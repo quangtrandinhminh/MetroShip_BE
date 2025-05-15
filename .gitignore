@@ -534,6 +534,10 @@ FodyWeavers.xsd
 *.msp
 
 # JetBrains Rider
+.idea/
+
+# Environment variables
+*.env
 
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
