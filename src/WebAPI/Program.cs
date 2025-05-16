@@ -6,8 +6,8 @@ using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load environment variables
-Env.Load();
+// Load environment variables from root folder
+Env.Load("../");
 string appName = Environment.GetEnvironmentVariable("APP_NAME");
 Console.WriteLine($"Environment: {appName}");
 
