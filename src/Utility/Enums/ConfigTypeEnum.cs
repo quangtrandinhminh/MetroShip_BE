@@ -4,8 +4,8 @@ public enum ConfigTypeEnum
 {
     System = 1,
 
-    // Include shipment expenses and metro size
-    Shipment,
+    // Include shipment expenses
+    Expense,
 
     // Policy for staff and customer
     Policy,

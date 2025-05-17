@@ -203,28 +203,148 @@ VALUES
 -- ───────────────────────────────────────────────────────────────────────────────
 INSERT INTO public."MetroTimeSlots"
 ("Id","DayOfWeek","SpecialDate","IsAbnormal","OpenTime","CloseTime","Shift",
- "MetroLineId","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+"CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
-    ('a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6',NULL,NULL,FALSE,'08:00:00','11:00:00',1,'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Morning
-    ('b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7',NULL,NULL,FALSE,'13:00:00','16:00:00',2,'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Afternoon
-    ('c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8',NULL,NULL,FALSE,'18:00:00','21:00:00',3,'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Evening
-    ('d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9',NULL,NULL,FALSE,'22:00:00','03:00:00',4,'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',NULL,NULL,NULL,NOW(),NOW(),NULL); -- Night
+    ('a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6',NULL,NULL,FALSE,'08:00:00','11:00:00',1,NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Morning
+    ('b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7',NULL,NULL,FALSE,'13:00:00','16:00:00',2,NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Afternoon
+    ('c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8',NULL,NULL,FALSE,'18:00:00','21:00:00',3,NULL,NULL,NULL,NOW(),NOW(),NULL),  -- Evening
+    ('d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9',NULL,NULL,FALSE,'22:00:00','03:00:00',4,NULL,NULL,NULL,NOW(),NOW(),NULL); -- Night
 
 -- ───────────────────────────────────────────────────────────────────────────────
 -- Link Line 1 to its default time slot
 -- ───────────────────────────────────────────────────────────────────────────────
-INSERT INTO public."MetroSchedules"
-("LineId","TimeSlotId")
+INSERT INTO public."MetroBasePrices"
+("Id","LineId","TimeSlotId","BasePriceVndPerKm","IsActive",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
-    ('e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c','a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6'),
-    ('e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c','b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7'),
-    ('e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c','c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8'),
-    ('e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c','d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9');
+    -- Morning (08:00–11:00) – full base price
+    ('d5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     'a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6',
+     5000.00, TRUE,
+     NULL, NULL, NULL,
+     NOW(), NOW(), NULL),
+
+    -- Afternoon (13:00–16:00) – full base price
+    ('e6f7a8b9-c0d1-2e3f-4a5b-6c7d8e9f0a1b',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     'b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7',
+     5000.00, TRUE,
+     NULL, NULL, NULL,
+     NOW(), NOW(), NULL),
+
+    -- Evening (18:00–21:00) – full base price
+    ('f7a8b9c0-d1e2-3f4a-5b6c-7d8e9f0a1b2c',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     'c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8',
+     5000.00, TRUE,
+     NULL, NULL, NULL,
+     NOW(), NOW(), NULL),
+
+    -- Night (22:00–03:00) – 20% discount
+    ('a8b9c0d1-e2f3-4a5b-6c7d-8e9f0a1b2c3d',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     'd4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9',
+     4000.00, TRUE,
+     NULL, NULL, NULL,
+     NOW(), NOW(), NULL);
 
 -- ───────────────────────────────────────────────────────────────────────────────
 -- Parcel Category
 -- ───────────────────────────────────────────────────────────────────────────────
-/*INSERT INTO public."ParcelCategories"
-("Id","CategoryName","Description","HeightLimitCm","WidthLimitCm","LengthLimitCm", "WeightLimitKg",
+INSERT INTO public."ParcelCategories"
+("Id","CategoryName","Description","IsBulk","WeightLimitKg","VolumeLimitCm3",
+ "LengthLimitCm","WidthLimitCm","HeightLimitCm","IsActive",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
-VALUES */
+VALUES
+    -- Hàng hóa chung / General cargo
+    ('0a1b2c3d-4e5f-6789-abcd-0fedcba98765',
+     'Hàng hóa chung',
+     'Hàng bình thường, không cần xử lý đặc biệt',
+     FALSE, NULL,   NULL,
+     NULL, NULL, NULL,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hàng nguy hiểm / Dangerous goods
+    ('1b2c3d4e-5f6a-7890-bcde-1fedcba98765',
+     'Hàng nguy hiểm',
+     'Vật phẩm nguy hiểm, tuân thủ quy định an toàn',
+     FALSE, NULL,   NULL,
+     NULL, NULL, NULL,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Động vật sống / Live animals
+    ('2c3d4e5f-6a7b-8901-cdef-2fedcba98765',
+     'Động vật sống',
+     'Vận chuyển động vật theo quy định chuyên biệt',
+     FALSE, NULL,   NULL,
+     NULL, NULL, NULL,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hàng dễ hư hỏng / Perishable goods
+    ('3d4e5f6a-7b8c-9012-def0-3fedcba98765',
+     'Hàng dễ hư hỏng',
+     'Hàng cần bảo quản lạnh hoặc kiểm soát nhiệt độ',
+     FALSE, NULL,   NULL,
+     NULL, NULL, NULL,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hàng giá trị / Valuable goods
+    ('4e5f6a7b-8c9d-0123-ef01-4fedcba98765',
+     'Hàng giá trị',
+     'Hàng giá trị cao, cần bảo mật và giám sát',
+     FALSE, NULL,   NULL,
+     NULL, NULL, NULL,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hành lý tiêu chuẩn / Standard luggage
+    ('5f6a7b8c-9d0e-1234-f012-5fedcba98765',
+     'Hành lý tiêu chuẩn',
+     'Hành lý của khách: ≤70 kg và 100×60×25 cm',
+     FALSE, 70.00, NULL,
+     100.00,60.00,25.00,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hàng cồng kềnh / Bulky article
+    ('6a7b8c9d-0e1f-2345-0123-6fedcba98765',
+     'Hàng cồng kềnh',
+     'Vượt 100 kg hoặc kích thước >100×100×70 cm',
+     TRUE, 100.00, NULL,
+     100.00,100.00,70.00,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+    -- Hàng pallet / Pallet shipment
+    ('7b8c9d0e-1f2a-3456-1234-7fedcba98765',
+     'Hàng pallet',
+     'Đóng pallet: ≤2500 kg và 240×180×220 cm',
+     TRUE,2500.00, NULL,
+     240.00,180.00,220.00,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+VALUES
+    ('a3f5b9e1-4c12-4fa8-9b2a-7d5e1c2f3a4b','CONFIRMATION_HOUR','24','Số giờ cho phép xác nhận đơn hàng',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('b4d6c8f2-5d23-5gb9-0c3b-8e6f2d3g4h5c','PAYMENT_REQUEST_HOUR','24','Số giờ yêu cầu thanh toán',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('c5e7d9g3-6e34-6hc0-1d4c-9f7g3e4h5i6d','ALLOW_CANCEL_BEFORE_HOUR','24','Cho phép hủy trước bao nhiêu giờ',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('d6f8e0h4-7f45-7id1-2e5d-0g8h4f5i6j7e','REFUND_PERCENT','80','Phần trăm hoàn tiền khi hủy',2,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('e7g9f1i5-8g56-8je2-3f6e-1h9i5g6j7k8f','SURCHARGE_AFTER_DELIVERED_HOUR','48','Phụ phí sau thời gian giao',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('f8h0g2j6-9h67-9kf3-4g7f-2i0j6h7k8l9g','SURCHARGE_PER_DAY_VND','10000','Phụ phí lưu kho mỗi ngày (VND)',2,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('09i1h3k7-0i78-0lg4-5h8g-3j1k7i8l9m0h','FREE_STORAGE_AFTER_DAY','30','Số ngày thanh lý hàng tồn kho',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+

@@ -91,5 +91,6 @@ public partial class MetroLine : BaseEntity
     [InverseProperty(nameof(Route.MetroLine))]
     public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
 
-    public virtual ICollection<MetroTimeSlot> MetroSchedules { get; set; } = new List<MetroTimeSlot>();
+    [InverseProperty(nameof(MetroBasePrice.Line))]
+    public virtual ICollection<MetroBasePrice> MetroBasePrices { get; set; } = new List<MetroBasePrice>();
 }

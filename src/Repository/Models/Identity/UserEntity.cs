@@ -58,6 +58,9 @@ public class UserEntity : IdentityUser<string>
     [InverseProperty(nameof(Notification.User))]
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
+    [InverseProperty(nameof(Transaction.PaidBy))]
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
     [NotMapped]
     public override string SecurityStamp { get => base.SecurityStamp; set => base.SecurityStamp = value; }
     [NotMapped]

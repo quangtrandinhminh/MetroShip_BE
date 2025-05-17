@@ -30,22 +30,41 @@ public partial class Shipment : BaseEntity
 
     [Required]
     [StringLength(50)]
-    public string ArrivalStationId { get; set; }
+    public string DestinationStationId { get; set; }
 
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal TotalCost { get; set; }
+    public decimal TotalCostVnd { get; set; } 
 
-    public DateTimeOffset? ScheduledDate { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal ShippingFeeVnd { get; set; }
 
-    [StringLength(20)]
-    public string TimeSlot { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? InsuranceFeeVnd { get; set; }
 
-    public DateTimeOffset BookingAt { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? SurchargeFeeVnd { get; set; }
 
-    public DateTimeOffset PickupTime { get; set; }
+    public DateTimeOffset? ScheduledDateTime { get; set; }
 
+    public DateTimeOffset? BookedAt { get; set; }
+
+    public DateTimeOffset? ApprovedAt { get; set; }
+
+    public DateTimeOffset? PaidAt { get; set; }
+
+    public DateTimeOffset? PickupAt { get; set; }
+
+    public DateTimeOffset? DeliveredAt { get; set; }
+
+    public DateTimeOffset? SurchargeAppliedAt { get; set; }
+
+    public DateTimeOffset? CancelledAt { get; set; }
+
+    public DateTimeOffset? RefundedAt { get; set; }
+
+    // Customer fields
     [Required]
     [StringLength(50)]
     public string SenderId { get; set; }
@@ -69,26 +88,12 @@ public partial class Shipment : BaseEntity
     [StringLength(20)]
     public string RecipientPhone { get; set; }
 
+    [StringLength(255)]
+    public string? RecipientEmail { get; set; }
+
     [Required]
     [StringLength(20)]
     public string RecipientNationalId { get; set; }
-
-    // Sender payment fields
-    [StringLength(50)]
-    public string? PaymentMethod { get; set; }
-
-    public string? PaymentStatus { get; set; }
-
-    [StringLength(50)]
-    public string? PaymentTransactionId { get; set; }
-
-    public DateTimeOffset? PaymentDate { get; set; }
-
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal? PaymentAmount { get; set; }
-
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal? InsuranceAmount { get; set; }
 
     [ForeignKey(nameof(SenderId))]
     [InverseProperty(nameof(UserEntity.Shipments))]

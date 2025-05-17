@@ -15,7 +15,9 @@ public partial class ShipmentTracking : BaseEntity
     [StringLength(50)]
     public string ShipmentId { get; set; }
 
-    public int Status { get; set; }
+    [Required]
+    [StringLength(255)]
+    public string Status { get; set; }
 
     [StringLength(50)]
     public string? StationId { get; set; }
@@ -28,7 +30,4 @@ public partial class ShipmentTracking : BaseEntity
     [ForeignKey(nameof(ShipmentId))]
     [InverseProperty(nameof(Shipment.ShipmentTrackings))]
     public virtual Shipment Shipment { get; set; }
-
-    [ForeignKey(nameof(StationId))]
-    public virtual Station? Station { get; set; }
 }
