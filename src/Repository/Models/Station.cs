@@ -46,4 +46,7 @@ public partial class Station : BaseEntity
 
     [InverseProperty(nameof(Region.Stations))]
     public virtual Region Region { get; set; }
+
+    [InverseProperty(nameof(ParcelTracking.Station))]
+    public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; }
 }

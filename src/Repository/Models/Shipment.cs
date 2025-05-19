@@ -17,7 +17,7 @@ public partial class Shipment : BaseEntity
     public Shipment()
     {
         TrackingCode = this.GetType().Name.ToUpperInvariant();
-        ShipmentStatus = ShipmentStatusEnum.WaitForApproval;
+        ShipmentStatus = ShipmentStatusEnum.Processing;
     }
 
     [Required]
@@ -104,9 +104,6 @@ public partial class Shipment : BaseEntity
 
     [InverseProperty(nameof(ShipmentItinerary.Shipment))]
     public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new List<ShipmentItinerary>();
-
-    [InverseProperty(nameof(ShipmentTracking.Shipment))]
-    public virtual ICollection<ShipmentTracking> ShipmentTrackings { get; set; } = new List<ShipmentTracking>();
 
     [InverseProperty(nameof(SupportingTicket.Shipment))]
     public virtual ICollection<SupportingTicket> SupportingTickets { get; set; } = new List<SupportingTicket>();

@@ -36,7 +36,7 @@ public sealed partial class AppDbContext
 
     public DbSet<ShipmentItinerary> ShipmentItineraries { get; set; }
 
-    public DbSet<ShipmentTracking> ShipmentTrackings { get; set; }
+    public DbSet<ParcelTracking> ShipmentTrackings { get; set; }
 
     public DbSet<Station> Stations { get; set; }
 
