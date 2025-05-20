@@ -145,6 +145,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IParcelCategoryService, ParcelCategoryService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddScoped<IVnPayService, VnPayService>();
@@ -153,6 +154,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IParcelCategoryRepository, ParcelCategoryRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

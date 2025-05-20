@@ -1,6 +1,8 @@
 ﻿using MetroShip.Repository.Extensions;
+using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.User;
 
 namespace MetroShip.Service.Mapper;
@@ -29,4 +31,13 @@ public interface IMapperlyMapper
     IList<double> MapJsonStringToDoubleList(string jsonString);
 
     IList<string?> MapRoleToRoleName(IEnumerable<UserRoleEntity> entity);
+
+    // parcel category
+    ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
+
+    void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
+    
+    ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+    
+    PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 }
