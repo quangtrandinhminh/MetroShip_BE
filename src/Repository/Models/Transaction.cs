@@ -10,6 +10,9 @@ namespace MetroShip.Repository.Models;
 public partial class Transaction : BaseEntity
 {
     [StringLength(50)]
+    public string ShipmentId { get; set; }
+
+    [StringLength(50)]
     public string? PaidById { get; set; }
 
     [StringLength(50)]
@@ -34,4 +37,8 @@ public partial class Transaction : BaseEntity
 
     [ForeignKey(nameof(PaidById))]
     public virtual UserEntity? PaidBy { get; set; }
+
+    [ForeignKey(nameof(ShipmentId))]
+    [InverseProperty(nameof(Shipment.Transactions))]
+    public virtual Shipment Shipment { get; set; }
 }
