@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Utility.Enums;
+using MetroShip.Utility.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
@@ -16,7 +17,7 @@ public partial class Shipment : BaseEntity
 {
     public Shipment()
     {
-        TrackingCode = this.GetType().Name.ToUpperInvariant();
+        BookedAt = CoreHelper.SystemTimeNow;
         ShipmentStatus = ShipmentStatusEnum.Processing;
     }
 
@@ -107,4 +108,7 @@ public partial class Shipment : BaseEntity
 
     [InverseProperty(nameof(SupportingTicket.Shipment))]
     public virtual ICollection<SupportingTicket> SupportingTickets { get; set; } = new List<SupportingTicket>();
+
+    [InverseProperty(nameof(Transaction.Shipment))]
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

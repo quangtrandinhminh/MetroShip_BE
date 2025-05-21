@@ -9,9 +9,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index("StationCode", Name = "UQ__Stations__A25C5AA7E98BD6EC", IsUnique = true)]
+[Index(nameof(StationCode), nameof(RegionId), IsUnique = true)]
 public partial class Station : BaseEntity
 {
+    public Station()
+    {
+        StationCode = this.GetType().Name.ToUpperInvariant();
+        RoutesFrom = new HashSet<Route>();
+        RoutesTo = new HashSet<Route>();
+        ParcelTrackings = new HashSet<ParcelTracking>();
+        IsMultiLine = false;
+    }
+
     [Required]
     [StringLength(20)]
     public string StationCode { get; set; }
@@ -37,6 +46,8 @@ public partial class Station : BaseEntity
     public double? Latitude { get; set; }
 
     public double? Longitude { get; set; }
+
+    public bool IsMultiLine { get; set; }
 
     [InverseProperty(nameof(Route.FromStation))]
     public virtual ICollection<Route> RoutesFrom { get; set; }
