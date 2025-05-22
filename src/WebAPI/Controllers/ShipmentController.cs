@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     public class ShipmentController(IShipmentService shipmentService) : ControllerBase
     {
