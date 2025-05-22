@@ -1,6 +1,11 @@
 ﻿using MetroShip.Repository.Extensions;
+using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
+using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Route;
+using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.ApiModels.User;
 
 namespace MetroShip.Service.Mapper;
@@ -11,22 +16,26 @@ public interface IMapperlyMapper
     IList<RoleResponse> MapToRoleResponseList(IList<RoleEntity> entity);
     UserEntity MapToUserEntity(RegisterRequest request);
     LoginResponse MapToLoginResponse(UserEntity entity);
-
     UserEntity MapToUserEntity(UserCreateRequest request);
     void MapUserRequestToEntity(UserUpdateRequest request, UserEntity entity);
-
     IList<UserResponse> MapToUserResponseList(IList<UserEntity> entity);
     IQueryable<UserResponse> MapToUserResponseList(IQueryable<UserEntity> entity);
     PaginatedListResponse<UserResponse> MapToUserResponsePaginatedList(PaginatedList<UserEntity> entity);
     UserResponse MapToUserResponse(UserEntity entity);
-    void MapRegisterRequestToEntity(RegisterRequest request, UserEntity entity);
 
-    int? MapToVoucherId(int? voucherId);
+    // shipment
+    PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
+    ShipmentListResponse MapToShipmentListResponse(Shipment entity);
+    ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    Shipment MapToShipmentEntity(ShipmentRequest request);
+    ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
 
-    DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset);
-    DateOnly MapDateTimeToDateOnly(DateTime dateTime);
+    // station
+    StationResponse MapToStationResponse(Station entity);
 
-    IList<double> MapJsonStringToDoubleList(string jsonString);
+    // route
+    RouteResponse MapToRouteResponse(Route entity);
 
-    IList<string?> MapRoleToRoleName(IEnumerable<UserRoleEntity> entity);
+    // metroline
+    MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
 }

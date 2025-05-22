@@ -19,4 +19,10 @@ public class JwtClaimUltils
     {
         return userClaimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value).ToList();
     }
+
+    public static string GetUserId(IHttpContextAccessor accessor)
+    {
+        var userClaimsPrincipal = GetLoginedUser(accessor);
+        return userClaimsPrincipal?.FindFirst(ClaimTypes.Sid)?.Value ?? string.Empty;
+    }
 }

@@ -33,18 +33,17 @@
             public const string DeleteCategory = BaseEndpoint + "/{id}";
         }
 
-        public static class Shipment
+        public static class ShipmentEndpoint
         {
             private const string BaseEndpoint = "~/" + AreaName + "/shipments";
             public const string GetShipments = BaseEndpoint;
-            public const string GetShipmentById = BaseEndpoint + "/{shipmentId}";
+            public const string GetShipmentByTrackingCode = BaseEndpoint + "/{shipmentTrackingCode}";
+            public const string GetShipmentsHistory = BaseEndpoint + "/customer/history";
             public const string CreateShipment = BaseEndpoint;
-            public const string DeleteShipment = BaseEndpoint + "/{shipmentId}";
-            public const string GetShipmentsByUser = BaseEndpoint + "/user/status";
+            public const string GetShipmentItinerary = BaseEndpoint + "/itinerary";
             public const string UpdateShipmentStatus = BaseEndpoint + "/{shipmentId}/status";
             public const string GetShipmentsByStatus = BaseEndpoint + "/status";
             public const string CustomerChangeShipmentStatus = BaseEndpoint + "customer/{shipmentId}";
-            public const string AdminChangeShipmentStatus = BaseEndpoint + "admin/{shipmentId}";
             public const string CustomerCancelShipment = BaseEndpoint + "customer/{shipmentId}";
             public const string VnpayUrl = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "vnpay/payment-execute";

@@ -60,7 +60,7 @@
         public const string EMAIL_REQUIRED = "Email cannot be empty.";
         public const string PHONENUMBER_REQUIRED = "Phone number cannot be empty.";
         public const string PHONENUMBER_INVALID = "Phone number is invalid.";
-        public const string PHONENUMBER_LENGTH = "Phone number must be exactly 10 digits.";
+        public const string PHONENUMBER_LENGTH_INVALID = "Phone number must be exactly 10 digits.";
         public const string ROLES_REQUIRED = "Role cannot be empty.";
         public const string USER_NOT_ALLOWED = "You do not have permission to access this section.";
         public const string EMAIL_VALIDATION_REQUIRED = "Please enter the OTP code sent to your email to activate your account.";
@@ -100,5 +100,78 @@
         public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ. ";
         public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ. ";
         public const string INVALID_URL = "Đường dẫn hình ảnh không hợp lệ. ";
+    }
+
+    public class ResponseMessageShipment
+    {
+        public const string SHIPMENT_NOT_FOUND = "Shipment not found.";
+        public const string SHIPMENT_EXISTED = "Shipment already exists.";
+        public const string SHIPMENT_UPDATE_SUCCESS = "Shipment updated successfully.";
+        public const string SHIPMENT_DELETE_SUCCESS = "Shipment deleted successfully.";
+        public const string SHIPMENT_CREATE_SUCCESS = "Shipment created successfully.";
+        public const string SHIPMENT_CANCEL_SUCCESS = "Shipment canceled successfully.";
+        public const string SENDER_ID_REQUIRED = "Sender ID is required.";
+        public const string SENDER_NAME_REQUIRED = "Sender name is required.";
+        public const string SENDER_PHONE_REQUIRED = "Sender phone number is required.";
+        public const string RECIPIENT_NAME_REQUIRED = "Recipient name is required.";
+        public const string RECIPIENT_PHONE_REQUIRED = "Recipient phone number is required.";
+        public const string RECIPIENT_NATIONAL_ID_REQUIRED = "Recipient national ID is required.";
+        public const string TOTAL_COST_VND_REQUIRED = "Total cost in VND is required.";
+        public const string TOTAL_COST_VND_INVALID = "Total cost in VND is invalid.";
+        public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND is invalid.";
+        public const string SHIPPING_FEE_VND_REQUIRED = "Shipping fee in VND is required.";
+        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND is invalid.";
+        public const string SHIPMENT_STATUS_INVALID = "Shipment status is invalid.";
+        public const string SHIPMENT_STATUS_NOT_FOUND = "Shipment status not found.";
+        public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
+        public const string SHIPMENT_DATE_REQUIRED = "ScheduledDateTime is required.";
+        public const string DEPARTURE_STATION_ID_REQUIRED = "Departure station ID is required.";
+        public const string DEPARTURE_STATION_NOT_FOUND = "Departure station not found.";
+        public const string DESTINATION_STATION_ID_REQUIRED = "Destination station ID is required.";
+        public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
+        public const string PATH_NOT_FOUND = "Path not found between two stations.";
+    }
+
+    public class ResponseMessageItinerary
+    {
+        public const string ITINERARY_REQUIRED = "Itinerary is required.";
+        public const string ROUTE_ID_REQUIRED = "Route ID is required.";
+        public const string LEG_ORDER_REQUIRED = "Leg order is required.";
+        public const string LEG_ORDER_INVALID = "Leg order must be large than 0";
+        public const string EST_MINUTES_INVALID = "Estimated minutes must be large than 0";
+    }
+
+    public class ResponseMessageParcel
+    {
+        public const string PARCEL_REQUIRED = "Parcel is required";
+        public const string PARCEL_NOT_FOUND = "Parcel not found.";
+        public const string PARCEL_EXISTED = "Parcel already exists.";
+        public const string PARCEL_UPDATE_SUCCESS = "Parcel updated successfully.";
+        public const string PARCEL_DELETE_SUCCESS = "Parcel deleted successfully.";
+        public const string PARCEL_CREATE_SUCCESS = "Parcel created successfully.";
+        public const string PARCEL_CANCEL_SUCCESS = "Parcel canceled successfully.";
+        public const string PARCEL_STATUS_INVALID = "Parcel status is invalid.";
+        public const string PARCEL_STATUS_NOT_FOUND = "Parcel status not found.";
+        public const string PARCEL_STATUS_UPDATE_SUCCESS = "Parcel status updated successfully.";
+        public const string PARCEL_CATEGORY_ID_REQUIRED = "Parcel category ID is required.";
+        public const string WIDTH_REQUIRED = "Width is required.";
+        public const string HEIGHT_REQUIRED = "Height is required.";
+        public const string LENGTH_REQUIRED = "Length is required.";
+        public const string WEIGHT_REQUIRED = "Weight is required.";
+        public const string WEIGHT_INVALID = "Weight must be greater than 0.";
+        public const string HEIGHT_INVALID = "Height must be greater than 0.";
+        public const string WIDTH_INVALID = "Width must be greater than 0.";
+        public const string LENGTH_INVALID = "Length must be greater than 0.";
+        public const string IS_BULK_REQUIRED = "Is Bulk is required";
+        public const string IS_BULK_INVALID = "Is Bulk must be true or false";
+    }
+
+    public class ResponseMessageStation
+    {
+        public const string STATION_NOT_FOUND = "Station not found.";
+        public const string STATION_EXISTED = "Station already exists.";
+        public const string STATION_UPDATE_SUCCESS = "Station updated successfully.";
+        public const string STATION_DELETE_SUCCESS = "Station deleted successfully.";
+        public const string STATION_CREATE_SUCCESS = "Station created successfully.";
     }
 }

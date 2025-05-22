@@ -68,11 +68,11 @@ namespace MetroShip.Service.Services
             return _mapper.MapToRoleResponseList(roles);
         }
 
-        public async Task<LoginResponse> Authenticate(LoginRequest dto)
+        public async Task<LoginResponse> Authenticate(LoginRequest request)
         {
-            _logger.Information("Authenticate user: {@dto}", dto.Username);
-            var account = await GetUserByUserName(dto.Username);
-            _authValidator.ValidateLogin(dto, account);
+            _logger.Information("Authenticate user: {@request}", request.Username);
+            var account = await GetUserByUserName(request.Username);
+            _authValidator.ValidateLogin(request, account);
 
             try
             {
@@ -98,7 +98,8 @@ namespace MetroShip.Service.Services
 
         public async Task Register(RegisterRequest request, CancellationToken cancellationToken = default)
         {
-            _logger.Information("Register new user: {@request}", request);
+            _logger.Information("Register new user: {@request}", request.UserName);
+            _authValidator.ValidateRegisterRequest(request);
             // get user by name
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)

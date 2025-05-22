@@ -25,7 +25,7 @@ namespace MetroShip.Service.Services
             var request = context.Request;
             var scheme = request.Scheme;
             var host = request.Host;
-            var returnUrl = $"{scheme}://{host}" + WebApiEndpoint.Shipment.VnpayExecute;
+            var returnUrl = $"{scheme}://{host}" + WebApiEndpoint.ShipmentEndpoint.VnpayExecute;
             var hostName = System.Net.Dns.GetHostName();
             var clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0).ToString();
             var orderInfo = $"Thanh toán đơn hàng ID: {orderId}, Tổng giá trị: {totalAmount} VND";
