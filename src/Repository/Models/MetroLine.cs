@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
+[Index(nameof(LineCode), nameof(RegionId), IsUnique = true)]
 public partial class MetroLine : BaseEntity
 {
     public MetroLine()

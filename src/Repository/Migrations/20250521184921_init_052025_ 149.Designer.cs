@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250521184921_init_052025_ 149")]
+    partial class init_052025_149
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -554,9 +557,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<int>("ParcelStatus")
                         .HasColumnType("integer");
 
-                    b.Property<decimal>("PriceVnd")
-                        .HasColumnType("decimal(18, 2)");
-
                     b.Property<string>("QrCode")
                         .HasColumnType("text");
 
@@ -1024,9 +1024,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<decimal>("TotalCostVnd")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<decimal?>("TotalKm")
-                        .HasColumnType("decimal(8, 2)");
-
                     b.Property<string>("TrackingCode")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1041,7 +1038,7 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("TrackingCode")
+                    b.HasIndex(new[] { "TrackingCode" }, "UQ__Shipment__A2A2A54B59D458B2")
                         .IsUnique();
 
                     b.ToTable("Shipments");

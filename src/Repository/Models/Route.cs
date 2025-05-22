@@ -10,19 +10,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index("RouteCode", Name = "UQ__Routes__A25C5AA7CC95834E", IsUnique = true)]
+[Index(nameof(RouteCode), IsUnique = true)]
+[Index(nameof(LineId))]
+[Index(nameof(FromStationId))]
+[Index(nameof(ToStationId))]
+[Index(nameof(LineId),nameof(FromStationId),nameof(ToStationId), IsUnique = true)]
 public partial class Route : BaseEntity
 {
     public Route()
     {
         RouteCode = this.GetType().Name.ToUpperInvariant();
-        RouteNameVi = this.FromStation.StationNameVi + " - " + this.ToStation.StationNameVi;
-        RouteNameEn = this.FromStation.StationNameEn + " - " + this.ToStation.StationNameEn;
+        // RouteNameVi = this.FromStation.StationNameVi + " - " + this.ToStation.StationNameVi;
+        // RouteNameEn = this.FromStation.StationNameEn + " - " + this.ToStation.StationNameEn;
     }
 
     [Required]
     [StringLength(20)]
-    public string RouteCode { get; set; }
+    public string? RouteCode { get; set; }
 
     [Required]
     [StringLength(50)]

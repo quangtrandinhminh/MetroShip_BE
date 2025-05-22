@@ -44,6 +44,14 @@ VALUES
 -- ───────────────────────────────────────────────────────────────────────────────
 -- Stations on Line 1 (3 underground, 11 elevated)
 -- ───────────────────────────────────────────────────────────────────────────────
+/*DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Stations") THEN
+            DELETE FROM public."Stations";
+        END IF;
+    END
+$$;*/
+
 INSERT INTO public."Stations"
 ("Id","StationCode","StationNameVi","StationNameEn","Address","IsUnderground","IsActive","RegionId","Latitude","Longitude",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -345,6 +353,75 @@ VALUES
      NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('f8h0g2j6-9h67-9kf3-4g7f-2i0j6h7k8l9g','SURCHARGE_PER_DAY_VND','10000','Phụ phí lưu kho mỗi ngày (VND)',2,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('09i1h3k7-0i78-0lg4-5h8g-3j1k7i8l9m0h','FREE_STORAGE_AFTER_DAY','30','Số ngày thanh lý hàng tồn kho',3,
      NULL,NULL,NULL,NOW(),NOW(),NULL);
+
+/*INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt") VALUES
+    ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
+    NULL,NULL,NULL,NOW(),NOW(),NULL);*/
+
+-- ───────────────────────────────────────────────────────────────────────────────
+-- insert default user
+-- ───────────────────────────────────────────────────────────────────────────────
+-- If Roles already has data, clear it first
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Roles") THEN
+            DELETE FROM public."Roles";
+        END IF;
+    END
+$$;
+
+INSERT INTO public."Roles"
+("Id","ConcurrencyStamp","Name","NormalizedName")
+VALUES
+    ('021239ef-1d1f-4676-a402-aff9fd24c0c8','8f9fc771-6b87-441a-ba62-a9a68b6bc629','Admin','ADMIN'),
+    ('d56ba56c-6469-4494-913a-88d3639f905e','8944cb35-777f-47f6-8202-423e1d6df65a','Customer','CUSTOMER'),
+    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','a8d5d83a-96d2-4121-bbd8-d5e85e4ffc90','Staff','STAFF');
+
+-- Seed Users
+INSERT INTO public."Users"
+("Id","AccessFailedCount","AccountName","AccountNo","Address","Avatar","BankId","BirthDate",
+ "ConcurrencyStamp","CreatedBy","CreatedTime","DeletedBy","DeletedTime",
+ "Email","EmailConfirmed","FullName","LastUpdatedBy","LastUpdatedTime",
+ "LockoutEnabled","LockoutEnd","NormalizedEmail","NormalizedUserName",
+ "OTP","PasswordHash","PhoneNumber","PhoneNumberConfirmed","TwoFactorEnabled",
+ "UserName","Verified")
+VALUES
+    (
+        '5ca7e417-15c3-4bf4-b31c-d57b861e4ab3', 0, NULL, NULL, NULL,
+        'https://via.placeholder.com/150', NULL, NULL,
+        '6c4a58fc-041f-4677-9d88-45f5ca60e831', NULL,
+        '2025-05-19T15:48:50.1689055+00:00', NULL, NULL,
+        'admin@example.com', FALSE, 'Admin User', NULL,
+        '2025-05-19T15:48:50.1689055+00:00',
+        FALSE, NULL, 'ADMIN', 'ADMIN',
+        NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
+        NULL, FALSE, FALSE,
+        'admin', '2025-05-19T15:48:50.1689062+00:00'
+    ),
+    (
+        '64b4c4c2-48ab-4a97-af1c-b25f1aa86362', 0, NULL, NULL, NULL,
+        'https://via.placeholder.com/150', NULL, NULL,
+        '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
+        '2025-05-19T15:48:50.1689069+00:00', NULL, NULL,
+        'staff@example.com', FALSE, 'Staff', NULL,
+        '2025-05-19T15:48:50.1689069+00:00',
+        FALSE, NULL, 'STAFF', 'STAFF',
+        NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
+        NULL, FALSE, FALSE,
+        'staff', '2025-05-19T15:48:50.1689071+00:00'
+    );
+
+-- Seed UserRoles
+INSERT INTO public."UserRoles"
+("RoleId","UserId","Discriminator")
+VALUES
+    ('021239ef-1d1f-4676-a402-aff9fd24c0c8','5ca7e417-15c3-4bf4-b31c-d57b861e4ab3','UserRoleEntity'),
+    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity');
+
 

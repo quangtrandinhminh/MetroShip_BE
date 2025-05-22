@@ -7,16 +7,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Utility.Enums;
+using MetroShip.Utility.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index("TrackingCode", Name = "UQ__Shipment__A2A2A54B59D458B2", IsUnique = true)]
+[Index("TrackingCode", IsUnique = true)]
 public partial class Shipment : BaseEntity
 {
     public Shipment()
     {
-        TrackingCode = this.GetType().Name.ToUpperInvariant();
+        BookedAt = CoreHelper.SystemTimeNow;
         ShipmentStatus = ShipmentStatusEnum.Processing;
     }
 
@@ -45,6 +46,9 @@ public partial class Shipment : BaseEntity
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? SurchargeFeeVnd { get; set; }
+
+    [Column(TypeName = "decimal(8, 2)")]
+    public decimal? TotalKm { get; set; }
 
     public DateTimeOffset? ScheduledDateTime { get; set; }
 
@@ -107,4 +111,7 @@ public partial class Shipment : BaseEntity
 
     [InverseProperty(nameof(SupportingTicket.Shipment))]
     public virtual ICollection<SupportingTicket> SupportingTickets { get; set; } = new List<SupportingTicket>();
+
+    [InverseProperty(nameof(Transaction.Shipment))]
+    public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 }

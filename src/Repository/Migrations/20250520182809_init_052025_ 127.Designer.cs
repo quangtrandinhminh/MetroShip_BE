@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250520182809_init_052025_ 127")]
+    partial class init_052025_127
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -382,9 +385,6 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasIndex("RegionId");
 
-                    b.HasIndex("LineCode", "RegionId")
-                        .IsUnique();
-
                     b.ToTable("MetroLines");
                 });
 
@@ -553,9 +553,6 @@ namespace MetroShip.Repository.Migrations
 
                     b.Property<int>("ParcelStatus")
                         .HasColumnType("integer");
-
-                    b.Property<decimal>("PriceVnd")
-                        .HasColumnType("decimal(18, 2)");
 
                     b.Property<string>("QrCode")
                         .HasColumnType("text");
@@ -897,12 +894,9 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasIndex("LineId");
 
-                    b.HasIndex("RouteCode")
-                        .IsUnique();
-
                     b.HasIndex("ToStationId");
 
-                    b.HasIndex("LineId", "FromStationId", "ToStationId")
+                    b.HasIndex(new[] { "RouteCode" }, "UQ__Routes__A25C5AA7CC95834E")
                         .IsUnique();
 
                     b.ToTable("Routes");
@@ -1024,9 +1018,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<decimal>("TotalCostVnd")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<decimal?>("TotalKm")
-                        .HasColumnType("decimal(8, 2)");
-
                     b.Property<string>("TrackingCode")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -1041,7 +1032,7 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("TrackingCode")
+                    b.HasIndex(new[] { "TrackingCode" }, "UQ__Shipment__A2A2A54B59D458B2")
                         .IsUnique();
 
                     b.ToTable("Shipments");
@@ -1066,13 +1057,10 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<int?>("EstMinute")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("EstimatedArrival")
+                    b.Property<DateTimeOffset>("EstimatedArrival")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTimeOffset?>("EstimatedDeparture")
+                    b.Property<DateTimeOffset>("EstimatedDeparture")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("LastUpdatedAt")
@@ -1135,9 +1123,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsMultiLine")
-                        .HasColumnType("boolean");
-
                     b.Property<bool>("IsUnderground")
                         .HasColumnType("boolean");
 
@@ -1182,7 +1167,7 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasIndex("RegionId");
 
-                    b.HasIndex("StationCode", "RegionId")
+                    b.HasIndex(new[] { "StationCode" }, "UQ__Stations__A25C5AA7E98BD6EC")
                         .IsUnique();
 
                     b.ToTable("Stations");

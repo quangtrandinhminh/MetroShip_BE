@@ -1,0 +1,51 @@
+version: '3.4'
+
+networks:
+  metroship:
+    driver: bridge
+
+services:
+  metroship.webapi:
+    container_name: metroship-api
+    image: ${DOCKER_REGISTRY-}metroshipwebapi
+    build:
+      context: .
+      dockerfile: ./src/Dockerfile
+    ports:
+      - 8080:8080
+      - 8081:8081
+      
+    environment:
+      - ASPNETCORE_URLS=http://+:8080;https://+:8081
+      - POSTGRES_HOST=metroship.postgres.db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=metroship
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=metroshipp@55w0rd
+
+    env_file:
+      - ./src/be.env
+    networks:
+      - metroship
+    depends_on:
+      - metroship.postgres.db
+    restart: unless-stopped
+
+  metroship.postgres.db:
+    container_name: metroship-postgresql
+    image: "postgres:latest"
+    environment:
+     - POSTGRES_DB=metroship
+     - POSTGRES_USER=postgres
+     - POSTGRES_PASSWORD=metroshipp@55w0rd
+    ports:
+      - "5432:5432"
+    volumes:
+      - metroshipvolumne:/var/lib/postgresql/data
+      - ./doc/pg_seed.sql:/docker-entrypoint-initdb.d/pg_seed.sql:ro
+    networks:
+      - metroship
+    restart: unless-stopped
+
+volumes:
+  metroshipvolumne:
