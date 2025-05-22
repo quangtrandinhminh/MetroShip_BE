@@ -100,7 +100,7 @@ public class ShipmentService : IShipmentService
         return shipmentListResponse;
     }
 
-    public async Task BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default)
+    public async Task<string> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Book shipment with request: {@request}", request);
@@ -163,6 +163,8 @@ public class ShipmentService : IShipmentService
 
         await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        return shipment.TrackingCode;
     }
 
     private async Task InitializeAsync()

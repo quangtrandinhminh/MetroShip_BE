@@ -47,9 +47,9 @@ namespace MetroShip.Service.ApiModels
             return new BaseResponse<T>(StatusCodes.Status500InternalServerError, code, data, additionalData);
         }
 
-        public static BaseResponse<T> OkResponseDto(string message, T data, object? additionalData = null, string code = HttpResponseCodeConstants.SUCCESS)
+        public static BaseResponse<T?> OkResponseDto(string message, T? data, object? additionalData = null, string code = HttpResponseCodeConstants.SUCCESS)
         {
-            return new BaseResponse<T>(StatusCodes.Status200OK, code, data, additionalData, message);
+            return new BaseResponse<T?>(StatusCodes.Status200OK, code, data, additionalData, message);
         }
 
         public static BaseResponse<T> NotFoundResponseDto(string message, T? data, object? additionalData = null, string code = HttpResponseCodeConstants.NOT_FOUND)

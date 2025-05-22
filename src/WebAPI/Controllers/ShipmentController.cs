@@ -2,6 +2,8 @@
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.ApiModels.Transaction;
+using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
@@ -13,9 +15,13 @@ namespace MetroShip.WebAPI.Controllers
 {
     [Authorize]
     [ApiController]
-    public class ShipmentController(IShipmentService shipmentService) : ControllerBase
+    public class ShipmentController(
+        IShipmentService shipmentService,
+        ITransactionService transactionService
+        ) : ControllerBase
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
+
 
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
         public async Task<IActionResult> Get([FromQuery] PaginatedListRequest request)
@@ -43,8 +49,9 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateShipment)]
         public async Task<IActionResult> Create([FromBody] ShipmentRequest request)
         {
-            await shipmentService.BookShipment(request);
-            return Created(nameof(Create), BaseResponse.OkResponseDto(ResponseMessageShipment.SHIPMENT_CREATE_SUCCESS));
+            var shipmentId = await shipmentService.BookShipment(request);
+            return Created(nameof(Create), 
+                BaseResponse.OkResponseDto(shipmentId));
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
@@ -56,5 +63,19 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(result));
         }
 
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
+        public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
+        {
+            var paymentUrl = await transactionService.CreateVnPayTransaction(request);
+            return Ok(BaseResponse.OkResponseDto(paymentUrl));
+        }
+
+        [AllowAnonymous]
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
+        public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
+        {
+            await transactionService.ExecuteVnPayPayment(model);
+            return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
+        }
     }
 }

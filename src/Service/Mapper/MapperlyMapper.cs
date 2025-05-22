@@ -10,6 +10,7 @@ using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.BusinessModels;
 using Microsoft.CodeAnalysis;
@@ -62,6 +63,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
 
+    // transaction
+    public partial Transaction MapToTransactionEntity(TransactionRequest request);
 
     public int? MapToVoucherId(int? voucherId)
     {

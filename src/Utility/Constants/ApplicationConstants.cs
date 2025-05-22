@@ -174,4 +174,22 @@
         public const string STATION_DELETE_SUCCESS = "Station deleted successfully.";
         public const string STATION_CREATE_SUCCESS = "Station created successfully.";
     }
+
+    public class ResponseMessageRoute
+    {
+        public const string ROUTE_NOT_FOUND = "Route not found.";
+        public const string ROUTE_EXISTED = "Route already exists.";
+        public const string ROUTE_UPDATE_SUCCESS = "Route updated successfully.";
+        public const string ROUTE_DELETE_SUCCESS = "Route deleted successfully.";
+        public const string ROUTE_CREATE_SUCCESS = "Route created successfully.";
+    }
+
+    public class ResponseMessageTransaction
+    {
+        public const string TRANSACTION_NOT_FOUND = "Transaction not found.";
+        public const string TRANSACTION_EXISTED = "Transaction already exists.";
+        public const string TRANSACTION_UPDATE_SUCCESS = "Transaction updated successfully.";
+        public const string TRANSACTION_DELETE_SUCCESS = "Transaction deleted successfully.";
+        public const string TRANSACTION_CREATE_SUCCESS = "Transaction created successfully.";
+    }
 }

@@ -23,7 +23,7 @@ namespace MetroShip.WebAPI.Controllers
             _authService = authSevices;
         }
 
-        [HttpGet("hello")]
+        [HttpGet(WebApiEndpoint.Authentication.Hello)]
         public IActionResult Hello()
         {
             return Ok("Hello");

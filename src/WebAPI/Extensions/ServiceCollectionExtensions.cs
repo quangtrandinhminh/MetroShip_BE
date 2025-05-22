@@ -149,6 +149,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddScoped<IVnPayService, VnPayService>();
         services.AddScoped<IShipmentService, ShipmentService>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

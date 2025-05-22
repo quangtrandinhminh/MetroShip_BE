@@ -6,6 +6,7 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 
 namespace MetroShip.Service.Mapper;
@@ -38,4 +39,7 @@ public interface IMapperlyMapper
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+
+    // transaction
+    Transaction MapToTransactionEntity(TransactionRequest request);
 }
