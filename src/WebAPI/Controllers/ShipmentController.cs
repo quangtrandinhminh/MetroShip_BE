@@ -8,7 +8,6 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestSharp.Extensions;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -47,7 +46,7 @@ namespace MetroShip.WebAPI.Controllers
             return Created(nameof(Create), BaseResponse.OkResponseDto(ResponseMessageShipment.SHIPMENT_CREATE_SUCCESS));
         }
 
-        //[Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetShipmentItinerary)]
         public async Task<ActionResult<List<ItineraryResponse>>> GetPath(
             [FromBody]  BestPathRequest request)
