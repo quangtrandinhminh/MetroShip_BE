@@ -55,6 +55,9 @@ public partial class Parcel : BaseEntity
     public string Barcode { get; set; }
     public string QrCode { get; set; }
 
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal PriceVnd { get; set; }
+
     [StringLength(255)]
     public string Description { get; set; }
 

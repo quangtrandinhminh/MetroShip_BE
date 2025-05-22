@@ -44,6 +44,14 @@ VALUES
 -- ───────────────────────────────────────────────────────────────────────────────
 -- Stations on Line 1 (3 underground, 11 elevated)
 -- ───────────────────────────────────────────────────────────────────────────────
+/*DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Stations") THEN
+            DELETE FROM public."Stations";
+        END IF;
+    END
+$$;*/
+
 INSERT INTO public."Stations"
 ("Id","StationCode","StationNameVi","StationNameEn","Address","IsUnderground","IsActive","RegionId","Latitude","Longitude",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index("TrackingCode", Name = "UQ__Shipment__A2A2A54B59D458B2", IsUnique = true)]
+[Index("TrackingCode", IsUnique = true)]
 public partial class Shipment : BaseEntity
 {
     public Shipment()
@@ -46,6 +46,9 @@ public partial class Shipment : BaseEntity
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? SurchargeFeeVnd { get; set; }
+
+    [Column(TypeName = "decimal(8, 2)")]
+    public decimal? TotalKm { get; set; }
 
     public DateTimeOffset? ScheduledDateTime { get; set; }
 

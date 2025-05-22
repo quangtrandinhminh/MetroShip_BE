@@ -20,8 +20,8 @@ public partial class Route : BaseEntity
     public Route()
     {
         RouteCode = this.GetType().Name.ToUpperInvariant();
-        RouteNameVi = this.FromStation.StationNameVi + " - " + this.ToStation.StationNameVi;
-        RouteNameEn = this.FromStation.StationNameEn + " - " + this.ToStation.StationNameEn;
+        // RouteNameVi = this.FromStation.StationNameVi + " - " + this.ToStation.StationNameVi;
+        // RouteNameEn = this.FromStation.StationNameEn + " - " + this.ToStation.StationNameEn;
     }
 
     [Required]
