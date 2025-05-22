@@ -6,7 +6,7 @@ namespace MetroShip.Service.Interfaces
     public interface IAuthService
     {
         Task<IList<RoleResponse>> GetAllRoles();
-        Task<LoginResponse> Authenticate(LoginRequest dto);
+        Task<LoginResponse> Authenticate(LoginRequest request);
         Task Register(RegisterRequest request, CancellationToken cancellationToken = default);
         Task RegisterByAdmin(RegisterRequest request, int role);
         Task<LoginResponse> RefreshToken(string token);

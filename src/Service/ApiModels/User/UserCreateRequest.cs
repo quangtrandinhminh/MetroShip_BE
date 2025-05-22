@@ -20,7 +20,7 @@ public sealed record UserCreateRequest : BankInfoRequest
 
     [Required(ErrorMessage = ResponseMessageIdentity.PHONENUMBER_REQUIRED)]
     [Phone(ErrorMessage = ResponseMessageIdentity.PHONENUMBER_INVALID)]
-    [StringLength(10, MinimumLength = 10, ErrorMessage = ResponseMessageIdentity.PHONENUMBER_LENGTH)]
+    [StringLength(10, MinimumLength = 10, ErrorMessage = ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID)]
     public string PhoneNumber { get; set; }
 
     [Required(ErrorMessage = ResponseMessageIdentity.PASSWORD_REQUIRED)]

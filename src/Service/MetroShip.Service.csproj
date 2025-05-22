@@ -21,6 +21,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="ApiModels\Station\" />
+      <Folder Include="ApiModels\Parcel\" />
       <Folder Include="BusinessModels\" />
     </ItemGroup>
 
