@@ -1530,6 +1530,54 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Vnpay create payment link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"MS-HCMC-17481179640000101VN\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-url",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-url"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vnpay excecute",
+					"request": {
+						"method": "GET",
+						"header": []
+					},
+					"response": []
 				}
 			],
 			"auth": {
