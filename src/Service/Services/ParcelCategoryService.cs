@@ -1,4 +1,5 @@
-﻿using MetroShip.Repository.Infrastructure;
+﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.PaginatedList;
@@ -22,12 +23,12 @@ namespace MetroShip.Service.Services;
 
 public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCategoryService
 {
-    private readonly IParcelCategoryRepository _parcelCategoryRepository = serviceProvider.GetRequiredService<IParcelCategoryRepository>();
+    private readonly IBaseRepository<ParcelCategory> _parcelCategoryRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelCategory>>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger<ParcelCategoryService> _logger = serviceProvider.GetRequiredService<ILogger<ParcelCategoryService>>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
 
-    public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(bool? isActive, int pageNumber, int pageSize)
+    public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(bool? isActive, PaginatedListRequest request)
     {
         _logger.LogInformation("Get all parcel categories. IsActive: {isActive}", isActive);
 
@@ -38,8 +39,8 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         }
 
         var paginatedCategories = await _parcelCategoryRepository.GetAllPaginatedQueryable(
-            pageNumber,
-            pageSize,
+            pageNumber: 1,
+            pageSize: 10,
             predicate,
             c => c.CreatedAt // default order
         );
@@ -72,7 +73,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         var entity = _mapper.MapToParcelCategoryEntity(request);
 
         // Pass the correctly mapped entity to the repository
-        await _parcelCategoryRepository.CreateAsync(entity);
+        await _parcelCategoryRepository.AddAsync(entity);
         await _unitOfWork.SaveChangeAsync();
 
         // Return the created entity mapped to a response
@@ -86,7 +87,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         var entity = await GetParcelCategoryById(request.Id);
 
         _mapper.MapParcelCategoryUpdateRequestToEntity(request, entity);
-        await _parcelCategoryRepository.UpdateAsync(entity);
+        _parcelCategoryRepository.Update(entity);
         await _unitOfWork.SaveChangeAsync();
     }
 
@@ -97,7 +98,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         var entity = await GetParcelCategoryById(id);
         entity.DeletedAt = CoreHelper.SystemTimeNow;
 
-        await _parcelCategoryRepository.UpdateAsync(entity);
+        _parcelCategoryRepository.Update(entity);
         await _unitOfWork.SaveChangeAsync();
     }
 

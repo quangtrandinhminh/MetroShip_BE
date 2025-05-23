@@ -172,7 +172,26 @@ public partial class MapperlyMapper : IMapperlyMapper
             TotalPages = entityList.TotalPages
         };
     }
-        public EnumResponse MapToEnumResponse(Enum enumValue)
+    public CreateParcelResponse MapToParcelResponse(Parcel entity)
+    {
+        return new CreateParcelResponse
+        {
+            Id = Guid.Parse(entity.Id),
+            VolumeCm3 = entity.VolumeCm3,
+            ChargeableWeightKg = entity.ChargeableWeightKg
+        };
+    }
+    public PaginatedListResponse<CreateParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList)
+    {
+        return new PaginatedListResponse<CreateParcelResponse>
+        {
+            Items = entityList.Items.Select(MapToParcelResponse).ToList(),
+            PageNumber = entityList.PageNumber,
+            TotalCount = entityList.TotalCount,
+            TotalPages = entityList.TotalPages
+        };
+    }
+    public EnumResponse MapToEnumResponse(Enum enumValue)
     {
         return new EnumResponse
         {

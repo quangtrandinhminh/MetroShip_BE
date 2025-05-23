@@ -3,6 +3,7 @@ using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
@@ -47,6 +48,10 @@ public interface IMapperlyMapper
     ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
     
     PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
+
+    // parcel
+    CreateParcelResponse MapToParcelResponse(Parcel entity);
+    PaginatedListResponse<CreateParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
 }

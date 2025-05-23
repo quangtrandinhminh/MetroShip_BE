@@ -5,6 +5,7 @@ using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using MetroShip.Service.ApiModels.PaginatedList;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -20,9 +21,9 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet("get-all")]
-        public async Task<IActionResult> GetAll([FromQuery] bool? isActive, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetAll([FromQuery] bool? isActive, [FromQuery] PaginatedListRequest request)
         {
-            var result = await _parcelCategoryService.GetAllAsync(isActive, pageNumber, pageSize);
+            var result = await _parcelCategoryService.GetAllAsync(isActive,request);
             return Ok(BaseResponse.OkResponseDto(result));
         }
 
