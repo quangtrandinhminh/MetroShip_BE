@@ -58,4 +58,8 @@ public interface IMapperlyMapper
 
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
+
+    PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
+
+    TransactionResponse MapToTransactionResponse(Transaction transaction);
 }

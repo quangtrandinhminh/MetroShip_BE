@@ -1,6 +1,8 @@
-﻿using MetroShip.Repository.Infrastructure;
+using MetroShip.Repository.Base;
+using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.Interfaces;
@@ -13,6 +15,7 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Serilog;
+using System.Linq.Expressions;
 using System.Net;
 
 namespace MetroShip.Service.Services;
@@ -27,13 +30,16 @@ public class TransactionService : ITransactionService
     private readonly IUnitOfWork _unitOfWork;
     private readonly TransactionValidator _transactionValidator;
 
+    private readonly IBaseRepository<Transaction> _transaction;
+
     public TransactionService(
         IShipmentRepository shipmentRepository,
         IMapperlyMapper mapper,
         IHttpContextAccessor httpContextAccessor,
         ILogger logger,
         IUnitOfWork unitOfWork,
-        IVnPayService vnPayService)
+        IVnPayService vnPayService,
+        IBaseRepository<Transaction> transactionRepository) 
     {
         _vnPayService = vnPayService;
         _shipmentRepository = shipmentRepository;
@@ -42,12 +48,13 @@ public class TransactionService : ITransactionService
         _logger = logger;
         _transactionValidator = new TransactionValidator();
         _unitOfWork = unitOfWork;
+        _transaction = transactionRepository; // Initialize the field
     }
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
-        var customerId  = JwtClaimUltils.GetUserId(_httpContextAccessor);
-        _logger.Information("Creating payment link for: {shipment} by {CustomerId}", 
+        var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Creating payment link for: {shipment} by {CustomerId}",
             request.ShipmentId, customerId);
         _transactionValidator.ValidateTransactionRequest(request);
         var shipment = await _shipmentRepository.GetSingleAsync(
@@ -85,7 +92,7 @@ public class TransactionService : ITransactionService
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
-        
+
         var paymentUrl = await _vnPayService.CreatePaymentUrl(
             shipment.TrackingCode, shipment.TotalCostVnd);
         return paymentUrl;
@@ -143,5 +150,26 @@ public class TransactionService : ITransactionService
 
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request)
+    {
+        _logger.Information("Fetching transactions. PaymentStatus: {status}", status);
+
+        Expression<Func<Transaction, bool>> predicate = t => t.DeletedAt == null;
+
+        if (status.HasValue)
+        {
+            predicate = predicate.And(t => t.PaymentStatus == status.Value);
+        }
+
+        var paginatedTransactions = await _transaction.GetAllPaginatedQueryable(
+            pageNumber: request.PageNumber,
+            pageSize: request.PageSize,
+            predicate: predicate,
+            orderBy: t => t.PaymentDate // Default sort
+        );
+
+        return _mapper.MapToTransactionPaginatedList(paginatedTransactions);
     }
 }

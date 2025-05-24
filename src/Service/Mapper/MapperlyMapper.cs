@@ -16,6 +16,7 @@ using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.BusinessModels;
 using Microsoft.CodeAnalysis;
 using Riok.Mapperly.Abstractions;
+using MetroShip.Service.ApiModels.Transaction;
 
 namespace MetroShip.Service.Mapper;
 
@@ -202,4 +203,8 @@ public partial class MapperlyMapper : IMapperlyMapper
             Value = enumValue.ToString(),
         };
     }
+
+    public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
+
+    public partial TransactionResponse MapToTransactionResponse(Transaction transaction);
 }
