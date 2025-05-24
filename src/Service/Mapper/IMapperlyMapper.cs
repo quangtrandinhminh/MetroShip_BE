@@ -8,6 +8,7 @@ using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 
 namespace MetroShip.Service.Mapper;
@@ -54,4 +55,9 @@ public interface IMapperlyMapper
     PaginatedListResponse<CreateParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+
+    // transaction
+    PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
+
+    TransactionResponse MapToTransactionResponse(Transaction transaction);
 }
