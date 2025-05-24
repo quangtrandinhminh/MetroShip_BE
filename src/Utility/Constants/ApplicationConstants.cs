@@ -102,6 +102,12 @@
         public const string INVALID_URL = "Đường dẫn hình ảnh không hợp lệ. ";
     }
 
+    public static class ResponseMessageConstantsParcelCategory
+    {
+        public const string NOT_FOUND = "Parcel category not found.";
+        public const string UPDATE_SUCCESS = "Parcel category updated successfully.";
+        public const string DELETE_SUCCESS = "Parcel category deleted successfully.";
+    }
     public class ResponseMessageShipment
     {
         public const string SHIPMENT_NOT_FOUND = "Shipment not found.";
