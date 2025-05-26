@@ -1,12 +1,13 @@
-﻿using MetroShip.Service.ApiModels.PaginatedList;
+﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class ParcelController : ControllerBase
     {
@@ -36,11 +37,11 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(cost);
         }
 
-        [HttpGet("get-all")]
-        public async Task<ActionResult<PaginatedListResponse<CreateParcelResponse>>> GetAll([FromQuery] PaginatedListRequest request)
+        [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcels)]
+        public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(result);
+            return Ok(BaseResponse.OkResponseDto(result));
         }
     }
 }
