@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels.PaginatedList;
+﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Enums;
@@ -22,10 +23,11 @@ namespace MetroShip.WebAPI.Controllers
         /// Get all transactions (paginated & optional payment status filter)
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<PaginatedListResponse<TransactionResponse>>> GetAllAsync([FromQuery] PaymentStatusEnum? status,[FromQuery] PaginatedListRequest request)
+        public async Task<ActionResult<PaginatedListResponse<TransactionResponse>>> GetAllAsync(
+            [FromQuery] PaymentStatusEnum? status,[FromQuery] PaginatedListRequest request)
         {
             var result = await _transactionService.GetAllAsync(status, request);
-            return Ok(result);
+            return Ok(BaseResponse.OkResponseDto(result));
         }
     }
 }

@@ -154,6 +154,8 @@ public class TransactionService : ITransactionService
 
     public async Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request)
     {
+        var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        var userRole = JwtClaimUltils.GetUserRole(_httpContextAccessor);
         _logger.Information("Fetching transactions. PaymentStatus: {status}", status);
 
         Expression<Func<Transaction, bool>> predicate = t => t.DeletedAt == null;
@@ -161,6 +163,11 @@ public class TransactionService : ITransactionService
         if (status.HasValue)
         {
             predicate = predicate.And(t => t.PaymentStatus == status.Value);
+        }
+
+        if (!string.IsNullOrEmpty(customerId) && userRole.Contains(UserRoleEnum.Customer.ToString()))
+        {
+            predicate = predicate.And(t => t.PaidById == customerId);
         }
 
         var paginatedTransactions = await _transaction.GetAllPaginatedQueryable(
