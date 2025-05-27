@@ -55,7 +55,7 @@
         public const string NAME_REQUIRED = "Name cannot be empty.";
         public const string USERCODE_REQUIRED = "User code cannot be empty.";
         public const string PASSWORD_REQUIRED = "Password cannot be empty.";
-        public const string PASSSWORD_LENGTH = "Password must be at least 5 characters.";
+        public const string PASSSWORD_LENGTH = "Password must be at least 8 characters.";
         public const string CONFIRM_PASSWORD_REQUIRED = "Confirm password cannot be empty.";
         public const string EMAIL_REQUIRED = "Email cannot be empty.";
         public const string PHONENUMBER_REQUIRED = "Phone number cannot be empty.";
@@ -136,6 +136,7 @@
         public const string DESTINATION_STATION_ID_REQUIRED = "Destination station ID is required.";
         public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
         public const string PATH_NOT_FOUND = "Path not found between two stations.";
+        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) or Departure station ID are required.";
     }
 
     public class ResponseMessageItinerary
