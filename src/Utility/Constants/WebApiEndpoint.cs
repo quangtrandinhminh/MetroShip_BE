@@ -33,6 +33,16 @@
             public const string DeleteCategory = BaseEndpoint + "/{id}";
         }
 
+        public static class ParcelEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/parcels";
+            public const string GetParcels = BaseEndpoint;
+            public const string GetParcelById = BaseEndpoint + "/{id}";
+            public const string CreateParcel = BaseEndpoint;
+            public const string UpdateParcel = BaseEndpoint + "/{id}";
+            public const string DeleteParcel = BaseEndpoint + "/{id}";
+        }
+
         public static class ShipmentEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/shipments";
