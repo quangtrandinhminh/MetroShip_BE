@@ -35,6 +35,11 @@ public interface IMapperlyMapper
 
     // station
     StationResponse MapToStationResponse(Station entity);
+    PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
+    StationListResponse MapToStationListResponse(Station entity);
+    StationDetailResponse MapToStationDetailResponse(Station entity);
+    Station MapToStationEntity(CreateStationRequest request);
+    void MapToExistingStation(UpdateStationRequest request, Station entity);
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
