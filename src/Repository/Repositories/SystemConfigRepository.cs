@@ -1,6 +1,9 @@
 ﻿using MetroShip.Repository.Base;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Utility.Constants;
+using MetroShip.Utility.Exceptions;
+using Microsoft.AspNetCore.Http;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
 namespace MetroShip.Repository.Repositories;
@@ -18,7 +21,10 @@ public class SystemConfigRepository : BaseRepository<SystemConfig>, ISystemConfi
         var configValue = _context.SystemConfigs.FirstOrDefault(x => x.ConfigKey == key).ConfigValue;
         if (string.IsNullOrEmpty(configValue))
         {
-            throw new ArgumentNullException(nameof(configValue), $"System config with key {key} not found.");
+            throw new AppException(
+                ErrorCode.SystemConfigNotFound, 
+                $"System config with key {key} not found.",
+                StatusCodes.Status500InternalServerError);
         }
         return configValue;
     }
