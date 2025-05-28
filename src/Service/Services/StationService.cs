@@ -22,7 +22,6 @@ namespace MetroShip.Service.Services
     public class StationService(IServiceProvider serviceProvider) : IStationService
     {
         private readonly IBaseRepository<Station> _stationRepository = serviceProvider.GetRequiredService<IBaseRepository<Station>>();
-        private readonly ShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<ShipmentRepository>();
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
         private readonly ILogger<StationService> _logger = serviceProvider.GetRequiredService<ILogger<StationService>>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();

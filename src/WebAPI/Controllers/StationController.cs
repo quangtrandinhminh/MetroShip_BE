@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels.PaginatedList;
+﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAllStations([FromQuery] PaginatedListRequest request)
         {
             var stations = await _stationService.GetAllStationsAsync(request);
-            return Ok(stations);
+            return Ok(BaseResponse.OkResponseDto(stations));
         }
 
         [HttpGet("{id}")]

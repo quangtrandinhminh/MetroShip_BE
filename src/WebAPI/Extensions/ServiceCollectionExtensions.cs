@@ -149,6 +149,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IParcelService, ParcelService>();
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IStationService, StationService>();
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddScoped<IVnPayService, VnPayService>();
         services.AddScoped<IShipmentService, ShipmentService>();
