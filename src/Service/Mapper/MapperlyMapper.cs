@@ -2,6 +2,7 @@
 using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
+using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.MetroLine;
@@ -44,12 +45,19 @@ public partial class MapperlyMapper : IMapperlyMapper
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
-    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentRepository.ShipmentDto entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
-    protected partial ShippingInformation MapToShippingInformation(Shipment entity);
-    protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
+    // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
+    // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
+    public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentRepository.ShipmentDto entity);
+    public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
+        PaginatedList<ShipmentRepository.ShipmentDto> entity);
+
+
+
+
 
     // graph
 
@@ -68,6 +76,9 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
+    public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
+    public partial ParcelResponse MapToParcelResponse(Parcel entity);
+
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
@@ -176,25 +187,7 @@ public partial class MapperlyMapper : IMapperlyMapper
             TotalPages = entityList.TotalPages
         };
     }
-    public CreateParcelResponse MapToParcelResponse(Parcel entity)
-    {
-        return new CreateParcelResponse
-        {
-            Id = Guid.Parse(entity.Id),
-            VolumeCm3 = entity.VolumeCm3,
-            ChargeableWeightKg = entity.ChargeableWeightKg
-        };
-    }
-    public PaginatedListResponse<CreateParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList)
-    {
-        return new PaginatedListResponse<CreateParcelResponse>
-        {
-            Items = entityList.Items.Select(MapToParcelResponse).ToList(),
-            PageNumber = entityList.PageNumber,
-            TotalCount = entityList.TotalCount,
-            TotalPages = entityList.TotalPages
-        };
-    }
+
     public EnumResponse MapToEnumResponse(Enum enumValue)
     {
         return new EnumResponse

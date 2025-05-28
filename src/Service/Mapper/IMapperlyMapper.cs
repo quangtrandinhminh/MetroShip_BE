@@ -1,6 +1,7 @@
 ﻿using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
+using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
@@ -29,9 +30,10 @@ public interface IMapperlyMapper
     // shipment
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     ShipmentListResponse MapToShipmentListResponse(Shipment entity);
-    ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentRepository.ShipmentDto entity);
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
+    PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<ShipmentRepository.ShipmentDto> entity);
 
     // station
     StationResponse MapToStationResponse(Station entity);
@@ -51,8 +53,9 @@ public interface IMapperlyMapper
     PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
     // parcel
-    CreateParcelResponse MapToParcelResponse(Parcel entity);
-    PaginatedListResponse<CreateParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
+    PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
+    ParcelResponse MapToParcelResponse(Parcel entity);
+
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
 

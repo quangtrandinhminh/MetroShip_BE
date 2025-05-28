@@ -12,4 +12,5 @@ public sealed record RouteResponse
     public string FromStationId { get; set; }
     public string ToStationId { get; set; }
     public string LineId { get; set; }
+    public decimal BasePriceVndPerKm { get; set; }
 }

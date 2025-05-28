@@ -356,14 +356,21 @@ VALUES
     ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('09i1h3k7-0i78-0lg4-5h8g-3j1k7i8l9m0h','FREE_STORAGE_AFTER_DAY','30','Số ngày thanh lý hàng tồn kho',3,
-     NULL,NULL,NULL,NOW(),NOW(),NULL);
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('29e61663-34e5-457e-a6f8-121ee33ce4e4','NIGHT_DISCOUNT','0.2','Số phần trăm ưu đãi cho các kiện hàng giao ca đêm',3,
+    NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 /*INSERT INTO public."SystemConfigs"
 ("Id","ConfigKey","ConfigValue","Description","ConfigType",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt") VALUES
     ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
-    NULL,NULL,NULL,NOW(),NOW(),NULL);*/
-
+    NULL,NULL,NULL,NOW(),NOW(),NULL);
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt") VALUES
+    ('29e61663-34e5-457e-a6f8-121ee33ce4e4','NIGHT_DISCOUNT','0.2','Số phần trăm ưu đãi cho các kiện hàng giao đêm',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+*/
 -- ───────────────────────────────────────────────────────────────────────────────
 -- insert default user
 -- ───────────────────────────────────────────────────────────────────────────────

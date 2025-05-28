@@ -12,4 +12,5 @@ public interface IShipmentService
     Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentsHistory(PaginatedListRequest request, ShipmentStatusEnum? status);
     Task<string> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default);
     Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request);
+    Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request);
 }

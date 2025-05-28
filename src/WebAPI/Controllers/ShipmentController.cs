@@ -4,6 +4,7 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.VNPay;
+using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
@@ -15,6 +16,7 @@ namespace MetroShip.WebAPI.Controllers
 {
     [Authorize]
     [ApiController]
+    [Route("api/shipments")]
     public class ShipmentController(
         IShipmentService shipmentService,
         ITransactionService transactionService
@@ -76,6 +78,13 @@ namespace MetroShip.WebAPI.Controllers
         {
             await transactionService.ExecuteVnPayPayment(model);
             return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
+        }
+
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetTotalPrice)]
+        public async Task<IActionResult> GetTotalPrice([FromBody] TotalPriceCalcRequest request)
+        {
+            var result = await shipmentService.GetItineraryAndTotalPrice(request);
+            return Ok(BaseResponse.OkResponseDto(result));
         }
     }
 }

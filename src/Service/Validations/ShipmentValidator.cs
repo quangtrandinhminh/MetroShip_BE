@@ -15,24 +15,19 @@ public class ShipmentValidator
     private readonly IValidator<ShipmentRequest> _shipmentRequestValidator;
     private readonly IValidator<ShipmentItineraryRequest> _itineraryRequestValidator;
     private readonly IValidator<ParcelRequest> _parcelRequestValidator;
+    private readonly IValidator<TotalPriceCalcRequest> _totalPriceCalcRequestValidator;
 
     public ShipmentValidator()
     {
         _shipmentRequestValidator = new ShipmentRequestValidator();
         _itineraryRequestValidator = new ShipmentItineraryRequestValidator();
         _parcelRequestValidator = new ParcelRequestValidator();
+        _totalPriceCalcRequestValidator = new TotalPriceCalcRequestValidator();
     }
 
-    public void ValidateShipmentRequest(ShipmentRequest request, DateTimeOffset minBookDate, DateTimeOffset maxBookDate)
+    public void ValidateShipmentRequest(ShipmentRequest request)
     {
         _shipmentRequestValidator.ValidateApiModel(request);
-        if (request.ScheduledDateTime < minBookDate || request.ScheduledDateTime > maxBookDate)
-        {
-            throw new AppException(
-               ErrorCode.BadRequest,
-               $"The ScheduledDateTime must be between {minBookDate} and {maxBookDate}.",
-               StatusCodes.Status400BadRequest);
-        }
 
         foreach (var parcel in request.Parcels)
         {
@@ -42,6 +37,16 @@ public class ShipmentValidator
         foreach (var itinerary in request.ShipmentItineraries)
         {
             _itineraryRequestValidator.ValidateApiModel(itinerary);
+        }
+    }
+
+    public void ValidateTotalPriceCalcRequest(TotalPriceCalcRequest request)
+    {
+        _totalPriceCalcRequestValidator.ValidateApiModel(request);
+
+        foreach (var parcel in request.Parcels)
+        {
+            _parcelRequestValidator.ValidateApiModel(parcel);
         }
     }
 }
@@ -166,12 +171,27 @@ public class ParcelRequestValidator : AbstractValidator<ParcelRequest>
             .WithMessage(ResponseMessageParcel.WEIGHT_REQUIRED)
             .GreaterThan(0)
             .WithMessage(ResponseMessageParcel.WEIGHT_INVALID);
-
-        RuleFor(x => x.IsBulk)
-            .NotNull()
-            .WithMessage(ResponseMessageParcel.IS_BULK_REQUIRED)
-            .Must(x => x == true || x == false)
-            .WithMessage(ResponseMessageParcel.IS_BULK_INVALID);
     }
 }
 
+public class TotalPriceCalcRequestValidator : AbstractValidator<TotalPriceCalcRequest>
+{
+    public TotalPriceCalcRequestValidator()
+    {
+        RuleFor(x => x.DepartureStationId)
+            .NotEmpty()
+            .WithMessage(ResponseMessageShipment.DEPARTURE_STATION_ID_REQUIRED);
+
+        RuleFor(x => x.DestinationStationId)
+            .NotEmpty()
+            .WithMessage(ResponseMessageShipment.DESTINATION_STATION_ID_REQUIRED);
+
+        RuleFor(x => x.ScheduleShipmentDate)
+            .NotEmpty()
+            .WithMessage(ResponseMessageShipment.SHIPMENT_DATE_REQUIRED);
+
+        RuleFor(x => x.Parcels)
+            .NotEmpty()
+            .WithMessage(ResponseMessageParcel.PARCEL_REQUIRED);
+    }
+}

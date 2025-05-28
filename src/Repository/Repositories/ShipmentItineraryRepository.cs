@@ -40,6 +40,8 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
         var metroLines = await _context.MetroLines
             .AsNoTracking()
             .Where(l => lineIds.Contains(l.Id))
+            .Include(l => l.MetroBasePrices)
+            .ThenInclude(bp => bp.TimeSlot)
             .ToListAsync();
 
         return (routes, stations, metroLines);

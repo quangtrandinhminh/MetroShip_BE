@@ -114,5 +114,6 @@ namespace MetroShip.Utility.Config
         public string SURCHARGE_AFTER_DELIVERED_HOUR { get; set; }
         public string SURCHARGE_PER_DAY_VND { get; set; }
         public string FREE_STORAGE_DAY { get; set; }
+        public string NIGHT_DISCOUNT { get; set; }
     }
 }

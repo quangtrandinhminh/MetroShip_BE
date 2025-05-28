@@ -36,8 +36,11 @@ public class MetroGraph
         // Xây dựng adjacency list và routes mapping
         foreach (var route in routes)
         {
+            // Thêm ga vào stations map nếu chưa có
             if (!_adjacencyList.ContainsKey(route.FromStationId))
+            {
                 _adjacencyList[route.FromStationId] = new List<string>();
+            }
 
             _adjacencyList[route.FromStationId].Add(route.ToStationId);
             _routesMap[(route.FromStationId, route.ToStationId)] = route;
@@ -189,7 +192,78 @@ public class MetroGraph
 
         foreach (var route in response.Routes)
         {
+            var basePricePerKm = _linesMap[route.LineId].BasePriceVndPerKm;
             route.LegOrder = response.Routes.IndexOf(route) + 1;
+            route.BasePriceVndPerKm = basePricePerKm;
+        }
+
+        return response;
+    }
+
+    public BestPathGraphResponse CreateResponseFromPath(List<string> path, IMapperlyMapper _mapper, DateTimeOffset schduleDate)
+    {
+        if (path == null || path.Count < 2)
+            return null;
+
+        // Tạo cấu trúc dữ liệu mới
+        var newAdjacencyList = new Dictionary<string, List<string>>();
+        var newRoutesMap = new Dictionary<(string from, string to), Route>();
+        var newStationsMap = new Dictionary<string, Station>();
+        var newLinesMap = new Dictionary<string, MetroLine>();
+        var timeOnly = TimeOnly.FromTimeSpan(schduleDate.TimeOfDay);
+
+        // Thêm các ga trên đường đi vào map mới
+        foreach (var stationId in path)
+        {
+            if (_stationsMap.TryGetValue(stationId, out var station))
+            {
+                newStationsMap[stationId] = station;
+            }
+        }
+
+        // Thêm các tuyến đường trên đường đi
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            var fromId = path[i];
+            var toId = path[i + 1];
+
+            // Thêm vào adjacency list mới
+            if (!newAdjacencyList.ContainsKey(fromId))
+                newAdjacencyList[fromId] = new List<string>();
+
+            newAdjacencyList[fromId].Add(toId);
+
+            // Thêm route vào map mới
+            if (_routesMap.TryGetValue((fromId, toId), out var route))
+            {
+                newRoutesMap[(fromId, toId)] = route;
+
+                // Thêm line vào map mới nếu chưa có
+                if (!newLinesMap.ContainsKey(route.LineId) && _linesMap.TryGetValue(route.LineId, out var line))
+                {
+                    newLinesMap[route.LineId] = line;
+                }
+            }
+        }
+
+        var response = new BestPathGraphResponse
+        {
+            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteResponse(r)).ToList(),
+            Stations = newStationsMap.Values.Select(s => _mapper.MapToStationResponse(s)).ToList(),
+            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineResponse(l)).ToList()
+        };
+
+        foreach (var route in response.Routes)
+        {
+            var basePricePerKm = _linesMap[route.LineId].MetroBasePrices
+                .FirstOrDefault(
+                    x => x.TimeSlot.CloseTime <= timeOnly
+                         && x.TimeSlot.OpenTime >= timeOnly
+                         && x.IsActive
+                )!.BasePriceVndPerKm;
+
+            route.LegOrder = response.Routes.IndexOf(route) + 1;
+            route.BasePriceVndPerKm = basePricePerKm;
         }
 
         return response;

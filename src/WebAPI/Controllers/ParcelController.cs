@@ -1,6 +1,7 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
+    [Route("api/parcels")]
     public class ParcelController : ControllerBase
     {
         private readonly IParcelService _parcelService;
@@ -17,7 +19,7 @@ namespace MetroShip.WebAPI.Controllers
         {
             _parcelService = parcelService;
         }
-        /// <summary>
+        /*/// <summary>
         /// Tính toán thông tin kiện hàng
         /// </summary>
         [HttpPost("calculate-parcel")]
@@ -35,13 +37,20 @@ namespace MetroShip.WebAPI.Controllers
         {
             var cost = _parcelService.CalculateShippingCost(request, distanceKm, pricePerKm);
             return Ok(cost);
-        }
+        }*/
 
         [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcels)]
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
             return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        [HttpGet("qrcode/{parcelTrackingCode}")]
+        public async Task<IActionResult> GetParcelQRCode([FromRoute] string parcelTrackingCode)
+        {
+            var qrCode = TrackingCodeGenerator.GenerateQRCode(parcelTrackingCode);
+            return Ok(qrCode);
         }
     }
 }

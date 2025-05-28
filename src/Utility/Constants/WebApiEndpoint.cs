@@ -57,6 +57,7 @@
             public const string CustomerCancelShipment = BaseEndpoint + "customer/{shipmentId}";
             public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
+            public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
         }
 
         public static class Parcel
