@@ -9,4 +9,6 @@ public interface IStationRepository : IBaseRepository<Station>
         double userLongitude,
         int maxDistanceInMeters = 1000,
         int maxCount = 10);
+        
+    IEnumerable<Station> GetStationsByRegion(string? regionId);
 }

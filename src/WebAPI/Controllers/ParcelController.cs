@@ -39,7 +39,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(cost);
         }*/
 
-        [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcels)]
+        [HttpGet(WebApiEndpoint.Parcel.GetParcels)]
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);

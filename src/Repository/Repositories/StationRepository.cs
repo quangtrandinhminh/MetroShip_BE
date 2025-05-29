@@ -28,4 +28,11 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
             .Take(maxCount)
             .ToListAsync();
     }
+    
+    public IEnumerable<Station> GetStationsByRegion(string regionId)
+    {
+        return _context.Stations
+                       .Where(station => station.RegionId == regionId && station.IsActive)
+                       .ToList();
+    }
 }

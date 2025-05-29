@@ -66,6 +66,16 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
 
+    public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
+
+    public partial StationListResponse MapToStationListResponse(Station entity);
+
+    public partial StationDetailResponse MapToStationDetailResponse(Station entity);
+
+    public partial Station MapToStationEntity(CreateStationRequest request);
+
+    public partial void MapToExistingStation(UpdateStationRequest request, Station entity);
+
     // route
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     public partial RouteResponse MapToRouteResponse(Route entity);

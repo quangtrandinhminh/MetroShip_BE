@@ -94,5 +94,15 @@
             public const string UnregisterDevice = $"{BaseEndpoint}/unregister";
             public const string GetUserDevices = BaseEndpoint;
         }
+
+        public static class Station 
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/stations";
+            public const string GetStations = BaseEndpoint;
+            public const string GetStationById = BaseEndpoint + "/{id}";
+            public const string CreateStation = BaseEndpoint;
+            public const string UpdateStation = BaseEndpoint;
+            public const string DeleteStation = BaseEndpoint + "/{id}";
+        }
     }
 }
