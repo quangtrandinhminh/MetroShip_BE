@@ -15,20 +15,35 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         _context = context;
     }
 
-    public async Task<List<Station>> GetAllStationNearUser(double userLatitude,
+    public async Task<List<Station>> GetAllStationNearUser(
+        double userLatitude,
         double userLongitude,
         int maxDistanceInMeters = 1000,
         int maxCount = 10)
     {
+        var earthRadius = 6371000.0; // meters
+
         return await _context.Stations
             .Where(s => s.Latitude != null && s.Longitude != null)
-            .Where(s => CalculateHelper.CalculateDistanceBetweenTwoCoordinatesByHaversine(
-                               userLatitude, userLongitude,
-                                              s.Latitude.Value, s.Longitude.Value) <= maxDistanceInMeters)
+            .Select(s => new
+            {
+                Station = s,
+                Distance = earthRadius * 2 * Math.Asin(
+                    Math.Sqrt(
+                        Math.Pow(Math.Sin((Math.PI / 180) * (s.Latitude.Value - userLatitude) / 2), 2) +
+                        Math.Cos((Math.PI / 180) * userLatitude) *
+                        Math.Cos((Math.PI / 180) * s.Latitude.Value) *
+                        Math.Pow(Math.Sin((Math.PI / 180) * (s.Longitude.Value - userLongitude) / 2), 2)
+                    )
+                )
+            })
+            .Where(x => x.Distance <= maxDistanceInMeters)
+            .OrderBy(x => x.Distance)
             .Take(maxCount)
+            .Select(x => x.Station)
             .ToListAsync();
     }
-    
+
     public IEnumerable<Station> GetStationsByRegion(string regionId)
     {
         return _context.Stations
