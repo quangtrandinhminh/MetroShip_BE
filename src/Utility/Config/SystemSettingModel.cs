@@ -103,6 +103,14 @@ namespace MetroShip.Utility.Config
         public string AdminHashPassword { get; set; }
     }
 
+    public class Neo4jSetting
+    {
+        public static Neo4jSetting Instance { get; set; }
+        public string Uri { get; set; }
+        public string Username { get; set; }
+        public string Password { get; set; }
+    }
+
     public class SystemConfigSetting
     {
         public static SystemConfigSetting Instance { get; set; }

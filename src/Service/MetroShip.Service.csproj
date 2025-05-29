@@ -11,6 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Metroship.Repository.Neo4j\MetroShip.Repository.Neo4j.csproj" />
       <ProjectReference Include="..\Repository\MetroShip.Repository.csproj" />
     </ItemGroup>
 

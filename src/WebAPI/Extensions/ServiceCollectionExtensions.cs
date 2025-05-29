@@ -12,6 +12,8 @@ using MetroShip.Service.Services;
 using MetroShip.Utility.Config;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
+using Neo4j.Driver;
+using Neo4jClient;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -105,9 +107,18 @@ public static class ServiceCollectionExtensions
             options.AuthToken = GetEnvironmentVariableOrThrow("TWILIO_AUTH_TOKEN");
             options.PhoneNumber = GetEnvironmentVariableOrThrow("TWILIO_PHONE_NUMBER");
         });
+        TwilioSetting.Instance = services.BuildServiceProvider().GetService<IOptions<TwilioSetting>>().Value;
+
+        services.Configure<Neo4jSetting>(options =>
+        {
+            options.Uri = GetEnvironmentVariableOrThrow("NEO4J_URI");
+            options.Username = GetEnvironmentVariableOrThrow("NEO4J_USERNAME");
+            options.Password = GetEnvironmentVariableOrThrow("NEO4J_PASSWORD");
+        });
+        Neo4jSetting.Instance = services.BuildServiceProvider().GetService<IOptions<Neo4jSetting>>().Value;
     }
 
-    private static void RegisterInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
+    private static async void RegisterInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
         // Add Cors
         const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -123,6 +134,16 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")
                               ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION")));
+
+        // Add Neo4j Driver
+        services.AddSingleton(GraphDatabase.Driver(
+            Neo4jSetting.Instance.Uri,
+            AuthTokens.Basic(
+                Neo4jSetting.Instance.Username,
+                Neo4jSetting.Instance.Password)
+                ));  // Neo4j credentials
+
+
 
         // Add Identity
         services.AddIdentityCore<UserEntity>()
