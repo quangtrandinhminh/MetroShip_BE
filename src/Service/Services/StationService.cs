@@ -16,29 +16,41 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace MetroShip.Service.Services
 {
-    public class StationService(IServiceProvider serviceProvider) : IStationService
+    public class StationService : IStationService
+{
+    private readonly IStationRepository _stationRepository;
+    private readonly IMapperlyMapper _mapper;
+    private readonly ILogger<StationService> _logger;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly ISystemConfigRepository _systemConfigRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public StationService(
+        IStationRepository stationRepository,
+        IMapperlyMapper mapper,
+        ILogger<StationService> logger,
+        IUnitOfWork unitOfWork,
+        ISystemConfigRepository systemConfigRepository,
+        IHttpContextAccessor httpContextAccessor)
     {
-        private readonly IBaseRepository<Station> _stationRepository = serviceProvider.GetRequiredService<IBaseRepository<Station>>();
-        private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-        private readonly ILogger<StationService> _logger = serviceProvider.GetRequiredService<ILogger<StationService>>();
-        private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-        private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
-        private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-
-        public async Task<PaginatedListResponse<StationListResponse>> GetAllStationsAsync(PaginatedListRequest request)
+        _stationRepository = stationRepository;
+        _mapper = mapper;
+        _logger = logger;
+        _unitOfWork = unitOfWork;
+        _systemConfigRepository = systemConfigRepository;
+        _httpContextAccessor = httpContextAccessor;
+    }
+        public async Task<IEnumerable<StationListResponse>> GetAllStationsAsync(string? regionId)
         {
-            _logger.LogInformation("Fetching all stations with request: {@Request}", request);
+            var stations = string.IsNullOrWhiteSpace(regionId)
+                ? _stationRepository.GetAll().Where(s => s.IsActive).ToList()
+                : _stationRepository.GetStationsByRegion(regionId);
 
-            var stations = await _stationRepository.GetAllPaginatedQueryable(
-                request.PageNumber,
-                request.PageSize,
-                x => x.DeletedAt == null);
-
-            var stationList = _mapper.MapToStationListResponsePaginatedList(stations);
-            return stationList;
+            return stations.Select(_mapper.MapToStationListResponse).ToList();
         }
 
         public async Task<StationDetailResponse> GetStationByIdAsync(Guid id)

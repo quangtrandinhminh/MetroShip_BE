@@ -20,9 +20,9 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllStations([FromQuery] PaginatedListRequest request)
+        public async Task<IActionResult> GetAllStationsAsync([FromQuery] string? regionId)
         {
-            var stations = await _stationService.GetAllStationsAsync(request);
+            var stations = await _stationService.GetAllStationsAsync(regionId);
             return Ok(BaseResponse.OkResponseDto(stations));
         }
 
