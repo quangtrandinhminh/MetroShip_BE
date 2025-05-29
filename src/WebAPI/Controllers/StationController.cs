@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/stations")]
     [ApiController]
     public class StationController : ControllerBase
     {
