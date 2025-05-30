@@ -148,14 +148,12 @@ public class ShipmentService : IShipmentService
                                shipment.TrackingCode, index);
             //parcel.QrCode = TrackingCodeGenerator.GenerateQRCode(parcel.ParcelCode);
 
-            parcel.ParcelTrackings = new List<ParcelTracking>
+            parcel.ParcelTrackings.Add(new ParcelTracking
             {
-                new ParcelTracking
-                {
-                    ParcelId = parcel.Id,
-                    Status = ParcelStatusEnum.AwaitingConfirmation.ToString(),  
-                }
-            };
+                ParcelId = parcel.Id,
+                Status = ParcelStatusEnum.AwaitingConfirmation.ToString(),
+            });
+
             index++;
         }
 
@@ -185,7 +183,7 @@ public class ShipmentService : IShipmentService
         await InitializeAsync();
 
         // Sử dụng đồ thị để tìm đường đi
-        var path = _metroGraph.FindShortestPath(request.DepartureStationId, request.DestinationStationId);
+        var path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
 
         if (path == null || !path.Any())
             throw new AppException(
@@ -230,7 +228,15 @@ public class ShipmentService : IShipmentService
         {
             foreach (var departureStation in departureStations)
             {
-                path = _metroGraph.FindShortestPath(departureStation.Id, request.DestinationStationId);
+                if (_stationRepository.AreStationsInSameMetroLine(departureStation.Id, request.DestinationStationId))
+                {
+                    path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
+                }
+                else
+                {
+                    path = _metroGraph.FindShortestPathByDijkstra(departureStation.Id, request.DestinationStationId);
+                }
+
                 if (path == null || !path.Any())
                     continue;
 
@@ -239,7 +245,14 @@ public class ShipmentService : IShipmentService
         }
         else
         {
-            path = _metroGraph.FindShortestPath(request.DepartureStationId, request.DestinationStationId);
+            if (_stationRepository.AreStationsInSameMetroLine(request.DepartureStationId, request.DestinationStationId))
+            {
+                path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
+            }
+            else
+            {
+                path = _metroGraph.FindShortestPathByDijkstra(request.DepartureStationId, request.DestinationStationId);
+            }
             response.BestPathGraphResponses.Add(_metroGraph.CreateResponseFromPath(path, _mapperlyMapper));
         }
 

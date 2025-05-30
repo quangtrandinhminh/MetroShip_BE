@@ -19,7 +19,7 @@ public class RouteRepository : BaseRepository<Route>, IRouteRepository
         _context = context;
     }
 
-    public class RoutesForGraph : Route
+    /*public class RoutesForGraph : Route
     {
         public decimal MetroBasePriceVndPerKm { get; set; }
     }
@@ -57,5 +57,5 @@ public class RouteRepository : BaseRepository<Route>, IRouteRepository
         }
 
         return result;
-    }
+    }*/
 }

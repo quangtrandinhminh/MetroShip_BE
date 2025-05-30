@@ -11,4 +11,5 @@ public interface IStationRepository : IBaseRepository<Station>
         int maxCount = 10);
         
     IEnumerable<Station> GetStationsByRegion(string? regionId);
+    bool AreStationsInSameMetroLine(string departureStationId, string destinationStationId);
 }

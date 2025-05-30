@@ -50,4 +50,18 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
                        .Where(station => station.RegionId == regionId && station.IsActive)
                        .ToList();
     }
+
+    // Checks if two stations are on the same metro line
+    public bool AreStationsInSameMetroLine(string departureStationId, string destinationStationId)
+    {
+        return _context.Routes
+            .Where(r => r.FromStationId == departureStationId || r.ToStationId == departureStationId)
+            .Select(r => r.LineId)
+            .Intersect(
+                _context.Routes
+                    .Where(r => r.FromStationId == destinationStationId || r.ToStationId == destinationStationId)
+                    .Select(r => r.LineId)
+            )
+            .Any();
+    }
 }

@@ -80,6 +80,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
         }
 
+        [AllowAnonymous]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetTotalPrice)]
         public async Task<IActionResult> GetTotalPrice([FromBody] TotalPriceCalcRequest request)
         {

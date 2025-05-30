@@ -97,7 +97,7 @@ public partial class Shipment : BaseEntity
 
     [Required]
     [StringLength(20)]
-    public string RecipientNationalId { get; set; }
+    public string? RecipientNationalId { get; set; }
 
     [ForeignKey(nameof(SenderId))]
     [InverseProperty(nameof(UserEntity.Shipments))]

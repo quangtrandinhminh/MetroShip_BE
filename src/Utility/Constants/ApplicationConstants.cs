@@ -122,11 +122,12 @@
         public const string RECIPIENT_NAME_REQUIRED = "Recipient name is required.";
         public const string RECIPIENT_PHONE_REQUIRED = "Recipient phone number is required.";
         public const string RECIPIENT_NATIONAL_ID_REQUIRED = "Recipient national ID is required.";
+        public const string RECIPIENT_NATIONAL_ID_INAVLID = "Recipient national ID must be 9 to 12 digits.";
         public const string TOTAL_COST_VND_REQUIRED = "Total cost in VND is required.";
-        public const string TOTAL_COST_VND_INVALID = "Total cost in VND is invalid.";
+        public const string TOTAL_COST_VND_INVALID = "Total cost must be greater than or equal to 0.";
         public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND is invalid.";
         public const string SHIPPING_FEE_VND_REQUIRED = "Shipping fee in VND is required.";
-        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND is invalid.";
+        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND must be greater than or equal to 0.";
         public const string SHIPMENT_STATUS_INVALID = "Shipment status is invalid.";
         public const string SHIPMENT_STATUS_NOT_FOUND = "Shipment status not found.";
         public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
@@ -146,6 +147,8 @@
         public const string LEG_ORDER_REQUIRED = "Leg order is required.";
         public const string LEG_ORDER_INVALID = "Leg order must be large than 0";
         public const string EST_MINUTES_INVALID = "Estimated minutes must be large than 0";
+        public const string BASE_PRICE_VND_PER_KM_REQUIRED = "Base price per kilometer in VND is required.";
+        public const string BASE_PRICE_VND_PER_KM_INVALID = "Base price per kilometer in VND must be greater than or equal to 0.";
     }
 
     public class ResponseMessageParcel

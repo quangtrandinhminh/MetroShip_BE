@@ -84,25 +84,25 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
             .WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID);
 
         RuleFor(x => x.RecipientNationalId)
-            .NotEmpty()
-            .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_REQUIRED)
+            // .NotEmpty()
+            // .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_REQUIRED)
             .Matches(@"^\d{9,12}$")
-            .WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID);
+            .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_INAVLID);
 
         RuleFor(x => x.TotalCostVnd)
             .NotEmpty()
             .WithMessage(ResponseMessageShipment.TOTAL_COST_VND_REQUIRED)
-            .GreaterThan(0)
+            .GreaterThanOrEqualTo(0)
             .WithMessage(ResponseMessageShipment.TOTAL_COST_VND_INVALID);
 
         RuleFor(x => x.InsuranceFeeVnd)
-            .GreaterThan(0).WithMessage(ResponseMessageShipment.TOTAL_COST_VND_INVALID)
+            .GreaterThanOrEqualTo(0).WithMessage(ResponseMessageShipment.INSURANCE_FEE_VND_INVALID)
             .When(x => x.InsuranceFeeVnd.HasValue);
 
         RuleFor(x => x.ShippingFeeVnd)
             .NotEmpty()
             .WithMessage(ResponseMessageShipment.SHIPPING_FEE_VND_REQUIRED)
-            .GreaterThan(0)
+            .GreaterThanOrEqualTo(0)
             .WithMessage(ResponseMessageShipment.SHIPPING_FEE_VND_INVALID);
 
         RuleFor(x => x.Parcels)
@@ -126,6 +126,7 @@ public class ShipmentItineraryRequestValidator : AbstractValidator<ShipmentItine
     {
         RuleFor(x => x.RouteId)
             .NotNull()
+            .Must(x => Guid.TryParse(x, out _))
             .WithMessage(ResponseMessageItinerary.ROUTE_ID_REQUIRED);
 
         RuleFor(x => x.LegOrder)
@@ -133,6 +134,12 @@ public class ShipmentItineraryRequestValidator : AbstractValidator<ShipmentItine
             .WithMessage(ResponseMessageItinerary.LEG_ORDER_REQUIRED)
 
             .WithMessage(ResponseMessageItinerary.LEG_ORDER_INVALID);
+
+        RuleFor(x => x.BasePriceVndPerKm)
+            .NotNull()
+            .WithMessage(ResponseMessageItinerary.BASE_PRICE_VND_PER_KM_REQUIRED)
+            .GreaterThanOrEqualTo(0)
+            .WithMessage(ResponseMessageItinerary.BASE_PRICE_VND_PER_KM_INVALID);
 
         /*RuleFor(x => x.EstMinutes)
             .GreaterThan(0)

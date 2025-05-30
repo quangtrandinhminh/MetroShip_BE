@@ -15,11 +15,30 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
         _context = context;
     }
 
-    public async Task<(List<Route> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync()
+    public class RoutesForGraph : Route
     {
+        public decimal BasePriceVndPerKm { get; set; }
+    }
+
+    public async Task<(List<RoutesForGraph> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync()
+    {
+        Console.WriteLine("Fetching routes, stations, and metro lines...");
         // Lấy tất cả routes, stations và metroLines một lần
         var routes = await _context.Routes
             .AsNoTracking()
+            .Include(r => r.MetroLine)
+            .Select(x => new RoutesForGraph
+            {
+                Id = x.Id,
+                FromStationId = x.FromStationId,
+                ToStationId = x.ToStationId,
+                RouteNameVi = x.RouteNameVi,
+                LineId = x.LineId,
+                SeqOrder = x.SeqOrder,
+                TravelTimeMin = x.TravelTimeMin,
+                LengthKm = x.LengthKm,
+                BasePriceVndPerKm = x.MetroLine.BasePriceVndPerKm,
+            })
             .ToListAsync();
 
         var stationIds = routes

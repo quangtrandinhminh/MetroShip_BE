@@ -55,13 +55,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentRepository.ShipmentDto> entity);
 
-
-
-
-
-    // graph
-
-
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
@@ -78,7 +71,12 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // route
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
+    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
     public partial RouteResponse MapToRouteResponse(Route entity);
+
+    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
+    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
+    public partial RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
 
     // metroline
     [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]

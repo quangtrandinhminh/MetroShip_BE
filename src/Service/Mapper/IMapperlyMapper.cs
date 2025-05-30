@@ -45,6 +45,7 @@ public interface IMapperlyMapper
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
+    RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
 
     IList<string?> MapRoleToRoleName(IEnumerable<UserRoleEntity> entity);
 
