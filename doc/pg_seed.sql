@@ -432,3 +432,14 @@ VALUES
     ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity');
 
 
+SELECT t."Id", t."Barcode", t."CreatedAt", t."CreatedBy", t."DeletedAt", t."DeletedBy", t."Description", t."HeightCm", t."IsBulk", t."LastUpdatedAt", t."LastUpdatedBy", t."LengthCm", t."ParcelCategoryId", t."ParcelCode", t."ParcelStatus", t."PriceVnd", t."QrCode", t."ShipmentId", t."WeightKg", t."WidthCm", t."Id0", s."Id", s."CreatedAt", s."CreatedBy", s."DeletedAt", s."DeletedBy", s."EventTime", s."LastUpdatedAt", s."LastUpdatedBy", s."ParcelId", s."StationId", s."Status"
+FROM (
+         SELECT p."Id", p."Barcode", p."CreatedAt", p."CreatedBy", p."DeletedAt", p."DeletedBy", p."Description", p."HeightCm", p."IsBulk", p."LastUpdatedAt", p."LastUpdatedBy", p."LengthCm", p."ParcelCategoryId", p."ParcelCode", p."ParcelStatus", p."PriceVnd", p."QrCode", p."ShipmentId", p."WeightKg", p."WidthCm", p0."Id" AS "Id0"
+         FROM "Parcels" AS p
+                  INNER JOIN "ParcelCategories" AS p0 ON p."ParcelCategoryId" = p0."Id"
+         WHERE p."DeletedAt" IS NULL
+         ORDER BY p0."Id" DESC
+         LIMIT 10 OFFSET 1
+     ) AS t
+         LEFT JOIN "ShipmentTrackings" AS s ON t."Id" = s."ParcelId"
+ORDER BY t."Id0" DESC, t."Id"

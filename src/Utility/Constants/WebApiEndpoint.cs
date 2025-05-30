@@ -15,12 +15,13 @@
 
         public static class User
         {
-            private const string BaseEndpoint = "/" + AreaName + "/user";
+            private const string BaseEndpoint = "/" + AreaName + "/users";
             public const string GetUsers = BaseEndpoint;
             public const string GetUser = BaseEndpoint + "/{id}";
             public const string CreateUser = BaseEndpoint;
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
+            public const string GetUserRoles = BaseEndpoint + "/roles";
         }
 
         public static class ParcelCategory

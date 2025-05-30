@@ -34,6 +34,8 @@
 
     public class ResponseMessageIdentity
     {
+        public const string USER_ID_REQUIRED = "User ID is required.";
+        public const string USER_ID_INVALID = "User ID is invalid.";
         public const string INVALID_USER = "User does not exist.";
         public const string UNAUTHENTICATED = "Unauthenticated.";
         public const string PASSWORD_NOT_MATCH = "Passwords do not match.";
@@ -48,16 +50,19 @@
         public const string EMAIL_VALIDATED = "Email has been validated.";
         public const string PHONE_VALIDATED = "Phone number has been validated.";
         public const string ROLE_INVALID = "Roles are invalid.";
+        public const string BIRTHDATE_INVALID = "Birth date is invalid, must be in the past.";
         public const string CLAIM_NOTFOUND = "Claim not found.";
         public const string EXISTED_ROLE = "Role already exists.";
 
         public const string USERNAME_REQUIRED = "Username cannot be empty.";
         public const string NAME_REQUIRED = "Name cannot be empty.";
+        public const string NAME_INVALID = "Name cannot contain numbers.";
         public const string USERCODE_REQUIRED = "User code cannot be empty.";
         public const string PASSWORD_REQUIRED = "Password cannot be empty.";
         public const string PASSSWORD_LENGTH = "Password must be at least 8 characters.";
         public const string CONFIRM_PASSWORD_REQUIRED = "Confirm password cannot be empty.";
         public const string EMAIL_REQUIRED = "Email cannot be empty.";
+        public const string EMAIL_INVALID = "Email is invalid.";
         public const string PHONENUMBER_REQUIRED = "Phone number cannot be empty.";
         public const string PHONENUMBER_INVALID = "Phone number is invalid.";
         public const string PHONENUMBER_LENGTH_INVALID = "Phone number must be exactly 10 digits.";
@@ -86,8 +91,8 @@
     public class ResponseMessageConstantsUser
     {
         public const string USER_NOT_FOUND = "User not found.";
-        public const string USER_EXISTED = "User already exists.";
-        public const string ADD_USER_SUCCESS = "User added successfully.";
+        public const string USER_EXISTED = "User already exists";
+        public const string CREATE_USER_SUCCESS = "User added successfully.";
         public const string UPDATE_USER_SUCCESS = "User updated successfully.";
         public const string DELETE_USER_SUCCESS = "User deleted successfully.";
         public const string ADMIN_NOT_FOUND = "Administrator not found.";
@@ -133,8 +138,10 @@
         public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
         public const string SHIPMENT_DATE_REQUIRED = "ScheduledDateTime is required.";
         public const string DEPARTURE_STATION_ID_REQUIRED = "Departure station ID is required.";
+        public const string DEPARTURE_STATION_ID_INVALID = "Departure station ID is invalid.";
         public const string DEPARTURE_STATION_NOT_FOUND = "Departure station not found.";
         public const string DESTINATION_STATION_ID_REQUIRED = "Destination station ID is required.";
+        public const string DESTINATION_STATION_ID_INVALID = "Destination station ID is invalid.";
         public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
         public const string PATH_NOT_FOUND = "Path not found between two stations.";
         public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) or Departure station ID are required.";

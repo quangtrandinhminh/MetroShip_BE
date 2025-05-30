@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Linq.Expressions;
 using MetroShip.Repository.Interfaces;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Http;
@@ -19,6 +20,7 @@ using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Service.ApiModels.Graph;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace MetroShip.Service.Services;
 
@@ -34,6 +36,8 @@ public class ShipmentService : IShipmentService
     private readonly ShipmentValidator _shipmentValidator;
     private readonly ISystemConfigRepository _systemConfigRepository;
     private readonly SystemConfigSetting _systemConfigSetting;
+    private readonly IEmailService _emailSender;
+    private readonly IUserRepository _userRepository;
     private bool _isInitialized = false;
     private MetroGraph _metroGraph;
 
@@ -46,6 +50,8 @@ public class ShipmentService : IShipmentService
         ISystemConfigRepository systemConfigRepository,
         ILogger logger,
         IHttpContextAccessor httpContextAccessor,
+        IEmailService emailSender,
+        IUserRepository userRepository,
         IMapperlyMapper mapperlyMapper)
     {
         _unitOfWork = unitOfWork;
@@ -57,6 +63,8 @@ public class ShipmentService : IShipmentService
         _shipmentValidator = new ShipmentValidator();
         _stationRepository = stationRepository;
         _systemConfigRepository = systemConfigRepository;
+        _emailSender = emailSender;
+        _userRepository = userRepository;
     }
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(PaginatedListRequest request)
@@ -159,9 +167,35 @@ public class ShipmentService : IShipmentService
 
         shipment.SenderId = customerId;
 
-        await _shipmentRepository.AddAsync(shipment, cancellationToken);
+        shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
+        // send email to customer
+        /*_logger.Information("Send email to customer with tracking code: {@trackingCode}", shipment.TrackingCode);
+        var user = await _userRepository.GetUserByIdAsync(customerId);
+        var sendMailModel = new SendMailModel
+        {
+            Email = user.Email,
+            Type = MailTypeEnum.Shipment,
+            Name = request.SenderName,
+            Data = shipment,
+        };
+        _emailSender.SendMail(sendMailModel);
+
+        // send email to recipient if provided
+        if (request.RecipientEmail is not null && request.RecipientEmail != user.Email)
+        {
+            // send email to recipient
+            _logger.Information("Send email to recipient with tracking code: {@trackingCode}", shipment.TrackingCode);
+            var recipientSendMailModel = new SendMailModel
+            {
+                Email = request.RecipientEmail,
+                Type = MailTypeEnum.Shipment,
+                Name = request.RecipientName,
+                Data = shipment,
+            };
+            _emailSender.SendMail(recipientSendMailModel);
+        }*/
         return shipment.TrackingCode;
     }
 

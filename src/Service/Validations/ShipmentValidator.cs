@@ -187,11 +187,13 @@ public class TotalPriceCalcRequestValidator : AbstractValidator<TotalPriceCalcRe
     {
         RuleFor(x => x.DepartureStationId)
             .NotEmpty()
-            .WithMessage(ResponseMessageShipment.DEPARTURE_STATION_ID_REQUIRED);
+            .WithMessage(ResponseMessageShipment.DEPARTURE_STATION_ID_REQUIRED)
+            .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageShipment.DEPARTURE_STATION_ID_INVALID);
 
         RuleFor(x => x.DestinationStationId)
             .NotEmpty()
-            .WithMessage(ResponseMessageShipment.DESTINATION_STATION_ID_REQUIRED);
+            .WithMessage(ResponseMessageShipment.DESTINATION_STATION_ID_REQUIRED)
+            .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageShipment.DESTINATION_STATION_ID_INVALID);
 
         RuleFor(x => x.ScheduleShipmentDate)
             .NotEmpty()
