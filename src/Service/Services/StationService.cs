@@ -57,7 +57,7 @@ namespace MetroShip.Service.Services
         {
             _logger.LogInformation("Fetching station by Id: {Id}", id);
 
-            var station = await _stationRepository.GetByIdAsync(id);
+            var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)
             {
                 return null; // or return a default StationDetailResponse, as appropriate
@@ -84,7 +84,7 @@ namespace MetroShip.Service.Services
         {
             _logger.LogInformation("Updating station with Id: {Id}, {@Request}", id, request);
 
-            var station = await _stationRepository.GetByIdAsync(id);
+            var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)
             {
                 return null; // or handle as appropriate
@@ -103,7 +103,7 @@ namespace MetroShip.Service.Services
         {
             _logger.LogInformation("Deleting station with Id: {Id}", id);
 
-            var station = await _stationRepository.GetByIdAsync(id);
+            var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)
             {
                 return; // or handle as appropriate
