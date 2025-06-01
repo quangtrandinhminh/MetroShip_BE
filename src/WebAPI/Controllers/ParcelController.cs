@@ -4,6 +4,8 @@ using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,6 +53,14 @@ namespace MetroShip.WebAPI.Controllers
         {
             var qrCode = TrackingCodeGenerator.GenerateQRCode(parcelTrackingCode);
             return Ok(qrCode);
+        }
+
+        [HttpPost("confirm/{parcelId}")]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> ConfirmParcelAsync([FromRoute] Guid parcelId, [FromQuery] bool isRejected)
+        {
+            await _parcelService.ConfirmParcelAsync(parcelId, isRejected);
+            return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully."));
         }
     }
 }
