@@ -15,12 +15,13 @@
 
         public static class User
         {
-            private const string BaseEndpoint = "/" + AreaName + "/user";
+            private const string BaseEndpoint = "/" + AreaName + "/users";
             public const string GetUsers = BaseEndpoint;
             public const string GetUser = BaseEndpoint + "/{id}";
             public const string CreateUser = BaseEndpoint;
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
+            public const string GetUserRoles = BaseEndpoint + "/roles";
         }
 
         public static class ParcelCategory
@@ -31,6 +32,16 @@
             public const string CreateCategory = BaseEndpoint;
             public const string UpdateCategory = BaseEndpoint;
             public const string DeleteCategory = BaseEndpoint + "/{id}";
+        }
+
+        public static class ParcelEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/parcels";
+            public const string GetParcels = BaseEndpoint;
+            public const string GetParcelById = BaseEndpoint + "/{id}";
+            public const string CreateParcel = BaseEndpoint;
+            public const string UpdateParcel = BaseEndpoint + "/{id}";
+            public const string DeleteParcel = BaseEndpoint + "/{id}";
         }
 
         public static class ShipmentEndpoint
@@ -47,6 +58,7 @@
             public const string CustomerCancelShipment = BaseEndpoint + "customer/{shipmentId}";
             public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
+            public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
         }
 
         public static class Parcel

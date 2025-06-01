@@ -84,7 +84,6 @@ namespace MetroShip.Repository.Repositories
         public async Task<IdentityResult> UpdateAsync(UserEntity user)
         {
             _context.Users.Update(user);
-            await _context.SaveChangesAsync();
             return IdentityResult.Success;
         }
 

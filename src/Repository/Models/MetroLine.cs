@@ -78,7 +78,7 @@ public partial class MetroLine : BaseEntity
     public decimal? CarriageVolumeM3 => CarriageLenghtMeter * CarriageWidthMeter * CarriageHeightMeter;
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal? BasePriceVndPerKm { get; set; }
+    public decimal BasePriceVndPerKm { get; set; }
 
     [StringLength(20)]
     public string ColorHex { get; set; }

@@ -356,14 +356,21 @@ VALUES
     ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('09i1h3k7-0i78-0lg4-5h8g-3j1k7i8l9m0h','FREE_STORAGE_AFTER_DAY','30','Số ngày thanh lý hàng tồn kho',3,
-     NULL,NULL,NULL,NOW(),NOW(),NULL);
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('29e61663-34e5-457e-a6f8-121ee33ce4e4','NIGHT_DISCOUNT','0.2','Số phần trăm ưu đãi cho các kiện hàng giao ca đêm',3,
+    NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 /*INSERT INTO public."SystemConfigs"
 ("Id","ConfigKey","ConfigValue","Description","ConfigType",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt") VALUES
     ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15','Số ngày tối đa khách có thể đặt trước cho kiện hàng',3,
-    NULL,NULL,NULL,NOW(),NOW(),NULL);*/
-
+    NULL,NULL,NULL,NOW(),NOW(),NULL);
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt") VALUES
+    ('29e61663-34e5-457e-a6f8-121ee33ce4e4','NIGHT_DISCOUNT','0.2','Số phần trăm ưu đãi cho các kiện hàng giao đêm',3,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+*/
 -- ───────────────────────────────────────────────────────────────────────────────
 -- insert default user
 -- ───────────────────────────────────────────────────────────────────────────────
@@ -425,3 +432,14 @@ VALUES
     ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity');
 
 
+SELECT t."Id", t."Barcode", t."CreatedAt", t."CreatedBy", t."DeletedAt", t."DeletedBy", t."Description", t."HeightCm", t."IsBulk", t."LastUpdatedAt", t."LastUpdatedBy", t."LengthCm", t."ParcelCategoryId", t."ParcelCode", t."ParcelStatus", t."PriceVnd", t."QrCode", t."ShipmentId", t."WeightKg", t."WidthCm", t."Id0", s."Id", s."CreatedAt", s."CreatedBy", s."DeletedAt", s."DeletedBy", s."EventTime", s."LastUpdatedAt", s."LastUpdatedBy", s."ParcelId", s."StationId", s."Status"
+FROM (
+         SELECT p."Id", p."Barcode", p."CreatedAt", p."CreatedBy", p."DeletedAt", p."DeletedBy", p."Description", p."HeightCm", p."IsBulk", p."LastUpdatedAt", p."LastUpdatedBy", p."LengthCm", p."ParcelCategoryId", p."ParcelCode", p."ParcelStatus", p."PriceVnd", p."QrCode", p."ShipmentId", p."WeightKg", p."WidthCm", p0."Id" AS "Id0"
+         FROM "Parcels" AS p
+                  INNER JOIN "ParcelCategories" AS p0 ON p."ParcelCategoryId" = p0."Id"
+         WHERE p."DeletedAt" IS NULL
+         ORDER BY p0."Id" DESC
+         LIMIT 10 OFFSET 1
+     ) AS t
+         LEFT JOIN "ShipmentTrackings" AS s ON t."Id" = s."ParcelId"
+ORDER BY t."Id0" DESC, t."Id"

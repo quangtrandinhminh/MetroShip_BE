@@ -1,5 +1,7 @@
 ﻿using MetroShip.Repository.Models;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using QRCoder;
+using BarcodeStandard;
 
 namespace MetroShip.Service.BusinessModels;
 
@@ -47,5 +49,21 @@ public static class TrackingCodeGenerator
         // 2) Build tracking code via interpolation
         return $"{shipmentCode}" + "-" +                      // e.g. "MS"
                $"{++seqInShipment:D2}";                       // zero-padded 2-digit sequence
+    }
+
+    // Gnerate QR code
+    public static string GenerateQRCode(string content)
+    {
+        // Create QR code generator instance
+        QRCodeGenerator qrGenerator = new ();
+
+        // Generate QR code data
+        QRCodeData qrCodeData = qrGenerator.CreateQrCode(content, QRCodeGenerator.ECCLevel.Q);
+
+        BitmapByteQRCode qRCode = new (qrCodeData);
+        string base64String = Convert.ToBase64String(qRCode.GetGraphic(10));
+
+        // Return the base64 string of the QR code image
+        return $"data:image/png;base64,{base64String}";
     }
 }

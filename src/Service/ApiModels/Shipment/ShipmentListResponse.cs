@@ -7,14 +7,12 @@ namespace MetroShip.Service.ApiModels.Shipment;
 public record ShipmentListResponse
 {
     public string TrackingCode { get; set; }
-
-    public string DepartureStationId { get; set; }
-
-    public string DestinationStationId { get; set; }
-
+    public string DepartureStationName { get; set; }
+    public string DestinationStationName { get; set; }
+    public string SenderName { get; set; }
+    public string SenderPhone { get; set; }
+    public string RecipientName { get; set; }
+    public string RecipientPhone { get; set; }
     public int ShipmentStatus { get; set; }
-
     public decimal TotalCostVnd { get; set; }
-
-    public decimal ShippingFeeVnd { get; set; }
 }

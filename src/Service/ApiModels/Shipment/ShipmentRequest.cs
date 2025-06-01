@@ -23,7 +23,7 @@ public sealed record ShipmentRequest
 
     public string? RecipientEmail { get; set; }
 
-    public string RecipientNationalId { get; set; }
+    public string? RecipientNationalId { get; set; }
 
     public DateTimeOffset ScheduledDateTime { get; set; }
 

@@ -10,6 +10,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Service.Utils;
 using MetroShip.Utility.Config;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ using Sprache;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,7 +29,6 @@ namespace MetroShip.Service.Services;
 public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 {
     private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
-    private readonly ShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<ShipmentRepository>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger<ParcelService> _logger = serviceProvider.GetRequiredService<ILogger<ParcelService>>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -37,8 +38,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
     public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
+        var isBulk = true;
         decimal volume = request.LengthCm * request.WidthCm * request.HeightCm;
-        decimal divisor = request.IsBulk ? 5000m : 6000m;
+        decimal divisor = isBulk ? 5000m : 6000m;
         decimal volumetricWeight = volume / divisor;
         decimal chargeableWeight = Math.Max(request.WeightKg, volumetricWeight);
 
@@ -78,40 +80,29 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         return Math.Round(cost, 0);
     }
     
-    public async Task<PaginatedListResponse<CreateParcelResponse>> GetAllParcels(PaginatedListRequest request)
+    public async Task<PaginatedListResponse<ParcelResponse>> GetAllParcels(PaginatedListRequest request)
     {
         // Lấy customerId từ JWT claims
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        var role = JwtClaimUltils.GetUserRole(_httpContextAccessor);
+        Expression<Func<Parcel, bool>> expression = x => x.DeletedAt == null;
+        if (!string.IsNullOrEmpty(customerId) && role.Contains(UserRoleEnum.Customer.ToString()))
+        {
+            expression = expression.And(x => x.Shipment.SenderId == customerId);
+        }
 
         // Ghi log yêu cầu
         _logger.LogInformation("Get all parcels with request: {@request} for customer {@customerId}", request, customerId);
 
         // Truy vấn các parcel liên quan đến customerId thông qua Shipment
-        var query = _parcelRepository.GetAll()
-    .Join(_shipmentRepository.GetAll(),
-          parcel => parcel.ShipmentId,
-          shipment => shipment.Id,
-          (parcel, shipment) => new { Parcel = parcel, Shipment = shipment })
-    .Where(joinResult => joinResult.Shipment.SenderId == customerId)
-    .Select(joinResult => joinResult.Parcel)
-    .OrderByDescending(p => p.CreatedAt); // Assuming 'CreatedAt' is the correct property
+        var parcels = await _parcelRepository.GetAllPaginatedQueryable(
+                request.PageNumber, request.PageSize,
+                expression,
+                x => x.ParcelCategory, x => x.ParcelTrackings
+        );
 
-        // Lấy tổng số lượng parcel
-        var totalCount = await query.CountAsync();
-
-        // Áp dụng phân trang
-        var parcels = await query
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .ToListAsync();
-
-        var paginatedParcels = new PaginatedList<Parcel>(parcels, totalCount, request.PageNumber, request.PageSize);
-
-        // Map the PaginatedList<Parcel> to PaginatedListResponse<CreateParcelResponse>
-        var parcelResponses = _mapper.MapToParcelPaginatedList(paginatedParcels);
-
-        // Trả về kết quả phân trang
-        return parcelResponses;
+        var parcelListResponse = _mapper.MapToParcelPaginatedList(parcels);
+        return parcelListResponse;
     }
 }
 
