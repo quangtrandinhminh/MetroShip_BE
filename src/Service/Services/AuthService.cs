@@ -104,29 +104,22 @@ namespace MetroShip.Service.Services
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
             }
 
             var existingUserWithEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingUserWithEmail != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
             }
 
             var existingUserWithPhone = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == request.PhoneNumber);
             if (existingUserWithPhone != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
-            }
-
-            if (!string.IsNullOrEmpty(request.PhoneNumber) && !Regex.IsMatch(request.PhoneNumber, @"^\d{10}$"))
-            {
-                throw new AppException(HttpResponseCodeConstants.INVALID_INPUT, ResponseMessageIdentity.PHONENUMBER_INVALID, StatusCodes.Status400BadRequest);
-            }
-
-            if (request.Password != request.ConfirmPassword)
-            {
-                throw new AppException(HttpResponseCodeConstants.INVALID_INPUT, ResponseMessageIdentity.PASSWORD_NOT_MATCH, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
             }
 
             try
@@ -137,17 +130,20 @@ namespace MetroShip.Service.Services
                 account.OTP = GenerateOTP();
                 await _userRepository.CreateUserAsync(account, cancellationToken);
 
-                await _userRepository.SaveChangeAsync();
+                var count = await _userRepository.SaveChangeAsync();
                 await _userManager.AddToRoleAsync(account, UserRoleEnum.Customer.ToString());
 
-                var mailRequest = new SendMailModel()
+                if (count > 0)
                 {
-                    Name = account.NormalizedUserName,
-                    Email = account.Email,
-                    Token = account.OTP,
-                    Type = MailTypeEnum.Verify
-                };
-                _emailService.SendMail(mailRequest);
+                    var mailRequest = new SendMailModel()
+                    {
+                        Name = account.NormalizedUserName,
+                        Email = account.Email,
+                        Token = account.OTP,
+                        Type = MailTypeEnum.Verify
+                    };
+                    _emailService.SendMail(mailRequest);
+                }
             }
             catch (Exception e)
             {
@@ -479,6 +475,7 @@ namespace MetroShip.Service.Services
 
         private async Task<UserEntity?> GetUserByUserName(string userName, CancellationToken cancellationToken = default)
         {
+            userName = _userManager.NormalizeName(userName);
             var user = await _userRepository.GetSingleAsync(_ => _.UserName == userName,
                 x => x.RefreshTokens);
 
