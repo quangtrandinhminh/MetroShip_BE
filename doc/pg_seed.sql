@@ -406,7 +406,7 @@ VALUES
         '2025-05-19T15:48:50.1689055+00:00', NULL, NULL,
         'admin@example.com', FALSE, 'Admin User', NULL,
         '2025-05-19T15:48:50.1689055+00:00',
-        FALSE, NULL, 'ADMIN', 'ADMIN',
+        FALSE, NULL, 'admin@example.com', 'ADMIN',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         NULL, FALSE, FALSE,
         'admin', '2025-05-19T15:48:50.1689062+00:00'
@@ -418,10 +418,22 @@ VALUES
         '2025-05-19T15:48:50.1689069+00:00', NULL, NULL,
         'staff@example.com', FALSE, 'Staff', NULL,
         '2025-05-19T15:48:50.1689069+00:00',
-        FALSE, NULL, 'STAFF', 'STAFF',
+        FALSE, NULL, 'staff@example.com', 'STAFF',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         NULL, FALSE, FALSE,
         'staff', '2025-05-19T15:48:50.1689071+00:00'
+    ),
+    (
+        '93155333-ab24-4410-b8f5-a77c77e81195', 0, NULL, NULL, NULL,
+        'https://via.placeholder.com/150', NULL, NULL,
+        '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
+        '2025-05-19T15:48:50.1689069+00:00', NULL, NULL,
+        'quang@example.com', FALSE, 'Quang', NULL,
+        '2025-05-19T15:48:50.1689069+00:00',
+        FALSE, NULL, 'quang@example.com', 'CUSTOMER',
+        NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
+        '012345678', FALSE, FALSE,
+        'quangtdm', '2025-05-19T15:48:50.1689071+00:00'
     );
 
 -- Seed UserRoles
@@ -429,17 +441,80 @@ INSERT INTO public."UserRoles"
 ("RoleId","UserId","Discriminator")
 VALUES
     ('021239ef-1d1f-4676-a402-aff9fd24c0c8','5ca7e417-15c3-4bf4-b31c-d57b861e4ab3','UserRoleEntity'),
-    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity');
+    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity'),
+    ('d56ba56c-6469-4494-913a-88d3639f905e','93155333-ab24-4410-b8f5-a77c77e81195','UserRoleEntity');
+
+-- Seed shipment
+INSERT INTO public."Shipments"
+    ("Id", "TrackingCode", "DepartureStationId", "DestinationStationId", "ShipmentStatus", "TotalCostVnd",
+     "SurchargeAppliedAt", "SenderId", "SenderName", "SenderPhone", "RecipientId", "RecipientName", "RecipientPhone",
+     "RecipientNationalId", "ScheduledDateTime", "SurchargeFeeVnd", "InsuranceFeeVnd", "CreatedBy", "LastUpdatedBy",
+     "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "ApprovedAt", "BookedAt", "CancelledAt", "DeliveredAt",
+     "PaidAt", "PickupAt", "RecipientEmail", "RefundedAt", "ShippingFeeVnd", "TotalKm")
+VALUES
+    ('e17e04fd-1679-4779-9f86-b6f49ce51a9f', 'MS-HCMC-20250604090000505VN',
+    '2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0', '4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2'
+       , 0, 692000.00, null, '93155333-ab24-4410-b8f5-a77c77e81195',
+    'Quang', '0123456789', null, 'Hoàng', '0123456789',
+    '079203015280', '2025-05-30 17:00:00.000000 +00:00', null,
+    null, '93155333-ab24-4410-b8f5-a77c77e81195', '93155333-ab24-4410-b8f5-a77c77e81195',
+    null, NOW(), NOW(),
+    null, null, NOW(), null, null,
+    null, null, null, null, 13650.00, null
+    );
+
+-- Seed ShipmentItineraries
+INSERT INTO public."ShipmentItineraries"
+    ("Id", "ShipmentId", "LegOrder", "RouteId", "EstimatedDeparture", "EstimatedArrival", "CreatedBy", "LastUpdatedBy",
+     "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "EstMinute", "BasePriceVndPerKm")
+VALUES
+    ('105a04ba-b8c9-4c08-aea8-1effe7452364', 'e17e04fd-1679-4779-9f86-b6f49ce51a9f', 2,
+        '3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8', null, null,
+        '93155333-ab24-4410-b8f5-a77c77e81195', '93155333-ab24-4410-b8f5-a77c77e81195',
+        null, NOW(), NOW(),
+        null, null, 5000.00
+    ),
+    ('4eb82435-ade9-4c0d-a45d-a93b6c6aa934', 'e17e04fd-1679-4779-9f86-b6f49ce51a9f',
+    1, '2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7', null, null,
+    '93155333-ab24-4410-b8f5-a77c77e81195', '93155333-ab24-4410-b8f5-a77c77e81195',
+    null, NOW(), NOW(),
+    null, null, 5000.00
+    );
+
+-- Seed Parcels
+INSERT INTO public."Parcels"
+    ("Id", "ParcelCode", "ShipmentId", "ParcelCategoryId", "WeightKg", "LengthCm", "WidthCm", "HeightCm", "IsBulk",
+     "Description", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "Barcode",
+     "ParcelStatus", "QrCode", "PriceVnd")
+VALUES
+    ('1b75aea9-0121-466b-8d52-274d76b6a406', 'MS-HCMC-20250604090000505VN-01',
+        'ffe0a3e3-34af-49b1-a9f9-5a646fa9ddba', '0a1b2c3d-4e5f-6789-abcd-0fedcba98765',
+        10.00, 10.00, 10.00, 10.00, false, null,
+        '93155333-ab24-4410-b8f5-a77c77e81195', '93155333-ab24-4410-b8f5-a77c77e81195',
+        null, NOW(), NOW(),
+        null, null, 0, null, 136500.00
+    ),
+    ('3337fb32-fa98-4aaa-8d50-1c2d0050b036', 'MS-HCMC-20250604090000505VN-02',
+     'ffe0a3e3-34af-49b1-a9f9-5a646fa9ddba', '0a1b2c3d-4e5f-6789-abcd-0fedcba98765',
+     20.00, 80.00, 60.00, 50.00, true, null,
+     '93155333-ab24-4410-b8f5-a77c77e81195', '93155333-ab24-4410-b8f5-a77c77e81195',
+     null, NOW(), NOW(),
+     null, null, 0, null, 546000.00
+    );
+
+-- ShipmentTracking
+INSERT INTO public."ShipmentTrackings"
+    ("Id", "ParcelId", "Status", "StationId", "EventTime", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt",
+     "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('b3b56157-3a59-4307-bd2a-2066d26764b7', '3337fb32-fa98-4aaa-8d50-1c2d0050b036', 'AwaitingConfirmation',
+     null, '-infinity', '93155333-ab24-4410-b8f5-a77c77e81195',
+     '93155333-ab24-4410-b8f5-a77c77e81195', null, NOW(), NOW(), null
+    ),
+    ('f670f740-c469-48f9-b1b0-dc92ee7572ec', '1b75aea9-0121-466b-8d52-274d76b6a406', 'AwaitingConfirmation',
+     null, '-infinity', '93155333-ab24-4410-b8f5-a77c77e81195',
+     '93155333-ab24-4410-b8f5-a77c77e81195', null, NOW(), NOW(), null
+    );
 
 
-SELECT t."Id", t."Barcode", t."CreatedAt", t."CreatedBy", t."DeletedAt", t."DeletedBy", t."Description", t."HeightCm", t."IsBulk", t."LastUpdatedAt", t."LastUpdatedBy", t."LengthCm", t."ParcelCategoryId", t."ParcelCode", t."ParcelStatus", t."PriceVnd", t."QrCode", t."ShipmentId", t."WeightKg", t."WidthCm", t."Id0", s."Id", s."CreatedAt", s."CreatedBy", s."DeletedAt", s."DeletedBy", s."EventTime", s."LastUpdatedAt", s."LastUpdatedBy", s."ParcelId", s."StationId", s."Status"
-FROM (
-         SELECT p."Id", p."Barcode", p."CreatedAt", p."CreatedBy", p."DeletedAt", p."DeletedBy", p."Description", p."HeightCm", p."IsBulk", p."LastUpdatedAt", p."LastUpdatedBy", p."LengthCm", p."ParcelCategoryId", p."ParcelCode", p."ParcelStatus", p."PriceVnd", p."QrCode", p."ShipmentId", p."WeightKg", p."WidthCm", p0."Id" AS "Id0"
-         FROM "Parcels" AS p
-                  INNER JOIN "ParcelCategories" AS p0 ON p."ParcelCategoryId" = p0."Id"
-         WHERE p."DeletedAt" IS NULL
-         ORDER BY p0."Id" DESC
-         LIMIT 10 OFFSET 1
-     ) AS t
-         LEFT JOIN "ShipmentTrackings" AS s ON t."Id" = s."ParcelId"
-ORDER BY t."Id0" DESC, t."Id"
+
