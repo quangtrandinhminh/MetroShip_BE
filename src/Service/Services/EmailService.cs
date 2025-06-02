@@ -32,7 +32,7 @@ namespace MetroShip.Service.Services
                     CreateResetPassMail(model);
                     break;
                 case MailTypeEnum.Account:
-                    CreateVerifyMail(model);
+                    CreateAccountMail(model);
                     break;
                 case MailTypeEnum.Shipment:
                     CreateOrderSuccessMail(model);
@@ -151,6 +151,13 @@ namespace MetroShip.Service.Services
         {
             try
             {
+                var JsonSerialize = new Newtonsoft.Json.JsonSerializer
+                {
+                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+                    Formatting = Newtonsoft.Json.Formatting.Indented
+                };
+                var data = Newtonsoft.Json.JsonConvert.SerializeObject(model.Data);
+
                 var appName = SystemSettingModel.Instance.ApplicationName;
                 var mailmsg = new MailMessage
                 {
@@ -161,7 +168,7 @@ namespace MetroShip.Service.Services
                 mailmsg.To.Add(model.Email);
 
                 mailmsg.Body = $"Cảm ơn bạn đã đặt hàng trên {appName}. " +
-                               $"\nThông tin đơn hàng: {model.Data}";
+                               $"\nThông tin đơn hàng: {data}";
 
                 SmtpClient smtp = new SmtpClient();
 
