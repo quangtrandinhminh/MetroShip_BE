@@ -476,7 +476,7 @@ namespace MetroShip.Service.Services
         private async Task<UserEntity?> GetUserByUserName(string userName, CancellationToken cancellationToken = default)
         {
             userName = _userManager.NormalizeName(userName);
-            var user = await _userRepository.GetSingleAsync(_ => _.UserName == userName,
+            var user = await _userRepository.GetSingleAsync(_ => _.NormalizedUserName == userName,
                 x => x.RefreshTokens);
 
             if (user != null && user.DeletedTime != null)
