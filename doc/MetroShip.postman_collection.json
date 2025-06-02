@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"username\": \"quangtdm\",\r\n    \"fullname\": \"Tran Dinh Minh Quang\",\r\n    \"email\": \"trandinhminhquangsxp@gmail.com\",\r\n    \"Password\": \"12345678\",\r\n    \"ConfirmPassword\": \"12345678\",\r\n    \"phonenumber\": \"0949458323\"\r\n}",
+							"raw": "{\r\n    \"username\": \"quangtdm\",\r\n    \"fullname\": \"Tran Dinh Minh Quang\",\r\n    \"email\": \"trandinhminhquangsxp@gmail.com\",\r\n    \"Password\": \"12345678\",\r\n    \"ConfirmPassword\": \"12345678\",\r\n    \"phonenumber\": \"0949458326\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -245,7 +245,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"OTP\": \"912922\",\r\n    \"UserName\": \"quangtdm\"\r\n}",
+							"raw": "{\r\n    \"OTP\": \"218672\",\r\n    \"UserName\": \"quangtdm\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -502,35 +502,15 @@
 				{
 					"name": "Get users",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users?pageNumber=1&pageSize=10",
+							"raw": "{{baseUrl}}/users",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"users"
-							],
-							"query": [
-								{
-									"key": "pageNumber",
-									"value": "1"
-								},
-								{
-									"key": "pageSize",
-									"value": "10"
-								}
 							]
 						}
 					},
@@ -562,7 +542,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"id\": 3,\n    \"userName\": \"customer1\",\n    \"fullName\": \"Customer One\",\n    \"address\": \"a\",\n    \"avatar\": \"https://via.placeholder.com/150\",\n    \"birthDate\": \"2003-06-11\",\n    \"bankId\": 1,\n    \"accountNo\": \"11111111111111\",\n    \"accountName\": \"customer1\"\n}",
+							"raw": "{\n    \"id\": \"5ac4f837-f792-48cf-9e92-12b3b947dd97\",\n    \"userName\": \"quangtdm1\",\n    \"fullName\": \"Quang\",\n    \"address\": \"a\",\n    \"avatar\": \"https://via.placeholder.com/150\",\n    \"birthDate\": \"2003-06-11\",\n    \"bankId\": 1,\n    \"accountNo\": \"11111111111111\",\n    \"accountName\": \"customer1\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -602,13 +582,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/3",
+							"raw": "{{baseUrl}}/users/5ac4f837-f792-48cf-9e92-12b3b947dd97",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"users",
-								"3"
+								"5ac4f837-f792-48cf-9e92-12b3b947dd97"
 							]
 						}
 					},
@@ -618,9 +598,68 @@
 					"name": "Create User",
 					"request": {
 						"method": "POST",
-						"header": []
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userName\": \"Quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"string\",\r\n  \"phoneNumber\": \"string\",\r\n  \"password\": \"string\",\r\n  \"confirmPassword\": \"string\",\r\n  \"birthDate\": \"2025-05-30T10:34:17.099Z\",\r\n  \"role\": [\r\n    2\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get roles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/roles",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -1484,13 +1523,43 @@
 					"response": []
 				},
 				{
+					"name": "Total price BaSon - TanCang",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"destinationStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"departureStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n  \"scheduleShipmentDate\": \"2025-06-01T22:00:00Z\",\r\n  \"UserLatitude\": 0,\r\n  \"UserLongitude\": 0,\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 80,\r\n      \"widthCm\": 60,\r\n      \"heightCm\": 50\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/total-price-itinerary",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Book a shipment",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n  \"senderName\": \"Quang\",\r\n  \"senderPhone\": \"0123456789\",\r\n  \"recipientName\": \"Hoàng\",\r\n  \"recipientPhone\": \"0123456789\",\r\n  \"recipientNationalId\": \"079203015280\",\r\n  \"scheduledDateTime\": \"2025-05-24T20:19:24.473Z\",\r\n  \"totalCostVnd\": 40000,    \r\n  \"shippingFeeVnd\": 30000,\r\n  \"insurance\": 10000, \r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8\",\r\n      \"legOrder\": 2\r\n    }\r\n  ],\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"price\": 10000\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"price\": 20000\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n    \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-01T17:00:00Z\",\r\n    \"totalCostVnd\": 692000,\r\n    \"shippingFeeVnd\": 13650,\r\n    \"insuranceFeeVnd\": 10000,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 2\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 136500\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"chargeableWeight\": 40,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 546000\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1510,19 +1579,46 @@
 					"response": []
 				},
 				{
+					"name": "Get shipment by tracking code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shipments/MS-HCMC-17486244000000101VN",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"MS-HCMC-17486244000000101VN"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Get cus shipment his",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "https://localhost:7085/api/shipments/customer/history",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/shipments/customer/history",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"shipments",
 								"customer",
 								"history"
@@ -1575,7 +1671,71 @@
 					"name": "Vnpay excecute",
 					"request": {
 						"method": "GET",
-						"header": []
+						"header": [],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-execute?vnp_Amount=4000000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14974199&vnp_CardType=ATM&vnp_OrderInfo=Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND&vnp_PayDate=20250523012110&vnp_ResponseCode=00&vnp_TmnCode=89668LJB&vnp_TransactionNo=14974199&vnp_TransactionStatus=00&vnp_TxnRef=MS-HCMC-17481179640000101VN&vnp_SecureHash=1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-execute"
+							],
+							"query": [
+								{
+									"key": "vnp_Amount",
+									"value": "4000000"
+								},
+								{
+									"key": "vnp_BankCode",
+									"value": "NCB"
+								},
+								{
+									"key": "vnp_BankTranNo",
+									"value": "VNP14974199"
+								},
+								{
+									"key": "vnp_CardType",
+									"value": "ATM"
+								},
+								{
+									"key": "vnp_OrderInfo",
+									"value": "Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND"
+								},
+								{
+									"key": "vnp_PayDate",
+									"value": "20250523012110"
+								},
+								{
+									"key": "vnp_ResponseCode",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TmnCode",
+									"value": "89668LJB"
+								},
+								{
+									"key": "vnp_TransactionNo",
+									"value": "14974199"
+								},
+								{
+									"key": "vnp_TransactionStatus",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TxnRef",
+									"value": "MS-HCMC-17481179640000101VN"
+								},
+								{
+									"key": "vnp_SecureHash",
+									"value": "1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1"
+								}
+							]
+						}
 					},
 					"response": []
 				}
@@ -1614,68 +1774,92 @@
 			]
 		},
 		{
-			"name": "Confirm payment",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+			"name": "Parcel",
+			"item": [
+				{
+					"name": "Get all parcels",
+					"event": [
 						{
-							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjpbIkN1c3RvbWVyIiwiU2hvcE93bmVyIl0sImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3NpZCI6IjUiLCJVc2VyTmFtZSI6InF1YW5nNjExMyIsInVuaXF1ZV9uYW1lIjoiVHLhuqduIMSQw6xuaCBNaW5oIFF1YW5nIiwiZW1haWwiOiJ0cmFuZGluaG1pbmhxdWFuZ3N4cEBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjA5MDE0NzIxODAiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIxMi8wMy8yMDI0IiwibmJmIjoxNzMzMTM3Nzk4LCJleHAiOjE3MzMyMjQxOTgsImlhdCI6MTczMzEzNzc5OH0.-BnGQeM_wXbasxOppkp56qALAGMF3Pu_BFcjX-R1CPw",
-							"type": "string"
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
 						}
-					]
-				},
-				"method": "GET",
-				"header": [
-					{
-						"key": "accept",
-						"value": "*/*"
-					}
-				],
-				"url": {
-					"raw": "https://rentezapi-latest.onrender.com/api/payments/payos/customer/confirmation/29/308919",
-					"protocol": "https",
-					"host": [
-						"rentezapi-latest",
-						"onrender",
-						"com"
 					],
-					"path": [
-						"api",
-						"payments",
-						"payos",
-						"customer",
-						"confirmation",
-						"29",
-						"308919"
-					]
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/parcels",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels"
+							]
+						}
+					},
+					"response": []
 				}
-			},
-			"response": []
+			]
 		},
 		{
-			"name": "Station list",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "https://www.citylines.co/api/ho-chi-minh-city/raw_source/stations",
-					"protocol": "https",
-					"host": [
-						"www",
-						"citylines",
-						"co"
-					],
-					"path": [
-						"api",
-						"ho-chi-minh-city",
-						"raw_source",
-						"stations"
-					]
+			"name": "Station",
+			"item": [
+				{
+					"name": "Get all stations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stations"
+							]
+						}
+					},
+					"response": []
 				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{customerAccessToken}}",
+						"type": "string"
+					}
+				]
 			},
-			"response": []
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		}
 	],
 	"event": [
@@ -1717,7 +1901,7 @@
 			"type": "string"
 		},
 		{
-			"key": "shopkeeperAccessToken",
+			"key": "staffAccessToken",
 			"value": "",
 			"type": "string"
 		},
