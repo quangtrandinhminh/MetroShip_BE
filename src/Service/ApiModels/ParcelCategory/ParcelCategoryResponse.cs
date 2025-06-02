@@ -17,7 +17,5 @@ namespace MetroShip.Service.ApiModels.ParcelCategory
         public decimal? LengthLimitCm { get; set; }
         public decimal? WidthLimitCm { get; set; }
         public decimal? HeightLimitCm { get; set; }
-        public bool IsActive { get; set; }
-        public DateTime CreatedAt { get; set; }
     }
 }

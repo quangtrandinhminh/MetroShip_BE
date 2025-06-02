@@ -55,12 +55,12 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(qrCode);
         }
 
-        [HttpPost("confirm/{parcelId}")]
+        [HttpPost(WebApiEndpoint.Parcel.ConfirmParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         public async Task<IActionResult> ConfirmParcelAsync([FromRoute] Guid parcelId, [FromQuery] bool isRejected)
         {
             await _parcelService.ConfirmParcelAsync(parcelId, isRejected);
-            return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully."));
+            return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully.", null));
         }
     }
 }

@@ -67,6 +67,7 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? CancelledAt { get; set; }
 
     public DateTimeOffset? RefundedAt { get; set; }
+    public DateTimeOffset? RejectedAt { get; set; }
 
     // Customer fields
     [Required]
