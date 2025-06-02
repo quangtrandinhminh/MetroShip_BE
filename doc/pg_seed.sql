@@ -502,8 +502,8 @@ VALUES
      null, null, 0, null, 546000.00
     );
 
--- ShipmentTracking
-INSERT INTO public."ShipmentTrackings"
+-- ParcelTracking
+INSERT INTO public."ParcelTrackings"
     ("Id", "ParcelId", "Status", "StationId", "EventTime", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt",
      "LastUpdatedAt", "DeletedAt")
 VALUES
