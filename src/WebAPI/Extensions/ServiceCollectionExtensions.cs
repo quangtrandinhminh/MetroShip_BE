@@ -121,8 +121,7 @@ public static class ServiceCollectionExtensions
 
         // Add DbContext
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")
-                              ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION")));
+            options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")));
 
         // Add Identity
         services.AddIdentityCore<UserEntity>()
