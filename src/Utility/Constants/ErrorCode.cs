@@ -38,5 +38,7 @@
         // Role
         public const string RoleInvalid = "Role invalid.";
 
+        // System config 
+        public const string SystemConfigNotFound = "System config not found.";
     }
 }

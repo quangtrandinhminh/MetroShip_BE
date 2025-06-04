@@ -145,14 +145,26 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IParcelCategoryService, ParcelCategoryService>();
+        services.AddScoped<IParcelService, ParcelService>();
+        services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IStationService, StationService>();
         services.AddScoped<ICloudinaryService, CloudinaryService>();
         services.AddScoped<IVnPayService, VnPayService>();
+        services.AddScoped<IShipmentService, ShipmentService>();
+        services.AddScoped<ITransactionService, TransactionService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IParcelCategoryRepository, ParcelCategoryRepository>();
+        services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
+        services.AddScoped<IRouteRepository, RouteRepository>();
+        services.AddScoped<IStationRepository, StationRepository>();
+        services.AddScoped<IShipmentRepository, ShipmentRepository>();
+        services.AddScoped<IShipmentItineraryRepository, ShipmentItineraryRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

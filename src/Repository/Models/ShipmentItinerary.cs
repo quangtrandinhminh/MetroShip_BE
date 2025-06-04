@@ -22,9 +22,12 @@ public partial class ShipmentItinerary : BaseEntity
     [StringLength(50)]
     public string RouteId { get; set; }
 
-    public DateTimeOffset EstimatedDeparture { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal BasePriceVndPerKm { get; set; }
 
-    public DateTimeOffset EstimatedArrival { get; set; }
+    public int? EstMinute { get; set; }
+    public DateTimeOffset? EstimatedDeparture { get; set; }
+    public DateTimeOffset? EstimatedArrival { get; set; }
 
     [ForeignKey(nameof(ShipmentId))]
     [InverseProperty(nameof(Shipment.ShipmentItineraries))]

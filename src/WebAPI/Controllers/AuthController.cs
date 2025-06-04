@@ -23,7 +23,7 @@ namespace MetroShip.WebAPI.Controllers
             _authService = authSevices;
         }
 
-        [HttpGet("hello")]
+        [HttpGet(WebApiEndpoint.Authentication.Hello)]
         public IActionResult Hello()
         {
             return Ok("Hello");
@@ -40,11 +40,11 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        [Route("register")]
+        [Route(WebApiEndpoint.Authentication.Register)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             await _authService.Register(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.REGIST_USER_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.REGIST_USER_SUCCESS, null));
         }
 
         [HttpPost]
@@ -53,12 +53,12 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> RegisterByAdmin([FromBody] RegisterRequest request, int role)
         {
             await _authService.RegisterByAdmin(request, role);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.REGIST_USER_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.REGIST_USER_SUCCESS, null));
         }
 
         [HttpPost]
         [AllowAnonymous]
-        [Route("authentication")]
+        [Route(WebApiEndpoint.Authentication.Login)]
         public async Task<IActionResult> Login(LoginRequest request)
         {
             var response = await _authService.Authenticate(request);
@@ -89,35 +89,35 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> VerifyEmail(VerifyEmailRequest request)
         {
             await _authService.VerifyEmail(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.VERIFY_EMAIL_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.VERIFY_EMAIL_SUCCESS, null));
         }
 
         [HttpPost("password/forgot")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
         {
             await _authService.ForgotPassword(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.FORGOT_PASSWORD_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.FORGOT_PASSWORD_SUCCESS, null));
         }
 
         [HttpPost("password/change")]
         public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
         {
             await _authService.ChangePassword(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.CHANGE_PASSWORD_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.CHANGE_PASSWORD_SUCCESS, null));
         }
 
         [HttpPost("password/reset")]
         public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
         {
             await _authService.ResetPassword(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.RESET_PASSWORD_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.RESET_PASSWORD_SUCCESS, null));
         }
 
         [HttpPost("email/resend")]
         public async Task<IActionResult> ResendEmail(ResendEmailRequest request)
         {
             await _authService.ReSendEmail(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.RESEND_EMAIL_SUCCESS));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageIdentitySuccess.RESEND_EMAIL_SUCCESS, null));
         }
 
         [HttpPost("authentication/google")]

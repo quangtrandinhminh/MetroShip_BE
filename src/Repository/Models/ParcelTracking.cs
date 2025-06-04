@@ -9,26 +9,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-public partial class ShipmentTracking : BaseEntity
+public partial class ParcelTracking : BaseEntity
 {
     [Required]
     [StringLength(50)]
-    public string ShipmentId { get; set; }
+    public string ParcelId { get; set; }
 
-    public int Status { get; set; }
+    [Required]
+    [StringLength(255)]
+    public string Status { get; set; }
 
     [StringLength(50)]
     public string? StationId { get; set; }
 
     public DateTimeOffset EventTime { get; set; }
 
-    [StringLength(255)]
-    public string Remarks { get; set; }
+    public string? Note { get; set; }
 
-    [ForeignKey(nameof(ShipmentId))]
-    [InverseProperty(nameof(Shipment.ShipmentTrackings))]
-    public virtual Shipment Shipment { get; set; }
+    [ForeignKey(nameof(ParcelId))]
+    [InverseProperty(nameof(Parcel.ParcelTrackings))]
+    public virtual Parcel Parcel { get; set; }
 
     [ForeignKey(nameof(StationId))]
+    [InverseProperty(nameof(Station.ParcelTrackings))]
     public virtual Station? Station { get; set; }
 }

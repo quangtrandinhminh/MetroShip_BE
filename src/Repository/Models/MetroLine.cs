@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
+[Index(nameof(LineCode), nameof(RegionId), IsUnique = true)]
 public partial class MetroLine : BaseEntity
 {
     public MetroLine()
@@ -77,7 +78,7 @@ public partial class MetroLine : BaseEntity
     public decimal? CarriageVolumeM3 => CarriageLenghtMeter * CarriageWidthMeter * CarriageHeightMeter;
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal? BasePriceVndPerKm { get; set; }
+    public decimal BasePriceVndPerKm { get; set; }
 
     [StringLength(20)]
     public string ColorHex { get; set; }
@@ -91,5 +92,6 @@ public partial class MetroLine : BaseEntity
     [InverseProperty(nameof(Route.MetroLine))]
     public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
 
-    public virtual ICollection<MetroTimeSlot> MetroSchedules { get; set; } = new List<MetroTimeSlot>();
+    [InverseProperty(nameof(MetroBasePrice.Line))]
+    public virtual ICollection<MetroBasePrice> MetroBasePrices { get; set; } = new List<MetroBasePrice>();
 }

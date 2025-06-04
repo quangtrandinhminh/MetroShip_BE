@@ -2,9 +2,11 @@ using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MetroShip.Service.Services
 {
@@ -12,51 +14,48 @@ namespace MetroShip.Service.Services
     {
         private readonly VnPaySetting _vnpaySetting;
         private readonly VnPayLibrary _vnpayHelper;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public VnPayService(IServiceProvider serviceProvider)
         {
             _vnpaySetting = VnPaySetting.Instance;
             _vnpayHelper = new VnPayLibrary();
+            _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         }
 
-        public async Task<string> CreatePaymentUrl(HttpContext context, string orderId, int totalAmount)
+        public async Task<string> CreatePaymentUrl(string orderId, decimal totalAmount)
         {
             // get localhost of this server
-            var request = context.Request;
+            var request = _httpContextAccessor.HttpContext.Request;
             var scheme = request.Scheme;
             var host = request.Host;
-            var returnUrl = $"{scheme}://{host}" + WebApiEndpoint.Shipment.VnpayExecute;
+            var returnUrl = $"{scheme}://{host}" + WebApiEndpoint.ShipmentEndpoint.VnpayExecute;
             var hostName = System.Net.Dns.GetHostName();
             var clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0).ToString();
             var orderInfo = $"Thanh toán đơn hàng ID: {orderId}, Tổng giá trị: {totalAmount} VND";
+            var amount = (int)totalAmount * 100; // Convert to VND in cents
+            // Ensure amount is a whole number (integer), not a decimal or float
+            if (amount <= 0)
+            {
+                throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, 
+                    "Invalid amount", StatusCodes.Status400BadRequest);
+            }
 
-            var tick = orderId;
+            DateTime createDate = DateTime.Now;
+            var bankCode = "NCB"; // Optional: specify bank code if needed
+            //var tick = DateTime.Now.Ticks;
             var vnpay = new VnPayLibrary();
 
             // Cấu hình dữ liệu
             vnpay.AddRequestData("vnp_Version", "2.1.0"); // Version
             vnpay.AddRequestData("vnp_Command", "pay"); // Command for create token
             vnpay.AddRequestData("vnp_TmnCode", _vnpaySetting.TmnCode); // Merchant code
-            vnpay.AddRequestData("vnp_BankCode", "");
+            vnpay.AddRequestData("vnp_BankCode", bankCode);
             vnpay.AddRequestData("vnp_Locale", "vn");
-            var amount = totalAmount * 100; // Convert to VND in cents
-
-            // Ensure amount is a whole number (integer), not a decimal or float
-            int amountInCents = (int)amount;  // Convert to integer
-
-            if (amountInCents <= 0)
-            {
-                throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, "Invalid amount", StatusCodes.Status400BadRequest);
-            }
-
-            vnpay.AddRequestData("vnp_Amount", amountInCents.ToString());
-            DateTime createDate = DateTime.Now;
-            vnpay.AddRequestData("vnp_CreateDate", createDate.ToString("yyyyMMddHHmmss")); 
-
-
-            // Tính toán giá trị thanh toán
+            vnpay.AddRequestData("vnp_Amount", amount.ToString());
+            vnpay.AddRequestData("vnp_CreateDate", createDate.ToString("yyyyMMddHHmmss"));
             vnpay.AddRequestData("vnp_CurrCode", "VND");
-            vnpay.AddRequestData("vnp_TxnRef", tick.ToString());
+            vnpay.AddRequestData("vnp_TxnRef", orderId); // Order code from the client
             vnpay.AddRequestData("vnp_OrderInfo", orderInfo);
             vnpay.AddRequestData("vnp_ReturnUrl", returnUrl);
             vnpay.AddRequestData("vnp_IpAddr", clientIPAddress);
@@ -74,42 +73,37 @@ namespace MetroShip.Service.Services
             }
         }
 
-        public async Task<VnPaymentResponse> PaymentExecute(HttpContext context)
+        public async Task<VnPaymentResponse> PaymentExecute(VnPayCallbackModel model)
         {
-            // Retrieve vnp_TxnRef from the query string directly
-            var vnpOrderIdStr = context.Request.Query["vnp_TxnRef"].ToString();
-            int vnpOrderId = 0;
+            // Extract vnp_TxnRef to get OrderCode
+            var vnpOrderIdStr = model.vnp_TxnRef;
+            var paymentDate = model.vnp_PayDate;
 
-            // Validate vnpOrderId
-            if (string.IsNullOrEmpty(vnpOrderIdStr) || !int.TryParse(vnpOrderIdStr, out vnpOrderId))
+            // Add all parameters from model to the vnpay helper
+            // Use reflection to get all properties of the model
+            var properties = typeof(VnPayCallbackModel).GetProperties();
+            foreach (var property in properties)
             {
-                throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, 
-                    "Invalid order ID", StatusCodes.Status400BadRequest);
-            }
+                var key = property.Name;
+                var value = property.GetValue(model)?.ToString();
 
-            var request = context.Request;
-            var collections = request.Query;
-
-            // Add all parameters starting with "vnp_" to the vnpay instance
-            foreach (var (key, value) in collections)
-            {
-                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_") && value != null)
                 {
-                    _vnpayHelper.AddResponseData(key, value.ToString());
+                    _vnpayHelper.AddResponseData(key, value);
                 }
             }
 
-            // Extract necessary data from the response
-            var vnpTransactionId = Convert.ToInt64(_vnpayHelper.GetResponseData("vnp_TransactionNo"));
-            var vnpSecureHash = collections.FirstOrDefault(p => p.Key == "vnp_SecureHash").Value;
-            var vnpResponseCode = _vnpayHelper.GetResponseData("vnp_ResponseCode");
-            var vnpOrderInfo = _vnpayHelper.GetResponseData("vnp_OrderInfo");
+            // Extract necessary data from the model
+            var vnpTransactionId = Convert.ToInt64(model.vnp_TransactionNo);
+            var vnpSecureHash = model.vnp_SecureHash;
+            var vnpResponseCode = model.vnp_ResponseCode;
+            var vnpOrderInfo = model.vnp_OrderInfo;
 
             // Validate the signature
             bool checkSignature = _vnpayHelper.ValidateSignature(vnpSecureHash, _vnpaySetting.HashSecret);
             if (!checkSignature)
             {
-                throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, 
+                throw new AppException(HttpResponseCodeConstants.BAD_REQUEST,
                     "Invalid signature", StatusCodes.Status400BadRequest);
             }
 
@@ -118,17 +112,29 @@ namespace MetroShip.Service.Services
             {
                 throw new AppException(HttpResponseCodeConstants.BAD_REQUEST,
                     $"Payment failed with response code: {vnpResponseCode}", StatusCodes.Status400BadRequest);
-            }    
+            }
+
+            // Build the PaymentId by reconstructing the query string from model properties
+            /*var queryParams = new List<string>();
+            foreach (var property in properties)
+            {
+                var key = property.Name;
+                var value = property.GetValue(model)?.ToString();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    queryParams.Add($"{key}={Uri.EscapeDataString(value)}");
+                }
+            }*/
 
             return new VnPaymentResponse()
             {
                 Success = true,
-                PaymentMethod = "VnPay",
+                PaymentMethod = PaymentMethodEnum.VnPay.ToString(),
                 OrderDescription = vnpOrderInfo,
-                OrderId = vnpOrderId.ToString(),
+                OrderId = vnpOrderIdStr,
                 TransactionId = vnpTransactionId.ToString(),
                 Token = vnpSecureHash,
-                PaymentId = request.QueryString.ToString(),
+                PaymentTime = paymentDate,
                 VnPayResponseCode = vnpResponseCode
             };
         }

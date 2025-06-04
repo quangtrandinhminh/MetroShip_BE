@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
@@ -14,6 +15,7 @@ public partial class Parcel : BaseEntity
 {
     public Parcel()
     {
+        ParcelStatus = ParcelStatusEnum.AwaitingConfirmation;
     }
 
     [Required]
@@ -27,6 +29,9 @@ public partial class Parcel : BaseEntity
     [Required]
     [StringLength(50)]
     public string ParcelCategoryId { get; set; }
+
+    [Required]
+    public ParcelStatusEnum ParcelStatus { get; set; }
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal WeightKg { get; set; }
@@ -47,6 +52,11 @@ public partial class Parcel : BaseEntity
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal ChargeableWeightKg => Math.Max(WeightKg, VolumeCm3 / 5000);
+    public string Barcode { get; set; }
+    public string QrCode { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal PriceVnd { get; set; }
 
     [StringLength(255)]
     public string Description { get; set; }
@@ -58,4 +68,7 @@ public partial class Parcel : BaseEntity
     [ForeignKey(nameof(ParcelCategoryId))]
     [InverseProperty(nameof(ParcelCategory.Parcels))]
     public virtual ParcelCategory ParcelCategory { get; set; }
+
+    [InverseProperty(nameof(ParcelTracking.Parcel))]
+    public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; } = new List<ParcelTracking>();
 }

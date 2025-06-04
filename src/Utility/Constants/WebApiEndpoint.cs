@@ -6,7 +6,7 @@
 
         public static class Authentication
         {
-            private const string BaseEndpoint = "~/" + AreaName + "/auth";
+            private const string BaseEndpoint = "/" + AreaName + "/auth";
             public const string Hello = BaseEndpoint + "/hello";
             public const string Register = BaseEndpoint + "/register";
             public const string Login = BaseEndpoint + "/authentication";
@@ -15,17 +15,18 @@
 
         public static class User
         {
-            private const string BaseEndpoint = "~/" + AreaName + "/user";
+            private const string BaseEndpoint = "/" + AreaName + "/users";
             public const string GetUsers = BaseEndpoint;
             public const string GetUser = BaseEndpoint + "/{id}";
             public const string CreateUser = BaseEndpoint;
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
+            public const string GetUserRoles = BaseEndpoint + "/roles";
         }
 
         public static class ParcelCategory
         {
-            private const string BaseEndpoint = "~/" + AreaName + "/parcel-category";
+            private const string BaseEndpoint = "/" + AreaName + "/parcel-category";
             public const string GetCategories = BaseEndpoint;
             public const string GetCategory = BaseEndpoint + "/{id}";
             public const string CreateCategory = BaseEndpoint;
@@ -33,36 +34,38 @@
             public const string DeleteCategory = BaseEndpoint + "/{id}";
         }
 
-        public static class Shipment
+        public static class ParcelEndpoint
         {
-            private const string BaseEndpoint = "~/" + AreaName + "/shipments";
-            public const string GetShipments = BaseEndpoint;
-            public const string GetShipmentById = BaseEndpoint + "/{shipmentId}";
-            public const string CreateShipment = BaseEndpoint;
-            public const string DeleteShipment = BaseEndpoint + "/{shipmentId}";
-            public const string GetShipmentsByUser = BaseEndpoint + "/user/status";
-            public const string UpdateShipmentStatus = BaseEndpoint + "/{shipmentId}/status";
-            public const string GetShipmentsByStatus = BaseEndpoint + "/status";
-            public const string CustomerChangeShipmentStatus = BaseEndpoint + "customer/{shipmentId}";
-            public const string AdminChangeShipmentStatus = BaseEndpoint + "admin/{shipmentId}";
-            public const string CustomerCancelShipment = BaseEndpoint + "customer/{shipmentId}";
-            public const string VnpayUrl = BaseEndpoint + "/vnpay/payment-url";
-            public const string VnpayExecute = BaseEndpoint + "vnpay/payment-execute";
-        }
-
-        public static class Parcel
-        {
-            private const string BaseEndpoint = "~/" + AreaName + "/parcels";
+            private const string BaseEndpoint = "/" + AreaName + "/parcels";
             public const string GetParcels = BaseEndpoint;
             public const string GetParcelById = BaseEndpoint + "/{id}";
             public const string CreateShipmentItem = BaseEndpoint;
             public const string UpdateShipmentItem = BaseEndpoint;
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
+            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
+            public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
+        }
+
+        public static class ShipmentEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/shipments";
+            public const string GetShipments = BaseEndpoint;
+            public const string GetShipmentByTrackingCode = BaseEndpoint + "/{shipmentTrackingCode}";
+            public const string GetShipmentsHistory = BaseEndpoint + "/customer/history";
+            public const string CreateShipment = BaseEndpoint;
+            public const string GetShipmentItinerary = BaseEndpoint + "/itinerary";
+            public const string UpdateShipmentStatus = BaseEndpoint + "/{shipmentId}/status";
+            public const string GetShipmentsByStatus = BaseEndpoint + "/status";
+            public const string CustomerChangeShipmentStatus = BaseEndpoint + "customer/{shipmentId}";
+            public const string CustomerCancelShipment = BaseEndpoint + "customer/{shipmentId}";
+            public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
+            public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
+            public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
         }
 
         public static class Notification
         {
-            private const string BaseEndpoint = "~/" + AreaName + "notifications";
+            private const string BaseEndpoint = "/" + AreaName + "notifications";
 
             public const string GetNotifications = BaseEndpoint;
             public const string GetNotification = $"{BaseEndpoint}/{{id}}";
@@ -79,10 +82,20 @@
 
         public static class UserDevice
         {
-            private const string BaseEndpoint = "~/" + AreaName + "user-devices";
+            private const string BaseEndpoint = "/" + AreaName + "user-devices";
             public const string RegisterDevice = $"{BaseEndpoint}/register";
             public const string UnregisterDevice = $"{BaseEndpoint}/unregister";
             public const string GetUserDevices = BaseEndpoint;
+        }
+
+        public static class Station 
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/stations";
+            public const string GetStations = BaseEndpoint;
+            public const string GetStationById = BaseEndpoint + "/{id}";
+            public const string CreateStation = BaseEndpoint;
+            public const string UpdateStation = BaseEndpoint;
+            public const string DeleteStation = BaseEndpoint + "/{id}";
         }
     }
 }

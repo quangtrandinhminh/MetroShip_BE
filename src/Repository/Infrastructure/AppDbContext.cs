@@ -88,7 +88,7 @@ public sealed partial class AppDbContext : IdentityDbContext<UserEntity, RoleEnt
     private void SeedData(ModelBuilder modelBuilder)
     {
         // Seed data for roles, get roles from enum
-        var roles = Enum.GetValues(typeof(UserRoleEnum))
+        /*var roles = Enum.GetValues(typeof(UserRoleEnum))
             .Cast<UserRoleEnum>()
             .Select(role => new RoleEntity
             {
@@ -99,6 +99,6 @@ public sealed partial class AppDbContext : IdentityDbContext<UserEntity, RoleEnt
             })
             .ToList();
 
-        modelBuilder.Entity<RoleEntity>().HasData(roles);
+        modelBuilder.Entity<RoleEntity>().HasData(roles);*/
     }
 }

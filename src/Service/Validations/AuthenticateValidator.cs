@@ -89,7 +89,7 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
         RuleFor(x => x.PhoneNumber)
             .NotEmpty().WithMessage(ResponseMessageIdentity.PHONENUMBER_REQUIRED)
             .Matches(@"^\d{10}$").WithMessage(ResponseMessageIdentity.PHONENUMBER_INVALID)
-            .Length(10).WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH);
+            .Length(10).WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID);
 
         // Password validation
         RuleFor(x => x.Password)
@@ -144,6 +144,6 @@ public sealed class PhoneLoginRequestValidator : AbstractValidator<PhoneLoginReq
         RuleFor(x => x.PhoneNumber)
             .NotEmpty().WithMessage(ResponseMessageIdentity.PHONENUMBER_REQUIRED)
             .Matches(expression).WithMessage(ResponseMessageIdentity.PHONENUMBER_INVALID)
-            .Length(10).WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH);
+            .Length(10).WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID);
     }
 }

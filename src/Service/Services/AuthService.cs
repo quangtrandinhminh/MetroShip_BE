@@ -68,11 +68,11 @@ namespace MetroShip.Service.Services
             return _mapper.MapToRoleResponseList(roles);
         }
 
-        public async Task<LoginResponse> Authenticate(LoginRequest dto)
+        public async Task<LoginResponse> Authenticate(LoginRequest request)
         {
-            _logger.Information("Authenticate user: {@dto}", dto.Username);
-            var account = await GetUserByUserName(dto.Username);
-            _authValidator.ValidateLogin(dto, account);
+            _logger.Information("Authenticate user: {@request}", request.Username);
+            var account = await GetUserByUserName(request.Username);
+            _authValidator.ValidateLogin(request, account);
 
             try
             {
@@ -98,34 +98,28 @@ namespace MetroShip.Service.Services
 
         public async Task Register(RegisterRequest request, CancellationToken cancellationToken = default)
         {
-            _logger.Information("Register new user: {@request}", request);
+            _logger.Information("Register new user: {@request}", request.UserName);
+            _authValidator.ValidateRegisterRequest(request);
             // get user by name
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
             }
 
             var existingUserWithEmail = await _userManager.FindByEmailAsync(request.Email);
             if (existingUserWithEmail != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
             }
 
             var existingUserWithPhone = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == request.PhoneNumber);
             if (existingUserWithPhone != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
-            }
-
-            if (!string.IsNullOrEmpty(request.PhoneNumber) && !Regex.IsMatch(request.PhoneNumber, @"^\d{10}$"))
-            {
-                throw new AppException(HttpResponseCodeConstants.INVALID_INPUT, ResponseMessageIdentity.PHONENUMBER_INVALID, StatusCodes.Status400BadRequest);
-            }
-
-            if (request.Password != request.ConfirmPassword)
-            {
-                throw new AppException(HttpResponseCodeConstants.INVALID_INPUT, ResponseMessageIdentity.PASSWORD_NOT_MATCH, StatusCodes.Status400BadRequest);
+                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                    ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
             }
 
             try
@@ -136,17 +130,20 @@ namespace MetroShip.Service.Services
                 account.OTP = GenerateOTP();
                 await _userRepository.CreateUserAsync(account, cancellationToken);
 
-                await _userRepository.SaveChangeAsync();
+                var count = await _userRepository.SaveChangeAsync();
                 await _userManager.AddToRoleAsync(account, UserRoleEnum.Customer.ToString());
 
-                var mailRequest = new SendMailModel()
+                if (count > 0)
                 {
-                    Name = account.NormalizedUserName,
-                    Email = account.Email,
-                    Token = account.OTP,
-                    Type = MailTypeEnum.Verify
-                };
-                _emailService.SendMail(mailRequest);
+                    var mailRequest = new SendMailModel()
+                    {
+                        Name = account.NormalizedUserName,
+                        Email = account.Email,
+                        Token = account.OTP,
+                        Type = MailTypeEnum.Verify
+                    };
+                    _emailService.SendMail(mailRequest);
+                }
             }
             catch (Exception e)
             {
@@ -478,7 +475,8 @@ namespace MetroShip.Service.Services
 
         private async Task<UserEntity?> GetUserByUserName(string userName, CancellationToken cancellationToken = default)
         {
-            var user = await _userRepository.GetSingleAsync(_ => _.UserName == userName,
+            userName = _userManager.NormalizeName(userName);
+            var user = await _userRepository.GetSingleAsync(_ => _.NormalizedUserName == userName,
                 x => x.RefreshTokens);
 
             if (user != null && user.DeletedTime != null)

@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using AngleSharp.Attributes;
 using Microsoft.AspNetCore.Http;
 
 namespace MetroShip.Service.Utils;
@@ -15,8 +16,16 @@ public class JwtClaimUltils
         return int.Parse(userClaimsPrincipal.FindFirst(ClaimTypes.Sid)?.Value);
     }
 
-    public static IList<string> GetUserRole(ClaimsPrincipal userClaimsPrincipal)
+    public static IList<string> GetUserRole(IHttpContextAccessor accessor)
     {
-        return userClaimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value).ToList();
+        var userClaimsPrincipal = GetLoginedUser(accessor);
+        return userClaimsPrincipal?.FindAll(ClaimTypes.Role).Select(x => x.Value).ToList()
+               ?? new List<string>();
+    }
+
+    public static string GetUserId(IHttpContextAccessor accessor)
+    {
+        var userClaimsPrincipal = GetLoginedUser(accessor);
+        return userClaimsPrincipal?.FindFirst(ClaimTypes.Sid)?.Value ?? string.Empty;
     }
 }

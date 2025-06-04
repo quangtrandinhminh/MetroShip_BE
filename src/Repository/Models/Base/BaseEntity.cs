@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models.Base
 {
-    [Index(nameof(Id), IsUnique = true, Name = "Index_Id")]
-    [Index(nameof(CreatedAt), Name = "Index_CreatedAt")]
+    [Index(nameof(Id), IsUnique = true)]
+    [Index(nameof(CreatedAt))]
     public abstract class BaseEntity
     {
         protected BaseEntity()

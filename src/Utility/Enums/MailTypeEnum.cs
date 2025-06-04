@@ -6,4 +6,5 @@ public enum MailTypeEnum
     ResetPassword,
     Account,
     Notification,
+    Shipment,
 }

@@ -5,6 +5,6 @@ namespace MetroShip.Service.Interfaces;
 
 public interface IVnPayService
 {
-    Task<string> CreatePaymentUrl(HttpContext context, string orderId, int totalAmount);
-    Task<VnPaymentResponse> PaymentExecute(HttpContext context);
+    Task<string> CreatePaymentUrl(string orderId, decimal totalAmount);
+    Task<VnPaymentResponse> PaymentExecute(VnPayCallbackModel model);
 }

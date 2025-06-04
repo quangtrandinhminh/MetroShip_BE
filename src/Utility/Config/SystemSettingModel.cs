@@ -95,4 +95,25 @@ namespace MetroShip.Utility.Config
         public string AuthToken { get; set; }
         public string PhoneNumber { get; set; }
     }
+
+    public class AdminConfig
+    {
+        public static AdminConfig Instance { get; set; }
+        public string AdminUsername { get; set; }
+        public string AdminHashPassword { get; set; }
+    }
+
+    public class SystemConfigSetting
+    {
+        public static SystemConfigSetting Instance { get; set; }
+        public string CONFIRMATION_HOUR { get; set; }
+        public string PAYMENT_REQUEST_HOUR { get; set; }
+        public string MAX_SCHEDULE_SHIPMENT_DAY { get; set; }
+        public string ALLOW_CANCEL_BEFORE_HOUR { get; set; }
+        public string REFUND_PERCENT { get; set; }
+        public string SURCHARGE_AFTER_DELIVERED_HOUR { get; set; }
+        public string SURCHARGE_PER_DAY_VND { get; set; }
+        public string FREE_STORAGE_DAY { get; set; }
+        public string NIGHT_DISCOUNT { get; set; }
+    }
 }

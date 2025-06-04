@@ -1,0 +1,1919 @@
+{
+	"info": {
+		"_postman_id": "81721379-7b04-4993-92fb-6ecf60b8853f",
+		"name": "MetroShip",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29777760"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register - Customer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"quangtdm\",\r\n    \"fullname\": \"Tran Dinh Minh Quang\",\r\n    \"email\": \"trandinhminhquangsxp@gmail.com\",\r\n    \"Password\": \"12345678\",\r\n    \"ConfirmPassword\": \"12345678\",\r\n    \"phonenumber\": \"0949458326\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Admin",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"admin\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Staff",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"staff\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Customer",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"quangtdm\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login Google",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"IdToken\": \"\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication/google",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication",
+								"google"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "VerifyPhone OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"phoneNumber\": \"+84901472180\",\r\n  \"verifyToken\": \"528859\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user/verify-phone",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"verify-phone"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SendOTP to phone",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"PhoneNumber\": \"+84901472180\",\r\n    \"Length\": 6,\r\n    \"Minute\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/user/send-otp-to-phone",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"user",
+								"send-otp-to-phone"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RefreshToken",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"Token\": \"qJnyDy/74qtpMkmOaMGN4SrRfnzcDl+4Qiu2ZdCJNxMC3IFgkunPlbkHwc1ZVG3y++4X0WCLOoKxVuuz8uqUcA==\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh-token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"OTP\": \"218672\",\r\n    \"UserName\": \"quangtdm\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/email/verification",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"email",
+								"verification"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Email",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"UserName\" : \"quangtdm\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/email/resend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"email",
+								"resend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register user with all role by admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"staff1\",\r\n    \"fullname\": \"Nguyen Van A\",\r\n    \"email\": \"staff1@staff.com\",\r\n    \"Password\": \"12345\",\r\n    \"ConfirmPassword\": \"12345\",\r\n    \"phonenumber\": \"0949458324\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/register?role=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"register"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all roles",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/admin/roles",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"admin",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userName\": \"quangtdm\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/forgot",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"forgot"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"oldPassword\": \"12345678\",\r\n  \"password\": \"123456789\",\r\n  \"confirmPassword\": \"123456789\",\r\n  \"userName\": \"quangtdm\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/change",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"change"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"otp\": \"string\",\r\n  \"password\": \"123456789\",\r\n  \"confirmPassword\": \"1233456789\",\r\n  \"userName\": \"quangtdm\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/password/reset",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"password",
+								"reset"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "noauth"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "Get users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update user",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"5ac4f837-f792-48cf-9e92-12b3b947dd97\",\n    \"userName\": \"quangtdm1\",\n    \"fullName\": \"Quang\",\n    \"address\": \"a\",\n    \"avatar\": \"https://via.placeholder.com/150\",\n    \"birthDate\": \"2003-06-11\",\n    \"bankId\": 1,\n    \"accountNo\": \"11111111111111\",\n    \"accountName\": \"customer1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get user by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/5ac4f837-f792-48cf-9e92-12b3b947dd97",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"5ac4f837-f792-48cf-9e92-12b3b947dd97"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userName\": \"Quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"string\",\r\n  \"phoneNumber\": \"string\",\r\n  \"password\": \"string\",\r\n  \"confirmPassword\": \"string\",\r\n  \"birthDate\": \"2025-05-30T10:34:17.099Z\",\r\n  \"role\": [\r\n    2\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get roles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/roles",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"roles"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Payment",
+			"item": [
+				{
+					"name": "Customer create payment link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"orderId\": 1,\n  \"cancelUrl\": \"https://localhost:7085/swagger/index.html\",\n  \"returnUrl\": \"https://localhost:7085/swagger/index.html\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/payos/customer/payment-url",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"payos",
+								"customer",
+								"payment-url"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin get payment info",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/payments/payos/admin/payment-info/27801",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"payos",
+								"admin",
+								"payment-info",
+								"27801"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin get payment info Copy",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{productionUrl}}/payments/payos/admin/payment-info/27801",
+							"host": [
+								"{{productionUrl}}"
+							],
+							"path": [
+								"payments",
+								"payos",
+								"admin",
+								"payment-info",
+								"27801"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "payment webhook",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"webhook_url\": \"https://rentezapi-latest.onrender.com/api/payos/transfer-handler\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/payments/payos/webhook/confirmation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"payos",
+								"webhook",
+								"confirmation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Customer confirm payment",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customerAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/payments/payos/customer/confirmation/1/27801",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"payments",
+								"payos",
+								"customer",
+								"confirmation",
+								"1",
+								"27801"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Stat",
+			"item": [
+				{
+					"name": "ADMIN TotalRevenue",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/revenue?FromDateTimeOffset=2024-11-01T00:00:00.070Z&DayNumber=30",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"revenue"
+							],
+							"query": [
+								{
+									"key": "FromDateTimeOffset",
+									"value": "2024-11-01T00:00:00.070Z"
+								},
+								{
+									"key": "DayNumber",
+									"value": "30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADMIN general",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/admin/general",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"admin",
+								"general"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADMIN revenue chart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/revenue/chart?year=2024",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"revenue",
+								"chart"
+							],
+							"query": [
+								{
+									"key": "year",
+									"value": "2024"
+								},
+								{
+									"key": "month",
+									"value": "12",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SHOP TotalRevenue",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{shopkeeperAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/revenue?FromDateTimeOffset=2024-11-01T00:00:00.070Z&DayNumber=30",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"revenue"
+							],
+							"query": [
+								{
+									"key": "FromDateTimeOffset",
+									"value": "2024-11-01T00:00:00.070Z"
+								},
+								{
+									"key": "DayNumber",
+									"value": "30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SHOP general",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{shopkeeperAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/shop/general",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"shop",
+								"general"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SHOP revenue chart",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{shopkeeperAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/revenue/chart?year=2024",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"revenue",
+								"chart"
+							],
+							"query": [
+								{
+									"key": "year",
+									"value": "2024"
+								},
+								{
+									"key": "month",
+									"value": "12",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADMIN Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/product",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SHOP Product",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{shopkeeperAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/product",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/admin/user",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"admin",
+								"user"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Shop",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/admin/shop",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"admin",
+								"shop"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/stats/admin/order",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stats",
+								"admin",
+								"order"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADMIN REVENUE CLOUD",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjEyLzAyLzIwMjQiLCJuYmYiOjE3MzMwMzc5ODUsImV4cCI6MTczMzEyNDM4NSwiaWF0IjoxNzMzMDM3OTg1fQ.zkUlXDxJUEBwGpxwjx-dgtz63qlJYtpQKhcWsUl8gnw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://rentezapi-latest.onrender.com/api/stats/revenue?FromDateTimeOffset=2024-11-24T16%3A26%3A31.8511935%2B00%3A00&DayNumber=7",
+							"protocol": "https",
+							"host": [
+								"rentezapi-latest",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"stats",
+								"revenue"
+							],
+							"query": [
+								{
+									"key": "FromDateTimeOffset",
+									"value": "2024-11-24T16%3A26%3A31.8511935%2B00%3A00"
+								},
+								{
+									"key": "DayNumber",
+									"value": "7"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ADMIN PRODUCT CLOUD",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjEyLzAyLzIwMjQiLCJuYmYiOjE3MzMwMzc5ODUsImV4cCI6MTczMzEyNDM4NSwiaWF0IjoxNzMzMDM3OTg1fQ.zkUlXDxJUEBwGpxwjx-dgtz63qlJYtpQKhcWsUl8gnw",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://rentezapi-latest.onrender.com/api/stats/product",
+							"protocol": "https",
+							"host": [
+								"rentezapi-latest",
+								"onrender",
+								"com"
+							],
+							"path": [
+								"api",
+								"stats",
+								"product"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Media",
+			"item": [
+				{
+					"name": "Upload an image",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": "/C:/Users/QUANG/OneDrive/Hình ảnh/bh3rd/2022-08-30-21-55-59_0.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/media/image",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"media",
+								"image"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete an image",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/media/image?imageUrl=https://res.cloudinary.com/dg8iesbty/image/upload/v1732556792/hq75pci0gdl6b9p7m2uj.png",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"media",
+								"image"
+							],
+							"query": [
+								{
+									"key": "imageUrl",
+									"value": "https://res.cloudinary.com/dg8iesbty/image/upload/v1732556792/hq75pci0gdl6b9p7m2uj.png"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Shipment",
+			"item": [
+				{
+					"name": "Create itinerary BaSon - TanCang",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Total price BaSon - TanCang",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"destinationStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"departureStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n  \"scheduleShipmentDate\": \"2025-06-01T22:00:00Z\",\r\n  \"UserLatitude\": 0,\r\n  \"UserLongitude\": 0,\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 80,\r\n      \"widthCm\": 60,\r\n      \"heightCm\": 50\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/total-price-itinerary",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Book a shipment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n    \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-01T17:00:00Z\",\r\n    \"totalCostVnd\": 692000,\r\n    \"shippingFeeVnd\": 13650,\r\n    \"insuranceFeeVnd\": 10000,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 2\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 136500\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"chargeableWeight\": 40,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 546000\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get shipment by tracking code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shipments/MS-HCMC-17486244000000101VN",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"MS-HCMC-17486244000000101VN"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get cus shipment his",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shipments/customer/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"customer",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vnpay create payment link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"MS-HCMC-17481179640000101VN\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-url",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-url"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vnpay excecute",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-execute?vnp_Amount=4000000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14974199&vnp_CardType=ATM&vnp_OrderInfo=Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND&vnp_PayDate=20250523012110&vnp_ResponseCode=00&vnp_TmnCode=89668LJB&vnp_TransactionNo=14974199&vnp_TransactionStatus=00&vnp_TxnRef=MS-HCMC-17481179640000101VN&vnp_SecureHash=1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-execute"
+							],
+							"query": [
+								{
+									"key": "vnp_Amount",
+									"value": "4000000"
+								},
+								{
+									"key": "vnp_BankCode",
+									"value": "NCB"
+								},
+								{
+									"key": "vnp_BankTranNo",
+									"value": "VNP14974199"
+								},
+								{
+									"key": "vnp_CardType",
+									"value": "ATM"
+								},
+								{
+									"key": "vnp_OrderInfo",
+									"value": "Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND"
+								},
+								{
+									"key": "vnp_PayDate",
+									"value": "20250523012110"
+								},
+								{
+									"key": "vnp_ResponseCode",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TmnCode",
+									"value": "89668LJB"
+								},
+								{
+									"key": "vnp_TransactionNo",
+									"value": "14974199"
+								},
+								{
+									"key": "vnp_TransactionStatus",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TxnRef",
+									"value": "MS-HCMC-17481179640000101VN"
+								},
+								{
+									"key": "vnp_SecureHash",
+									"value": "1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{customerAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Parcel",
+			"item": [
+				{
+					"name": "Get all parcels",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/parcels",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Station",
+			"item": [
+				{
+					"name": "Get all stations",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stations"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{customerAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost:7085/api",
+			"type": "string"
+		},
+		{
+			"key": "customerAccessToken",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjpbIkN1c3RvbWVyIiwiU2hvcE93bmVyIl0sImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3NpZCI6IjMiLCJVc2VyTmFtZSI6ImN1c3RvbWVyMSIsInVuaXF1ZV9uYW1lIjoiQ3VzdG9tZXIgMSIsImVtYWlsIjoiY3VzdG9tZXIxQGV4YW1wbGUuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbW9iaWxlcGhvbmUiOiIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIxMi8xMS8yMDI0IiwibmJmIjoxNzMxMzEyMjgyLCJleHAiOjE3MzEzOTg2ODIsImlhdCI6MTczMTMxMjI4Mn0.W8BMXdp1S7YmXG9UeyqdY5eDQosLKReEJW7uLcg7M_c",
+			"type": "string"
+		},
+		{
+			"key": "adminAccessToken",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjAxLzA5LzIwMjQiLCJuYmYiOjE3MjUwOTIyNzksImV4cCI6MTcyNTE3ODY3OSwiaWF0IjoxNzI1MDkyMjc5fQ.ubl4X_0hxzu60v9STgZWzM7Cxk3R_sTGbxpEDjWLLBY",
+			"type": "string"
+		},
+		{
+			"key": "staffAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "test",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "productionUrl",
+			"value": "https://metroshipapi-latest.onrender.com/",
+			"type": "string"
+		}
+	]
+}
