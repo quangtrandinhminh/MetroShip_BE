@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Load environment variables from root folder
+builder.Services.AddAzureAppConfiguration();
 Env.Load();
 string appName = Environment.GetEnvironmentVariable("APP_NAME");
 Console.WriteLine($"Environment: {appName}");
