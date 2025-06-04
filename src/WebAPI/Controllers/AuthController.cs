@@ -16,11 +16,15 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authSevices, IUserService userService)
+        public AuthController(IAuthService authSevices,
+            IUserService userService,
+            IConfiguration configuration)
         {
             _userService = userService;
             _authService = authSevices;
+            _configuration = configuration;
         }
 
         [HttpGet(WebApiEndpoint.Authentication.Hello)]
