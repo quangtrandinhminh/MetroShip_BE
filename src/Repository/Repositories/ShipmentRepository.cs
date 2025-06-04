@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Linq.Expressions;
 using MetroShip.Repository.Base;
 using MetroShip.Repository.Extensions;
@@ -33,23 +35,17 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         public string DepartureStationName { get; set; }
         public string DestinationStationName { get; set; }
-        public IList<ShipmentItineraryDto> ShipmentItinerariesDto { get; set; }
+        //public IList<ShipmentItineraryDto> ShipmentItinerariesDto { get; set; }
     }
 
-    public class ShipmentItineraryDto : ShipmentItinerary
+    public class RouteDto : Route
     {
-        public string RouteId { get; set; }
         public string LineId { get; set; }
         public string LineName { get; set; }
         public string FromStationId { get; set; }
         public string ToStaionId { get; set; }
-        public string FromStationName { get; set; }
         public string Direction { get; set; }
-        public string ToStationName { get; set; }
         public int TravelTimeMin { get; set; }
-        public decimal LengthKm { get; set; }
-        public decimal MetroBasePriceVndPerKm { get; set; }
-        public decimal AvgVelocityKmh { get; set; }
     }
 
     public async Task<PaginatedList<ShipmentDto>>
@@ -82,6 +78,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             BookedAt = s.BookedAt.Value,
             TrackingCode = s.TrackingCode,
             TotalCostVnd = s.TotalCostVnd,
+            ScheduledDateTime = s.ScheduledDateTime,
             DepartureStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.FromStation.StationNameVi)
@@ -100,21 +97,11 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     // get shipment by trackingCode with all information in ShipmentDto
     public async Task<ShipmentDto?> GetShipmentByTrackingCodeAsync(string trackingCode)
     {
-        var shipment = await _context.Shipments
-            .AsSplitQuery()
-            .Include(x => x.Transactions)
-            .Include(x => x.Parcels)
-            .Include(x => x.ShipmentItineraries)
-            .ThenInclude(itinerary => itinerary.Route)
-            .ThenInclude(route => route.MetroLine)
-            .FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
-
-        var shipmentItineraries = _context.ShipmentItineraries
-            .AsNoTracking().Where(x => x.ShipmentId == shipment.Id);
+        var shipment = _context.Shipments.AsNoTracking();
 
         if (shipment == null) return null;
 
-        var shipmentDto = new ShipmentDto
+        var shipmentDto = await shipment.Select(shipment => new ShipmentDto
         {
             // info 
             SenderId = shipment.SenderId,
@@ -139,26 +126,28 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             RefundedAt = shipment.RefundedAt,
             ShipmentStatus = shipment.ShipmentStatus,
             TotalKm = shipment.TotalKm,
-            ShipmentItinerariesDto = shipmentItineraries.Select(itinerary => new ShipmentItineraryDto
+            ShipmentItineraries = shipment.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
                 RouteId = itinerary.RouteId,
-                LineId = itinerary.Route.LineId,
-                LineName = itinerary.Route.MetroLine.LineNameVi,
-                FromStationId = itinerary.Route.FromStationId,
-                ToStaionId = itinerary.Route.ToStationId,
-                FromStationName = itinerary.Route.FromStation.StationNameVi,
-                Direction = itinerary.Route.Direction.ToString(),
-                ToStationName = itinerary.Route.ToStation.StationNameVi,
-                TravelTimeMin = itinerary.Route.TravelTimeMin,
-                LengthKm = itinerary.Route.LengthKm,
-                MetroBasePriceVndPerKm = itinerary.Route.MetroLine.BasePriceVndPerKm,
-                AvgVelocityKmh = itinerary.Route.MetroLine.TotalKm / itinerary.Route.MetroLine.RouteTimeMin.Value,
-            }).ToList(),
-            DepartureStationName = shipmentItineraries
+                LegOrder = itinerary.LegOrder,
+                BasePriceVndPerKm = itinerary.BasePriceVndPerKm,
+                Route = new RouteDto
+                {
+                    LineId = itinerary.Route.LineId,
+                    LineName = itinerary.Route.MetroLine.LineNameVi,
+                    FromStationId = itinerary.Route.FromStationId,
+                    ToStaionId = itinerary.Route.ToStationId,
+                    RouteNameVi = itinerary.Route.RouteNameVi,
+                    Direction = itinerary.Route.Direction.ToString(),
+                    TravelTimeMin = itinerary.Route.TravelTimeMin,
+                    LengthKm = itinerary.Route.LengthKm,
+                }
+            }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
+            DepartureStationName = shipment.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.FromStation.StationNameVi)
                 .FirstOrDefault(),
-            DestinationStationName = shipmentItineraries
+            DestinationStationName = shipment.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.ToStation.StationNameVi)
                 .LastOrDefault(),
@@ -168,9 +157,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             SurchargeFeeVnd = shipment.SurchargeFeeVnd,
             Parcels = shipment.Parcels.ToList(),
             Transactions = shipment.Transactions.ToList(),
-        };
+        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
 
-        Console.WriteLine(shipmentDto);
         return shipmentDto;
     }
 }

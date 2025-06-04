@@ -18,6 +18,7 @@ using MetroShip.Service.BusinessModels;
 using Microsoft.CodeAnalysis;
 using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
+using static MetroShip.Repository.Repositories.ShipmentRepository;
 
 namespace MetroShip.Service.Mapper;
 
@@ -45,15 +46,15 @@ public partial class MapperlyMapper : IMapperlyMapper
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
-    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentRepository.ShipmentDto entity);
+    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentDto entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
     // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
-    public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentRepository.ShipmentDto entity);
+    public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentDto entity);
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
-        PaginatedList<ShipmentRepository.ShipmentDto> entity);
+        PaginatedList<ShipmentDto> entity);
 
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
@@ -77,6 +78,10 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
     public partial RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
+
+    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
+    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
+    public partial RouteResponse MapToRouteResponse(RouteDto entity);
 
     // metroline
     [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]

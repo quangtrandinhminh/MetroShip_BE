@@ -8,9 +8,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
 
     public decimal? SurchargeFeeVnd { get; set; }
 
-    public DateTimeOffset? ScheduledDateTime { get; set; }
-
-    public DateTimeOffset? BookedAt { get; set; }
+    public decimal ShippingFeeVnd { get; set; }
 
     public DateTimeOffset? ApprovedAt { get; set; }
 

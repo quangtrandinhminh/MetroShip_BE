@@ -21,6 +21,7 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Service.ApiModels.Graph;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using MetroShip.Repository.Extensions;
 
 namespace MetroShip.Service.Services;
 
@@ -70,23 +71,55 @@ public class ShipmentService : IShipmentService
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(PaginatedListRequest request)
     {
         _logger.Information("Get all shipments with request: {@request}", request);
-        var shipments = await _shipmentRepository.GetAllPaginatedQueryable(
+        /*var shipments = await _shipmentRepository.GetAllPaginatedQueryable(
                 request.PageNumber, request.PageSize,
                 x => x.DeletedAt == null
-                );
+                );*/
+
+        /*// get all stations for departure and destination
+        var departureStationIds = shipments.Items.Select(x => x.DepartureStationId).Distinct().ToList();
+        var destinationStationIds = shipments.Items.Select(x => x.DestinationStationId).Distinct().ToList();
+        var departureStationsName = _stationRepository.GetAllWithCondition(
+                       x => departureStationIds.Contains(x.Id) && x.DeletedAt == null).Select(x => new
+                       {
+                           // x.Id, x.Name
+                           Id = x.Id,
+                           Name = x.StationNameVi
+                       });
+
+        var destinationStationsName = _stationRepository.GetAllWithCondition(
+            x => destinationStationIds.Contains(x.Id) && x.DeletedAt == null).Select(x => new
+            {
+                // x.Id, x.Name
+                Id = x.Id,
+                Name = x.StationNameVi
+            });
 
         var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+        ShipmentListResponse shipmentResponse = new();
+        foreach (var shipment in shipments.Items)
+        {
+            _logger.Information("Mapping shipment: {@shipment}", shipment);
+            shipmentResponse = shipmentListResponse.Items
+                .FirstOrDefault(x => x.TrackingCode == shipment.TrackingCode);
+
+            shipmentResponse.DepartureStationName = departureStationsName
+                .FirstOrDefault(x => x.Id == shipment.DepartureStationId)?.Name ?? string.Empty;
+
+            shipmentResponse.DestinationStationName = destinationStationsName
+                .FirstOrDefault(x => x.Id == shipment.DestinationStationId)?.Name ?? string.Empty;
+        }*/
+        var shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+            request.PageNumber, request.PageSize);
+
+        var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+
         return shipmentListResponse;
     }
 
     public async Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode)
     {
         _logger.Information("Get shipment by tracking code: {@trackingCode}", trackingCode);
-        /*var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.TrackingCode == trackingCode, false,
-                       x => x.ShipmentItineraries, x => x.Transactions
-                       );*/
-
         var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(trackingCode);
 
         var shipmentResponse = (shipment is not null) ? _mapperlyMapper.MapToShipmentDetailsResponse(shipment) : null;
@@ -251,8 +284,8 @@ public class ShipmentService : IShipmentService
         response.ParcelRequests = request.Parcels;
         foreach (var parcel in request.Parcels)
         {
-           parcel.ChargeableWeight = CalculateHelper.CalculateChargeableWeight(
-               parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
+            parcel.ChargeableWeight = CalculateHelper.CalculateChargeableWeight(
+                parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
 
             parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
         }
