@@ -62,5 +62,13 @@ namespace MetroShip.WebAPI.Controllers
             await _parcelService.ConfirmParcelAsync(parcelId, isRejected);
             return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully.", null));
         }
+
+        [HttpPost(WebApiEndpoint.Parcel.RejectParcel)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> RejectParcelAsync([FromBody] ParcelRejectRequest request)
+        {
+            await _parcelService.RejectParcelAsync(request);
+            return Ok(BaseResponse.OkResponseDto("Parcel rejection processed successfully.", null));
+        }
     }
 }

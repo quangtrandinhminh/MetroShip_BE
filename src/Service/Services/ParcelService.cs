@@ -183,6 +183,71 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
     }
+
+    public async Task RejectParcelAsync(ParcelRejectRequest request)
+    {
+        var parcel = await _parcelRepository.GetAll()
+            .Include(p => p.Shipment)
+            .FirstOrDefaultAsync(p => p.Id == request.ParcelId.ToString());
+
+        if (parcel == null)
+            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+
+        if (parcel.ParcelStatus != ParcelStatusEnum.AwaitingConfirmation)
+            throw new AppException(ErrorCode.BadRequest, "Parcel is not in AwaitingConfirmation status", StatusCodes.Status400BadRequest);
+
+        parcel.ParcelStatus = ParcelStatusEnum.Rejected;
+
+        // Trừ tiền khỏi shipment nếu từ chối
+        parcel.Shipment.TotalCostVnd -= parcel.PriceVnd;
+        if (parcel.Shipment.TotalCostVnd < 0) parcel.Shipment.TotalCostVnd = 0;
+
+        // Ghi lại tracking với lý do từ chối ở Note
+        _parceltrackingRepository.Add(new ParcelTracking
+        {
+            ParcelId = parcel.Id,
+            Status = parcel.ParcelStatus.ToString(),
+            EventTime = CoreHelper.SystemTimeNow,
+            Note = request.RejectReason
+        });
+
+        _shipmentRepository.Update(parcel.Shipment);
+        _parcelRepository.Update(parcel);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Kiểm tra trạng thái toàn bộ parcel trong shipment
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            s => s.Id == parcel.ShipmentId,
+            includeProperties: s => s.Parcels
+        );
+
+        var statuses = shipment.Parcels.Select(p => p.ParcelStatus).ToList();
+
+        if (statuses.All(s => s != ParcelStatusEnum.AwaitingConfirmation))
+        {
+            if (statuses.All(s => s == ParcelStatusEnum.Rejected))
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
+                shipment.RejectedAt = CoreHelper.SystemTimeNow;
+                _logger.LogInformation("Shipment {ShipmentId} rejected.", shipment.Id);
+            }
+            else if (statuses.All(s => s == ParcelStatusEnum.AwaitingPayment))
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.Accepted;
+                shipment.ApprovedAt = CoreHelper.SystemTimeNow;
+                _logger.LogInformation("Shipment {ShipmentId} accepted.", shipment.Id);
+            }
+            else
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.PartiallyConfirmed;
+                shipment.ApprovedAt = CoreHelper.SystemTimeNow;
+                _logger.LogInformation("Shipment {ShipmentId} partially confirmed.", shipment.Id);
+            }
+
+            _shipmentRepository.Update(shipment);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
+    }
 }
 
 

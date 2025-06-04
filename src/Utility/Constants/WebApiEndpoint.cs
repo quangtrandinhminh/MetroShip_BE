@@ -70,6 +70,7 @@
             public const string UpdateShipmentItem = BaseEndpoint;
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
             public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
+            public const string RejectParcel = BaseEndpoint + "/staff/reject/{parcelId}";
         }
 
         public static class Notification
