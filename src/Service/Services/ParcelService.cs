@@ -25,6 +25,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static MetroShip.Utility.Constants.WebApiEndpoint;
 
 namespace MetroShip.Service.Services;
 
@@ -111,7 +112,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         return parcelListResponse;
     }
 
-    public async Task ConfirmParcelAsync(Guid parcelId, bool isRejected)
+    public async Task ConfirmParcelAsync(Guid parcelId)
     {
         var parcel = await _parcelRepository.GetAll()
             .Include(p => p.Shipment)
@@ -125,7 +126,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             throw new AppException(ErrorCode.BadRequest, "Parcel is not in AwaitingConfirmation status",
                 StatusCodes.Status400BadRequest);
 
-        // Update parcel status based on confirmation
+        /*// Update parcel status based on confirmation
         parcel.ParcelStatus = isRejected
             ? ParcelStatusEnum.Rejected
             : ParcelStatusEnum.AwaitingPayment;
@@ -134,7 +135,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             parcel.Shipment.TotalCostVnd -= parcel.PriceVnd;
             if (parcel.Shipment.TotalCostVnd < 0) parcel.Shipment.TotalCostVnd = 0;
-        }
+        }*/
 
         _parceltrackingRepository.Add(new ParcelTracking
         {
@@ -148,40 +149,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Kiểm tra trạng thái của tất cả parcel trong shipment
-        var shipment = await _shipmentRepository.GetSingleAsync(s => s.Id == parcel.ShipmentId,
-                       includeProperties: s => s.Parcels);
-        var latestParcelStatuses = shipment.Parcels
-            .Select(p => p.ParcelStatus)
-            .ToList();
-
-        if (latestParcelStatuses.All(_ => _ != ParcelStatusEnum.AwaitingConfirmation))
-        {
-            var allRejected = latestParcelStatuses.All(s => s == ParcelStatusEnum.Rejected);
-            var allAccepted = latestParcelStatuses.All(s => s == ParcelStatusEnum.AwaitingPayment);
-            var anyRejected = latestParcelStatuses.Any(s => s == ParcelStatusEnum.Rejected);
-
-            if (allAccepted)
-            {
-                shipment.ShipmentStatus = ShipmentStatusEnum.Accepted;
-                shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} transitioned to Accepted via trigger {Trigger}", shipment.Id, ShipmentTrigger.StaffConfirmAllParcels);
-            }
-            else if (allRejected)
-            {
-                shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
-                shipment.RejectedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} transitioned to Rejected via trigger {Trigger}", shipment.Id, ShipmentTrigger.StaffRejectAllParcels);
-            }
-            else if (anyRejected)
-            {
-                shipment.ShipmentStatus = ShipmentStatusEnum.PartiallyConfirmed;
-                shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} transitioned to PartiallyConfirmed via trigger {Trigger}", shipment.Id, ShipmentTrigger.StaffConfirmSomeParcels);
-            }
-
-            _shipmentRepository.Update(shipment);
-            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        }
+        await HandleShipmentStatusByConfirmation(parcel.ShipmentId);
     }
 
     public async Task RejectParcelAsync(ParcelRejectRequest request)
@@ -216,8 +184,13 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Kiểm tra trạng thái toàn bộ parcel trong shipment
+        await HandleShipmentStatusByConfirmation(parcel.ShipmentId);
+    }
+
+    private async Task HandleShipmentStatusByConfirmation (string shipmentId)
+    {
         var shipment = await _shipmentRepository.GetSingleAsync(
-            s => s.Id == parcel.ShipmentId,
+            s => s.Id == shipmentId,
             includeProperties: s => s.Parcels
         );
 

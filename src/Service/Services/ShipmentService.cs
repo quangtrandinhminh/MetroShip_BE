@@ -121,8 +121,16 @@ public class ShipmentService : IShipmentService
     {
         _logger.Information("Get shipment by tracking code: {@trackingCode}", trackingCode);
         var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(trackingCode);
+        if (shipment is null)
+        {
+            return null;
+            /*throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);*/
+        }
 
-        var shipmentResponse = (shipment is not null) ? _mapperlyMapper.MapToShipmentDetailsResponse(shipment) : null;
+        var shipmentResponse = _mapperlyMapper.MapToShipmentDetailsResponse(shipment);
         return shipmentResponse;
     }
 

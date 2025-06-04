@@ -35,17 +35,11 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         public string DepartureStationName { get; set; }
         public string DestinationStationName { get; set; }
-        //public IList<ShipmentItineraryDto> ShipmentItinerariesDto { get; set; }
     }
 
     public class RouteDto : Route
     {
-        public string LineId { get; set; }
         public string LineName { get; set; }
-        public string FromStationId { get; set; }
-        public string ToStaionId { get; set; }
-        public string Direction { get; set; }
-        public int TravelTimeMin { get; set; }
     }
 
     public async Task<PaginatedList<ShipmentDto>>
@@ -136,9 +130,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     LineId = itinerary.Route.LineId,
                     LineName = itinerary.Route.MetroLine.LineNameVi,
                     FromStationId = itinerary.Route.FromStationId,
-                    ToStaionId = itinerary.Route.ToStationId,
+                    ToStationId = itinerary.Route.ToStationId,
                     RouteNameVi = itinerary.Route.RouteNameVi,
-                    Direction = itinerary.Route.Direction.ToString(),
+                    Direction = itinerary.Route.Direction,
                     TravelTimeMin = itinerary.Route.TravelTimeMin,
                     LengthKm = itinerary.Route.LengthKm,
                 }
@@ -155,8 +149,28 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             ShippingFeeVnd = shipment.ShippingFeeVnd,
             InsuranceFeeVnd = shipment.InsuranceFeeVnd,
             SurchargeFeeVnd = shipment.SurchargeFeeVnd,
-            Parcels = shipment.Parcels.ToList(),
-            Transactions = shipment.Transactions.ToList(),
+            Parcels = shipment.Parcels
+            .Select(parcel => new Parcel
+            {
+                Id = parcel.Id,
+                ParcelCode = parcel.ParcelCode,
+                WeightKg = parcel.WeightKg,
+                LengthCm = parcel.LengthCm,
+                WidthCm = parcel.WidthCm,
+                HeightCm = parcel.HeightCm,
+                Description = parcel.Description,
+                ParcelStatus = parcel.ParcelStatus,
+                PriceVnd = parcel.PriceVnd,
+                ParcelCategoryId = parcel.ParcelCategoryId,
+                ParcelCategory = new ParcelCategory
+                {
+                    Id = parcel.ParcelCategory.Id,
+                    CategoryName = parcel.ParcelCategory.CategoryName,
+                    Description = parcel.ParcelCategory.Description,
+                },
+            })
+            .ToList(),
+            //Transactions = shipment.Transactions.ToList(),
         }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
 
         return shipmentDto;

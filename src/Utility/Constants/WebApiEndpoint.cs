@@ -39,9 +39,11 @@
             private const string BaseEndpoint = "/" + AreaName + "/parcels";
             public const string GetParcels = BaseEndpoint;
             public const string GetParcelById = BaseEndpoint + "/{id}";
-            public const string CreateParcel = BaseEndpoint;
-            public const string UpdateParcel = BaseEndpoint + "/{id}";
-            public const string DeleteParcel = BaseEndpoint + "/{id}";
+            public const string CreateShipmentItem = BaseEndpoint;
+            public const string UpdateShipmentItem = BaseEndpoint;
+            public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
+            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
+            public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
         }
 
         public static class ShipmentEndpoint
@@ -59,18 +61,6 @@
             public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
             public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
-        }
-
-        public static class Parcel
-        {
-            private const string BaseEndpoint = "/" + AreaName + "/parcels";
-            public const string GetParcels = BaseEndpoint;
-            public const string GetParcelById = BaseEndpoint + "/{id}";
-            public const string CreateShipmentItem = BaseEndpoint;
-            public const string UpdateShipmentItem = BaseEndpoint;
-            public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
-            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
-            public const string RejectParcel = BaseEndpoint + "/staff/reject/{parcelId}";
         }
 
         public static class Notification
