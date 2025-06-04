@@ -24,6 +24,8 @@ public partial class ParcelTracking : BaseEntity
 
     public DateTimeOffset EventTime { get; set; }
 
+    public string? Note { get; set; }
+
     [ForeignKey(nameof(ParcelId))]
     [InverseProperty(nameof(Parcel.ParcelTrackings))]
     public virtual Parcel Parcel { get; set; }

@@ -14,6 +14,7 @@ public interface IBaseRepository<T> where T : class, new()
         int pageSize,
         Expression<Func<T, bool>> predicate = null,
         Expression<Func<T, object>>? orderBy = null,
+        bool isAscending = false,
         params Expression<Func<T, object>>[]? includeProperties);
     IQueryable<T> GetAllWithCondition(
         Expression<Func<T, bool>> predicate = null,

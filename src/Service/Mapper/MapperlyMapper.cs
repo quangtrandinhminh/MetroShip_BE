@@ -85,11 +85,22 @@ public partial class MapperlyMapper : IMapperlyMapper
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
+
+    [MapProperty(nameof(Parcel.Id), nameof(ParcelResponse.ParcelId))]
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
+    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
+
+    // parcel category
+    public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
+    public partial void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
+    public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+    public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
+    public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
+    public partial TransactionResponse MapToTransactionResponse(Transaction transaction);
 
     public int? MapToVoucherId(int? voucherId)
     {
@@ -132,70 +143,6 @@ public partial class MapperlyMapper : IMapperlyMapper
         return entity.Select(x => x.Role.NormalizedName).ToList();
     }
 
-    /// <summary>
-    /// mapper for parcel category
-    /// </summary>
-    /// <param name="request"></param>
-    /// <returns></returns>
-    public ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request)
-    {
-        return new ParcelCategory
-        {
-            Id = Guid.NewGuid().ToString(),
-            CategoryName = request.CategoryName,
-            Description = request.Description,
-            IsBulk = request.IsBulk,
-            WeightLimitKg = request.WeightLimitKg,
-            VolumeLimitCm3 = request.VolumeLimitCm3,
-            LengthLimitCm = request.LengthLimitCm,
-            WidthLimitCm = request.WidthLimitCm,
-            HeightLimitCm = request.HeightLimitCm,
-            IsActive = request.IsActive,
-            CreatedAt = DateTime.UtcNow
-        };
-    }
-
-    public void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity)
-    {
-        entity.CategoryName = request.CategoryName;
-        entity.Description = request.Description;
-        entity.IsBulk = request.IsBulk;
-        entity.WeightLimitKg = request.WeightLimitKg;
-        entity.VolumeLimitCm3 = request.VolumeLimitCm3;
-        entity.LengthLimitCm = request.LengthLimitCm;
-        entity.WidthLimitCm = request.WidthLimitCm;
-        entity.HeightLimitCm = request.HeightLimitCm;
-        entity.IsActive = request.IsActive;
-    }
-
-    public ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity)
-    {
-        return new ParcelCategoryResponse
-        {
-            Id = Guid.Parse(entity.Id),
-            CategoryName = entity.CategoryName,
-            Description = entity.Description,
-            IsBulk = entity.IsBulk,
-            WeightLimitKg = entity.WeightLimitKg,
-            VolumeLimitCm3 = entity.VolumeLimitCm3,
-            LengthLimitCm = entity.LengthLimitCm,
-            WidthLimitCm = entity.WidthLimitCm,
-            HeightLimitCm = entity.HeightLimitCm,
-            IsActive = entity.IsActive
-        };
-    }
-
-    public PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList)
-    {
-        return new PaginatedListResponse<ParcelCategoryResponse>
-        {
-            Items = entityList.Items.Select(MapToParcelCategoryResponse).ToList(),
-            PageNumber = entityList.PageNumber,
-            TotalCount = entityList.TotalCount,
-            TotalPages = entityList.TotalPages
-        };
-    }
-
     public EnumResponse MapToEnumResponse(Enum enumValue)
     {
         return new EnumResponse
@@ -204,8 +151,4 @@ public partial class MapperlyMapper : IMapperlyMapper
             Value = enumValue.ToString(),
         };
     }
-
-    public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
-
-    public partial TransactionResponse MapToTransactionResponse(Transaction transaction);
 }
