@@ -83,11 +83,17 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
             .Matches(@"^\d{10,15}$")
             .WithMessage(ResponseMessageIdentity.PHONENUMBER_LENGTH_INVALID);
 
+        RuleFor(x => x.RecipientEmail)
+            .EmailAddress()
+            .WithMessage(ResponseMessageIdentity.EMAIL_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.RecipientEmail));
+
         RuleFor(x => x.RecipientNationalId)
             // .NotEmpty()
             // .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_REQUIRED)
             .Matches(@"^\d{9,12}$")
-            .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_INAVLID);
+            .WithMessage(ResponseMessageShipment.RECIPIENT_NATIONAL_ID_INAVLID)
+            .When(x => !string.IsNullOrEmpty(x.RecipientNationalId));
 
         RuleFor(x => x.TotalCostVnd)
             .NotEmpty()

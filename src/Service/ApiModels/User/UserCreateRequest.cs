@@ -20,5 +20,5 @@ public sealed record UserCreateRequest : BankInfoRequest
     public DateTimeOffset? BirthDate { get; set; }
 
     [Required(ErrorMessage = ResponseMessageIdentity.ROLES_REQUIRED)]
-    public IList<int> Role { get; set; }
+    public int Role { get; set; }
 }

@@ -27,13 +27,13 @@ public static class TrackingCodeGenerator
         int seq = maxSeqPerDayAndRgn + 1;
         int check = seq % 7;
         // create timestamp for shipmentDate
-        var timestamp = shipmentDate.ToUnixTimeSeconds();
+        //var timestamp = shipmentDate.ToUnixTimeSeconds();
 
         // 2) Build tracking code via interpolation
         return $"{DefaultAppCode}-" +                           // e.g. "MS"
                $"{regionCode.ToUpperInvariant()}-" +            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
-               $"{timestamp}" +                                 // e.g. "20230519" :contentReference[oaicite:2]{index=2}
-               $"{seq:D5}" +                                    // zero-padded 5-digit sequence
+               $"{shipmentDate:yyyyMMddHHmm}" +                     // e.g. "20230519" :contentReference[oaicite:2]{index=2}
+               $"{seq:D3}" +                                    // zero-padded 3-digit sequence
                $"{check:D2}" +                                  // zero-padded 2-digit check-digit
                $"{DefaultCountryName}";                         // e.g. "VN"
     }
