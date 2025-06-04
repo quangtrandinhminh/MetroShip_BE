@@ -51,6 +51,7 @@ namespace MetroShip.Repository.Base
             int pageSize,
             Expression<Func<T, bool>> predicate = null,
             Expression<Func<T, object>>? orderBy = null,
+            bool isAscending = false,
             params Expression<Func<T, object>>[]? includeProperties
             )
         {
@@ -69,6 +70,11 @@ namespace MetroShip.Repository.Base
             // Apply the predicate
             queryable = predicate != null ? queryable.Where(predicate) : queryable;
             queryable = orderBy != null ? queryable.OrderByDescending(orderBy) : queryable.OrderByDescending(p => p.CreatedAt);
+            // Apply ascending order if specified
+            if (isAscending)
+            {
+                queryable = queryable.OrderBy(orderBy);
+            }
 
             // Create the paginated list with the projected query
             return await PaginatedList<T>.CreateAsync(queryable, pageNumber, pageSize);

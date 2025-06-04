@@ -172,6 +172,7 @@ public class ShipmentService : IShipmentService
 
         // map shipment request to shipment entity
         var shipment = _mapperlyMapper.MapToShipmentEntity(request);
+        shipment.SenderId = customerId;
 
         // quantity of booked shipment at region per date
         var quantity = _shipmentRepository.GetQuantityByBookedAtAndRegion(
@@ -193,12 +194,11 @@ public class ShipmentService : IShipmentService
             {
                 ParcelId = parcel.Id,
                 Status = ParcelStatusEnum.AwaitingConfirmation.ToString(),
+                EventTime = CoreHelper.SystemTimeNow,
             });
 
             index++;
         }
-
-        shipment.SenderId = customerId;
 
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);

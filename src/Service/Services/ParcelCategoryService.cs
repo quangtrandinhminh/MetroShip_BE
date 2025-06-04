@@ -41,8 +41,8 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         var paginatedCategories = await _parcelCategoryRepository.GetAllPaginatedQueryable(
             pageNumber: 1,
             pageSize: 10,
-            predicate,
-            c => c.CreatedAt // default order
+            predicate: predicate,
+            orderBy: c => c.CreatedAt // default order
         );
 
         return _mapper.MapToParcelCategoryPaginatedList(paginatedCategories);
