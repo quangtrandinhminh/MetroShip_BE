@@ -65,6 +65,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         // Project into your DTO, grabbing only the first & last itinerary
         var projected = q.Select(s => new ShipmentDto
         {
+            Id = s.Id,
             SenderName = s.SenderName,
             SenderPhone = s.SenderPhone,
             RecipientName = s.RecipientName,
@@ -98,6 +99,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         var shipmentDto = await shipment.Select(shipment => new ShipmentDto
         {
             // info 
+            Id = shipment.Id,
             SenderId = shipment.SenderId,
             SenderName = shipment.SenderName,
             SenderPhone = shipment.SenderPhone,

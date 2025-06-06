@@ -22,8 +22,7 @@ public static class TrackingCodeGenerator
     )
     {
         // 1) Compute sequence and check-digit
-        // create timestamp for shipmentDate
-        //var timestamp = shipmentDate.ToUnixTimeSeconds();
+        
         int randomDigits = 3;
         string datePart = shipmentDate.ToString("yyyyMMddHHmm");
         string randomPart = GenerateRandomString(randomDigits);
