@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MetroShip.Repository.Models.Identity;
 
-public class UserEntity : IdentityUser<string>
+public class UserEntity : IdentityUser
 {
     public UserEntity()
     {
@@ -67,9 +67,14 @@ public class UserEntity : IdentityUser<string>
     public override string ConcurrencyStamp { get => base.ConcurrencyStamp; set => base.ConcurrencyStamp = value; }
 }
 
-public class RoleEntity : IdentityRole<string>
+public class RoleEntity : IdentityRole
 {
+    public RoleEntity()
+    {
+        Id = Guid.NewGuid().ToString();
+    }
     public virtual ICollection<UserRoleEntity> UserRoles { get; set; }
+    
 
     [NotMapped]
     public override string ConcurrencyStamp { get => base.ConcurrencyStamp; set => base.ConcurrencyStamp = value; }

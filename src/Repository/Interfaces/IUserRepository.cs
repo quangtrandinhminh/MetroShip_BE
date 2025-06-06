@@ -19,5 +19,7 @@ namespace MetroShip.Repository.Interfaces
             Expression<Func<UserEntity, bool>> predicate = null,
             Expression<Func<UserEntity, object>>? orderBy = null,
             params Expression<Func<UserEntity, object>>[]? includeProperties);
+
+        Task AddUserToRoleAsync(string userId, List<string> lisRoleId, CancellationToken cancellationToken = default);
     }
 }

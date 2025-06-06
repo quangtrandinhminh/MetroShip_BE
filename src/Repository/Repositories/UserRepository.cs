@@ -9,7 +9,7 @@ using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
 namespace MetroShip.Repository.Repositories
 {
-    public class UserRepository : UserStore<UserEntity, RoleEntity, AppDbContext, string>, IUserRepository
+    public class UserRepository : UserStore<UserEntity, RoleEntity, AppDbContext>, IUserRepository
     {
         private readonly AppDbContext _context;
 
@@ -60,8 +60,11 @@ namespace MetroShip.Repository.Repositories
                     {
                         queryable = queryable.Include("UserRoles.Role");
                     }
-
-                    queryable = queryable.Include(navigationPropertyPath);
+                    else
+                    {
+                        // For other navigation properties, use the provided expression
+                        queryable = queryable.Include(navigationPropertyPath);
+                    }
                 }
             }
 
@@ -72,7 +75,6 @@ namespace MetroShip.Repository.Repositories
             // Create the paginated list with the projected query
             var paginatedList = await PaginatedList<UserEntity>.CreateAsync(queryable, pageNumber, pageSize);
             return paginatedList;
-
         }
 
         public async Task<IdentityResult> CreateUserAsync(UserEntity user, CancellationToken cancellationToken = default)
@@ -115,6 +117,22 @@ namespace MetroShip.Repository.Repositories
         public async Task<UserEntity?> GetUserByIdAsync(object userId)
         {
             return await _context.Users.FindAsync(userId);
+        }
+
+        public async Task AddUserToRoleAsync(string userId, List<string> lisRoleId, CancellationToken cancellationToken = default)
+        {
+            var userRoles = new List<UserRoleEntity>();
+            foreach (var roleId in lisRoleId)
+            {
+                var userRole = new UserRoleEntity
+                {
+                    UserId = userId,
+                    RoleId = roleId,
+                };
+                userRoles.Add(userRole);
+            }
+
+            await Context.UserRoles.AddRangeAsync(userRoles, cancellationToken);
         }
     }
 }

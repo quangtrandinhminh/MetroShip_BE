@@ -143,9 +143,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     }
 
     // role entity list to role name list<string>
-    public IList<string?> MapRoleToRoleName(IEnumerable<UserRoleEntity> entity)
+    public IList<string?> MapRoleToRoleName(IList<RoleEntity> entity)
     {
-        return entity.Select(x => x.Role.NormalizedName).ToList();
+        return entity.Select(x => x.Name).ToList();
     }
 
     public EnumResponse MapToEnumResponse(Enum enumValue)

@@ -6,6 +6,7 @@ namespace MetroShip.Service.ApiModels.Shipment;
 
 public record ShipmentListResponse
 {
+    public string Id { get; set; }
     public string TrackingCode { get; set; }
     public string DepartureStationName { get; set; }
     public string DestinationStationName { get; set; }

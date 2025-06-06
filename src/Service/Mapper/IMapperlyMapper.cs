@@ -47,7 +47,7 @@ public interface IMapperlyMapper
     RouteResponse MapToRouteResponse(Route entity);
     RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
 
-    IList<string?> MapRoleToRoleName(IEnumerable<UserRoleEntity> entity);
+    IList<string?> MapRoleToRoleName(IList<RoleEntity> entity);
 
     // parcel category
     ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);

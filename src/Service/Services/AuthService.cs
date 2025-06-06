@@ -129,9 +129,10 @@ namespace MetroShip.Service.Services
                 account.SecurityStamp = Guid.NewGuid().ToString();
                 account.OTP = GenerateOTP();
                 await _userRepository.CreateUserAsync(account, cancellationToken);
-
+                var roleEntity = await _roleManager.FindByNameAsync(UserRoleEnum.Customer.ToString());
+                var roleIds = new List<string> { roleEntity.Id };
+                await _userRepository.AddUserToRoleAsync(account.Id, roleIds, cancellationToken);
                 var count = await _userRepository.SaveChangeAsync();
-                await _userManager.AddToRoleAsync(account, UserRoleEnum.Customer.ToString());
 
                 if (count > 0)
                 {
