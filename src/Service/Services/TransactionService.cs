@@ -76,8 +76,8 @@ public class TransactionService : ITransactionService
         }
 
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Accepted
-            || shipment.ShipmentStatus != ShipmentStatusEnum.PartiallyConfirmed)
+        if (shipment.ShipmentStatus is not (ShipmentStatusEnum.Accepted 
+            or ShipmentStatusEnum.PartiallyConfirmed))
         {
             throw new AppException(
                 ErrorCode.BadRequest,
