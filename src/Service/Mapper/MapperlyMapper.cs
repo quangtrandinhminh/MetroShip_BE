@@ -91,7 +91,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
 
-    [MapProperty(nameof(Parcel.Id), nameof(ParcelResponse.ParcelId))]
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
     public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
 

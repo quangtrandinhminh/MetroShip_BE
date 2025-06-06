@@ -66,14 +66,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         var projected = q.Select(s => new ShipmentDto
         {
             Id = s.Id,
-            SenderName = s.SenderName,
-            SenderPhone = s.SenderPhone,
-            RecipientName = s.RecipientName,
-            RecipientPhone = s.RecipientPhone,
-            BookedAt = s.BookedAt.Value,
             TrackingCode = s.TrackingCode,
-            TotalCostVnd = s.TotalCostVnd,
-            ScheduledDateTime = s.ScheduledDateTime,
             DepartureStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.FromStation.StationNameVi)
@@ -81,7 +74,17 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             DestinationStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.ToStation.StationNameVi)
-                .LastOrDefault()
+                .LastOrDefault(),
+
+            SenderName = s.SenderName,
+            SenderPhone = s.SenderPhone,
+            RecipientName = s.RecipientName,
+            RecipientPhone = s.RecipientPhone,
+
+            ShipmentStatus = s.ShipmentStatus,
+            BookedAt = s.BookedAt.Value,
+            TotalCostVnd = s.TotalCostVnd,
+            ScheduledDateTime = s.ScheduledDateTime,
         });
 
         // Use your existing paging helper on the projection
@@ -124,6 +127,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TotalKm = shipment.TotalKm,
             ShipmentItineraries = shipment.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
+                Id = itinerary.Id,
                 RouteId = itinerary.RouteId,
                 LegOrder = itinerary.LegOrder,
                 BasePriceVndPerKm = itinerary.BasePriceVndPerKm,
@@ -156,6 +160,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             {
                 Id = parcel.Id,
                 ParcelCode = parcel.ParcelCode,
+                ShipmentId = parcel.ShipmentId,
                 WeightKg = parcel.WeightKg,
                 LengthCm = parcel.LengthCm,
                 WidthCm = parcel.WidthCm,

@@ -6,7 +6,7 @@ namespace MetroShip.Service.ApiModels.Parcel;
 
 public class ParcelResponse
 {
-    public string ParcelId { get; set; }
+    public string Id { get; set; }
     public string ParcelCode { get; set; }
     public string ShipmentId { get; set; }
     public decimal VolumeCm3 { get; set; }
