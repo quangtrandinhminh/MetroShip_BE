@@ -76,8 +76,14 @@ namespace MetroShip.WebAPI.Controllers
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
         public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
         {
-            await transactionService.ExecuteVnPayPayment(model);
-            return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
+            var result = await transactionService.ExecuteVnPayPayment(model);
+            // Redirect to the payment result page
+            if (string.IsNullOrEmpty(result))
+            {
+                return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
+            }
+
+            return Redirect(result);
         }
 
         [AllowAnonymous]

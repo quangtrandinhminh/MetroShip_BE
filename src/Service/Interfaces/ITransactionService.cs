@@ -10,6 +10,6 @@ namespace MetroShip.Service.Interfaces;
 public interface ITransactionService
 {
     Task<string> CreateVnPayTransaction(TransactionRequest request);
-    Task ExecuteVnPayPayment(VnPayCallbackModel model);
+    Task<string?> ExecuteVnPayPayment(VnPayCallbackModel model);
     Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request);
 }

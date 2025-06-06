@@ -108,11 +108,11 @@ namespace MetroShip.Service.Services
             }
 
             // Handle the response based on the VNPay response code
-            if (vnpResponseCode != "00") // Success
+            /*if (vnpResponseCode != "00") // Success
             {
                 throw new AppException(HttpResponseCodeConstants.BAD_REQUEST,
                     $"Payment failed with response code: {vnpResponseCode}", StatusCodes.Status400BadRequest);
-            }
+            }*/
 
             // Build the PaymentId by reconstructing the query string from model properties
             /*var queryParams = new List<string>();
@@ -128,7 +128,7 @@ namespace MetroShip.Service.Services
 
             return new VnPaymentResponse()
             {
-                Success = true,
+                Success = vnpResponseCode == "00", // Check if the response code indicates success
                 PaymentMethod = PaymentMethodEnum.VnPay.ToString(),
                 OrderDescription = vnpOrderInfo,
                 OrderId = vnpOrderIdStr,

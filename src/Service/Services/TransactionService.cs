@@ -14,6 +14,7 @@ using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Serilog;
 using System.Linq.Expressions;
 using System.Net;
@@ -94,6 +95,7 @@ public class TransactionService : ITransactionService
             transaction.PaymentStatus = PaymentStatusEnum.Pending;
             transaction.PaymentAmount = shipment.TotalCostVnd;
             transaction.TransactionType = TransactionTypeEnum.ShipmentCost;
+            transaction.Description = JsonConvert.SerializeObject(request);
             shipment.Transactions.Add(transaction);
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -104,9 +106,10 @@ public class TransactionService : ITransactionService
         return paymentUrl;
     }
 
-    public async Task ExecuteVnPayPayment(VnPayCallbackModel model)
+    public async Task<string?> ExecuteVnPayPayment(VnPayCallbackModel model)
     {
         _logger.Information("Executing VnPay payment with context: {context}", model);
+        string response = null;
         var vnPaymentResponse = await _vnPayService.PaymentExecute(model);
         if (vnPaymentResponse == null)
         {
@@ -127,6 +130,7 @@ public class TransactionService : ITransactionService
                 StatusCodes.Status400BadRequest);
         }
 
+        // Get only the transaction that is pending for shipment cost
         var transaction = shipment.Transactions
             .FirstOrDefault(x => x.TransactionType == TransactionTypeEnum.ShipmentCost
             && x.PaymentStatus == PaymentStatusEnum.Pending
@@ -139,27 +143,56 @@ public class TransactionService : ITransactionService
                 StatusCodes.Status400BadRequest);
         }
 
+        // Deserialize the transaction request from the transaction description for return URLs
+        var transactionRequest = JsonConvert
+            .DeserializeObject<TransactionRequest>(transaction.Description);
+
+        if (transactionRequest == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Invalid transaction request data, cannot execute",
+            StatusCodes.Status400BadRequest);
+        }
+
         // Update the shipment status based on the payment response
         if (vnPaymentResponse.VnPayResponseCode == "00")
         {
+            _logger.Information("Payment successful for shipment: {shipmentId}", shipment.Id);
             shipment.ShipmentStatus = ShipmentStatusEnum.Paid;
             shipment.PaidAt = CoreHelper.SystemTimeNow;
 
             transaction.PaymentStatus = PaymentStatusEnum.Paid;
-            transaction.PaymentTrackingId = vnPaymentResponse.TransactionId;
-            transaction.PaymentTime = DateTimeOffset.ParseExact(
-                vnPaymentResponse.PaymentTime,
-                "yyyyMMddHHmmss",
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.AssumeUniversal
-            ).ToUniversalTime();
-            transaction.PaymentCurrency = "VND";
             await HandleShipmentParcelTransaction(shipment);
-            transaction.PaymentDate = CoreHelper.SystemTimeNow;
-            _shipmentRepository.Update(shipment);
+            response = transactionRequest.ReturnUrl;
+        }
+        else if (vnPaymentResponse.VnPayResponseCode == "24")
+        {
+            _logger.Information("Payment cancelled for shipment: {shipmentId}", shipment.Id);
+            transaction.PaymentStatus = PaymentStatusEnum.Cancelled;
+            response = transactionRequest.CancelUrl;
+        }
+        else
+        {
+            _logger.Error("Payment failed for shipment: {shipmentId} with response code: {responseCode}",
+                               shipment.Id, vnPaymentResponse.VnPayResponseCode);
+            transaction.PaymentStatus = PaymentStatusEnum.Failed;
+            response = transactionRequest.CancelUrl;
         }
 
+        transaction.PaymentTrackingId = vnPaymentResponse.TransactionId;
+        transaction.PaymentTime = DateTimeOffset.ParseExact(
+            vnPaymentResponse.PaymentTime,
+            "yyyyMMddHHmmss",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.AssumeUniversal
+        ).ToUniversalTime();
+        transaction.PaymentCurrency = "VND";
+        transaction.Description = JsonConvert.SerializeObject(vnPaymentResponse);
+        transaction.PaymentDate = CoreHelper.SystemTimeNow;
+        _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        return response;
     }
 
     public async Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request)
