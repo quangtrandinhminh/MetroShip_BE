@@ -183,12 +183,12 @@ public class ShipmentService : IShipmentService
         shipment.SenderId = customerId;
 
         // quantity of booked shipment at region per date
-        var quantity = _shipmentRepository.GetQuantityByBookedAtAndRegion(
-            CoreHelper.SystemTimeNow.Date, departureStation.Region.RegionCode);
+        // var quantity = _shipmentRepository.GetQuantityByBookedAtAndRegion(
+        //     CoreHelper.SystemTimeNow.Date, departureStation.Region.RegionCode);
 
         // generate shipment tracking code
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
-            departureStation.Region.RegionCode, shipment.ScheduledDateTime.Value, quantity);
+            departureStation.Region.RegionCode, shipment.ScheduledDateTime.Value);
 
         // foreach parcel, set shipment id and generate parcel code
         int index = 0;

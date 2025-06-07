@@ -35,6 +35,8 @@ public partial class Transaction : BaseEntity
 
     public TransactionTypeEnum TransactionType { get; set; }
 
+    public string? Description { get; set; }
+
     [ForeignKey(nameof(PaidById))]
     public virtual UserEntity? PaidBy { get; set; }
 

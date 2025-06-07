@@ -15,27 +15,26 @@ public static class TrackingCodeGenerator
     /// </summary>
     /// <param name="regionCode">The region code of departure station</param>
     /// <param name="shipmentDate">The date that shipment is booked</param>
-    /// <param name="maxSeqPerDayAndRgn">Number of shipments per day and region</param>
     /// <returns> E.g: MS-HCMC-2505190000103VN </returns>
     public static string GenerateShipmentTrackingCode(
         string regionCode,
-        DateTimeOffset shipmentDate,
-        int maxSeqPerDayAndRgn
+        DateTimeOffset shipmentDate
     )
     {
         // 1) Compute sequence and check-digit
-        int seq = maxSeqPerDayAndRgn + 1;
-        int check = seq % 7;
-        // create timestamp for shipmentDate
-        //var timestamp = shipmentDate.ToUnixTimeSeconds();
+        
+        int randomDigits = 3;
+        string datePart = shipmentDate.ToString("yyyyMMddHHmm");
+        string randomPart = GenerateRandomString(randomDigits);
 
         // 2) Build tracking code via interpolation
         return $"{DefaultAppCode}-" +                           // e.g. "MS"
                $"{regionCode.ToUpperInvariant()}-" +            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
                $"{shipmentDate:yyyyMMddHHmm}" +                     // e.g. "20230519" :contentReference[oaicite:2]{index=2}
-               $"{seq:D3}" +                                    // zero-padded 3-digit sequence
-               $"{check:D2}" +                                  // zero-padded 2-digit check-digit
-               $"{DefaultCountryName}";                         // e.g. "VN"
+               //$"{seq:D3}" +                                    // zero-padded 3-digit sequence
+               //$"{check:D2}" +                                  // zero-padded 2-digit check-digit
+               $"{randomPart}";                                 // e.g. "103" :contentReference[oaicite:2]{index=2}
+               //$"{DefaultCountryName}";                         // e.g. "VN"
     }
 
     /// <summary>
@@ -65,5 +64,13 @@ public static class TrackingCodeGenerator
 
         // Return the base64 string of the QR code image
         return $"data:image/png;base64,{base64String}";
+    }
+
+    private static string GenerateRandomString(int length)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new Random();
+        return new string(Enumerable.Repeat(chars, length)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
     }
 }

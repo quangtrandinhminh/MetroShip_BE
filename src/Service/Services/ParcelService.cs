@@ -126,16 +126,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             throw new AppException(ErrorCode.BadRequest, "Parcel is not in AwaitingConfirmation status",
                 StatusCodes.Status400BadRequest);
 
-        /*// Update parcel status based on confirmation
-        parcel.ParcelStatus = isRejected
-            ? ParcelStatusEnum.Rejected
-            : ParcelStatusEnum.AwaitingPayment;
-
-        if (isRejected)
-        {
-            parcel.Shipment.TotalCostVnd -= parcel.PriceVnd;
-            if (parcel.Shipment.TotalCostVnd < 0) parcel.Shipment.TotalCostVnd = 0;
-        }*/
+        parcel.ParcelStatus = ParcelStatusEnum.AwaitingPayment;
 
         _parceltrackingRepository.Add(new ParcelTracking
         {

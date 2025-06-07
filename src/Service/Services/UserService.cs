@@ -17,6 +17,7 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using MetroShip.Service.Validations;
 using Microsoft.EntityFrameworkCore;
+using Twilio.Rest.Api.V2010.Account;
 
 namespace MetroShip.Service.Services;
 
@@ -28,7 +29,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly UserManager<UserEntity> _userManager = serviceProvider.GetRequiredService<UserManager<UserEntity>>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-    private readonly UserValidator _userValidator = new UserValidator();
+    private readonly UserValidator _userValidator = new();
     private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
 
@@ -36,36 +37,33 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     {
         _logger.Information($"Get all users by role {role.ToString()}");
         Expression<Func<UserEntity, bool>> predicate = v => v.DeletedTime == null;
+
+        List<RoleEntity> roleEntity;
         if (role != null)
         {
             predicate = predicate.And(x => x.UserRoles.Any(y => y.Role.Name == role.ToString()));
+            roleEntity = await _roleManager.Roles.Where(x => x.Name == role.ToString()).ToListAsync();
         }
+        else
+        {
+            roleEntity = await _roleManager.Roles.ToListAsync();
+        }
+
         var users = await _userRepository.GetAllPaginatedQueryable(
             pageNumber, pageSize,
             predicate, null, e => e.UserRoles);
 
-        return _mapper.MapToUserResponsePaginatedList(users);
+        var userResponse = _mapper.MapToUserResponsePaginatedList(users);
+        foreach (var user in userResponse.Items)
+        {
+            user.Role = _mapper.MapRoleToRoleName(roleEntity);
+        }
+        return userResponse;
     }
 
     public async Task CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default)
     {
         _logger.Information("Create user {@request}", request);
-        /*_userValidator.ValidateUserCreateRequest(request);
-        var existingUser = await _userRepository.GetSingleAsync(u => u.UserName == request.UserName);
-        existingUser ??= await _userRepository.GetSingleAsync(u => u.Email == request.Email);
-        existingUser ??= await _userRepository.GetSingleAsync(u => u.PhoneNumber == request.PhoneNumber);
-        if (existingUser != null)
-        {
-            throw new AppException(
-                HttpResponseCodeConstants.DUPLICATE, 
-                ResponseMessageConstantsUser.USER_EXISTED, 
-                StatusCodes.Status409Conflict);
-        }
-        var user = _mapper.MapToUserEntity(request);
-        user.Verified = CoreHelper.SystemTimeNow;
-        await _userRepository.CreateUserAsync(user);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);*/
-
         _userValidator.ValidateUserCreateRequest(request);
         // parse role from request
         if (!Enum.TryParse<UserRoleEnum>(request.Role.ToString(), out var role))
@@ -111,9 +109,9 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             account.SecurityStamp = Guid.NewGuid().ToString();
             account.Verified = CoreHelper.SystemTimeNow;
             await _userRepository.CreateUserAsync(account, cancellationToken);
+            var roleIds = new List<string> { roleEntity.Id };
+            await _userRepository.AddUserToRoleAsync(account.Id, roleIds, cancellationToken);
             var count = await _userRepository.SaveChangeAsync();
-            await _userManager.AddToRoleAsync(account, roleEntity.NormalizedName);
-
             if (count > 0)
             {
                 // send email to user
