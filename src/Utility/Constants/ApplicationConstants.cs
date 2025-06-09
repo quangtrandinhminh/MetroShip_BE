@@ -55,6 +55,7 @@
         public const string EXISTED_ROLE = "Role already exists.";
 
         public const string USERNAME_REQUIRED = "Username cannot be empty.";
+        public const string USERNAME_INVALID = "Username cannot contain special characters or spaces.";
         public const string NAME_REQUIRED = "Name cannot be empty.";
         public const string NAME_INVALID = "Name cannot contain numbers.";
         public const string USERCODE_REQUIRED = "User code cannot be empty.";

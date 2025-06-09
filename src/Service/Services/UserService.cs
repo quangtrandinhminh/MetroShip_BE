@@ -18,6 +18,7 @@ using MetroShip.Utility.Helpers;
 using MetroShip.Service.Validations;
 using Microsoft.EntityFrameworkCore;
 using Twilio.Rest.Api.V2010.Account;
+using MetroShip.Service.Utils;
 
 namespace MetroShip.Service.Services;
 
@@ -136,10 +137,11 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
     public async Task UpdateUserAsync(UserUpdateRequest request)
     {
-        _logger.Information("Update user {@request}", request);
+        var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Update user {@request} for user {userId}", request, userId);
         _userValidator.ValidateUserUpdateRequest(request);
-        var user = await GetUserById(request.Id);
-        if (user.UserName != request.UserName)
+        var user = await GetUserById(userId);
+        if (user.UserName is not null && user.UserName != request.UserName)
         {
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)

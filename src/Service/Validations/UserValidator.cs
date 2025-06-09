@@ -72,26 +72,26 @@ public sealed class UserUpdateRequestValidator : AbstractValidator<UserUpdateReq
 {
     public UserUpdateRequestValidator()
     {
-        RuleFor(x => x.Id)
-            .NotNull()
-            .WithMessage(ResponseMessageIdentity.USER_ID_REQUIRED)
-            .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageIdentity.USER_ID_INVALID);
-
-
         RuleFor(x => x.UserName)
-            .NotEmpty().WithMessage(ResponseMessageIdentity.USERNAME_REQUIRED)
-            .MaximumLength(100);
+            .MaximumLength(100)
+            // Allow alphanumeric characters, number,no spaces, and special characters like . _ -
+            .Matches(@"^[a-zA-Z0-9._-]+$")
+            .WithMessage(ResponseMessageIdentity.USERNAME_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.UserName));
 
         RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage(ResponseMessageIdentity.NAME_REQUIRED)
             .MaximumLength(100)
-            .Matches("^[^0-9]+$").WithMessage(ResponseMessageIdentity.NAME_INVALID);
+            // Allow only alphabetic characters, no numbers
+            .Matches("^[^0-9]+$").WithMessage(ResponseMessageIdentity.NAME_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.FullName)); 
 
         RuleFor(x => x.Address)
-            .MaximumLength(200);
+            .MaximumLength(200)
+            .When(x => !string.IsNullOrEmpty(x.Address));
 
         RuleFor(x => x.Avatar)
-            .MaximumLength(500);
+            .MaximumLength(500)
+            .When(x => !string.IsNullOrEmpty(x.Avatar));
 
         RuleFor(x => x.BirthDate)
             .LessThanOrEqualTo(DateTimeOffset.Now).WithMessage(ResponseMessageIdentity.BIRTHDATE_INVALID)
