@@ -1962,3 +1962,21 @@ VALUES
  'Giao Khẩu – Thạnh Xuân','Giao Khau – Thanh Xuan',1,31,2,0.73,
  NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL);
 
+-- ─────────────────────────────────────────────────────────────────
+-- Update SystemConfigs for NIGHT_DISCOUNT_PERCENT + Add MAX_DISTANCE_IN_METERS, MAX_COUNT_NEAR_STATION
+-- ─────────────────────────────────────────────────────────────────
+UPDATE public."SystemConfigs"
+SET "ConfigKey" = 'NIGHT_DISCOUNT_PERCENT'
+WHERE "Id" = '29e61663-34e5-457e-a6f8-121ee33ce4e4';
+
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+VALUES
+('39f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','MAX_DISTANCE_IN_METERS','5000',
+ 'Bán kính phạm vi tìm kiếm các ga gần vị trí người dùng', 3,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
+('49b4f8a5-d6c9-e4b4-f8a5-d6c9eb4f8a5d','MAX_COUNT_NEAR_STATION','3',
+ 'Số ga tối đa gần khách hàng mà hệ thống cần tìm', 3,
+ NULL,NULL,NULL,NOW(),NOW(),NULL);
+
