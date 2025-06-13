@@ -154,6 +154,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVnPayService, VnPayService>();
         services.AddScoped<IShipmentService, ShipmentService>();
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IMetroLineService, MetroLineService>();
+        services.AddScoped<IMetroTimeSlotService, MetroTimeSlotService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

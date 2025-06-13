@@ -162,7 +162,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (parcel.Shipment.TotalCostVnd < 0) parcel.Shipment.TotalCostVnd = 0;
 
         // Ghi lại tracking với lý do từ chối ở Note
-        _parceltrackingRepository.Add(new ParcelTracking
+        _parceltrackingRepository.Update(new ParcelTracking
         {
             ParcelId = parcel.Id,
             Status = parcel.ParcelStatus.ToString(),
