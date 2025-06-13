@@ -22,6 +22,7 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Service.ApiModels.Graph;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using MetroShip.Repository.Extensions;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MetroShip.Service.Services;
 
@@ -276,19 +277,24 @@ public class ShipmentService : IShipmentService
         _shipmentValidator.ValidateTotalPriceCalcRequest(request);
         CheckShipmentDate(request.ScheduleShipmentDate);
 
-        await InitializeAsync();
-        List<Station> departureStations = new();
+        // get departure stations near user location
+        var maxDistanceInMeters = int.Parse(_systemConfigRepository
+                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
+        var maxStationCount = int.Parse(_systemConfigRepository
+                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_COUNT_STATION_NEAR_USER)));
+
+        // add departure station to the list
+        var stationIds = new HashSet<string> { request.DepartureStationId };
         if (request is { UserLongitude: not null, UserLatitude: not null })
         {
-            // get 3 departure stations near user location
-            departureStations = await _stationRepository.GetAllStationNearUser(
-                request.UserLongitude.Value, request.UserLatitude.Value, 2000, 3);
+            // get all stations near user location, ordered by distance
+            stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
         }
 
-        // Sử dụng đồ thị để tìm đường đi
         var response = new TotalPriceResponse();
-        response.NightDiscount = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.NIGHT_DISCOUNT)));
+
+        // calculate chargeable weight and check if parcel is bulk
         response.ParcelRequests = request.Parcels;
         foreach (var parcel in request.Parcels)
         {
@@ -298,39 +304,48 @@ public class ShipmentService : IShipmentService
             parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
         }
 
-        List<string> path;
-        if (departureStations.Any())
-        {
-            foreach (var departureStation in departureStations)
-            {
-                if (_stationRepository.AreStationsInSameMetroLine(departureStation.Id, request.DestinationStationId))
-                {
-                    path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
-                }
-                else
-                {
-                    path = _metroGraph.FindShortestPathByDijkstra(departureStation.Id, request.DestinationStationId);
-                }
+        // Assume stationIds is a HashSet<string> where:
+        // - stationIds.ElementAt(0) is the user's chosen departure station
+        // - stationIds.ElementAt(1) is the nearest station
+        var stationIdList = stationIds.ToList();
 
-                if (path == null || !path.Any())
-                    continue;
+        // use algorithm to find paths from each departure station to the destination
+        InitializeAsync().Wait(); // Ensure the graph is initialized
+        var pathTasks = stationIdList.Select(async departureStationId => {
+            List<string> path = _stationRepository.AreStationsInSameMetroLine(departureStationId, request.DestinationStationId)
+                ? _metroGraph.FindShortestPathByBFS(departureStationId, request.DestinationStationId)
+                : _metroGraph.FindShortestPathByDijkstra(departureStationId, request.DestinationStationId);
+            return (StationId: departureStationId, Path: path);
+        }).ToList();
+        var allPaths = await Task.WhenAll(pathTasks);
 
-                response.BestPathGraphResponses.Add(_metroGraph.CreateResponseFromPath(path, _mapperlyMapper));
-            }
-        }
-        else
-        {
-            if (_stationRepository.AreStationsInSameMetroLine(request.DepartureStationId, request.DestinationStationId))
-            {
-                path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
-            }
-            else
-            {
-                path = _metroGraph.FindShortestPathByDijkstra(request.DepartureStationId, request.DestinationStationId);
-            }
-            response.BestPathGraphResponses.Add(_metroGraph.CreateResponseFromPath(path, _mapperlyMapper));
-        }
+        // Filter out null/empty paths and keep mapping
+        List<(string StationId, List<string> Path)> pathResults = allPaths
+            .Where(r => r.Path != null && r.Path.Any())
+            .ToList();
 
+        // Now create responses (BestPathGraphResponse) from those valid paths
+        var bestPathResponses = pathResults.Select(r => new {
+            StationId = r.StationId,
+            Response = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper)
+        }).ToList();
+
+        // Assign Standard (user choice), Nearest, and Cheapest
+        response.Standard = bestPathResponses
+            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
+
+        response.Nearest = bestPathResponses.Count > 1
+            ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
+            : null;
+
+        response.Cheapest = bestPathResponses.Count > 1
+            ? bestPathResponses
+                .OrderBy(r => r.Response.ShippingFeeByItinerary)
+                .FirstOrDefault()?.Response
+            : null;
+
+        response.NightDiscount = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.NIGHT_DISCOUNT_PERCENT)));
         return response;
     }
 
