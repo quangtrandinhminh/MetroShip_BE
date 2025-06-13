@@ -15,33 +15,36 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         _context = context;
     }
 
-    public async Task<List<Station>> GetAllStationNearUser(
-        double userLatitude,
+    public async Task<List<string>> GetAllStationIdNearUser(double userLatitude,
         double userLongitude,
         int maxDistanceInMeters = 1000,
         int maxCount = 10)
     {
         var earthRadius = 6371000.0; // meters
 
-        return await _context.Stations
+        // Calculate the distance using the Haversine formula
+        // Convert latitude and longitude from decimal degrees to radians for sine and cosine calculations
+        var results = await _context.Stations
             .Where(s => s.Latitude != null && s.Longitude != null)
             .Select(s => new
             {
                 Station = s,
                 Distance = earthRadius * 2 * Math.Asin(
                     Math.Sqrt(
-                        Math.Pow(Math.Sin((Math.PI / 180) * (s.Latitude.Value - userLatitude) / 2), 2) +
-                        Math.Cos((Math.PI / 180) * userLatitude) *
-                        Math.Cos((Math.PI / 180) * s.Latitude.Value) *
-                        Math.Pow(Math.Sin((Math.PI / 180) * (s.Longitude.Value - userLongitude) / 2), 2)
+                        (1 - Math.Cos((userLatitude - s.Latitude.Value) * Math.PI / 180) +
+                        Math.Cos(userLatitude * Math.PI / 180) * Math.Cos(s.Latitude.Value * Math.PI / 180) *
+                        (1 - Math.Cos((userLongitude - s.Longitude.Value) * Math.PI / 180))
+                        ) / 2
                     )
                 )
             })
             .Where(x => x.Distance <= maxDistanceInMeters)
             .OrderBy(x => x.Distance)
             .Take(maxCount)
-            .Select(x => x.Station)
+            .Select(x => x.Station.Id)
             .ToListAsync();
+
+        return results;
     }
 
     public IEnumerable<Station> GetStationsByRegion(string regionId)

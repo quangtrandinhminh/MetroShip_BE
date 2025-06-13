@@ -182,4 +182,50 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return shipmentDto;
     }
+
+    // get all shipments by lineId and date
+    public async Task<List<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(string lineId, DateTimeOffset date)
+    {
+        var shipments = _context.Shipments
+            .AsNoTracking()
+            .AsSingleQuery()
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .ThenInclude(r => r.MetroLine)
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .ThenInclude(r => r.FromStation)
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .ThenInclude(r => r.ToStation)
+            .Where(s => s.ShipmentItineraries.Any(i => i.Route.LineId == lineId)
+                        && s.ApprovedAt.HasValue
+                        && s.ApprovedAt.Value.Date == date.Date)
+            .OrderBy(s => s.ApprovedAt);
+
+        var shipmentDtos = await shipments
+            .Select(s => new ShipmentDto
+            {
+                Id = s.Id,
+                TrackingCode = s.TrackingCode,
+                DepartureStationName = s.ShipmentItineraries
+                    .OrderBy(i => i.LegOrder)
+                    .Select(i => i.Route.FromStation.StationNameVi)
+                    .FirstOrDefault(),
+                DestinationStationName = s.ShipmentItineraries
+                    .OrderBy(i => i.LegOrder)
+                    .Select(i => i.Route.ToStation.StationNameVi)
+                    .LastOrDefault(),
+                SenderName = s.SenderName,
+                SenderPhone = s.SenderPhone,
+                RecipientName = s.RecipientName,
+                RecipientPhone = s.RecipientPhone,
+                ShipmentStatus = s.ShipmentStatus,
+                BookedAt = s.BookedAt.Value,
+                TotalCostVnd = s.TotalCostVnd,
+                ScheduledDateTime = s.ScheduledDateTime,
+            }).ToListAsync();
+
+        return shipmentDtos;
+    }
 }
