@@ -93,5 +93,18 @@ namespace MetroShip.WebAPI.Controllers
             var result = await shipmentService.GetItineraryAndTotalPrice(request);
             return Ok(BaseResponse.OkResponseDto(result));
         }
+
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentsByLineAndDate)]
+        public async Task<IActionResult> GetShipmentByLineAndDate(
+            [FromRoute] string lineCode,
+            [FromRoute] DateTimeOffset date,
+                [FromQuery] PaginatedListRequest request,
+                string? regionCode,
+                ShiftEnum? shift
+            )
+        {
+            var response = await shipmentService.GetShipmentByLineAndDate(request, lineCode, date, regionCode, shift);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }
     }
 }
