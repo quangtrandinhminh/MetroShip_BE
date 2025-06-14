@@ -516,14 +516,14 @@ VALUES
      '93155333-ab24-4410-b8f5-a77c77e81195', null, NOW(), NOW(), null
     );
 
--- update station Ben Thành IsMultiline to TRUE
-UPDATE public."Stations"
-SET "IsMultiLine" = TRUE
-WHERE "Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0';
 -- ─────────────────────────────────────────────────────────────────
 -- Metro Line 2: Ben Thanh – Tham Luong
 -- ─────────────────────────────────────────────────────────────────
 -- 1. MetroLine Insert
+-- update station Ben Thành IsMultiline to TRUE
+UPDATE public."Stations"
+SET "IsMultiLine" = TRUE
+WHERE "Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0';
 INSERT INTO public."MetroLines"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
  "LineOwner","CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
