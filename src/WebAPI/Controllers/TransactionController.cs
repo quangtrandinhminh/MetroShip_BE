@@ -14,12 +14,14 @@ namespace MetroShip.WebAPI.Controllers
     public class TransactionController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
-        private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<PaymentStatusEnum>();
+        private readonly TransactionEnumResponse _transactionEnumResponse = new();
 
         public TransactionController(ITransactionService transactionService)
         {
             _transactionService = transactionService;
         }
+
+        // response new json response include 2 list 
 
         /// <summary>
         /// Get all transactions (paginated & optional payment status filter)
@@ -29,7 +31,7 @@ namespace MetroShip.WebAPI.Controllers
             [FromQuery] PaymentStatusEnum? status,[FromQuery] PaginatedListRequest request)
         {
             var result = await _transactionService.GetAllAsync(status, request);
-            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
+            return Ok(BaseResponse.OkResponseDto(result, _transactionEnumResponse));
         }
     }
 }
