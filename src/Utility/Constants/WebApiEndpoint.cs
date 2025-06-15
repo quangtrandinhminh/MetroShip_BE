@@ -97,5 +97,23 @@
             public const string UpdateStation = BaseEndpoint;
             public const string DeleteStation = BaseEndpoint + "/{id}";
         }
+        public static class MetroLine
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetMetroLines = BaseEndpoint;
+            public const string GetMetroLineById = BaseEndpoint + "/{id}";
+            public const string CreateMetroLine = BaseEndpoint;
+            public const string UpdateMetroLine = BaseEndpoint;
+            public const string DeleteMetroLine = BaseEndpoint + "/{id}";
+        }
+        public static class MetroTimeSlot
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-time-slots";
+            public const string GetMetroTimeSlots = BaseEndpoint;
+            public const string GetMetroTimeSlotById = BaseEndpoint + "/{id}";
+            public const string CreateMetroTimeSlot = BaseEndpoint;
+            public const string UpdateMetroTimeSlot = BaseEndpoint;
+            public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,7 +17,7 @@ namespace MetroShip.WebAPI.Controllers
             _metroTimeSlotService = metroTimeSlotService;
         }
 
-        [HttpGet]
+        [HttpGet(WebApiEndpoint.MetroTimeSlot.GetMetroTimeSlots)]
         public async Task<IActionResult> GetAllMetroTimeSlotsAsync()
         {
             var timeSlots = await _metroTimeSlotService.GetAllForMetroTimeSlot();
