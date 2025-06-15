@@ -1,11 +1,10 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.Interfaces;
-using Microsoft.AspNetCore.Http;
+using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/metro-lines")]
     [ApiController]
     public class MetroLineController : ControllerBase
     {
@@ -16,7 +15,7 @@ namespace MetroShip.WebAPI.Controllers
             _metroLineService = metroLineService;
         }
 
-        [HttpGet("dropdown-list")]
+        [HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesDropdownList)]
         public async Task<IActionResult> GetAllMetroLinesAsync()
         {
             var metroLines = await _metroLineService.GetAllMetroLine();

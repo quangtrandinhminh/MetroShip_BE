@@ -4,14 +4,9 @@ using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
+using Serilog;
 
 namespace MetroShip.Service.Services
 {
@@ -19,30 +14,27 @@ namespace MetroShip.Service.Services
     {
         private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-        private readonly ILogger<MetroTimeSlotService> _logger = serviceProvider.GetRequiredService<ILogger<MetroTimeSlotService>>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
 
         public async Task<IEnumerable<MetroTimeSlotResponse>> GetAllForMetroTimeSlot()
         {
-            _logger.LogInformation("Getting all MetroTimeSlots for dropdown.");
+            _logger.Information("Getting all MetroTimeSlots for dropdown.");
 
-            var timeSlots = await _metroTimeSlotRepository.GetAllAsync();
-            timeSlots = timeSlots
+            var timeSlots = await _metroTimeSlotRepository.GetAll()
                 .Where(s => s.DeletedAt == null)
                 .OrderBy(s => s.OpenTime)
-                .ToList();
-
-            return timeSlots.Select(slot => new MetroTimeSlotResponse
-            {
-                Id = slot.Id,
-                DayOfWeek = slot.DayOfWeek,
-                SpecialDate = slot.SpecialDate,
-                OpenTime = slot.OpenTime,
-                CloseTime = slot.CloseTime,
-                Shift = slot.Shift,
-                IsAbnormal = slot.IsAbnormal
-            }).OrderBy(slot => slot.OpenTime).ToList();
+                .Select(slot => new MetroTimeSlotResponse
+                {
+                    Id = slot.Id,
+                    DayOfWeek = slot.DayOfWeek,
+                    SpecialDate = slot.SpecialDate,
+                    OpenTime = slot.OpenTime,
+                    CloseTime = slot.CloseTime,
+                    Shift = slot.Shift,
+                    IsAbnormal = slot.IsAbnormal
+                }).OrderBy(slot => slot.OpenTime).ToListAsync();
+            return timeSlots;
         }
-
     }
 }

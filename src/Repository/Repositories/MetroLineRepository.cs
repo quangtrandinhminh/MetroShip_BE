@@ -14,12 +14,4 @@ public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineReposito
     {
         _context = context;
     }
-
-    // get base price by line id & schedule time
-    public async Task<MetroBasePrice> GetBasePriceByLineIdAndTimeSlotAsync(string lineId, string timeSlotId)
-    {
-        return await _context.MetroBasePrices
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.LineId == lineId && x.TimeSlotId == timeSlotId);
-    }
 }

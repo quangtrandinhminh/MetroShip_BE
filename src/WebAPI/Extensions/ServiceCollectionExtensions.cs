@@ -167,6 +167,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStationRepository, StationRepository>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IShipmentItineraryRepository, ShipmentItineraryRepository>();
+        services.AddScoped<IMetroLineRepository, MetroLineRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

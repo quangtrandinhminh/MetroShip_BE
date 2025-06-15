@@ -3,6 +3,7 @@ using MetroShip.Repository.Models;
 
 namespace MetroShip.Repository.Interfaces;
 
-public interface IMetroLineRepository : IBaseRepository<MetroLine>
+public interface IMetroBasePriceRepository : IBaseRepository<MetroBasePrice>
 {
+    
 }
