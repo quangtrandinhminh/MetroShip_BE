@@ -6,7 +6,6 @@ using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -19,7 +18,7 @@ namespace MetroShip.Service.Services
     public class MetroLineService(IServiceProvider serviceProvider) : IMetroLineService
     {
         private readonly IMetroLineRepository _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
-        private readonly ILogger<MetroLineService> _logger = serviceProvider.GetRequiredService<ILogger<MetroLineService>>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
 
         public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLine()
         {
@@ -36,7 +35,7 @@ namespace MetroShip.Service.Services
         }
         public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLineByRegion(string? regionId, string? regionCode)
         {
-            _logger.LogInformation("Getting all MetroLines for dropdown by region.");
+            _logger.Information("Getting all MetroLines for dropdown by region.");
             var metroLines = await _metroLineRepository.GetAllWithBasePriceByRegionAsync(regionId, regionCode);
             return metroLines.Select(line => new MetrolineResponse
             {
