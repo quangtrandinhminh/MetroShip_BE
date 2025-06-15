@@ -61,6 +61,18 @@
             public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
             public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
+            public const string GetShipmentsByLineAndDate = BaseEndpoint + "/metroline/{lineCode}/date/{date}";
+        }
+
+        public static class MetroLine
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetAllMetroLines = BaseEndpoint;
+            public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown-list";
+            public const string GetMetroLineById = BaseEndpoint + "/{id}";
+            public const string CreateMetroLine = BaseEndpoint;
+            public const string UpdateMetroLine = BaseEndpoint;
+            public const string DeleteMetroLine = BaseEndpoint + "/{id}";
         }
 
         public static class Notification

@@ -9,6 +9,7 @@ using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using MetroShip.Utility.Enums;
 
 
 namespace MetroShip.Repository.Repositories;
@@ -184,26 +185,43 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     }
 
     // get all shipments by lineId and date
-    public async Task<List<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(string lineId, DateTimeOffset date)
+    public async Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
+    int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift)
     {
         var shipments = _context.Shipments
             .AsNoTracking()
             .AsSingleQuery()
-            .Include(s => s.ShipmentItineraries)
-            .ThenInclude(i => i.Route)
-            .ThenInclude(r => r.MetroLine)
-            .Include(s => s.ShipmentItineraries)
-            .ThenInclude(i => i.Route)
-            .ThenInclude(r => r.FromStation)
-            .Include(s => s.ShipmentItineraries)
-            .ThenInclude(i => i.Route)
-            .ThenInclude(r => r.ToStation)
             .Where(s => s.ShipmentItineraries.Any(i => i.Route.LineId == lineId)
-                        && s.ApprovedAt.HasValue
-                        && s.ApprovedAt.Value.Date == date.Date)
-            .OrderBy(s => s.ApprovedAt);
+                        && s.ApprovedAt.HasValue && s.ScheduledDateTime.HasValue
+                        && s.ScheduledDateTime.Value.Date == date.Date);
 
-        var shipmentDtos = await shipments
+        if (!string.IsNullOrEmpty(regionId))
+        {
+            shipments = shipments.Where(s => s.TrackingCode.Contains(regionId));
+        }
+
+        if (shift != null)
+        {
+            var shiftSlot = await _context.MetroBasePrices
+                .AsNoTracking()
+                .Include(s => s.TimeSlot)
+                .Where(s => s.LineId == lineId && s.TimeSlot.Shift == shift)
+                .Select(s => s.TimeSlot)
+                .FirstOrDefaultAsync();
+
+            if (shiftSlot != null)
+            {
+                var open = shiftSlot.OpenTime.ToTimeSpan();
+                var close = shiftSlot.CloseTime.ToTimeSpan();
+                shipments = shipments.Where(s =>
+                    s.ScheduledDateTime.HasValue &&
+                    s.ScheduledDateTime.Value.TimeOfDay >= open &&
+                    s.ScheduledDateTime.Value.TimeOfDay <= close);
+            }
+        }
+
+        var shipmentDtos = shipments
+            .OrderBy(s => s.ApprovedAt)
             .Select(s => new ShipmentDto
             {
                 Id = s.Id,
@@ -223,9 +241,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 ShipmentStatus = s.ShipmentStatus,
                 BookedAt = s.BookedAt.Value,
                 TotalCostVnd = s.TotalCostVnd,
-                ScheduledDateTime = s.ScheduledDateTime,
-            }).ToListAsync();
+                ScheduledDateTime = s.ScheduledDateTime
+            });
 
-        return shipmentDtos;
+        return await PaginatedList<ShipmentDto>.CreateAsync(shipmentDtos, pageNumber, pageSize);
     }
 }

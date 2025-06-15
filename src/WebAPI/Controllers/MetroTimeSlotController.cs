@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/time-slots")]
     [ApiController]
     public class MetroTimeSlotController : ControllerBase
     {

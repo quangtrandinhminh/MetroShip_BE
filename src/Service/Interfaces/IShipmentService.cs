@@ -13,4 +13,6 @@ public interface IShipmentService
     Task<string> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default);
     Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request);
     Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request);
+    Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentByLineAndDate(PaginatedListRequest request,
+        string lineCode, DateTimeOffset date, string? regionCode, ShiftEnum? shift);
 }

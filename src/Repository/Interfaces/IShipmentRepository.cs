@@ -3,6 +3,7 @@ using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
 using System.Linq.Expressions;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Repository.Interfaces;
 
@@ -16,4 +17,7 @@ public interface IShipmentRepository : IBaseRepository<Shipment>
             Expression<Func<Shipment, object>> orderBy = null);
 
     Task<ShipmentDto?> GetShipmentByTrackingCodeAsync(string trackingCode);
+
+    Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
+        int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift);
 }

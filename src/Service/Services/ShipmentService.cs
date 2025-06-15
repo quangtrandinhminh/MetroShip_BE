@@ -290,10 +290,17 @@ public class ShipmentService : IShipmentService
             // get all stations near user location, ordered by distance
             stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
                 request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
+
+            // stationIds should contain at least 2 stations, if not, extend maxDistanceInMeters more 1000
+            /*while (stationIds.Count < 2 && maxDistanceInMeters < 10000)
+            {
+                maxDistanceInMeters += 1000; // extend distance by 1000 meters
+                stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
+                                       request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
+            }*/
         }
 
         var response = new TotalPriceResponse();
-
         // calculate chargeable weight and check if parcel is bulk
         response.ParcelRequests = request.Parcels;
         foreach (var parcel in request.Parcels)
@@ -346,7 +353,21 @@ public class ShipmentService : IShipmentService
 
         response.NightDiscount = decimal.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(_systemConfigSetting.NIGHT_DISCOUNT_PERCENT)));
+        response.StationsInDistanceMeter = maxDistanceInMeters;
         return response;
+    }
+
+    public async Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentByLineAndDate(
+        PaginatedListRequest request, string lineCode, DateTimeOffset date, string? regionCode, ShiftEnum? shift)
+    {
+        _logger.Information("Get shipment by line code: {@lineCode} and date: {@date}", lineCode, date);
+        var shipments = await _shipmentRepository.GetShipmentsByLineIdAndDateAsync(
+            request.PageNumber, request.PageSize, 
+            lineCode, date, regionCode, shift);
+
+        var shipmentResponses =
+            _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+        return shipmentResponses;
     }
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)

@@ -4,6 +4,7 @@ using MetroShip.Repository.Models;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -22,14 +23,16 @@ namespace MetroShip.Service.Services
 
         public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLine()
         {
-            _logger.LogInformation("Getting all MetroLines for dropdown.");
-            var metroLines = await _metroLineRepository.GetAllAsync();
-            return metroLines.Select(line => new MetrolineResponse
+            _logger.Information("Getting all MetroLines for dropdown.");
+            var metroLines = await _metroLineRepository.GetAll()
+                .Select(line => new MetrolineResponse
             {
                 Id = line.Id,
                 LineNameVi = line.LineNameVi,
                 LineNameEn = line.LineNameEn
-            }).OrderBy(line => line.LineNameVi);
+            }).OrderBy(line => line.LineNameVi).ToListAsync();
+
+            return metroLines;
         }
         public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLineByRegion(string? regionId, string? regionCode)
         {
