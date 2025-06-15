@@ -10,5 +10,6 @@ namespace MetroShip.Service.Interfaces
     public interface IMetroLineService
     {
         Task<IEnumerable<MetrolineResponse>> GetAllMetroLine();
+        Task<IEnumerable<MetrolineResponse>> GetAllMetroLineByRegion(string? regionId, string? regionCode);
     }
 }

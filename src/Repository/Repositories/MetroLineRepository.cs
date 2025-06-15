@@ -22,4 +22,23 @@ public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineReposito
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.LineId == lineId && x.TimeSlotId == timeSlotId);
     }
+
+    public async Task<IEnumerable<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId, string? regionCode)
+    {
+        var query = _context.MetroLines
+            .Include(x => x.BasePriceVndPerKm)
+            .Include(x => x.Region) // assuming navigation to Region
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(regionId) && Guid.TryParse(regionId, out var guidRegionId))
+        {
+            query = query.Where(x => x.RegionId == guidRegionId.ToString());
+        }
+        else if (!string.IsNullOrEmpty(regionCode))
+        {
+            query = query.Where(x => x.RegionId == regionCode);
+        }
+
+        return await query.AsNoTracking().ToListAsync();
+    }
 }

@@ -105,6 +105,7 @@
             public const string CreateMetroLine = BaseEndpoint;
             public const string UpdateMetroLine = BaseEndpoint;
             public const string DeleteMetroLine = BaseEndpoint + "/{id}";
+            public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
         }
         public static class MetroTimeSlot
         {
