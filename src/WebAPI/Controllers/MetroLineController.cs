@@ -23,9 +23,9 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(metroLines));
         }
         [HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesByRegion)]
-        public async Task<IActionResult> GetAllMetroLinesByRegionAsync([FromQuery] string? regionId, [FromQuery] string? regionCode)
+        public async Task<IActionResult> GetAllMetroLinesByRegionAsync([FromQuery] string? regionId)
         {
-            var metroLines = await _metroLineService.GetAllMetroLineByRegion(regionId, regionCode);
+            var metroLines = await _metroLineService.GetAllMetroLineByRegion(regionId);
             return Ok(BaseResponse.OkResponseDto(metroLines));
         }
     }

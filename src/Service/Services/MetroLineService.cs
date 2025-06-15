@@ -33,15 +33,17 @@ namespace MetroShip.Service.Services
 
             return metroLines;
         }
-        public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLineByRegion(string? regionId, string? regionCode)
+        public async Task<IEnumerable<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId)
         {
             _logger.Information("Getting all MetroLines for dropdown by region.");
-            var metroLines = await _metroLineRepository.GetAllWithBasePriceByRegionAsync(regionId, regionCode);
-            return metroLines.Select(line => new MetrolineResponse
+            var metroLines = await _metroLineRepository.GetAllWithBasePriceByRegionAsync(regionId);
+            return metroLines.Select(line => new MetrolineGetByRegionResponse
             {
                 Id = line.Id,
                 LineNameVi = line.LineNameVi,
-                LineNameEn = line.LineNameEn
+                LineNameEn = line.LineNameEn,
+                BasePriceVndPerKm = line.BasePriceVndPerKm,
+                regionCode = line.RegionId
             }).OrderBy(line => line.LineNameVi);
         }
     }

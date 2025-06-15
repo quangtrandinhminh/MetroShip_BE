@@ -23,7 +23,7 @@ public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineReposito
             .FirstOrDefaultAsync(x => x.LineId == lineId && x.TimeSlotId == timeSlotId);
     }
 
-    public async Task<IEnumerable<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId, string? regionCode)
+    public async Task<IEnumerable<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId)
     {
         var query = _context.MetroLines
             .Include(x => x.BasePriceVndPerKm)
@@ -34,11 +34,6 @@ public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineReposito
         {
             query = query.Where(x => x.RegionId == guidRegionId.ToString());
         }
-        else if (!string.IsNullOrEmpty(regionCode))
-        {
-            query = query.Where(x => x.RegionId == regionCode);
-        }
-
         return await query.AsNoTracking().ToListAsync();
     }
 }
