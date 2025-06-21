@@ -17,7 +17,6 @@ using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using Sprache;
 using System;
@@ -36,7 +35,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();   
     private readonly IBaseRepository<ParcelTracking> _parceltrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-    private readonly ILogger<ParcelService> _logger = serviceProvider.GetRequiredService<ILogger<ParcelService>>();
+    private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
@@ -67,7 +66,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var maxBookDate = now.AddDays(maxScheduleDay);
 
         // Optionally store these internally in memory, cache, or db — not returned in response
-        _logger.LogInformation("Parcel info valid from {MinBookDate} to {MaxBookDate}, expires at {ExpirationTime}", minBookDate, maxBookDate);
+        _logger.Information("Parcel info valid from {MinBookDate} to {MaxBookDate}, expires at {ExpirationTime}", minBookDate, maxBookDate);
 
         var result = new CreateParcelResponse
         {
@@ -98,7 +97,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
 
         // Ghi log yêu cầu
-        _logger.LogInformation("Get all parcels with request: {@request} for customer {@customerId}", request, customerId);
+        _logger.Information("Get all parcels with request: {@request} for customer {@customerId}", request, customerId);
 
         // Truy vấn các parcel liên quan đến customerId thông qua Shipment
         var parcels = await _parcelRepository.GetAllPaginatedQueryable(
@@ -194,19 +193,19 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
                 shipment.RejectedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} rejected.", shipment.Id);
+                _logger.Information("Shipment {ShipmentId} rejected.", shipment.Id);
             }
             else if (statuses.All(s => s == ParcelStatusEnum.AwaitingPayment))
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.Accepted;
                 shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} accepted.", shipment.Id);
+                _logger.Information("Shipment {ShipmentId} accepted.", shipment.Id);
             }
             else
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.PartiallyConfirmed;
                 shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-                _logger.LogInformation("Shipment {ShipmentId} partially confirmed.", shipment.Id);
+                _logger.Information("Shipment {ShipmentId} partially confirmed.", shipment.Id);
             }
 
             _shipmentRepository.Update(shipment);

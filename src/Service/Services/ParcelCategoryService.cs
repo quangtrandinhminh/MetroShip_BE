@@ -11,7 +11,6 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -26,12 +25,12 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 {
     private readonly IBaseRepository<ParcelCategory> _parcelCategoryRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelCategory>>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-    private readonly ILogger<ParcelCategoryService> _logger = serviceProvider.GetRequiredService<ILogger<ParcelCategoryService>>();
+    private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
 
     public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(bool? isActive, PaginatedListRequest request)
     {
-        _logger.LogInformation("Get all parcel categories. IsActive: {isActive}", isActive);
+        _logger.Information("Get all parcel categories. IsActive: {isActive}", isActive);
 
         Expression<Func<ParcelCategory, bool>> predicate = c => c.DeletedAt == null;
         if (isActive.HasValue)
@@ -51,7 +50,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     public async Task<ParcelCategoryResponse> GetByIdAsync(Guid id)
     {
-        _logger.LogInformation("Get parcel category by id {id}", id);
+        _logger.Information("Get parcel category by id {id}", id);
 
         var category = await _parcelCategoryRepository.GetSingleAsync(c => c.Id == id.ToString());
 
@@ -68,7 +67,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     public async Task<ParcelCategoryResponse> CreateAsync(ParcelCategoryCreateRequest request)
     {
-        _logger.LogInformation("Create parcel category {@request}", request);
+        _logger.Information("Create parcel category {@request}", request);
 
         // Correctly map the request to the ParcelCategory entity
         var entity = _mapper.MapToParcelCategoryEntity(request);
@@ -83,7 +82,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     public async Task UpdateAsync(ParcelCategoryUpdateRequest request)
     {
-        _logger.LogInformation("Update parcel category {@request}", request);
+        _logger.Information("Update parcel category {@request}", request);
 
         var entity = await GetParcelCategoryById(request.Id);
 
@@ -94,7 +93,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     public async Task DeleteAsync(Guid id)
     {
-        _logger.LogInformation("Soft delete parcel category by id {id}", id);
+        _logger.Information("Soft delete parcel category by id {id}", id);
 
         var entity = await GetParcelCategoryById(id);
         entity.DeletedAt = CoreHelper.SystemTimeNow;
