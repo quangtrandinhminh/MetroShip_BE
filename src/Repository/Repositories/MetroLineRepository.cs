@@ -23,10 +23,10 @@ public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineReposito
             .FirstOrDefaultAsync(x => x.LineId == lineId && x.TimeSlotId == timeSlotId);
     }
 
-    public async Task<IEnumerable<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId)
+    public async Task<List<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId)
     {
         var query = _context.MetroLines
-            .Include(x => x.BasePriceVndPerKm)
+            //.Include(x => x.BasePriceVndPerKm)
             .Include(x => x.Region) // assuming navigation to Region
             .AsQueryable();
 

@@ -5,5 +5,5 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface IMetroLineRepository : IBaseRepository<MetroLine>
 {
-    Task<IEnumerable<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId);
+    Task<List<MetroLine>> GetAllWithBasePriceByRegionAsync(string? regionId);
 }

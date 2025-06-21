@@ -15,36 +15,47 @@ using System.Threading.Tasks;
 
 namespace MetroShip.Service.Services
 {
-    public class MetroLineService(IServiceProvider serviceProvider) : IMetroLineService
+    public class MetroLineService : IMetroLineService
     {
-        private readonly IMetroLineRepository _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
-        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+        private readonly IMetroLineRepository _metroLineRepository;
+        private readonly ILogger _logger;
 
-        public async Task<IEnumerable<MetrolineResponse>> GetAllMetroLine()
+        public MetroLineService(IServiceProvider serviceProvider)
+        {
+            _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
+            _logger = serviceProvider.GetRequiredService<ILogger>();
+        }
+
+        public async Task<List<MetrolineResponse>> GetAllMetroLine()
         {
             _logger.Information("Getting all MetroLines for dropdown.");
             var metroLines = await _metroLineRepository.GetAll()
                 .Select(line => new MetrolineResponse
-            {
-                Id = line.Id,
-                LineNameVi = line.LineNameVi,
-                LineNameEn = line.LineNameEn
-            }).OrderBy(line => line.LineNameVi).ToListAsync();
-
+                {
+                    Id = line.Id,
+                    LineNameVi = line.LineNameVi,
+                    LineNameEn = line.LineNameEn
+                })
+                .OrderBy(line => line.LineNameVi)
+                .ToListAsync();
             return metroLines;
         }
-        public async Task<IEnumerable<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId)
+
+        public async Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId)
         {
             _logger.Information("Getting all MetroLines for dropdown by region.");
             var metroLines = await _metroLineRepository.GetAllWithBasePriceByRegionAsync(regionId);
-            return metroLines.Select(line => new MetrolineGetByRegionResponse
-            {
-                Id = line.Id,
-                LineNameVi = line.LineNameVi,
-                LineNameEn = line.LineNameEn,
-                BasePriceVndPerKm = line.BasePriceVndPerKm,
-                regionCode = line.RegionId
-            }).OrderBy(line => line.LineNameVi);
+            return metroLines
+                .Select(line => new MetrolineGetByRegionResponse
+                {
+                    Id = line.Id,
+                    LineNameVi = line.LineNameVi,
+                    LineNameEn = line.LineNameEn,
+                    BasePriceVndPerKm = line.BasePriceVndPerKm,
+                    regionCode = line.RegionId
+                })
+                .OrderBy(line => line.LineNameVi)
+                .ToList();
         }
     }
 }
