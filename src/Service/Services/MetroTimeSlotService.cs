@@ -1,5 +1,6 @@
 ﻿using MetroShip.Repository.Base;
 using MetroShip.Repository.Infrastructure;
+using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.Interfaces;
@@ -13,6 +14,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using MetroShip.Utility.Config;
 
 namespace MetroShip.Service.Services
 {
@@ -22,11 +24,15 @@ namespace MetroShip.Service.Services
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
         private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+        private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
+        private readonly SystemConfigSetting _systemConfigSetting;
 
-        public async Task<IEnumerable<MetroTimeSlotResponse>> GetAllForMetroTimeSlot()
+        public async Task<IList<MetroTimeSlotResponse>> GetAllForMetroTimeSlot()
         {
             _logger.Information("Getting all MetroTimeSlots for dropdown.");
 
+            var shiftConfig = int.Parse(_systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(_systemConfigSetting.SCHEDULE_BEFORE_SHIFT_MINUTES)));
             var timeSlots = await _metroTimeSlotRepository.GetAll()
                 .Where(s => s.DeletedAt == null)
                 .OrderBy(s => s.OpenTime)
@@ -38,7 +44,8 @@ namespace MetroShip.Service.Services
                     OpenTime = slot.OpenTime,
                     CloseTime = slot.CloseTime,
                     Shift = slot.Shift,
-                    IsAbnormal = slot.IsAbnormal
+                    IsAbnormal = slot.IsAbnormal,
+                    ScheduleBeforeShiftMinutes = shiftConfig
                 }).OrderBy(slot => slot.OpenTime).ToListAsync();
             return timeSlots;
         }

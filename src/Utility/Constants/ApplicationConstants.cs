@@ -145,7 +145,19 @@
         public const string DESTINATION_STATION_ID_INVALID = "Destination station ID is invalid.";
         public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
         public const string PATH_NOT_FOUND = "Path not found between two stations.";
-        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) or Departure station ID are required.";
+        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) " +
+            "or Departure station ID are required.";
+        public const string USER_COORDINATE_INVALID = "User coordinates (latitude and longitude) are invalid.";
+        public const string SHIFT_REQUIRED = "Shift is required.";
+        public const string SHIFT_INVALID = "Shift is invalid.";
+        public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment has already been confirmed.";
+        public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
+            "Please schedule the itinerary before confirming the shipment.";
+        public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
+            "Please select a valid shift for the shipment.";
+        public const string TIME_SLOT_NOT_FOUND = "Time slot not found.";
+        public const string TOTAL_KM_REQUIRED = "Total kilometers are required.";
+        public const string TOTAL_KM_INVALID = "Total kilometers must be greater than to 0.";
     }
 
     public class ResponseMessageItinerary
@@ -182,6 +194,12 @@
         public const string LENGTH_INVALID = "Length must be greater than 0.";
         public const string IS_BULK_REQUIRED = "Is Bulk is required";
         public const string IS_BULK_INVALID = "Is Bulk must be true or false";
+        public const string PARCEL_CATEGORY_ID_INVALID = "Parcel category ID is invalid.";
+        public const string CHARGEABLE_WEIGHT_INVALID = "Chargeable weight must be greater than 0.";
+        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND must be greater than or equal to 0.";
+        public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND must be greater than or equal to 0.";
+        public const string PRICE_VND_INVALID = "Price in VND must be greater than or equal to 0.";
+        public const string VALUE_VND_INVALID = "Value in VND must be greater than to 0.";
     }
 
     public class ResponseMessageStation

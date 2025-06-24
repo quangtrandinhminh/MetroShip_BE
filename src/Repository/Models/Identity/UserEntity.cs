@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using MetroShip.Repository.Models.Base;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Identity;

@@ -49,7 +49,7 @@ namespace MetroShip.Repository.Base
         public async Task<PaginatedList<T>> GetAllPaginatedQueryable(
             int pageNumber,
             int pageSize,
-            Expression<Func<T, bool>> predicate = null,
+            Expression<Func<T, bool>>? predicate = null,
             Expression<Func<T, object>>? orderBy = null,
             bool isAscending = false,
             params Expression<Func<T, object>>[]? includeProperties

@@ -9,7 +9,7 @@ namespace MetroShip.Service.Interfaces
 {
     public interface IMetroTimeSlotService
     {
-        Task<IEnumerable<MetroTimeSlotResponse>> GetAllForMetroTimeSlot();
+        Task<IList<MetroTimeSlotResponse>> GetAllForMetroTimeSlot();
 
     }
 }

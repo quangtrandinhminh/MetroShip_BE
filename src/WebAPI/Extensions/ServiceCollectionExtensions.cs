@@ -156,6 +156,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IMetroLineService, MetroLineService>();
         services.AddScoped<IMetroTimeSlotService, MetroTimeSlotService>();
+        services.AddScoped<ITrainService, TrainService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

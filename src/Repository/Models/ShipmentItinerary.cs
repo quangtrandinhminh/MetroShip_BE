@@ -5,12 +5,19 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
 public partial class ShipmentItinerary : BaseEntity
 {
+    public ShipmentItinerary()
+    {
+        // Default values can be set here if needed
+        IsCompleted = false;
+    }
+
     [Required]
     [StringLength(50)]
     public string ShipmentId { get; set; }
@@ -22,12 +29,12 @@ public partial class ShipmentItinerary : BaseEntity
     [StringLength(50)]
     public string RouteId { get; set; }
 
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal BasePriceVndPerKm { get; set; }
+    [StringLength(50)]
+    public string? TrainId { get; set; }
 
-    public int? EstMinute { get; set; }
-    public DateTimeOffset? EstimatedDeparture { get; set; }
-    public DateTimeOffset? EstimatedArrival { get; set; }
+    public string? TimeSlotId { get; set; }
+    public DateTimeOffset? Date { get; set; }
+    public bool IsCompleted { get; set; }
 
     [ForeignKey(nameof(ShipmentId))]
     [InverseProperty(nameof(Shipment.ShipmentItineraries))]
@@ -36,4 +43,12 @@ public partial class ShipmentItinerary : BaseEntity
     [ForeignKey(nameof(RouteId))]
     [InverseProperty(nameof(Route.ShipmentItineraries))]
     public virtual Route Route { get; set; }
+
+    [ForeignKey(nameof(TrainId))]
+    [InverseProperty(nameof(MetroTrain.ShipmentItineraries))]
+    public virtual MetroTrain? Train { get; set; }
+
+    [ForeignKey(nameof(TimeSlotId))]
+    [InverseProperty(nameof(MetroTimeSlot.ShipmentItineraries))]
+    public virtual MetroTimeSlot? TimeSlot { get; set; }
 }

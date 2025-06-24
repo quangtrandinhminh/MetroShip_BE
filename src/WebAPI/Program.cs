@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MetroShip.WebAPI.Extensions;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,18 @@ builder.Services.AddSwaggerDocumentation(appName, "v1");
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
+
+builder.Services.AddControllers().AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+    options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
 });
 
 var app = builder.Build();

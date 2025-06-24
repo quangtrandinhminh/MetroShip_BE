@@ -14,9 +14,9 @@ public sealed partial class AppDbContext
 
     public  DbSet<MetroLine> MetroLines { get; set; }
 
-    public DbSet<MetroTimeSlot> MetroTimeSlots { get; set; }
+    public DbSet<MetroTrain> MetroTrains { get; set; }
 
-    public DbSet<MetroBasePrice> MetroBasePrices { get; set; }
+    public DbSet<MetroTimeSlot> MetroTimeSlots { get; set; }
 
     public DbSet<Parcel> Parcels { get; set; }
 
@@ -35,8 +35,6 @@ public sealed partial class AppDbContext
     public DbSet<Notification> Notifications { get; set; }
 
     public DbSet<ShipmentItinerary> ShipmentItineraries { get; set; }
-
-    public DbSet<ParcelTracking> ParcelTrackings { get; set; }
 
     public DbSet<Station> Stations { get; set; }
 

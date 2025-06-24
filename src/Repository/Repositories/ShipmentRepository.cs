@@ -48,7 +48,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             int pageNumber,
             int pageSize,
             Expression<Func<Shipment, bool>> predicate = null,
-            Expression<Func<Shipment, object>> orderBy = null)
+            Expression<Func<Shipment, object>> orderBy = null,
+            bool? isDesc = false)
     {
         // Base query
         IQueryable<Shipment> q = _context.Shipments
@@ -60,7 +61,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         // Apply ordering
         q = orderBy is not null
-            ? q.OrderByDescending(orderBy)
+            ? isDesc.HasValue && isDesc.Value
+                ? q.OrderByDescending(orderBy)
+                : q.OrderBy(orderBy)
             : q.OrderByDescending(s => s.CreatedAt);
 
         // Project into your DTO, grabbing only the first & last itinerary
@@ -131,7 +134,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Id = itinerary.Id,
                 RouteId = itinerary.RouteId,
                 LegOrder = itinerary.LegOrder,
-                BasePriceVndPerKm = itinerary.BasePriceVndPerKm,
                 Route = new RouteDto
                 {
                     LineId = itinerary.Route.LineId,
@@ -153,9 +155,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 .Select(i => i.Route.ToStation.StationNameVi)
                 .LastOrDefault(),
             
-            ShippingFeeVnd = shipment.ShippingFeeVnd,
-            InsuranceFeeVnd = shipment.InsuranceFeeVnd,
-            SurchargeFeeVnd = shipment.SurchargeFeeVnd,
+            TotalShippingFeeVnd = shipment.TotalShippingFeeVnd,
+            TotalInsuranceFeeVnd = shipment.TotalInsuranceFeeVnd,
+            TotalSurchargeFeeVnd = shipment.TotalSurchargeFeeVnd,
             Parcels = shipment.Parcels
             .Select(parcel => new Parcel
             {
@@ -167,7 +169,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 WidthCm = parcel.WidthCm,
                 HeightCm = parcel.HeightCm,
                 Description = parcel.Description,
-                ParcelStatus = parcel.ParcelStatus,
                 PriceVnd = parcel.PriceVnd,
                 ParcelCategoryId = parcel.ParcelCategoryId,
                 ParcelCategory = new ParcelCategory
@@ -185,7 +186,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     }
 
     // get all shipments by lineId and date
-    public async Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
+    /*public async Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
     int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift)
     {
         var shipments = _context.Shipments
@@ -245,5 +246,5 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             });
 
         return await PaginatedList<ShipmentDto>.CreateAsync(shipmentDtos, pageNumber, pageSize);
-    }
+    }*/
 }

@@ -3,13 +3,13 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
     public class TransactionController : ControllerBase
     {
@@ -21,12 +21,10 @@ namespace MetroShip.WebAPI.Controllers
             _transactionService = transactionService;
         }
 
-        // response new json response include 2 list 
-
         /// <summary>
         /// Get all transactions (paginated & optional payment status filter)
         /// </summary>
-        [HttpGet]
+        [HttpGet(WebApiEndpoint.TransactionEndpoint.GetTransactions)]
         public async Task<ActionResult<PaginatedListResponse<TransactionResponse>>> GetAllAsync(
             [FromQuery] PaymentStatusEnum? status,[FromQuery] PaginatedListRequest request)
         {

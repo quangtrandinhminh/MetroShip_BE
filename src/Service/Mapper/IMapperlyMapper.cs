@@ -2,6 +2,7 @@
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
@@ -45,7 +46,6 @@ public interface IMapperlyMapper
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
-    RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
 
     IList<string?> MapRoleToRoleName(IList<RoleEntity> entity);
 
@@ -71,4 +71,10 @@ public interface IMapperlyMapper
     PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
 
     TransactionResponse MapToTransactionResponse(Transaction transaction);
+
+    // train
+    PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
+    TrainListResponse MapToTrainListResponse (MetroTrain entity);
+    TrainResponse MapToTrainResponse(MetroTrain request);
+
 }

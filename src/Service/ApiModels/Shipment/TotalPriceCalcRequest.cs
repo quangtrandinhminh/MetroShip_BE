@@ -8,6 +8,7 @@ public record TotalPriceCalcRequest
     public string DestinationStationId { get; set; }
     public double? UserLatitude { get; set; }
     public double? UserLongitude { get; set; }
-    public DateTimeOffset ScheduleShipmentDate { get; set; }
-    public IList<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
+    public DateTimeOffset ScheduledDateTime { get; set; }
+    public string TimeSlotId { get; set; }
+    public List<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
 }

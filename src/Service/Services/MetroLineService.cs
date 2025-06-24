@@ -51,7 +51,6 @@ namespace MetroShip.Service.Services
                     Id = line.Id,
                     LineNameVi = line.LineNameVi,
                     LineNameEn = line.LineNameEn,
-                    BasePriceVndPerKm = line.BasePriceVndPerKm,
                     regionCode = line.RegionId
                 })
                 .OrderBy(line => line.LineNameVi)

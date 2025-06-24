@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using MetroShip.Repository.Models.Base;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +13,6 @@ namespace MetroShip.Repository.Models;
 [Index(nameof(LineCode), nameof(RegionId), IsUnique = true)]
 public partial class MetroLine : BaseEntity
 {
-    public MetroLine()
-    {
-        LineCode = this.GetType().Name.ToUpperInvariant();
-    }
-
     [Required]
     [StringLength(50)]
     public string RegionId { get; set; }
@@ -44,41 +40,16 @@ public partial class MetroLine : BaseEntity
     public int TotalStations { get; set; }
 
     // This property is used to calculate est time
-    public int? MinHeadwayMin { get; set; }
+    //public int? MinHeadwayMin { get; set; }
 
     // This property is used to calculate timeline
-    public int? MaxHeadwayMin { get; set; }
+    //public int? MaxHeadwayMin { get; set; }
 
     public int? RouteTimeMin { get; set; }
 
     public int? DwellTimeMin { get; set; }
 
-    public int? TopSpeedKmH { get; set; }
-
-    public int? TopSpeedUdgKmH { get; set; }
-
-    // Toa
-    public int? CarriagesPerTrain { get; set; }
-
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? CarriageLenghtMeter { get; set; }
-
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? CarriageWidthMeter { get; set; }
-
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? CarriageHeightMeter { get; set; }
-
-    // Khối lượng tải
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? CarriageWeightTons { get; set; }
-
-    // Thể tích tải
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal? CarriageVolumeM3 => CarriageLenghtMeter * CarriageWidthMeter * CarriageHeightMeter;
-
-    [Column(TypeName = "decimal(18, 2)")]
-    public decimal BasePriceVndPerKm { get; set; }
+    public string? StationCoordinateList { get; set; } // JSON string of coordinates
 
     [StringLength(20)]
     public string ColorHex { get; set; }
@@ -92,6 +63,6 @@ public partial class MetroLine : BaseEntity
     [InverseProperty(nameof(Route.MetroLine))]
     public virtual ICollection<Route> Routes { get; set; } = new List<Route>();
 
-    [InverseProperty(nameof(MetroBasePrice.Line))]
-    public virtual ICollection<MetroBasePrice> MetroBasePrices { get; set; } = new List<MetroBasePrice>();
+    [InverseProperty(nameof(MetroTrain.Line))]
+    public virtual ICollection<MetroTrain> Trains { get; set; } = new List<MetroTrain>();
 }

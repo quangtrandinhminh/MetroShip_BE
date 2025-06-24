@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index(nameof(RouteCode), IsUnique = true)]
 [Index(nameof(LineId))]
 [Index(nameof(FromStationId))]
 [Index(nameof(ToStationId))]
@@ -20,11 +19,8 @@ public partial class Route : BaseEntity
     public Route()
     {
         RouteCode = this.GetType().Name.ToUpperInvariant();
-        // RouteNameVi = this.FromStation.StationNameVi + " - " + this.ToStation.StationNameVi;
-        // RouteNameEn = this.FromStation.StationNameEn + " - " + this.ToStation.StationNameEn;
     }
 
-    [Required]
     [StringLength(20)]
     public string? RouteCode { get; set; }
 
@@ -50,7 +46,7 @@ public partial class Route : BaseEntity
 
     public int SeqOrder { get; set; }
 
-    public int TravelTimeMin { get; set; }
+    public int? TravelTimeMin { get; set; }
 
     public DirectionEnum Direction { get; set; }
 

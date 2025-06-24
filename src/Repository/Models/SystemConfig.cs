@@ -27,5 +27,7 @@ public partial class SystemConfig : BaseEntity
     [StringLength(255)]
     public string Description { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     public ConfigTypeEnum ConfigType { get; set; }
 }

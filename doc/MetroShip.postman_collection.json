@@ -38,6 +38,19 @@
 				},
 				{
 					"name": "Login - Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -65,6 +78,19 @@
 				},
 				{
 					"name": "Login - Staff",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
@@ -91,13 +117,66 @@
 					"response": []
 				},
 				{
-					"name": "Login - Customer",
+					"name": "Login - Customer 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('customerAccessToken', pm.response.json().token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n  \"username\": \"quangtdm\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Customer 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('customer2AccessToken', pm.response.json().token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"quang6113\",\r\n  \"password\": \"12345678\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -595,18 +674,59 @@
 					"response": []
 				},
 				{
-					"name": "Create User",
+					"name": "Create User Cus",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"userName\": \"Quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"string\",\r\n  \"phoneNumber\": \"string\",\r\n  \"password\": \"string\",\r\n  \"confirmPassword\": \"string\",\r\n  \"birthDate\": \"2025-05-30T10:34:17.099Z\",\r\n  \"role\": [\r\n    2\r\n  ]\r\n}",
+							"raw": "{\r\n  \"userName\": \"quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp1@gmail.com\",\r\n  \"phoneNumber\": \"0123456788\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 3\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
 								}
 							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/users",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User Staff",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userName\": \"quangStaff\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp2@gmail.com\",\r\n  \"phoneNumber\": \"0123456787\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/users",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"users"
+							]
 						}
 					},
 					"response": []
@@ -1496,13 +1616,13 @@
 			"name": "Shipment",
 			"item": [
 				{
-					"name": "Create itinerary BaSon - TanCang",
+					"name": "Total price SuoiTien - Hiep Bình Phước",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\"\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"scheduledDateTime\": \"2025-06-28T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"UserLatitude\": 10.7705,\r\n    \"UserLongitude\": 106.6974,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1510,26 +1630,29 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/shipments/itinerary",
+							"raw": "https://localhost:7085/api/shipments/total-price-itinerary",
+							"protocol": "https",
 							"host": [
-								"{{baseUrl}}"
+								"localhost"
 							],
+							"port": "7085",
 							"path": [
+								"api",
 								"shipments",
-								"itinerary"
+								"total-price-itinerary"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Total price BaSon - TanCang",
+					"name": "Total price SuoiTien - Hiep Bình Phước - No user location",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"destinationStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"departureStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n  \"scheduleShipmentDate\": \"2025-06-01T22:00:00Z\",\r\n  \"UserLatitude\": 0,\r\n  \"UserLongitude\": 0,\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 80,\r\n      \"widthCm\": 60,\r\n      \"heightCm\": 50\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"scheduledDateTime\": \"2025-06-28T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1559,7 +1682,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n    \"destinationStationId\": \"4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-01T17:00:00Z\",\r\n    \"totalCostVnd\": 692000,\r\n    \"shippingFeeVnd\": 13650,\r\n    \"insuranceFeeVnd\": 10000,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8\",\r\n            \"BasePriceVndPerKm\": 5000,\r\n            \"legOrder\": 2\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 136500\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"chargeableWeight\": 40,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 546000\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-28T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"shippingFeeVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1596,21 +1719,95 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MS-HCMC-17486244000000101VN",
+							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506082300295",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MS-HCMC-17486244000000101VN"
+								"MS-HCMC-202506082300295"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get cus shipment his",
+					"name": "Get all shipment",
 					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shipments?orderBy=rejectedAt&orderDirection=desc&pageNumber=1&pageSize=5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							],
+							"query": [
+								{
+									"key": "shipmentStatus",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "orderBy",
+									"value": "rejectedAt"
+								},
+								{
+									"key": "orderDirection",
+									"value": "desc"
+								},
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "lineId",
+									"value": "e4d1d6b2-4f3a-4de0-9efa-",
+									"disabled": true
+								},
+								{
+									"key": "pageSize",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get cus 1 shipment his",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/shipments/customer/history",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"customer",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get cus 2 shipment his",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customer2AccessToken}}",
+									"type": "string"
+								}
+							]
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -1643,7 +1840,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"shipmentId\": \"MS-HCMC-17481179640000101VN\"\n}",
+							"raw": "{\n  \"shipmentId\": \"ffe0a3e3-34af-49b1-a9f9-5a646fa9ddba\",\n  \"returnUrl\": \"https://localhost:7085/api/auth/hello\",\n  \"cancelUrl\": \"https://metroship-cosdy.ondigitalocean.app/swagger/index.html\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1738,6 +1935,105 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "vnpay execute",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-execute?vnp_Amount=69200000&vnp_BankCode=VNPAY&vnp_CardType=QRCODE&vnp_OrderInfo=Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-2025060409000000505VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+692000.00+VND&vnp_PayDate=20250607032351&vnp_ResponseCode=24&vnp_TmnCode=89668LJB&vnp_TransactionNo=0&vnp_TransactionStatus=02&vnp_TxnRef=MS-HCMC-2025060409000000505VN&vnp_SecureHash=7a70bc167dd481161d0119cebcec89a04f359629570de5e7f13ab8685bcf0596b5ca2dcd79dac66448d7bf0da7f12df51095c3a1a0d3426a623086eac453bfea",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-execute"
+							],
+							"query": [
+								{
+									"key": "vnp_ReturnUrl",
+									"value": "https%3A%2F%2Fsandbox.vnpayment.vn%2Ftryitnow%2FHome%2FVnPayReturn?",
+									"disabled": true
+								},
+								{
+									"key": "vnp_Amount",
+									"value": "69200000"
+								},
+								{
+									"key": "vnp_BankCode",
+									"value": "VNPAY"
+								},
+								{
+									"key": "vnp_CardType",
+									"value": "QRCODE"
+								},
+								{
+									"key": "vnp_OrderInfo",
+									"value": "Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-2025060409000000505VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+692000.00+VND"
+								},
+								{
+									"key": "vnp_PayDate",
+									"value": "20250607032351"
+								},
+								{
+									"key": "vnp_ResponseCode",
+									"value": "24"
+								},
+								{
+									"key": "vnp_TmnCode",
+									"value": "89668LJB"
+								},
+								{
+									"key": "vnp_TransactionNo",
+									"value": "0"
+								},
+								{
+									"key": "vnp_TransactionStatus",
+									"value": "02"
+								},
+								{
+									"key": "vnp_TxnRef",
+									"value": "MS-HCMC-2025060409000000505VN"
+								},
+								{
+									"key": "vnp_SecureHash",
+									"value": "7a70bc167dd481161d0119cebcec89a04f359629570de5e7f13ab8685bcf0596b5ca2dcd79dac66448d7bf0da7f12df51095c3a1a0d3426a623086eac453bfea"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get shipment by line and date",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/shipments/metroline/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/date/2025-06-04",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"metroline",
+								"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+								"date",
+								"2025-06-04"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"auth": {
@@ -1804,6 +2100,94 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Staff confirms a parcel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/confirmation/2fbf4172-082c-424e-b720-ac11c7228310",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"confirmation",
+								"2fbf4172-082c-424e-b720-ac11c7228310"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff rejects a parcel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/rejection/263c4696-c0c8-4b40-8432-790faf6def5c?isRejected=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"rejection",
+								"263c4696-c0c8-4b40-8432-790faf6def5c"
+							],
+							"query": [
+								{
+									"key": "isRejected",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{staffAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -1860,6 +2244,151 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Transaction",
+			"item": [
+				{
+					"name": "Get Transactions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "text/plain"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{customerAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "TimeSlot",
+			"item": [
+				{
+					"name": "Get time slots",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-time-slots",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-time-slots"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{customerAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Train",
+			"item": [
+				{
+					"name": "Get all trains",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-trains",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-trains"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -1913,6 +2442,11 @@
 		{
 			"key": "productionUrl",
 			"value": "https://metroshipapi-latest.onrender.com/",
+			"type": "string"
+		},
+		{
+			"key": "customer2AccessToken",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQ3VzdG9tZXIiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIyZDgyODkwMS0zMWE2LTQwNTEtODNiZi00ZWZhNzhjYmNmZmEiLCJVc2VyTmFtZSI6InF1YW5nNjExMyIsInVuaXF1ZV9uYW1lIjoiUXVhbmciLCJlbWFpbCI6InRyYW5kaW5obWluaHF1YW5nc3hwMUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjAxMjM0NTY3ODgiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIwMy8wNi8yMDI1IiwibmJmIjoxNzQ4ODUxMDA0LCJleHAiOjE3NDg5Mzc0MDQsImlhdCI6MTc0ODg1MTAwNH0.w4ZcENAI_rv7Jkc1JjuyRq_UoSXOvOlteacJbH7mH2A",
 			"type": "string"
 		}
 	]

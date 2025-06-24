@@ -64,6 +64,17 @@
             public const string GetShipmentsByLineAndDate = BaseEndpoint + "/metroline/{lineCode}/date/{date}";
         }
 
+        public static class TransactionEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/transactions";
+            public const string GetTransactions = BaseEndpoint;
+            public const string GetTransactionById = BaseEndpoint + "/{id}";
+            public const string CreateTransaction = BaseEndpoint;
+            public const string UpdateTransaction = BaseEndpoint + "/{id}";
+            public const string DeleteTransaction = BaseEndpoint + "/{id}";
+            public const string GetTransactionsByShipmentId = BaseEndpoint + "/shipment/{shipmentId}";
+        }
+
         public static class Notification
         {
             private const string BaseEndpoint = "/" + AreaName + "notifications";
@@ -101,7 +112,7 @@
         public static class MetroLine
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
-            public const string GetMetroLines = BaseEndpoint;
+            public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
             public const string GetMetroLineById = BaseEndpoint + "/{id}";
             public const string CreateMetroLine = BaseEndpoint;
             public const string UpdateMetroLine = BaseEndpoint;
@@ -116,6 +127,17 @@
             public const string CreateMetroTimeSlot = BaseEndpoint;
             public const string UpdateMetroTimeSlot = BaseEndpoint;
             public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+        }
+
+        public static class MetroTrain
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-trains";
+            public const string GetAllTrains = BaseEndpoint;
+            public const string GetTrainById = BaseEndpoint + "/{id}";
+            public const string CreateTrain = BaseEndpoint;
+            public const string UpdateTrain = BaseEndpoint + "/{id}";
+            public const string DeleteTrain = BaseEndpoint + "/{id}";
+            public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
         }
     }
 }

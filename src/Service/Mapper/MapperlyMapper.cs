@@ -77,10 +77,6 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
-    public partial RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
-
-    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
-    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
     public partial RouteResponse MapToRouteResponse(RouteDto entity);
 
     // metroline
@@ -92,7 +88,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
 
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
-    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
 
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
@@ -105,6 +100,11 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
     public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
     public partial TransactionResponse MapToTransactionResponse(Transaction transaction);
+
+    // metro train
+    public partial PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
+    public partial TrainListResponse MapToTrainListResponse(MetroTrain entity);
+    public partial TrainResponse MapToTrainResponse(MetroTrain request);
 
     public int? MapToVoucherId(int? voucherId)
     {

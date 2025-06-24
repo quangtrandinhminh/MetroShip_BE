@@ -6,11 +6,10 @@ namespace MetroShip.Service.ApiModels.Shipment;
 
 public record TotalPriceResponse
 {
-    public decimal NightDiscount { get; set; }
-    public IList<ParcelRequest> ParcelRequests { get; set; } = new List<ParcelRequest>();
+    //public IList<ParcelRequest> ParcelRequests { get; set; } = new List<ParcelRequest>();
     public BestPathGraphResponse Standard { get; set; }
     public BestPathGraphResponse? Nearest { get; set; }
-    public BestPathGraphResponse? Cheapest { get; set; }
+    public BestPathGraphResponse? Shortest { get; set; }
     public int StationsInDistanceMeter { get; set; }
 }
 

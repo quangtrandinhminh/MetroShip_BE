@@ -59,8 +59,8 @@
             decimal length, decimal width, decimal height, decimal weight)
         {
             decimal volume = length * width * height; // cm^3
-            // Đơn vị tính là cm^3/kg, thường là 6000 cho các hãng vận chuyển hàng không
-            decimal divisor = 6000; 
+            // Đơn vị tính là cm^3/kg, 5000 cho vận chuyển mặt đất
+            decimal divisor = 5000; 
             decimal volumetricWeight = volume / divisor;
             decimal chargeableWeight = Math.Max(weight, volumetricWeight);
 

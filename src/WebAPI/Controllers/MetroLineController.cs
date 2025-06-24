@@ -16,17 +16,18 @@ namespace MetroShip.WebAPI.Controllers
             _metroLineService = metroLineService;
         }
 
-        [HttpGet(WebApiEndpoint.MetroLine.GetMetroLines)]
+        [HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesDropdownList)]
         public async Task<IActionResult> GetAllMetroLinesAsync()
         {
             var metroLines = await _metroLineService.GetAllMetroLine();
             return Ok(BaseResponse.OkResponseDto(metroLines));
         }
-        [HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesByRegion)]
+
+        /*[HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesByRegion)]
         public async Task<IActionResult> GetAllMetroLinesByRegionAsync([FromQuery] string? regionId)
         {
             var metroLines = await _metroLineService.GetAllMetroLineByRegion(regionId);
             return Ok(BaseResponse.OkResponseDto(metroLines));
-        }
+        }*/
     }
 }

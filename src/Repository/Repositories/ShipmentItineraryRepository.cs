@@ -15,19 +15,14 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
         _context = context;
     }
 
-    public class RoutesForGraph : Route
-    {
-        public decimal BasePriceVndPerKm { get; set; }
-    }
-
-    public async Task<(List<RoutesForGraph> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync()
+    public async Task<(List<Route> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync()
     {
         Console.WriteLine("Fetching routes, stations, and metro lines...");
         // Lấy tất cả routes, stations và metroLines một lần
         var routes = await _context.Routes
             .AsNoTracking()
             .Include(r => r.MetroLine)
-            .Select(x => new RoutesForGraph
+            .Select(x => new Route
             {
                 Id = x.Id,
                 FromStationId = x.FromStationId,
@@ -37,7 +32,6 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
                 SeqOrder = x.SeqOrder,
                 TravelTimeMin = x.TravelTimeMin,
                 LengthKm = x.LengthKm,
-                BasePriceVndPerKm = x.MetroLine.BasePriceVndPerKm,
             })
             .ToListAsync();
 
@@ -59,8 +53,6 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
         var metroLines = await _context.MetroLines
             .AsNoTracking()
             .Where(l => lineIds.Contains(l.Id))
-            .Include(l => l.MetroBasePrices)
-            .ThenInclude(bp => bp.TimeSlot)
             .ToListAsync();
 
         return (routes, stations, metroLines);

@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Service.ApiModels.Shipment;
 
@@ -23,17 +25,12 @@ public sealed record ShipmentRequest
 
     public string? RecipientEmail { get; set; }
 
-    public string? RecipientNationalId { get; set; }
-
     public DateTimeOffset ScheduledDateTime { get; set; }
-
+    public string TimeSlotId { get; set; } 
     public decimal TotalCostVnd { get; set; }
-
-    public decimal ShippingFeeVnd { get; set; }
-
-    public decimal? InsuranceFeeVnd { get; set; }
-
+    public decimal TotalShippingFeeVnd { get; set; }
+    public decimal? TotalInsuranceFeeVnd { get; set; }
+    public decimal TotalKm { get; set; }
     public IList<ShipmentItineraryRequest> ShipmentItineraries { get; set; } = new List<ShipmentItineraryRequest>();
-
     public IList<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
 }

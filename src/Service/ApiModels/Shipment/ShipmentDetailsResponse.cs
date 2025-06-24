@@ -10,14 +10,6 @@ public record ShipmentDetailsResponse : ShipmentListResponse
 
     public decimal ShippingFeeVnd { get; set; }
 
-    public DateTimeOffset? ApprovedAt { get; set; }
-
-    public DateTimeOffset? PaidAt { get; set; }
-
-    public DateTimeOffset? PickupAt { get; set; }
-
-    public DateTimeOffset? DeliveredAt { get; set; }
-
     public DateTimeOffset? SurchargeAppliedAt { get; set; }
 
     public DateTimeOffset? CancelledAt { get; set; }

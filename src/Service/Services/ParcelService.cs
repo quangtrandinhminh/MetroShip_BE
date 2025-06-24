@@ -33,7 +33,6 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 {
     private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
     private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();   
-    private readonly IBaseRepository<ParcelTracking> _parceltrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -103,16 +102,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var parcels = await _parcelRepository.GetAllPaginatedQueryable(
                 request.PageNumber, request.PageSize,
                 expression,
-                x => x.CreatedAt,
-                true,
-                x => x.ParcelTrackings, x => x.ParcelCategory
-        );
+                orderBy: x => x.CreatedAt,
+                isAscending: true,
+                includeProperties: x => x.ParcelCategory);
 
         var parcelListResponse = _mapper.MapToParcelPaginatedList(parcels);
         return parcelListResponse;
     }
 
-    public async Task ConfirmParcelAsync(Guid parcelId)
+    /*public async Task ConfirmParcelAsync(Guid parcelId)
     {
         var parcel = await _parcelRepository.GetAll()
             .Include(p => p.Shipment)
@@ -128,22 +126,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         parcel.ParcelStatus = ParcelStatusEnum.AwaitingPayment;
 
-        _parceltrackingRepository.Add(new ParcelTracking
-        {
-            ParcelId = parcel.Id,
-            Status = parcel.ParcelStatus.ToString(),
-            EventTime = CoreHelper.SystemTimeNow,
-        });
-
         _shipmentRepository.Update(parcel.Shipment);
         _parcelRepository.Update(parcel);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Kiểm tra trạng thái của tất cả parcel trong shipment
         await HandleShipmentStatusByConfirmation(parcel.ShipmentId);
-    }
+    }*/
 
-    public async Task RejectParcelAsync(ParcelRejectRequest request)
+    /*public async Task RejectParcelAsync(ParcelRejectRequest request)
     {
         var parcel = await _parcelRepository.GetAll()
             .Include(p => p.Shipment)
@@ -161,24 +152,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         parcel.Shipment.TotalCostVnd -= parcel.PriceVnd;
         if (parcel.Shipment.TotalCostVnd < 0) parcel.Shipment.TotalCostVnd = 0;
 
-        // Ghi lại tracking với lý do từ chối ở Note
-        _parceltrackingRepository.Update(new ParcelTracking
-        {
-            ParcelId = parcel.Id,
-            Status = parcel.ParcelStatus.ToString(),
-            EventTime = CoreHelper.SystemTimeNow,
-            Note = request.RejectReason
-        });
-
         _shipmentRepository.Update(parcel.Shipment);
         _parcelRepository.Update(parcel);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Kiểm tra trạng thái toàn bộ parcel trong shipment
         await HandleShipmentStatusByConfirmation(parcel.ShipmentId);
-    }
+    }*/
 
-    private async Task HandleShipmentStatusByConfirmation (string shipmentId)
+    /*private async Task HandleShipmentStatusByConfirmation (string shipmentId)
     {
         var shipment = await _shipmentRepository.GetSingleAsync(
             s => s.Id == shipmentId,
@@ -201,17 +183,17 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 shipment.ApprovedAt = CoreHelper.SystemTimeNow;
                 _logger.Information("Shipment {ShipmentId} accepted.", shipment.Id);
             }
-            else
+            /*else
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.PartiallyConfirmed;
                 shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-                _logger.Information("Shipment {ShipmentId} partially confirmed.", shipment.Id);
-            }
+                _logger.LogInformation("Shipment {ShipmentId} partially confirmed.", shipment.Id);
+            }#1#
 
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
-    }
+    }*/
 }
 
 

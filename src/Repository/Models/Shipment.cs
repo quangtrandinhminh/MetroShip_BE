@@ -18,7 +18,7 @@ public partial class Shipment : BaseEntity
     public Shipment()
     {
         BookedAt = CoreHelper.SystemTimeNow;
-        ShipmentStatus = ShipmentStatusEnum.Processing;
+        ShipmentStatus = ShipmentStatusEnum.AwaitingConfirmation;
     }
 
     [Required]
@@ -33,24 +33,40 @@ public partial class Shipment : BaseEntity
     [StringLength(50)]
     public string DestinationStationId { get; set; }
 
+    [StringLength(50)]
+    public string? ReturnForShipmentId { get; set; } // Nullable, if not return shipment
+
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal TotalCostVnd { get; set; } 
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal ShippingFeeVnd { get; set; }
+    public decimal TotalShippingFeeVnd { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal? InsuranceFeeVnd { get; set; }
+    public decimal? TotalInsuranceFeeVnd { get; set; } = 0;
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal? SurchargeFeeVnd { get; set; }
+    public decimal? TotalSurchargeFeeVnd { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? TotalOverdueSurchargeFee { get; set; }
 
     [Column(TypeName = "decimal(8, 2)")]
     public decimal? TotalKm { get; set; }
 
-    public DateTimeOffset? ScheduledDateTime { get; set; }
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? TotalWeightKg { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? TotalVolumeM3 { get; set; }
+
+    [StringLength(50)]
+    public string? TimeSlotId { get; set; }
+    public DateTimeOffset? ScheduledDateTime { get; set; } 
+    public ShiftEnum? ScheduledShift { get; set; }
+    public string? PriceStructureDescriptionJSON { get; set; }
 
     public DateTimeOffset? BookedAt { get; set; }
 
@@ -67,7 +83,14 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? CancelledAt { get; set; }
 
     public DateTimeOffset? RefundedAt { get; set; }
+
     public DateTimeOffset? RejectedAt { get; set; }
+
+    public DateTimeOffset? ReturnRequestedAt { get; set; }
+    public DateTimeOffset? ReturnApprovedAt { get; set; }
+    public DateTimeOffset? ReturnPickupAt { get; set; }
+    public DateTimeOffset? ReturnDeliveredAt { get; set; }
+    public DateTimeOffset? ReturnCancelledAt { get; set; }
 
     // Customer fields
     [Required]
@@ -115,4 +138,7 @@ public partial class Shipment : BaseEntity
 
     [InverseProperty(nameof(Transaction.Shipment))]
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+    [ForeignKey(nameof(ReturnForShipmentId))]
+    public virtual Shipment? ReturnForShipment { get; set; }
 }
