@@ -629,6 +629,20 @@ VALUES
 -- ─────────────────────────────────────────────────────────────────
 DO $$
     BEGIN
+        IF EXISTS (SELECT 1 FROM public."Transactions") THEN
+            DELETE FROM public."Transactions";
+        END IF;
+    END
+$$;
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Shipments") THEN
+            DELETE FROM public."Shipments";
+        END IF;
+    END
+$$;
+DO $$
+    BEGIN
         IF EXISTS (SELECT 1 FROM public."SystemConfigs") THEN
             DELETE FROM public."SystemConfigs";
         END IF;
@@ -1977,21 +1991,7 @@ VALUES
 
 
 -- ───────────────────────────────────────────────────────────────
-/*DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."Transactions") THEN
-            DELETE FROM public."Transactions";
-        END IF;
-    END
-$$;
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."Shipments") THEN
-            DELETE FROM public."Shipments";
-        END IF;
-    END
-$$;
-
+/*
 -- Seed shipment
 INSERT INTO public."Shipments"
 ("Id", "TrackingCode", "DepartureStationId", "DestinationStationId", "ShipmentStatus", "TotalCostVnd",
