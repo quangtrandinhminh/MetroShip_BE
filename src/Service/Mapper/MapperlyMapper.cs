@@ -55,6 +55,11 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentDto entity);
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentDto> entity);
+    // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
+    [MapProperty("TimeSlot.Id", nameof(ShipmentAvailableTimeSlotResponse.TimeSlotId))]
+    [MapProperty("TimeSlot.Shift", nameof(ShipmentAvailableTimeSlotResponse.TimeSlotName))]
+    public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
+        List<(DateTimeOffset Date, MetroTimeSlot TimeSlot, decimal RemainingWeightKg, decimal RemainingVolumeM3)> slots);
 
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
@@ -94,7 +99,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
     public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
-
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);

@@ -247,4 +247,85 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return await PaginatedList<ShipmentDto>.CreateAsync(shipmentDtos, pageNumber, pageSize);
     }*/
+
+    public class CheckAvailableTimeSlotsRequest
+    {
+        public string RouteId { get; set; }
+        public DateTimeOffset StartDate { get; set; }
+        public int MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
+        public List<string>? ParcelIds { get; set; }
+    }
+
+    public class AvailableTimeSlotDto
+    {
+        public DateTimeOffset Date { get; set; }
+        public string TimeSlotId { get; set; }
+        public string TimeSlotName { get; set; } // ví dụ: "Morning", "Afternoon", "Evening"
+        public decimal RemainingWeightKg { get; set; }
+        public decimal RemainingVolumeM3 { get; set; }
+    }
+
+
+    public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
+    {
+        var result = new List<AvailableTimeSlotDto>();
+        var maxWeight = 20000m;
+        var maxVolume = 160m;
+
+        // 1. Lấy danh sách parcel
+        var parcels = await _context.Parcels
+            .Where(p => request.ParcelIds.Contains(p.Id))
+            .ToListAsync();
+
+        if (!parcels.Any())
+            return result;
+
+        // 2. Tính tổng Volume & Weight
+        var requiredWeight = parcels.Sum(p => p.WeightKg);
+        var requiredVolume = parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1000000m); // Convert cm³ to m³
+
+        // 3. Lấy danh sách ca (slot)
+        var timeSlots = await _context.MetroTimeSlots.ToListAsync();
+
+        // 4. Check từng ca trong khoảng cho phép
+        for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
+        {
+            var currentDate = request.StartDate.Date.AddDays(dayOffset);
+
+            foreach (var slot in timeSlots)
+            {
+                var usage = await _context.ShipmentItineraries
+                    .Include(i => i.Shipment)
+                    .ThenInclude(s => s.Parcels)
+                    .Where(i =>
+                        i.RouteId == request.RouteId &&
+                        i.Date == currentDate &&
+                        i.TimeSlotId == slot.Id &&
+                        i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment)
+                    .ToListAsync();
+
+                var usedVolume = usage.Sum(x => x.Shipment.TotalVolumeM3 ?? 0);
+                var usedWeight = usage.Sum(x => x.Shipment.TotalWeightKg ?? 0);
+
+                var remainingVol = maxVolume - usedVolume;
+                var remainingWgt = maxWeight - usedWeight;
+
+                if (remainingVol >= requiredVolume && remainingWgt >= requiredWeight)
+                {
+                    result.Add(new AvailableTimeSlotDto
+                    {
+                        Date = currentDate,
+                        TimeSlotId = slot.Id,
+                        TimeSlotName = slot.Shift.ToString(),
+                        RemainingWeightKg = remainingWgt,
+                        RemainingVolumeM3 = remainingVol
+                    });
+                }
+            }
+
+            if (result.Any()) break; // Dừng sớm nếu đã có slot phù hợp
+        }
+
+        return result;
+    }
 }

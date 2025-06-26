@@ -19,4 +19,6 @@ public interface IShipmentRepository : IBaseRepository<Shipment>
 
     /*Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
         int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift);*/
+
+    Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request);
 }

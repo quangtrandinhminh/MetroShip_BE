@@ -62,6 +62,7 @@
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
             public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
             public const string GetShipmentsByLineAndDate = BaseEndpoint + "/metroline/{lineCode}/date/{date}";
+            public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
         }
 
         public static class TransactionEndpoint

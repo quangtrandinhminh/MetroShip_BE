@@ -23,6 +23,7 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Parcel;
 using System;
+using MetroShip.Repository.Repositories;
 
 namespace MetroShip.Service.Services;
 
@@ -46,6 +47,7 @@ public class ShipmentService : IShipmentService
     private MetroGraph _metroGraph;
     private bool _isInitializedPricingTable = false;
     private PricingTable _pricingTable;
+    public readonly IParcelRepository _parcelRepository;
 
     public ShipmentService(
         IServiceProvider serviceProvider,
@@ -57,7 +59,8 @@ public class ShipmentService : IShipmentService
         IEmailService emailSender,
         IParcelCategoryRepository parcelCategoryRepository,
         IBaseRepository<MetroTimeSlot> metroTimeSlotRepository,
-        IUserRepository userRepository)
+        IUserRepository userRepository,
+        IParcelRepository parcelRepository)
     {
         _unitOfWork = unitOfWork;
         _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
@@ -72,6 +75,7 @@ public class ShipmentService : IShipmentService
         _userRepository = userRepository;
         _parcelCategoryRepository = parcelCategoryRepository;
         _metroTimeSlotRepository = metroTimeSlotRepository;
+        _parcelRepository = parcelRepository;
     }
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
@@ -83,7 +87,7 @@ public class ShipmentService : IShipmentService
         // Build filter expression based on request
         Expression<Func<Shipment, bool>> filterExpression = BuildShipmentFilterExpression(filterRequest);
         // Build order by expression based on request
-        Expression<Func<Shipment, object>>? orderByExpression = BuildShipmentOrderByExpression(orderByRequest, 
+        Expression<Func<Shipment, object>>? orderByExpression = BuildShipmentOrderByExpression(orderByRequest,
             out bool? IsDesc);
 
         var shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
@@ -715,7 +719,7 @@ public class ShipmentService : IShipmentService
         }
 
         if (!string.IsNullOrWhiteSpace(request.RegionCode))
-        {   
+        {
             expression = expression.And(x => x.TrackingCode.Contains(request.RegionCode.ToUpperInvariant()));
         }
 
@@ -743,7 +747,7 @@ public class ShipmentService : IShipmentService
 
     private Expression<Func<Shipment, object>>? BuildShipmentOrderByExpression(OrderByRequest? request, out bool? isDesc)
     {
-        _logger.Information("Building order by expression for orderBy: {@orderBy}, isDesc: {@isDesc}", 
+        _logger.Information("Building order by expression for orderBy: {@orderBy}, isDesc: {@isDesc}",
             request?.OrderBy, request?.IsDesc);
 
         // Default to ScheduledDateTime if no orderBy specified
@@ -772,7 +776,7 @@ public class ShipmentService : IShipmentService
         return orderByExpression;
     }
 
-    private static readonly Dictionary<string, Expression<Func<Shipment, object>>> OrderByMapping = 
+    private static readonly Dictionary<string, Expression<Func<Shipment, object>>> OrderByMapping =
         new(StringComparer.OrdinalIgnoreCase)
     {
         { nameof(Shipment.ScheduledDateTime), x => x.ScheduledDateTime },
@@ -811,7 +815,8 @@ public class ShipmentService : IShipmentService
     {
         InitializeGraphAsync().Wait();
 
-        var pathTasks = stationIdList.Select(async departureStationId => {
+        var pathTasks = stationIdList.Select(async departureStationId =>
+        {
             List<string> path = _stationRepository.AreStationsInSameMetroLine(departureStationId, destinationStationId)
                 ? _metroGraph.FindShortestPathByBFS(departureStationId, destinationStationId)
                 : _metroGraph.FindShortestPathByDijkstra(departureStationId, destinationStationId);
@@ -829,7 +834,7 @@ public class ShipmentService : IShipmentService
         // Get pricing configuration
         InitializePricingTableAsync().Wait();
         var priceCalculationService = new PriceCalculationService(_pricingTable);
-        
+
         // Get parcel categories
         var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
         var categories = _parcelCategoryRepository.GetAllWithCondition(
@@ -839,13 +844,14 @@ public class ShipmentService : IShipmentService
         if (categories.Count() != categoryIds.Count)
         {
             var missingCategories = categoryIds.Except(categories.Select(c => c.Id)).ToList();
-                throw new AppException(
-                ErrorCode.NotFound,
-                $"Parcel categories not found: {string.Join(", ", missingCategories)}",
-                StatusCodes.Status404NotFound);
+            throw new AppException(
+            ErrorCode.NotFound,
+            $"Parcel categories not found: {string.Join(", ", missingCategories)}",
+            StatusCodes.Status404NotFound);
         }
 
-        return pathResults.Select(r => {
+        return pathResults.Select(r =>
+        {
             var pathResponse = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper);
 
             // Calculate pricing for each parcel
@@ -936,5 +942,61 @@ public class ShipmentService : IShipmentService
         response.StationsInDistanceMeter = maxDistanceInMeters;
         //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
+    }
+
+    public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request)
+    {
+        // 1. Lấy danh sách Parcel
+        var parcels = await _parcelRepository.GetByIdsAsync(request.ParcelIds);
+        if (!parcels.Any()) return new();
+
+        // 2. Chuẩn bị request cho repository
+        var availableSlotsRequest = new ShipmentRepository.CheckAvailableTimeSlotsRequest
+        {
+            RouteId = request.RouteId,
+            StartDate = request.StartDate,
+            MaxAttempts = request.MaxAttempts,
+            ParcelIds = parcels.Select(p => p.Id).ToList()
+        };
+
+        // 3. Gọi repository để lấy danh sách ca trống
+        var availableSlots = await _shipmentRepository.FindAvailableTimeSlotsAsync(availableSlotsRequest);
+
+        // 4. Map từng slot từ DTO → tuple (dùng if-else cho shift)
+        var mappedSlots = availableSlots.Select(slot =>
+        {
+            ShiftEnum shift;
+            if (slot.TimeSlotName.Equals("Morning", StringComparison.OrdinalIgnoreCase))
+                shift = ShiftEnum.Morning;
+            else if (slot.TimeSlotName.Equals("Afternoon", StringComparison.OrdinalIgnoreCase))
+                shift = ShiftEnum.Afternoon;
+            else if (slot.TimeSlotName.Equals("Evening", StringComparison.OrdinalIgnoreCase))
+                shift = ShiftEnum.Evening;
+            else if (slot.TimeSlotName.Equals("Night", StringComparison.OrdinalIgnoreCase))
+                shift = ShiftEnum.Night;
+            else
+                throw new InvalidOperationException($"Unrecognized time slot name: {slot.TimeSlotName}");
+
+            return (
+                Date: slot.Date,
+                TimeSlot: new MetroTimeSlot
+                {
+                    Id = slot.TimeSlotId, // Ensure this matches the type expected by MetroTimeSlot.Id
+                    Shift = shift
+                },
+                RemainingWeightKg: slot.RemainingWeightKg,
+                RemainingVolumeM3: slot.RemainingVolumeM3
+            );
+        }).ToList();
+
+        // 5. Map sang response
+        return mappedSlots.Select(slot => new ShipmentAvailableTimeSlotResponse
+        {
+            Date = slot.Date,
+            TimeSlotId = slot.TimeSlot.Id.ToString(),
+            TimeSlotName = slot.TimeSlot.Shift.ToString(),
+            RemainingWeightKg = slot.RemainingWeightKg,
+            RemainingVolumeM3 = slot.RemainingVolumeM3
+        }).ToList();
     }
 }

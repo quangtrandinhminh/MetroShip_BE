@@ -111,5 +111,13 @@ namespace MetroShip.WebAPI.Controllers
             var response = await shipmentService.GetShipmentByLineAndDate(request, lineCode, date, regionCode, shift);
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }*/
+        
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetAvailableTimeSlots)]
+        public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
+        {
+            var response = await shipmentService.CheckAvailableTimeSlotsAsync(request);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }
     }
 }

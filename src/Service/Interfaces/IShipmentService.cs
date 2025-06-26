@@ -16,4 +16,5 @@ public interface IShipmentService
     Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request);
     /*Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentByLineAndDate(PaginatedListRequest request,
         string lineCode, DateTimeOffset date, string? regionCode, ShiftEnum? shift);*/
+    Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request);
 }
