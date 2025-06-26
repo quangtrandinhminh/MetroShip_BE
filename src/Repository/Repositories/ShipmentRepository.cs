@@ -122,7 +122,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TotalCostVnd = shipment.TotalCostVnd,
             ScheduledDateTime = shipment.ScheduledDateTime,
             PaidAt = shipment.PaidAt,
-            PickupAt = shipment.PickupAt,
+            PickedUpAt = shipment.PickedUpAt,
             DeliveredAt = shipment.DeliveredAt,
             SurchargeAppliedAt = shipment.SurchargeAppliedAt,
             CancelledAt = shipment.CancelledAt,

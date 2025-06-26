@@ -141,7 +141,7 @@ public class MetroGraph
     /// </summary>
     /// <param name="fromStationId"></param>
     /// <param name="toStationId"></param>
-    /// <returns></returns>
+    /// <returns>List station Id on path, or null if not found</returns>
     /// <exception cref="AppException"></exception>
     public List<string> FindShortestPathByDFS(string fromStationId, string toStationId)
     {
@@ -197,7 +197,7 @@ public class MetroGraph
     /// <returns>MetroGraph mới chứa các ga và tuyến đường trong path</returns>
     public BestPathGraphResponse CreateResponseFromPath(List<string> path, IMapperlyMapper _mapper)
     {
-        if (path == null || path.Count < 2)
+        if (!path.Any())
             return null;
 
         // Tạo cấu trúc dữ liệu mới
@@ -332,7 +332,7 @@ public class MetroGraph
         {
             var current = queue.Dequeue();
 
-            // Nếu đã đến đích, xây dựng đường đi
+            // Nếu đã đến ga đích, xây dựng đường đi
             if (current == end)
             {
                 var path = new List<string>();

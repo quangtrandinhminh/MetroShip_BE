@@ -67,4 +67,7 @@ public partial class Parcel : BaseEntity
     [ForeignKey(nameof(ParcelCategoryId))]
     [InverseProperty(nameof(ParcelCategory.Parcels))]
     public virtual ParcelCategory ParcelCategory { get; set; }
+
+    [InverseProperty(nameof(ParcelTracking.Parcel))]
+    public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; } = new List<ParcelTracking>();
 }

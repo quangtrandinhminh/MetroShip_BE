@@ -250,10 +250,10 @@ namespace MetroShip.Service.Services
             sb.AppendLine($"<p>Bạn có thể theo dõi tình trạng vận đơn bằng mã: <strong>{shipment.TrackingCode}</strong></p>");
             sb.AppendLine($"<p>Đơn hàng của bạn sẽ được chúng tôi xác nhận trong <strong>" +
                 $"{_systemConfigRepository.GetSystemConfigValueByKey(
-                                       SystemConfigSetting.Instance.CONFIRMATION_HOUR) ?? "24"}h</strong>!</p>");
+                                       nameof(SystemConfigSetting.CONFIRMATION_HOUR)) ?? "24"}h</strong>!</p>");
             sb.AppendLine($"<p>Vui lòng theo dõi thông báo và thanh toán ngay sau khi đơn được xác nhận trong <strong>" +
                 $"{_systemConfigRepository.GetSystemConfigValueByKey(
-                SystemConfigSetting.Instance.CONFIRMATION_HOUR) ?? "24"}h</strong> kế tiếp!</p>");
+                    nameof(SystemConfigSetting.PAYMENT_REQUEST_HOUR)) ?? "24"}h</strong> kế tiếp!</p>");
 
             sb.AppendLine($"<p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của chúng tôi!</p>");
             sb.AppendLine($"<p>Trân trọng,<br/>Đội ngũ {appName}</p>");

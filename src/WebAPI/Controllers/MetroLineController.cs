@@ -16,7 +16,7 @@ namespace MetroShip.WebAPI.Controllers
             _metroLineService = metroLineService;
         }
 
-        [HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesDropdownList)]
+        [HttpGet(WebApiEndpoint.MetroLineEndpoint.GetMetroLinesDropdownList)]
         public async Task<IActionResult> GetAllMetroLinesAsync()
         {
             var metroLines = await _metroLineService.GetAllMetroLine();

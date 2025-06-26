@@ -23,6 +23,7 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Parcel;
 using System;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Service.Services;
 
@@ -207,7 +208,8 @@ public class ShipmentService : IShipmentService
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // send email to customer
-        _logger.Information("Send email to customer with tracking code: {@trackingCode}", shipment.TrackingCode);
+        _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
+            shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
         var sendMailModel = new SendMailModel
         {
@@ -255,13 +257,14 @@ public class ShipmentService : IShipmentService
             return;
 
         // Lấy tất cả cấu hình giá từ hệ thống
-        var allConfigs = await _systemConfigRepository.GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
+        var allConfigs = await _systemConfigRepository
+            .GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
         var pricingTableBuilder = new PricingTableBuilder();
         _pricingTable = pricingTableBuilder.BuildPricingTable(allConfigs);
         _isInitializedPricingTable = true;
     }
 
-    public async Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request)
+    /*public async Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request)
     {
         await InitializeGraphAsync();
 
@@ -276,7 +279,7 @@ public class ShipmentService : IShipmentService
 
         // Chuyển đổi đường đi thành itinerary
         return _metroGraph.CreateResponseFromPath(path, _mapperlyMapper);
-    }
+    }*/
 
     // v0
     /*public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
@@ -779,7 +782,7 @@ public class ShipmentService : IShipmentService
         { nameof(Shipment.BookedAt), x => x.BookedAt },
         { nameof(Shipment.ApprovedAt), x => x.ApprovedAt },
         { nameof(Shipment.PaidAt), x => x.PaidAt },
-        { nameof(Shipment.PickupAt), x => x.PickupAt },
+        { nameof(Shipment.PickedUpAt), x => x.PickedUpAt },
         { nameof(Shipment.DeliveredAt), x => x.DeliveredAt },
         { nameof(Shipment.SurchargeAppliedAt), x => x.SurchargeAppliedAt },
         { nameof(Shipment.CancelledAt), x => x.CancelledAt },
@@ -799,8 +802,20 @@ public class ShipmentService : IShipmentService
 
         if (request is { UserLongitude: not null, UserLatitude: not null })
         {
-            stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
+            stationIds.UnionWith(
+                await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, 
+                maxDistanceInMeters, maxStationCount));
+
+            // Ensure at least 2 stations are available
+            while (stationIds.Count < 2 && maxDistanceInMeters < maxDistanceInMeters*2)
+            {
+                maxDistanceInMeters += 2000; // Extend distance by 1000 meters
+                stationIds.UnionWith(
+                    await _stationRepository.GetAllStationIdNearUser(
+                            request.UserLatitude.Value, request.UserLongitude.Value, 
+                            maxDistanceInMeters, maxStationCount));
+            }
         }
 
         return stationIds;
@@ -812,7 +827,8 @@ public class ShipmentService : IShipmentService
         InitializeGraphAsync().Wait();
 
         var pathTasks = stationIdList.Select(async departureStationId => {
-            List<string> path = _stationRepository.AreStationsInSameMetroLine(departureStationId, destinationStationId)
+            List<string> path = _stationRepository.AreStationsInSameMetroLine(
+                departureStationId, destinationStationId)
                 ? _metroGraph.FindShortestPathByBFS(departureStationId, destinationStationId)
                 : _metroGraph.FindShortestPathByDijkstra(departureStationId, destinationStationId);
             return (StationId: departureStationId, Path: path);
@@ -820,7 +836,25 @@ public class ShipmentService : IShipmentService
 
         var allPaths = await Task.WhenAll(pathTasks);
 
-        return allPaths.Where(r => r.Path != null && r.Path.Any()).ToList();
+        // Filter out null/empty paths and log them
+        // Valid path: path has more than 1 vertex (path is a station list, 1 route need 2 station)
+        var validPaths = allPaths.Where(
+            r => r.Path.Count > 1).ToList();
+
+        if (!validPaths.Any())
+        {
+            _logger.Information("No valid paths found from any station {StationIds} to {DestinationId}",
+                string.Join(", ", stationIdList), destinationStationId);
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.PATH_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        _logger.Information("Found {ValidPathCount} valid paths out of {TotalPathCount} attempted",
+            validPaths.Count, allPaths.Length);
+
+        return validPaths;
     }
 
     private async Task<List<dynamic>> CalculatePricingForPaths(
@@ -832,8 +866,9 @@ public class ShipmentService : IShipmentService
         
         // Get parcel categories
         var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
-        var categories = _parcelCategoryRepository.GetAllWithCondition(
-            x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null);
+        var categories = await _parcelCategoryRepository.GetAllWithCondition(
+            x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
+            .ToListAsync();
 
         // check if all categories are exist in categoryIds and if not, throw exception at which is not found
         if (categories.Count() != categoryIds.Count)
@@ -865,7 +900,7 @@ public class ShipmentService : IShipmentService
         List<ParcelRequest> parcels,
         BestPathGraphResponse pathResponse,
         PriceCalculationService priceCalculationService,
-        IEnumerable<ParcelCategory> categories)
+        List<ParcelCategory> categories)
     {
         foreach (var parcel in parcels)
         {
@@ -886,32 +921,40 @@ public class ShipmentService : IShipmentService
         }
     }
 
-    private void CalculateInsurance(ParcelRequest parcel, IEnumerable<ParcelCategory> categories)
+    private void CalculateInsurance(ParcelRequest parcel, List<ParcelCategory> categories)
     {
         var category = categories.FirstOrDefault(c => c.Id == parcel.ParcelCategoryId);
-
-        if (category != null && category.IsInsuranceRequired)
+        if (category.IsInsuranceRequired && !parcel.ValueVnd.HasValue)
         {
-            if (category.InsuranceRate != null)
-            {
-                if (!parcel.ValueVnd.HasValue)
-                {
-                    throw new AppException(
-                    ErrorCode.BadRequest,
-                    $"Category {category.CategoryName} required " +
-                    $"Customer have to pay insurance fee" +
-                    $"and need ValueVnd of the parcel for insurance calculation.",
-                    StatusCodes.Status400BadRequest);
-                }
-                parcel.InsuranceFeeVnd = parcel.ValueVnd * category.InsuranceRate;
-            }
-            else
-            {
-                parcel.InsuranceFeeVnd = category.InsuranceFeeVnd;
-            }
-
-            parcel.PriceVnd += parcel.InsuranceFeeVnd;
+            throw new AppException(
+                ErrorCode.BadRequest,
+                $"Category '{category.CategoryName}' has required insurance " +
+                $"and requires ValueVnd of the parcel for insurance calculation.",
+                StatusCodes.Status400BadRequest);
         }
+
+        // Calculate insurance fee if any insurance configuration exists
+        if (category.InsuranceRate != null || category.InsuranceFeeVnd != null)
+        {
+            parcel.InsuranceFeeVnd = CalculateInsuranceFee(parcel, category);
+
+            // Add to price only if insurance is required
+            if (category.IsInsuranceRequired)
+            {
+                parcel.PriceVnd += parcel.InsuranceFeeVnd;
+                parcel.IsInsuranceIncluded = true;
+            }
+        }
+    }
+
+    private decimal? CalculateInsuranceFee(ParcelRequest parcel, ParcelCategory category)
+    {
+        if (category.InsuranceRate != null)
+        {
+            return parcel.ValueVnd * category.InsuranceRate;
+        }
+
+        return category.InsuranceFeeVnd;
     }
 
     private TotalPriceResponse BuildTotalPriceResponse(List<dynamic> bestPathResponses, List<string> stationIdList)

@@ -33,7 +33,10 @@ public enum ShipmentStatusEnum
 
     // Completion
     AwaitingFeedback,     // delivered, waiting for rating
-    Completed             // feedback received, shipment closed
+    Completed,             // feedback received, shipment closed
+
+    // Unhappy case
+    Delayed,              // parcels delayed at any stage
 }
 
 /// <summary>

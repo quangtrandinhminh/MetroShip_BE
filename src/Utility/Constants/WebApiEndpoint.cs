@@ -100,7 +100,7 @@
             public const string GetUserDevices = BaseEndpoint;
         }
 
-        public static class Station 
+        public static class StationEndpoint 
         {
             private const string BaseEndpoint = "/" + AreaName + "/stations";
             public const string GetStations = BaseEndpoint;
@@ -109,7 +109,7 @@
             public const string UpdateStation = BaseEndpoint;
             public const string DeleteStation = BaseEndpoint + "/{id}";
         }
-        public static class MetroLine
+        public static class MetroLineEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
             public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
@@ -119,7 +119,7 @@
             public const string DeleteMetroLine = BaseEndpoint + "/{id}";
             public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
         }
-        public static class MetroTimeSlot
+        public static class MetroTimeSlotEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-time-slots";
             public const string GetMetroTimeSlots = BaseEndpoint;
@@ -129,7 +129,7 @@
             public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
         }
 
-        public static class MetroTrain
+        public static class MetroTrainEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-trains";
             public const string GetAllTrains = BaseEndpoint;
@@ -138,6 +138,33 @@
             public const string UpdateTrain = BaseEndpoint + "/{id}";
             public const string DeleteTrain = BaseEndpoint + "/{id}";
             public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
+        }
+
+        public static class MediaEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/media";
+            public const string UploadImage = BaseEndpoint + "/image";
+            public const string DeleteImage = BaseEndpoint + "/image";
+        }
+
+        public static class ReportEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/reports";
+            public const string GetReports = BaseEndpoint;
+            public const string GetReportById = BaseEndpoint + "/{id}";
+            public const string CreateReport = BaseEndpoint;
+            public const string UpdateReport = BaseEndpoint + "/{id}";
+            public const string DeleteReport = BaseEndpoint + "/{id}";
+        }
+
+        public static class SystemConfigEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/system-configs";
+            public const string GetSystemConfigs = BaseEndpoint;
+            public const string GetSystemConfigById = BaseEndpoint + "/{id}";
+            public const string CreateSystemConfig = BaseEndpoint;
+            public const string UpdateSystemConfig = BaseEndpoint + "/{id}";
+            public const string DeleteSystemConfig = BaseEndpoint + "/{id}";
         }
     }
 }
