@@ -10,6 +10,7 @@ using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using MetroShip.Utility.Enums;
+using System.Runtime.CompilerServices;
 
 
 namespace MetroShip.Repository.Repositories;
@@ -154,7 +155,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.ToStation.StationNameVi)
                 .LastOrDefault(),
-            
+
             TotalShippingFeeVnd = shipment.TotalShippingFeeVnd,
             TotalInsuranceFeeVnd = shipment.TotalInsuranceFeeVnd,
             TotalSurchargeFeeVnd = shipment.TotalSurchargeFeeVnd,
@@ -250,47 +251,68 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
     public class CheckAvailableTimeSlotsRequest
     {
-        public string RouteId { get; set; }
-        public DateTimeOffset StartDate { get; set; }
-        public int MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
-        public List<string>? ParcelIds { get; set; }
+        public string TrackingCode { get; set; }
+        public int? MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
     }
 
     public class AvailableTimeSlotDto
     {
+        public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset Date { get; set; }
         public string TimeSlotId { get; set; }
         public string TimeSlotName { get; set; } // ví dụ: "Morning", "Afternoon", "Evening"
         public decimal RemainingWeightKg { get; set; }
         public decimal RemainingVolumeM3 { get; set; }
+        public List<string>? ParcelIds { get; set; }
     }
-
 
     public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
     {
         var result = new List<AvailableTimeSlotDto>();
-        var maxWeight = 20000m;
-        var maxVolume = 160m;
+        const decimal maxWeight = 20000m;
+        const decimal maxVolume = 160m;
 
-        // 1. Lấy danh sách parcel
-        var parcels = await _context.Parcels
-            .Where(p => request.ParcelIds.Contains(p.Id))
-            .ToListAsync();
+        // 1. Lấy shipment + parcel theo request.TrackingCode
+        var shipment = await _context.Shipments
+            .Include(s => s.Parcels)
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .FirstOrDefaultAsync(s => s.Id == request.TrackingCode);
 
-        if (!parcels.Any())
+        if (shipment == null || !shipment.Parcels.Any())
             return result;
 
-        // 2. Tính tổng Volume & Weight
-        var requiredWeight = parcels.Sum(p => p.WeightKg);
-        var requiredVolume = parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1000000m); // Convert cm³ to m³
+        // 2. Lấy ngày bắt đầu từ Parcel.BookAt
+        var startDate = shipment.BookedAt?.Date ?? DateTimeOffset.UtcNow.Date;
 
-        // 3. Lấy danh sách ca (slot)
+        // 3. Extract routeId từ itinerary đầu tiên
+        var routeId = shipment.ShipmentItineraries.FirstOrDefault()?.RouteId;
+
+        if (routeId == null)
+            return result;
+
+        // 4. Tính tổng thể tích + khối lượng
+        var totalWeight = shipment.Parcels.Sum(p => p.WeightKg);
+        var totalVolume = shipment.Parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1_000_000m);
+
+        shipment.TotalWeightKg = totalWeight;
+        shipment.TotalVolumeM3 = totalVolume;
+
+        // 5. Nếu quá tải -> cập nhật trạng thái
+        if (totalWeight > maxWeight || totalVolume > maxVolume)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
+            await _context.SaveChangesAsync();
+            return result;
+        }
+
+        // 6. Lấy danh sách time slots
         var timeSlots = await _context.MetroTimeSlots.ToListAsync();
 
-        // 4. Check từng ca trong khoảng cho phép
+        // 7. Tìm slot phù hợp trong các ngày tới
         for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
         {
-            var currentDate = request.StartDate.Date.AddDays(dayOffset);
+            var currentDate = startDate.AddDays(dayOffset);
 
             foreach (var slot in timeSlots)
             {
@@ -298,10 +320,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     .Include(i => i.Shipment)
                     .ThenInclude(s => s.Parcels)
                     .Where(i =>
-                        i.RouteId == request.RouteId &&
                         i.Date == currentDate &&
                         i.TimeSlotId == slot.Id &&
-                        i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment)
+                        i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff)
                     .ToListAsync();
 
                 var usedVolume = usage.Sum(x => x.Shipment.TotalVolumeM3 ?? 0);
@@ -310,20 +331,22 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 var remainingVol = maxVolume - usedVolume;
                 var remainingWgt = maxWeight - usedWeight;
 
-                if (remainingVol >= requiredVolume && remainingWgt >= requiredWeight)
+                if (remainingVol >= totalVolume && remainingWgt >= totalWeight)
                 {
                     result.Add(new AvailableTimeSlotDto
                     {
+                        StartDate = startDate,
                         Date = currentDate,
                         TimeSlotId = slot.Id,
                         TimeSlotName = slot.Shift.ToString(),
                         RemainingWeightKg = remainingWgt,
-                        RemainingVolumeM3 = remainingVol
+                        RemainingVolumeM3 = remainingVol,
+                        ParcelIds = shipment.Parcels.Select(p => p.Id).ToList()
                     });
                 }
             }
 
-            if (result.Any()) break; // Dừng sớm nếu đã có slot phù hợp
+            if (result.Any()) break;
         }
 
         return result;

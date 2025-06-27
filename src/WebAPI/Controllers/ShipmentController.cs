@@ -112,7 +112,6 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }*/
         
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetAvailableTimeSlots)]
         public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
         {

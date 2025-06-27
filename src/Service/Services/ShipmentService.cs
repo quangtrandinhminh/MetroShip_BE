@@ -968,7 +968,7 @@ public class ShipmentService : IShipmentService
         var response = new TotalPriceResponse();
 
         response.Standard = bestPathResponses
-            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
+.FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
 
         response.Nearest = bestPathResponses.Count > 1
             ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
@@ -989,17 +989,17 @@ public class ShipmentService : IShipmentService
 
     public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request)
     {
-        // 1. Lấy danh sách Parcel
-        var parcels = await _parcelRepository.GetByIdsAsync(request.ParcelIds);
-        if (!parcels.Any()) return new();
+        // 1. Lấy danh sách Parcel theo ShipmentId
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.TrackingCode);
+        if (shipment == null || shipment.Parcels == null || !shipment.Parcels.Any());
+
+        var parcelIds = shipment.Parcels.Select(p => p.Id).ToList();
 
         // 2. Chuẩn bị request cho repository
         var availableSlotsRequest = new ShipmentRepository.CheckAvailableTimeSlotsRequest
         {
-            RouteId = request.RouteId,
-            StartDate = request.StartDate,
-            MaxAttempts = request.MaxAttempts,
-            ParcelIds = parcels.Select(p => p.Id).ToList()
+            TrackingCode = request.TrackingCode,
+            MaxAttempts = request.MaxAttempts > 0 ? request.MaxAttempts : 3
         };
 
         // 3. Gọi repository để lấy danh sách ca trống
@@ -1008,38 +1008,29 @@ public class ShipmentService : IShipmentService
         // 4. Map từng slot từ DTO → tuple (dùng if-else cho shift)
         var mappedSlots = availableSlots.Select(slot =>
         {
-            ShiftEnum shift;
-            if (slot.TimeSlotName.Equals("Morning", StringComparison.OrdinalIgnoreCase))
-                shift = ShiftEnum.Morning;
-            else if (slot.TimeSlotName.Equals("Afternoon", StringComparison.OrdinalIgnoreCase))
-                shift = ShiftEnum.Afternoon;
-            else if (slot.TimeSlotName.Equals("Evening", StringComparison.OrdinalIgnoreCase))
-                shift = ShiftEnum.Evening;
-            else if (slot.TimeSlotName.Equals("Night", StringComparison.OrdinalIgnoreCase))
-                shift = ShiftEnum.Night;
-            else
-                throw new InvalidOperationException($"Unrecognized time slot name: {slot.TimeSlotName}");
+        var shift = slot.TimeSlotName.ToLowerInvariant() switch
+        {
+            "morning" => ShiftEnum.Morning,
+            "afternoon" => ShiftEnum.Afternoon,
+            "evening" => ShiftEnum.Evening,
+            "night" => ShiftEnum.Night,
+            _ => throw new InvalidOperationException($"Unrecognized time slot name: {slot.TimeSlotName}")
+        };
 
-            return (
-                Date: slot.Date,
-                TimeSlot: new MetroTimeSlot
+        return (
+                slot.StartDate, // Use only `Date` instead of `StartDate`
+                slot.Date, // Keep `Date` as the second tuple element
+                new MetroTimeSlot
                 {
-                    Id = slot.TimeSlotId, // Ensure this matches the type expected by MetroTimeSlot.Id
+                    Id = slot.TimeSlotId,
                     Shift = shift
                 },
-                RemainingWeightKg: slot.RemainingWeightKg,
-                RemainingVolumeM3: slot.RemainingVolumeM3
+                slot.RemainingWeightKg,
+                slot.RemainingVolumeM3
             );
         }).ToList();
 
         // 5. Map sang response
-        return mappedSlots.Select(slot => new ShipmentAvailableTimeSlotResponse
-        {
-            Date = slot.Date,
-            TimeSlotId = slot.TimeSlot.Id.ToString(),
-            TimeSlotName = slot.TimeSlot.Shift.ToString(),
-            RemainingWeightKg = slot.RemainingWeightKg,
-            RemainingVolumeM3 = slot.RemainingVolumeM3
-        }).ToList();
+        return _mapperlyMapper.MapToAvailableTimeSlotResponseList(mappedSlots);
     }
 }

@@ -56,10 +56,14 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentDto> entity);
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
-    [MapProperty("TimeSlot.Id", nameof(ShipmentAvailableTimeSlotResponse.TimeSlotId))]
-    [MapProperty("TimeSlot.Shift", nameof(ShipmentAvailableTimeSlotResponse.TimeSlotName))]
+    [MapProperty("Item1", "StartDate")]
+    [MapProperty("Item2", "Date")]
+    [MapProperty("Item3.Id", "TimeSlotId")]
+    [MapProperty("Item3.Shift", "TimeSlotName")]
+    [MapProperty("Item4", "RemainingWeightKg")]
+    [MapProperty("Item5", "RemainingVolumeM3")]
     public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
-        List<(DateTimeOffset Date, MetroTimeSlot TimeSlot, decimal RemainingWeightKg, decimal RemainingVolumeM3)> slots);
+        List<(DateTimeOffset, DateTimeOffset, MetroTimeSlot, decimal, decimal)> slots);
 
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
