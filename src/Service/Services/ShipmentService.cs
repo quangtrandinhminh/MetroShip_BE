@@ -211,6 +211,7 @@ public class ShipmentService : IShipmentService
         _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
+        shipment.ScheduledDateTime = request.ScheduledDateTime;
         var sendMailModel = new SendMailModel
         {
             Email = user.Email,
