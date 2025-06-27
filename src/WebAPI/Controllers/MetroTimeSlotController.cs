@@ -17,7 +17,7 @@ namespace MetroShip.WebAPI.Controllers
             _metroTimeSlotService = metroTimeSlotService;
         }
 
-        [HttpGet(WebApiEndpoint.MetroTimeSlot.GetMetroTimeSlots)]
+        [HttpGet(WebApiEndpoint.MetroTimeSlotEndpoint.GetMetroTimeSlots)]
         public async Task<IActionResult> GetAllMetroTimeSlotsAsync()
         {
             var timeSlots = await _metroTimeSlotService.GetAllForMetroTimeSlot();

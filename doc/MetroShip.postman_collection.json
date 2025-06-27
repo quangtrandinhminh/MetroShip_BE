@@ -44,7 +44,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
-									""
+									"pm.collectionVariables.set('adminRT', pm.response.json().refreshToken);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -84,7 +84,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
-									""
+									"pm.collectionVariables.set('staffRT', pm.response.json().refreshToken);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -124,6 +124,8 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set('customerAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('customerRT', pm.response.json().refreshToken);\r",
+									"\r",
 									""
 								],
 								"type": "text/javascript",
@@ -164,7 +166,7 @@
 							"script": {
 								"exec": [
 									"pm.collectionVariables.set('customer2AccessToken', pm.response.json().token);\r",
-									""
+									"pm.collectionVariables.set('customer2RT', pm.response.json().refreshToken);"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -291,13 +293,26 @@
 					"response": []
 				},
 				{
-					"name": "RefreshToken",
+					"name": "RefreshToken for Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('customerAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('customerRT', pm.response.json().refreshToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"Token\": \"qJnyDy/74qtpMkmOaMGN4SrRfnzcDl+4Qiu2ZdCJNxMC3IFgkunPlbkHwc1ZVG3y++4X0WCLOoKxVuuz8uqUcA==\"\r\n}",
+							"raw": "{\r\n    \"Token\": \"{{customerRT}}\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -584,12 +599,18 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/users",
+							"raw": "{{baseUrl}}/users?role=3",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "3"
+								}
 							]
 						}
 					},
@@ -661,13 +682,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/users/5ac4f837-f792-48cf-9e92-12b3b947dd97",
+							"raw": "{{baseUrl}}/users/2d828901-31a6-4051-83bf-4efa78cbcffa",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"users",
-								"5ac4f837-f792-48cf-9e92-12b3b947dd97"
+								"2d828901-31a6-4051-83bf-4efa78cbcffa"
 							]
 						}
 					},
@@ -1563,14 +1584,11 @@
 							]
 						},
 						"url": {
-							"raw": "https://localhost:7085/api/media/image",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/media/image",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"media",
 								"image"
 							]
@@ -1589,14 +1607,11 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/media/image?imageUrl=https://res.cloudinary.com/dg8iesbty/image/upload/v1732556792/hq75pci0gdl6b9p7m2uj.png",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/media/image?imageUrl=https://res.cloudinary.com/dg8iesbty/image/upload/v1732556792/hq75pci0gdl6b9p7m2uj.png",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"media",
 								"image"
 							],
@@ -1630,14 +1645,11 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7085/api/shipments/total-price-itinerary",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"shipments",
 								"total-price-itinerary"
 							]
@@ -1660,14 +1672,38 @@
 							}
 						},
 						"url": {
-							"raw": "https://localhost:7085/api/shipments/total-price-itinerary",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tao Đàn - Bến Thành - TDY location",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
 								"shipments",
 								"total-price-itinerary"
 							]
@@ -1682,7 +1718,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-28T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"shippingFeeVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-29T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1719,13 +1755,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506082300295",
+							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506DD0000303VN",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MS-HCMC-202506082300295"
+								"MS-HCMC-202506DD0000303VN"
 							]
 						}
 					},
@@ -2435,11 +2471,6 @@
 			"type": "string"
 		},
 		{
-			"key": "test",
-			"value": "",
-			"type": "string"
-		},
-		{
 			"key": "productionUrl",
 			"value": "https://metroshipapi-latest.onrender.com/",
 			"type": "string"
@@ -2447,6 +2478,26 @@
 		{
 			"key": "customer2AccessToken",
 			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQ3VzdG9tZXIiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIyZDgyODkwMS0zMWE2LTQwNTEtODNiZi00ZWZhNzhjYmNmZmEiLCJVc2VyTmFtZSI6InF1YW5nNjExMyIsInVuaXF1ZV9uYW1lIjoiUXVhbmciLCJlbWFpbCI6InRyYW5kaW5obWluaHF1YW5nc3hwMUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjAxMjM0NTY3ODgiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIwMy8wNi8yMDI1IiwibmJmIjoxNzQ4ODUxMDA0LCJleHAiOjE3NDg5Mzc0MDQsImlhdCI6MTc0ODg1MTAwNH0.w4ZcENAI_rv7Jkc1JjuyRq_UoSXOvOlteacJbH7mH2A",
+			"type": "string"
+		},
+		{
+			"key": "customerRT",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "customer2RT",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminRT",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "staffRT",
+			"value": "",
 			"type": "string"
 		}
 	]

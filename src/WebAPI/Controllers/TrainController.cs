@@ -14,7 +14,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
 
         [Authorize]
-        [HttpGet(WebApiEndpoint.MetroTrain.GetAllTrains)]
+        [HttpGet(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
         public async Task<IActionResult> GetAllTrainsAsync(
                        [FromQuery] PaginatedListRequest request,
                        [FromQuery] string? lineId = null)

@@ -53,6 +53,8 @@
         public const string BIRTHDATE_INVALID = "Birth date is invalid, must be in the past.";
         public const string CLAIM_NOTFOUND = "Claim not found.";
         public const string EXISTED_ROLE = "Role already exists.";
+        public const string REFRESH_TOKEN_INVALID = "Refresh token is invalid or used";
+        public const string REFRESH_TOKEN_EXPIRED = "Refresh token has expired.";
 
         public const string USERNAME_REQUIRED = "Username cannot be empty.";
         public const string USERNAME_INVALID = "Username cannot contain special characters or spaces.";
