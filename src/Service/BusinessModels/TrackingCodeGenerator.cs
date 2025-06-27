@@ -22,19 +22,18 @@ public static class TrackingCodeGenerator
     )
     {
         // 1) Compute sequence and check-digit
-        
-        int randomDigits = 3;
+        int randomDigits = 4;
         string datePart = shipmentDate.ToString("yyyyMMddHHmm");
         string randomPart = GenerateRandomString(randomDigits);
 
         // 2) Build tracking code via interpolation
-        return $"{DefaultAppCode}-" +                           // e.g. "MS"
-               $"{regionCode.ToUpperInvariant()}-" +            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
+        return $"{DefaultAppCode}" +                           // e.g. "MS"
+               $"{regionCode.ToUpperInvariant()}" +            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
                $"{shipmentDate:yyyyMMddHHmm}" +                     // e.g. "20230519" :contentReference[oaicite:2]{index=2}
                //$"{seq:D3}" +                                    // zero-padded 3-digit sequence
                //$"{check:D2}" +                                  // zero-padded 2-digit check-digit
-               $"{randomPart}";                                 // e.g. "103" :contentReference[oaicite:2]{index=2}
-               //$"{DefaultCountryName}";                         // e.g. "VN"
+               $"{randomPart}" +                                 // e.g. "103" :contentReference[oaicite:2]{index=2}
+               $"{DefaultCountryName}";                         // e.g. "VN"
     }
 
     /// <summary>

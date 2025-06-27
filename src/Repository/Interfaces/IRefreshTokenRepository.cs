@@ -3,7 +3,7 @@ using MetroShip.Repository.Models.Identity;
 
 namespace MetroShip.Repository.Interfaces;
 
-public interface IRefreshTokenRepository : IBaseRepository<RefreshToken>
+/*public interface IRefreshTokenRepository : IBaseRepository<RefreshToken>
 {
 
-}
+}*/

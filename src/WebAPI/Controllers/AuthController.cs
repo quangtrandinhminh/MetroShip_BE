@@ -72,7 +72,7 @@ namespace MetroShip.WebAPI.Controllers
             var refreshToken = request.Token ?? Request.Cookies["refreshToken"];
             var response = await _authService.RefreshToken(refreshToken);
             SetTokenCookie(response.RefreshToken);
-            return Created(nameof(RefreshToken), BaseResponse.OkResponseDto(response));
+            return Created(nameof(RefreshToken), response);
         }
 
         private void SetTokenCookie(string token)

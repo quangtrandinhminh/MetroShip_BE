@@ -6,7 +6,7 @@ namespace MetroShip.Repository.Infrastructure;
 
 public sealed partial class AppDbContext
 {
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    //public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     public DbSet<UserRoleEntity> UserRoleEntity { get; set; }
 
@@ -19,6 +19,8 @@ public sealed partial class AppDbContext
     public DbSet<MetroTimeSlot> MetroTimeSlots { get; set; }
 
     public DbSet<Parcel> Parcels { get; set; }
+
+    public DbSet<ParcelTracking> ParcelTrackings { get; set; }
 
     public DbSet<ParcelCategory> ParcelCategories { get; set; }
 

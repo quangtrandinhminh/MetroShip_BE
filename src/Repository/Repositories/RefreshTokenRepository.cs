@@ -5,5 +5,5 @@ using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
 namespace MetroShip.Repository.Repositories;
 
-public class RefreshTokenRepository(AppDbContext context)
-    : BaseRepository<RefreshToken>(context), IRefreshTokenRepository;
+/*public class RefreshTokenRepository(AppDbContext context)
+    : BaseRepository<RefreshToken>(context), IRefreshTokenRepository;*/
