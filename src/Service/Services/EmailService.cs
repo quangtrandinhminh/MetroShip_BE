@@ -20,8 +20,10 @@ namespace MetroShip.Service.Services
         private string EMAIL_SENDER = MailSettingModel.Instance.FromAddress;
         private string EMAIL_SENDER_PASSWORD = MailSettingModel.Instance.Smtp.Password;
         private string EMAIL_SENDER_HOST = MailSettingModel.Instance.Smtp.Host;
+        private string EMAIL_SENDER_NAME = MailSettingModel.Instance.FromDisplayName;
         private int EMAIL_SENDER_PORT = Convert.ToInt16(MailSettingModel.Instance.Smtp.Port);
         private bool EMAIL_IsSSL = Convert.ToBoolean(MailSettingModel.Instance.Smtp.EnableSsl);
+        private string APP_NAME = SystemSettingModel.Instance.ApplicationName;
         private ILogger _logger = Log.Logger;
         private readonly ISystemConfigRepository _systemConfigRepository = 
             serviceProvider.GetRequiredService<ISystemConfigRepository>();
@@ -55,12 +57,11 @@ namespace MetroShip.Service.Services
         {
             try
             {
-                var appName = SystemSettingModel.Instance.ApplicationName;
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = false,
                     From = new MailAddress(MailSettingModel.Instance.FromAddress, MailSettingModel.Instance.FromDisplayName),
-                    Subject = $"{model.Token} là mã xác thực tài khoản {appName} của bạn"
+                    Subject = $"{model.Token} là mã xác thực tài khoản {APP_NAME} của bạn"
                 };
                 mailmsg.To.Add(model.Email);
 
@@ -91,22 +92,20 @@ namespace MetroShip.Service.Services
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = false,
-                    From = new MailAddress(MailSettingModel.Instance.FromAddress, MailSettingModel.Instance.FromDisplayName),
-                    Subject = ""
+                    From = new MailAddress(EMAIL_SENDER, EMAIL_SENDER_NAME),
+                    Subject = $"Yêu cầu đặt lại mật khẩu cho tài khoản {model.Email} từ hệ thống {APP_NAME}"
                 };
                 mailmsg.To.Add(model.Email);
 
                 mailmsg.Body = $"OTP reset: {model.Token}";
 
-                SmtpClient smtp = new SmtpClient();
-
-                smtp.Host = EMAIL_SENDER_HOST;
-
-                smtp.Port = EMAIL_SENDER_PORT;
-
-                smtp.EnableSsl = EMAIL_IsSSL;
-                var network = new NetworkCredential(EMAIL_SENDER, EMAIL_SENDER_PASSWORD);
-                smtp.Credentials = network;
+                SmtpClient smtp = new SmtpClient
+                {
+                    Host = EMAIL_SENDER_HOST,
+                    Port = EMAIL_SENDER_PORT,
+                    EnableSsl = EMAIL_IsSSL,
+                    Credentials = new NetworkCredential(EMAIL_SENDER, EMAIL_SENDER_PASSWORD)
+                };
                 smtp.Send(mailmsg);
             }
             catch (Exception ex)
@@ -120,12 +119,12 @@ namespace MetroShip.Service.Services
         {
             try
             {
-                var appName = SystemSettingModel.Instance.ApplicationName;
+                var APP_NAME = SystemSettingModel.Instance.ApplicationName;
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = false,
-                    From = new MailAddress(MailSettingModel.Instance.FromAddress, MailSettingModel.Instance.FromDisplayName),
-                    Subject = $"Tài khoản {appName} của bạn đã được tạo thành công"
+                    From = new MailAddress(EMAIL_SENDER, EMAIL_SENDER_NAME),
+                    Subject = $"Tài khoản {APP_NAME} của bạn đã được tạo thành công"
                 };
                 mailmsg.To.Add(model.Email);
 
@@ -161,18 +160,18 @@ namespace MetroShip.Service.Services
                     throw new ArgumentException("Invalid shipment data for email");
                 }
 
-                var appName = SystemSettingModel.Instance.ApplicationName;
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = true, // Changed to HTML for better formatting
-                    From = new MailAddress(MailSettingModel.Instance.FromAddress, 
-                    MailSettingModel.Instance.FromDisplayName),
-                    Subject = $"Đơn hàng {shipment.TrackingCode} đã được đặt thành công trên {appName}"
+                    From = new MailAddress(
+                        MailSettingModel.Instance.FromAddress, 
+                        MailSettingModel.Instance.FromDisplayName),
+                    Subject = $"Đơn hàng {shipment.TrackingCode} đã được đặt thành công trên {APP_NAME}"
                 };
                 mailmsg.To.Add(model.Email);
 
                 // Create formatted email body instead of raw JSON
-                mailmsg.Body = CreateShipmentEmailBody(shipment, model.Name, appName);
+                mailmsg.Body = CreateShipmentEmailBody(shipment, model.Name, APP_NAME);
 
                 SmtpClient smtp = new SmtpClient
                 {
@@ -194,13 +193,13 @@ namespace MetroShip.Service.Services
             }
         }
 
-        private string CreateShipmentEmailBody(Shipment shipment, string customerName, string appName)
+        private string CreateShipmentEmailBody(Shipment shipment, string customerName, string APP_NAME)
         {
             var sb = new StringBuilder();
 
             sb.AppendLine($"<html><body>");
             sb.AppendLine($"<h2>Chào {customerName},</h2>");
-            sb.AppendLine($"<p>Cảm ơn bạn đã sử dụng dịch vụ vận chuyển của {appName}!</p>");
+            sb.AppendLine($"<p>Cảm ơn bạn đã sử dụng dịch vụ vận chuyển của {APP_NAME}!</p>");
             sb.AppendLine($"<p>Đơn hàng của bạn đã được tiếp nhận thành công.</p>");
 
             sb.AppendLine($"<h3>Thông tin vận đơn:</h3>");
@@ -256,7 +255,7 @@ namespace MetroShip.Service.Services
                     nameof(SystemConfigSetting.PAYMENT_REQUEST_HOUR)) ?? "24"}h</strong> kế tiếp!</p>");
 
             sb.AppendLine($"<p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của chúng tôi!</p>");
-            sb.AppendLine($"<p>Trân trọng,<br/>Đội ngũ {appName}</p>");
+            sb.AppendLine($"<p>Trân trọng,<br/>Đội ngũ {APP_NAME}</p>");
             sb.AppendLine($"</body></html>");
 
             return sb.ToString();
@@ -266,12 +265,11 @@ namespace MetroShip.Service.Services
         {
             try
             {
-                var appName = SystemSettingModel.Instance.ApplicationName;
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = false,
-                    From = new MailAddress(MailSettingModel.Instance.FromAddress, MailSettingModel.Instance.FromDisplayName),
-                    Subject = $"Thông báo từ {appName}"
+                    From = new MailAddress(EMAIL_SENDER, EMAIL_SENDER_NAME),
+                    Subject = $"Thông báo từ {APP_NAME}"
                 };
                 mailmsg.To.Add(model.Email);
 
