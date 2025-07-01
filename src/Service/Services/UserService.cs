@@ -109,6 +109,8 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
             account.SecurityStamp = Guid.NewGuid().ToString();
             account.Verified = CoreHelper.SystemTimeNow;
+            account.NormalizedUserName = _userManager.NormalizeName(request.UserName);
+            account.NormalizedEmail = _userManager.NormalizeEmail(request.Email);
             await _userRepository.CreateUserAsync(account, cancellationToken);
             var roleIds = new List<string> { roleEntity.Id };
             await _userRepository.AddUserToRoleAsync(account.Id, roleIds, cancellationToken);
