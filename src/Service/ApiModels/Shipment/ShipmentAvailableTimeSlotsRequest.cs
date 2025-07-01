@@ -8,7 +8,7 @@ namespace MetroShip.Service.ApiModels.Shipment
 {
     public class ShipmentAvailableTimeSlotsRequest
     {
-        public string TrackingCode { get; set; }
+        public string ShipmentId { get; set; }
         public int? MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
     }
 }

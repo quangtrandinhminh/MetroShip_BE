@@ -251,7 +251,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
     public class CheckAvailableTimeSlotsRequest
     {
-        public string TrackingCode { get; set; }
+        public string ShipmentId { get; set; }
         public int? MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
     }
 
@@ -272,26 +272,25 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         const decimal maxWeight = 20000m;
         const decimal maxVolume = 160m;
 
-        // 1. Lấy shipment + parcel theo request.TrackingCode
+        // 1. Lấy shipment + parcel
         var shipment = await _context.Shipments
             .Include(s => s.Parcels)
             .Include(s => s.ShipmentItineraries)
             .ThenInclude(i => i.Route)
-            .FirstOrDefaultAsync(s => s.Id == request.TrackingCode);
+            .FirstOrDefaultAsync(s => s.Id == request.ShipmentId);
 
         if (shipment == null || !shipment.Parcels.Any())
             return result;
 
-        // 2. Lấy ngày bắt đầu từ Parcel.BookAt
+        // 2. Lấy ngày bắt đầu từ BookedAt
         var startDate = shipment.BookedAt?.Date ?? DateTimeOffset.UtcNow.Date;
 
-        // 3. Extract routeId từ itinerary đầu tiên
+        // 3. Lấy routeId từ itinerary đầu tiên
         var routeId = shipment.ShipmentItineraries.FirstOrDefault()?.RouteId;
-
         if (routeId == null)
             return result;
 
-        // 4. Tính tổng thể tích + khối lượng
+        // 4. Tính tổng khối lượng và thể tích
         var totalWeight = shipment.Parcels.Sum(p => p.WeightKg);
         var totalVolume = shipment.Parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1_000_000m);
 
@@ -309,7 +308,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         // 6. Lấy danh sách time slots
         var timeSlots = await _context.MetroTimeSlots.ToListAsync();
 
-        // 7. Tìm slot phù hợp trong các ngày tới
+        // 7. Duyệt qua các ngày tiếp theo để tìm slot phù hợp
         for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
         {
             var currentDate = startDate.AddDays(dayOffset);

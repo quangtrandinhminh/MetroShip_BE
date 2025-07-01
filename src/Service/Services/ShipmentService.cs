@@ -990,7 +990,7 @@ public class ShipmentService : IShipmentService
     public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request)
     {
         // 1. Lấy danh sách Parcel theo ShipmentId
-        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.TrackingCode);
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.ShipmentId);
         if (shipment == null || shipment.Parcels == null || !shipment.Parcels.Any());
 
         var parcelIds = shipment.Parcels.Select(p => p.Id).ToList();
@@ -998,7 +998,7 @@ public class ShipmentService : IShipmentService
         // 2. Chuẩn bị request cho repository
         var availableSlotsRequest = new ShipmentRepository.CheckAvailableTimeSlotsRequest
         {
-            TrackingCode = request.TrackingCode,
+            ShipmentId = request.ShipmentId,
             MaxAttempts = request.MaxAttempts > 0 ? request.MaxAttempts : 3
         };
 
