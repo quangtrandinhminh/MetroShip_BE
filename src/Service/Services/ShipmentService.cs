@@ -1008,7 +1008,17 @@ public class ShipmentService : IShipmentService
 
         var availableSlots = await _shipmentRepository.FindAvailableTimeSlotsAsync(availableSlotsRequest);
 
-        var mappedSlots = availableSlots.Select(slot =>
+        var validSlots = availableSlots
+            .Where(s => s.StartDate != default && s.Date != default)
+            .ToList();
+
+        if (!validSlots.Any())
+        {
+            _logger.Warning("No valid time slots found for shipment {ShipmentId}", request.ShipmentId);
+            return new List<ShipmentAvailableTimeSlotResponse>();
+        }
+
+        var mappedSlots = validSlots.Select(slot =>
         {
             var slotDetail = new MetroTimeSlotResponse
             {
@@ -1023,13 +1033,13 @@ public class ShipmentService : IShipmentService
             };
 
             return (
-                slot.StartDate,
-                slot.Date,
-                slotDetail,
-                slot.RemainingVolumeM3,
-                slot.RemainingWeightKg,
-                ShipmentStatusEnum.AwaitingDropOff,
-                slot.ParcelIds ?? new List<string>()
+                StartDate: slot.StartDate,
+                Date: slot.Date,
+                SlotDetail: slotDetail,
+                RemainingVolumeM3: slot.RemainingVolumeM3,
+                RemainingWeightKg: slot.RemainingWeightKg,
+                ShipmentStatus: ShipmentStatusEnum.AwaitingDropOff,
+                ParcelIds: slot.ParcelIds ?? new List<string>()
             );
         }).ToList();
 

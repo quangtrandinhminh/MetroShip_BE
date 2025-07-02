@@ -62,8 +62,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
     [MapProperty("Item3", "SlotDetail")]
-    [MapProperty("Item3.Id", "TimeSlotId")]
-    [MapProperty("Item3.Shift", "TimeSlotName")]
     [MapProperty("Item4", "RemainingVolumeM3")]
     [MapProperty("Item5", "RemainingWeightKg")]
     [MapProperty("Item6", "ShipmentStatus")]

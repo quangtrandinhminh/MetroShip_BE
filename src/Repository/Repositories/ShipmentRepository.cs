@@ -281,7 +281,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         const decimal maxWeight = 20000m;
         const decimal maxVolume = 160m;
 
-        // 1. Lấy shipment
         var shipment = await _context.Shipments
             .Include(s => s.Parcels)
             .Include(s => s.ShipmentItineraries)
@@ -291,24 +290,22 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         if (shipment == null || !shipment.Parcels.Any())
             return result;
 
-        // 2. Ngày bắt đầu và offset
         var bookedAt = shipment.BookedAt ?? DateTimeOffset.UtcNow;
-        var startDate = bookedAt.Date;
         var offset = bookedAt.Offset;
 
-        // 3. RouteId
+        // ✅ Nếu người dùng đã chọn thời gian thì ưu tiên
+        var startDate = shipment.ScheduledDateTime?.Date ?? bookedAt.Date;
+
         var routeId = shipment.ShipmentItineraries.FirstOrDefault()?.RouteId;
         if (routeId == null)
             return result;
 
-        // 4. Tổng khối lượng và thể tích
         var totalWeight = shipment.Parcels.Sum(p => p.WeightKg);
         var totalVolume = shipment.Parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1_000_000m);
 
         shipment.TotalWeightKg = totalWeight;
         shipment.TotalVolumeM3 = totalVolume;
 
-        // 5. Quá tải → Rejected
         if (totalWeight > maxWeight || totalVolume > maxVolume)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
@@ -316,10 +313,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             return result;
         }
 
-        // 6. Time slots
         var timeSlots = await _context.MetroTimeSlots.ToListAsync();
 
-        // 7. Tìm slot phù hợp
         for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
         {
             var currentDate = startDate.AddDays(dayOffset);
@@ -344,7 +339,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
                 if (remainingVol >= totalVolume && remainingWgt >= totalWeight)
                 {
-                    // Tính thời gian mở ca
                     var shiftStartTime = slot.Shift switch
                     {
                         ShiftEnum.Morning => new TimeSpan(8, 0, 0),
@@ -354,28 +348,20 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                         _ => new TimeSpan(0, 0, 0)
                     };
 
-                    // 🔧 Dùng offset từ bookedAt
                     var scheduledDateTime = new DateTimeOffset(
                         currentDate.Year, currentDate.Month, currentDate.Day,
                         shiftStartTime.Hours, shiftStartTime.Minutes, shiftStartTime.Seconds,
-                        bookedAt.Offset // ✅ dùng offset từ bookedAt (e.g. +07:00)
+                        offset
                     );
 
-                    // So sánh theo UTC để tránh lệch múi giờ
-                    if (scheduledDateTime.ToUniversalTime() <= bookedAt.ToUniversalTime())
-                        continue;
+                    var finalStartDate = new DateTimeOffset(startDate, offset);
 
-                    // Cập nhật shipment
-                    shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
-                    shipment.ScheduledDateTime = scheduledDateTime;
-                    shipment.ScheduledShift = slot.Shift;
-                    shipment.TimeSlotId = slot.Id;
-
-                    await _context.SaveChangesAsync();
+                    // ✅ Logging để xác minh
+                    Console.WriteLine($"Slot Found - Shipment: {shipment.Id}, StartDate: {finalStartDate}, Date: {scheduledDateTime}");
 
                     result.Add(new AvailableTimeSlotDto
                     {
-                        StartDate = bookedAt,
+                        StartDate = finalStartDate,
                         Date = scheduledDateTime,
                         TimeSlotId = slot.Id,
                         TimeSlotName = slot.Shift.ToString(),
@@ -383,7 +369,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                         RemainingVolumeM3 = remainingVol,
                         ParcelIds = shipment.Parcels.Select(p => p.Id).ToList(),
 
-                        // 🆕 Map trực tiếp từ entity MetroTimeSlot
                         DayOfWeek = slot.DayOfWeek,
                         SpecialDate = slot.SpecialDate,
                         OpenTime = slot.OpenTime,
@@ -392,12 +377,11 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                         IsAbnormal = slot.IsAbnormal,
                         ScheduleBeforeShiftMinutes = 30
                     });
-
-                    break;
                 }
             }
 
-            if (result.Any())
+            // ✅ Dừng sau khi có 3 slots hợp lệ
+            if (result.Count >= 3)
                 break;
         }
 
