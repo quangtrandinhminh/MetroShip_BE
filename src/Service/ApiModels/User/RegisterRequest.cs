@@ -1,6 +1,6 @@
 namespace MetroShip.Service.ApiModels.User
 {
-    public sealed record RegisterRequest : BankInfoRequest
+    public sealed record RegisterRequest
     {
         /*[Required(ErrorMessage = ResponseMessageIdentity.USERNAME_REQUIRED)]
         [MaxLength(100)]*/
