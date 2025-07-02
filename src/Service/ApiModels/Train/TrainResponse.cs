@@ -7,9 +7,6 @@ public record TrainListResponse
     public string ModelName { get; set; } = string.Empty;
     public string LineId { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
-
-    public decimal CurrentWeightKg { get; set; } = 0;
-    public decimal CurrentVolumeM3 { get; set; } = 0;
 }
 
 public sealed record TrainResponse : TrainListResponse
@@ -22,5 +19,11 @@ public sealed record TrainResponse : TrainListResponse
     public decimal? CarriageHeightMeter { get; set; }
     public int? TopSpeedKmH { get; set; }
     public int? TopSpeedUdgKmH { get; set; }
+}
+
+public sealed record TrainCurrentCapacityResponse : TrainListResponse
+{
+    public decimal CurrentWeightKg { get; set; } = 0;
+    public decimal CurrentVolumeM3 { get; set; } = 0;
 }
 

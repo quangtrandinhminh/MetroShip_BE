@@ -133,11 +133,13 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-trains";
             public const string GetAllTrains = BaseEndpoint;
+            public const string GetTrainsByLineSlotAndDate = BaseEndpoint 
+                + "/line/{LineId}/slot/{TimeSlotId}/date/{Date}";
             public const string GetTrainById = BaseEndpoint + "/{id}";
             public const string CreateTrain = BaseEndpoint;
             public const string UpdateTrain = BaseEndpoint + "/{id}";
             public const string DeleteTrain = BaseEndpoint + "/{id}";
-            public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
+            public const string AddShipmentItinerariesForTrain = BaseEndpoint + "/itineraries";
         }
 
         public static class MediaEndpoint

@@ -230,4 +230,30 @@
         public const string TRANSACTION_DELETE_SUCCESS = "Transaction deleted successfully.";
         public const string TRANSACTION_CREATE_SUCCESS = "Transaction created successfully.";
     }
+
+    public class ResponseMessageTrain
+    {
+        public const string TRAIN_NOT_FOUND = "Train not found.";
+        public const string TRAIN_EXISTED = "Train already exists.";
+        public const string TRAIN_UPDATE_SUCCESS = "Train updated successfully.";
+        public const string TRAIN_DELETE_SUCCESS = "Train deleted successfully.";
+        public const string TRAIN_CREATE_SUCCESS = "Train created successfully.";
+        public const string LINE_ID_REQUIRED = "Line ID is required.";
+        public const string TIME_SLOT_ID_REQUIRED = "Time slot ID is required.";
+        public const string DATE_REQUIRED = "Date is required.";
+        public const string LINE_ID_INVALID = "Line ID is invalid.";
+        public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
+        public const string DATE_INVALID = "Date is invalid.";
+        public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
+        public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
+        public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";
+        public const string TRAIN_ID_REQUIRED = "Train ID is required.";
+        public const string TRAIN_ID_INVALID = "Train ID is invalid.";
+        public const string ITINERARY_IDS_REQUIRED = "Itinerary IDs are required.";
+        public const string ITINERARY_IDS_INVALID = "Itinerary IDs are invalid.";
+        public const string TRAIN_ALREADY_ASSIGNED_TO_SLOT_ON_DATE = "Train is already assigned to this time slot" +
+            " on the specified date.";
+        public const string SHIPMENT_ITINERARIES_NOT_FOUND = 
+            "Shipment itineraries not found for the specified train.";
+    }
 }

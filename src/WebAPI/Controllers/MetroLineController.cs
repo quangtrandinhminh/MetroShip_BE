@@ -1,4 +1,5 @@
 ﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
@@ -29,5 +30,12 @@ namespace MetroShip.WebAPI.Controllers
             var metroLines = await _metroLineService.GetAllMetroLineByRegion(regionId);
             return Ok(BaseResponse.OkResponseDto(metroLines));
         }*/
+
+        [HttpPost(WebApiEndpoint.MetroLineEndpoint.CreateMetroLine)]
+        public async Task<IActionResult> CreateMetroLineAsync([FromBody] MetroLineCreateRequest request)
+        {
+            var response = await _metroLineService.CreateMetroLine(request);
+            return Created(nameof(CreateMetroLineAsync), BaseResponse.OkResponseDto(response));
+        }
     }
 }

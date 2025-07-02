@@ -64,6 +64,7 @@ public interface IMapperlyMapper
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+    MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
 
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
@@ -74,7 +75,7 @@ public interface IMapperlyMapper
 
     // train
     PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
-    TrainListResponse MapToTrainListResponse (MetroTrain entity);
+    IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
+    IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     TrainResponse MapToTrainResponse(MetroTrain request);
-
 }

@@ -20,6 +20,7 @@ using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
 using MetroShip.Service.ApiModels.Train;
+using MetroShip.Utility.Helpers;
 
 namespace MetroShip.Service.Mapper;
 
@@ -71,6 +72,8 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial void MapToExistingStation(UpdateStationRequest request, Station entity);
 
+    public partial ICollection<Station> MapToStationEntityList(ICollection<CreateStationRequest> request);
+
     // route
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
@@ -83,6 +86,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // metroline
     [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]
     public partial MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+    public partial MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
@@ -104,9 +108,10 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // metro train
     public partial PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
-
-    public partial TrainListResponse MapToTrainListResponse(MetroTrain entity);
+    public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
+
+    public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
 
     public int? MapToVoucherId(int? voucherId)
     {
