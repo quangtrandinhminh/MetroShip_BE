@@ -46,8 +46,8 @@ public class UserEntity : IdentityUser
     public string? OTP { get; set; }
     public bool IsActive => PhoneConfirmed;
     public bool PhoneConfirmed => Verified.HasValue;
-    public string RefreshToken { get; set; }
-    public DateTimeOffset RefreshTokenExpiredTime { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTimeOffset? RefreshTokenExpiredTime { get; set; }
     public bool IsRefreshTokenExpired => CoreHelper.SystemTimeNow >= RefreshTokenExpiredTime;
 
 

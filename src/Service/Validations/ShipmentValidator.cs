@@ -99,8 +99,8 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
 
         RuleFor(x => x.RecipientEmail)
             .EmailAddress()
-            .WithMessage(ResponseMessageIdentity.EMAIL_INVALID)
-            .When(x => !string.IsNullOrEmpty(x.RecipientEmail));
+            .WithMessage("Recipient " + ResponseMessageIdentity.EMAIL_INVALID)
+            .When(x => x.RecipientEmail != null);
 
         /*RuleFor(x => x.RecipientNationalId)
             // .NotEmpty()

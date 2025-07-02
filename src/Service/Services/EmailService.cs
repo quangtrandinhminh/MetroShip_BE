@@ -81,7 +81,7 @@ namespace MetroShip.Service.Services
             catch (Exception ex)
             {
                 _logger.Error(ex, "Failed to send email to {Email}", model.Email);
-                throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
             }
         }
 
@@ -110,7 +110,8 @@ namespace MetroShip.Service.Services
             }
             catch (Exception ex)
             {
-                throw new AppException(ErrorCode.Unknown, ex.Message);
+                _logger.Error(ex, "Failed to send reset password email to {Email}", model.Email);
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send reset password email: {ex.Message}");
             }
 
         }
@@ -146,7 +147,7 @@ namespace MetroShip.Service.Services
             catch (Exception ex)
             {
                 _logger.Error(ex, "Failed to send email to {Email}", model.Email);
-                throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
             }
         }
 
@@ -163,9 +164,7 @@ namespace MetroShip.Service.Services
                 var mailmsg = new MailMessage
                 {
                     IsBodyHtml = true, // Changed to HTML for better formatting
-                    From = new MailAddress(
-                        MailSettingModel.Instance.FromAddress, 
-                        MailSettingModel.Instance.FromDisplayName),
+                    From = new MailAddress(EMAIL_SENDER, EMAIL_SENDER_NAME),
                     Subject = $"Đơn hàng {shipment.TrackingCode} đã được đặt thành công trên {APP_NAME}"
                 };
                 mailmsg.To.Add(model.Email);
@@ -189,7 +188,7 @@ namespace MetroShip.Service.Services
             catch (Exception ex)
             {
                 _logger.Error(ex, "Failed to send email to {Email}", model.Email);
-                throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
             }
         }
 
@@ -287,7 +286,9 @@ namespace MetroShip.Service.Services
             }
             catch (Exception ex)
             {
-                throw new AppException(ErrorCode.Unknown, ex.Message);
+                _logger.Error(ex, "Failed to send notification email to {Email}", 
+                    model.Email);
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send notification email: {ex.Message}");
             }
         }
     }

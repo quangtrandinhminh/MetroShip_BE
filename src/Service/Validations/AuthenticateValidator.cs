@@ -112,9 +112,29 @@ public sealed class RegisterRequestValidator : AbstractValidator<RegisterRequest
             .MaximumLength(500).When(x => !string.IsNullOrEmpty(x.Avatar)); // Optional: Add a max length if needed
 
         // BirthDate validation (optional, no rules needed if nullable)
+        // if birthdate is not null, check its format is yyyy-MM-dd & not in the future
+        /*RuleFor(x => x.BirthDate)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.Now))
+            .WithMessage("BirthDate cannot be in the future")
+            .When(x => x.BirthDate.HasValue);*/
+
         RuleFor(x => x.BirthDate)
-            .LessThanOrEqualTo(DateOnly.FromDateTime(DateTime.Now)).WithMessage("BirthDate cannot be in the future")
-            .When(x => x.BirthDate.HasValue);
+            .Must(x => IsValidBirthDate(x.ToString()))
+            .WithMessage("BirthDate must be in format yyyy-MM-dd and not in the future")
+            .When(x => x.BirthDate != null);
+    }
+
+    private bool IsValidBirthDate(string? dateStr)
+    {
+        if (string.IsNullOrEmpty(dateStr))
+            return true;
+
+        if (DateOnly.TryParseExact(dateStr, "yyyy-MM-dd", out var date))
+        {
+            return date <= DateOnly.FromDateTime(DateTime.Now);
+        }
+
+        return false;
     }
 }
 

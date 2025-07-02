@@ -196,6 +196,9 @@ public class ShipmentService : IShipmentService
             // shipment.TotalCostVnd += parcel.PriceVnd;
             // shipment.TotalShippingFeeVnd += parcel.PriceVnd;
 
+            shipment.TotalVolumeM3 += parcel.VolumeCm3 /1000000;
+            shipment.TotalWeightKg += parcel.WeightKg;
+
             if (!await _parcelCategoryRepository.IsExistAsync(x => x.Id == parcel.ParcelCategoryId))
             {
                 throw new AppException(

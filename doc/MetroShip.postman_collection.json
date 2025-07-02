@@ -43,7 +43,7 @@
 							"listen": "test",
 							"script": {
 								"exec": [
-									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('adminAccessToken', pm.response.json().token);\r",
 									"pm.collectionVariables.set('adminRT', pm.response.json().refreshToken);"
 								],
 								"type": "text/javascript",
@@ -1718,7 +1718,33 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-06-29T09:00:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-07-02T09:00:00+07:00\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Book a shipment Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "    {\r\n        \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n        \"destinationStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n        \"senderName\": \"Tang Du Yen\",\r\n        \"senderPhone\": \"0932754722\",\r\n        \"recipientName\": \"Yellannn\",\r\n        \"recipientPhone\": \"0932754711\",\r\n        \"recipientEmail\": \"\",\r\n        \"recipientNationalId\": \"\",\r\n        \"scheduledDateTime\": \"2025-07-04T10:30:00.000Z\",\r\n        \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n        \"totalShippingFeeVnd\": 231000,\r\n        \"totalCostVnd\": 231000,\r\n        \"insuranceFeeVnd\": 0,\r\n        \"totalKm\": 20.39,\r\n        \"shipmentItineraries\": [\r\n            {\r\n                \"routeId\": \"3e3fd340-0392-4b0f-ae72-9f06bc4180e7\",\r\n                \"legOrder\": 1\r\n            },\r\n            {\r\n                \"routeId\": \"c392ab22-e058-413a-84dd-410a05ab1d30\",\r\n                \"legOrder\": 2\r\n            }\r\n        ],\r\n        \"parcels\": [\r\n            {\r\n                \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n                \"weightKg\": 11,\r\n                \"lengthCm\": 111,\r\n                \"widthCm\": 11,\r\n                \"heightCm\": 11,\r\n                \"shippingFeeVnd\": 77000,\r\n                \"insuranceFeeVnd\": 0,\r\n                \"chargeableWeight\": 11,\r\n                \"isBulk\": false,\r\n                \"priceVnd\": 231000,\r\n                \"valueVnd\": null\r\n            }\r\n        ]\r\n    }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1755,13 +1781,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506DD0000303VN",
+							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506280900CS4",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MS-HCMC-202506DD0000303VN"
+								"MS-HCMC-202506280900CS4"
 							]
 						}
 					},
@@ -2066,6 +2092,42 @@
 								"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
 								"date",
 								"2025-06-04"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Check shipment itineraries",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/available-time-slots?TrackingCode=a&MaxAttempts=3",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"available-time-slots"
+							],
+							"query": [
+								{
+									"key": "TrackingCode",
+									"value": "a"
+								},
+								{
+									"key": "MaxAttempts",
+									"value": "3"
+								}
 							]
 						}
 					},
@@ -2413,12 +2475,137 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains",
+							"raw": "{{baseUrl}}/metro-trains?LineId=e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c&TimeSlotId=a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6&Date=2024-11-11&ModelName=hitachi&IsAvailable=true&PageNumber=1&PageSize=10&Direction=0",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"metro-trains"
+							],
+							"query": [
+								{
+									"key": "LineId",
+									"value": "e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c"
+								},
+								{
+									"key": "TimeSlotId",
+									"value": "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"
+								},
+								{
+									"key": "Date",
+									"value": "2024-11-11"
+								},
+								{
+									"key": "ModelName",
+									"value": "hitachi"
+								},
+								{
+									"key": "IsAvailable",
+									"value": "true"
+								},
+								{
+									"key": "PageNumber",
+									"value": "1"
+								},
+								{
+									"key": "PageSize",
+									"value": "10"
+								},
+								{
+									"key": "Direction",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all trains by line, slot, date",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-trains/line/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/slot/a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6/date/2025-07-04T10:30:00.000Z",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-trains",
+								"line",
+								"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+								"slot",
+								"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+								"date",
+								"2025-07-04T10:30:00.000Z"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{staffAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "MetroLine",
+			"item": [
+				{
+					"name": "Get all lines dropdown",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/metro-lines/dropdown",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"metro-lines",
+								"dropdown"
 							]
 						}
 					},

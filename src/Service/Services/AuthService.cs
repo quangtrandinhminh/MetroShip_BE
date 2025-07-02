@@ -126,6 +126,8 @@ namespace MetroShip.Service.Services
                 account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 account.SecurityStamp = Guid.NewGuid().ToString();
                 account.OTP = GenerateOTP();
+                account.NormalizedUserName = _userManager.NormalizeName(request.UserName);
+                account.NormalizedEmail = _userManager.NormalizeEmail(request.Email);
                 await _userRepository.CreateUserAsync(account, cancellationToken);
                 var roleEntity = await _roleManager.FindByNameAsync(UserRoleEnum.Customer.ToString());
                 var roleIds = new List<string> { roleEntity.Id };
@@ -276,7 +278,8 @@ namespace MetroShip.Service.Services
             var account = await GetUserByUserName(request.UserName);
 
             if (account == null || account.OTP != request.OTP)
-                throw new AppException(ErrorCode.TokenInvalid, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+                throw new AppException(ErrorCode.TokenInvalid
+                    , ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
 
             account.Verified = CoreHelper.SystemTimeNow;
             account.OTP = null;

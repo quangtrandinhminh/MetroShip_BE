@@ -19,6 +19,7 @@ using Microsoft.CodeAnalysis;
 using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
+using MetroShip.Service.ApiModels.Train;
 
 namespace MetroShip.Service.Mapper;
 
@@ -111,6 +112,7 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // metro train
     public partial PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
+
     public partial TrainListResponse MapToTrainListResponse(MetroTrain entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
 
