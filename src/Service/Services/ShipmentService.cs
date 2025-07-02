@@ -887,11 +887,10 @@ public class ShipmentService : IShipmentService
 
         return pathResults.Select(r => {
             var pathResponse = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper);
+            _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
-            CalculateParcelPricing(request.Parcels, pathResponse, priceCalculationService, categories);
-
-            pathResponse.Parcels = request.Parcels;
+            CalculateParcelPricing(pathResponse.Parcels, pathResponse, priceCalculationService, categories);
 
             return new
             {

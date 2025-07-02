@@ -12,6 +12,7 @@ using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
+using Riok.Mapperly.Abstractions;
 
 namespace MetroShip.Service.Mapper;
 
@@ -61,6 +62,7 @@ public interface IMapperlyMapper
     // parcel
     PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
     ParcelResponse MapToParcelResponse(Parcel entity);
+    void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);

@@ -20,10 +20,11 @@ using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
 using MetroShip.Service.ApiModels.Train;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
 
-[Mapper]
+[Mapper(UseDeepCloning = true)]
 public partial class MapperlyMapper : IMapperlyMapper
 {
     /// <summary>
@@ -90,10 +91,15 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
 
+    public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
+
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
     public partial void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
+
+    [MapperRequiredMapping(RequiredMappingStrategy.Target)]
     public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
 
