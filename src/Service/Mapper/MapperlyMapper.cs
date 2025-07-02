@@ -20,6 +20,8 @@ using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
 using MetroShip.Service.ApiModels.Train;
+using MetroShip.Utility.Enums;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
 
 namespace MetroShip.Service.Mapper;
 
@@ -59,12 +61,15 @@ public partial class MapperlyMapper : IMapperlyMapper
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     [MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
+    [MapProperty("Item3", "SlotDetail")]
     [MapProperty("Item3.Id", "TimeSlotId")]
     [MapProperty("Item3.Shift", "TimeSlotName")]
-    [MapProperty("Item4", "RemainingWeightKg")]
-    [MapProperty("Item5", "RemainingVolumeM3")]
+    [MapProperty("Item4", "RemainingVolumeM3")]
+    [MapProperty("Item5", "RemainingWeightKg")]
+    [MapProperty("Item6", "ShipmentStatus")]
+    [MapProperty("Item7", "ParcelIds")]
     public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
-        List<(DateTimeOffset, DateTimeOffset, MetroTimeSlot, decimal, decimal)> slots);
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
 
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]

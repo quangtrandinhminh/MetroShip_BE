@@ -116,7 +116,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
         {
             var response = await shipmentService.CheckAvailableTimeSlotsAsync(request);
-            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+            return Ok(BaseResponse.OkResponseDto(response));
         }
     }
 }

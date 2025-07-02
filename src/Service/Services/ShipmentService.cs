@@ -25,6 +25,8 @@ using MetroShip.Service.ApiModels.Parcel;
 using System;
 using MetroShip.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
 
 namespace MetroShip.Service.Services;
 
@@ -992,48 +994,45 @@ public class ShipmentService : IShipmentService
 
     public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request)
     {
-        // 1. Lấy danh sách Parcel theo ShipmentId
-        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.ShipmentId);
-        if (shipment == null || shipment.Parcels == null || !shipment.Parcels.Any());
+        var shipment = await _shipmentRepository.GetByIdAsync(request.ShipmentId);
+        if (shipment?.Parcels == null)
+        {
+            _logger.Warning("Shipment or its parcels are null.");
+        }
 
-        var parcelIds = shipment.Parcels.Select(p => p.Id).ToList();
-
-        // 2. Chuẩn bị request cho repository
         var availableSlotsRequest = new ShipmentRepository.CheckAvailableTimeSlotsRequest
         {
             ShipmentId = request.ShipmentId,
             MaxAttempts = request.MaxAttempts > 0 ? request.MaxAttempts : 3
         };
 
-        // 3. Gọi repository để lấy danh sách ca trống
         var availableSlots = await _shipmentRepository.FindAvailableTimeSlotsAsync(availableSlotsRequest);
 
-        // 4. Map từng slot từ DTO → tuple (dùng if-else cho shift)
         var mappedSlots = availableSlots.Select(slot =>
         {
-        var shift = slot.TimeSlotName.ToLowerInvariant() switch
-        {
-            "morning" => ShiftEnum.Morning,
-            "afternoon" => ShiftEnum.Afternoon,
-            "evening" => ShiftEnum.Evening,
-            "night" => ShiftEnum.Night,
-            _ => throw new InvalidOperationException($"Unrecognized time slot name: {slot.TimeSlotName}")
-        };
+            var slotDetail = new MetroTimeSlotResponse
+            {
+                Id = slot.TimeSlotId,
+                Shift = slot.Shift,
+                DayOfWeek = slot.DayOfWeek,
+                SpecialDate = slot.SpecialDate,
+                OpenTime = slot.OpenTime,
+                CloseTime = slot.CloseTime,
+                IsAbnormal = slot.IsAbnormal,
+                ScheduleBeforeShiftMinutes = 30
+            };
 
-        return (
-                slot.StartDate, // Use only `Date` instead of `StartDate`
-                slot.Date, // Keep `Date` as the second tuple element
-                new MetroTimeSlot
-                {
-                    Id = slot.TimeSlotId,
-                    Shift = shift
-                },
+            return (
+                slot.StartDate,
+                slot.Date,
+                slotDetail,
+                slot.RemainingVolumeM3,
                 slot.RemainingWeightKg,
-                slot.RemainingVolumeM3
+                ShipmentStatusEnum.AwaitingDropOff,
+                slot.ParcelIds ?? new List<string>()
             );
         }).ToList();
 
-        // 5. Map sang response
         return _mapperlyMapper.MapToAvailableTimeSlotResponseList(mappedSlots);
     }
 }

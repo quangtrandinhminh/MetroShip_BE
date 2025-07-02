@@ -260,10 +260,19 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset Date { get; set; }
         public string TimeSlotId { get; set; }
-        public string TimeSlotName { get; set; } // ví dụ: "Morning", "Afternoon", "Evening"
+        public string TimeSlotName { get; set; }
         public decimal RemainingWeightKg { get; set; }
         public decimal RemainingVolumeM3 { get; set; }
         public List<string>? ParcelIds { get; set; }
+
+        // 🆕 Thêm chi tiết MetroTimeSlot
+        public DayOfWeekEnum? DayOfWeek { get; set; }
+        public DateOnly? SpecialDate { get; set; }
+        public TimeOnly OpenTime { get; set; }
+        public TimeOnly CloseTime { get; set; }
+        public ShiftEnum Shift { get; set; }
+        public bool IsAbnormal { get; set; }
+        public int ScheduleBeforeShiftMinutes { get; set; }=30; // Thời gian đặt trước ca (phút)
     }
 
     public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
@@ -272,7 +281,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         const decimal maxWeight = 20000m;
         const decimal maxVolume = 160m;
 
-        // 1. Lấy shipment + parcel
+        // 1. Lấy shipment
         var shipment = await _context.Shipments
             .Include(s => s.Parcels)
             .Include(s => s.ShipmentItineraries)
@@ -282,22 +291,24 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         if (shipment == null || !shipment.Parcels.Any())
             return result;
 
-        // 2. Lấy ngày bắt đầu từ BookedAt
-        var startDate = shipment.BookedAt?.Date ?? DateTimeOffset.UtcNow.Date;
+        // 2. Ngày bắt đầu và offset
+        var bookedAt = shipment.BookedAt ?? DateTimeOffset.UtcNow;
+        var startDate = bookedAt.Date;
+        var offset = bookedAt.Offset;
 
-        // 3. Lấy routeId từ itinerary đầu tiên
+        // 3. RouteId
         var routeId = shipment.ShipmentItineraries.FirstOrDefault()?.RouteId;
         if (routeId == null)
             return result;
 
-        // 4. Tính tổng khối lượng và thể tích
+        // 4. Tổng khối lượng và thể tích
         var totalWeight = shipment.Parcels.Sum(p => p.WeightKg);
         var totalVolume = shipment.Parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1_000_000m);
 
         shipment.TotalWeightKg = totalWeight;
         shipment.TotalVolumeM3 = totalVolume;
 
-        // 5. Nếu quá tải -> cập nhật trạng thái
+        // 5. Quá tải → Rejected
         if (totalWeight > maxWeight || totalVolume > maxVolume)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
@@ -305,24 +316,25 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             return result;
         }
 
-        // 6. Lấy danh sách time slots
+        // 6. Time slots
         var timeSlots = await _context.MetroTimeSlots.ToListAsync();
 
-        // 7. Duyệt qua các ngày tiếp theo để tìm slot phù hợp
+        // 7. Tìm slot phù hợp
         for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
         {
             var currentDate = startDate.AddDays(dayOffset);
 
+            var itineraries = await _context.ShipmentItineraries
+                .Include(i => i.Shipment)
+                .Where(i =>
+                    i.Date.HasValue &&
+                    i.Date.Value.Date == currentDate &&
+                    i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff)
+                .ToListAsync();
+
             foreach (var slot in timeSlots)
             {
-                var usage = await _context.ShipmentItineraries
-                    .Include(i => i.Shipment)
-                    .ThenInclude(s => s.Parcels)
-                    .Where(i =>
-                        i.Date == currentDate &&
-                        i.TimeSlotId == slot.Id &&
-                        i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff)
-                    .ToListAsync();
+                var usage = itineraries.Where(i => i.TimeSlotId == slot.Id).ToList();
 
                 var usedVolume = usage.Sum(x => x.Shipment.TotalVolumeM3 ?? 0);
                 var usedWeight = usage.Sum(x => x.Shipment.TotalWeightKg ?? 0);
@@ -332,20 +344,61 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
                 if (remainingVol >= totalVolume && remainingWgt >= totalWeight)
                 {
+                    // Tính thời gian mở ca
+                    var shiftStartTime = slot.Shift switch
+                    {
+                        ShiftEnum.Morning => new TimeSpan(8, 0, 0),
+                        ShiftEnum.Afternoon => new TimeSpan(13, 0, 0),
+                        ShiftEnum.Evening => new TimeSpan(18, 0, 0),
+                        ShiftEnum.Night => new TimeSpan(22, 0, 0),
+                        _ => new TimeSpan(0, 0, 0)
+                    };
+
+                    // 🔧 Dùng offset từ bookedAt
+                    var scheduledDateTime = new DateTimeOffset(
+                        currentDate.Year, currentDate.Month, currentDate.Day,
+                        shiftStartTime.Hours, shiftStartTime.Minutes, shiftStartTime.Seconds,
+                        bookedAt.Offset // ✅ dùng offset từ bookedAt (e.g. +07:00)
+                    );
+
+                    // So sánh theo UTC để tránh lệch múi giờ
+                    if (scheduledDateTime.ToUniversalTime() <= bookedAt.ToUniversalTime())
+                        continue;
+
+                    // Cập nhật shipment
+                    shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+                    shipment.ScheduledDateTime = scheduledDateTime;
+                    shipment.ScheduledShift = slot.Shift;
+                    shipment.TimeSlotId = slot.Id;
+
+                    await _context.SaveChangesAsync();
+
                     result.Add(new AvailableTimeSlotDto
                     {
-                        StartDate = startDate,
-                        Date = currentDate,
+                        StartDate = bookedAt,
+                        Date = scheduledDateTime,
                         TimeSlotId = slot.Id,
                         TimeSlotName = slot.Shift.ToString(),
                         RemainingWeightKg = remainingWgt,
                         RemainingVolumeM3 = remainingVol,
-                        ParcelIds = shipment.Parcels.Select(p => p.Id).ToList()
+                        ParcelIds = shipment.Parcels.Select(p => p.Id).ToList(),
+
+                        // 🆕 Map trực tiếp từ entity MetroTimeSlot
+                        DayOfWeek = slot.DayOfWeek,
+                        SpecialDate = slot.SpecialDate,
+                        OpenTime = slot.OpenTime,
+                        CloseTime = slot.CloseTime,
+                        Shift = slot.Shift,
+                        IsAbnormal = slot.IsAbnormal,
+                        ScheduleBeforeShiftMinutes = 30
                     });
+
+                    break;
                 }
             }
 
-            if (result.Any()) break;
+            if (result.Any())
+                break;
         }
 
         return result;
