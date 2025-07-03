@@ -26,7 +26,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
 
-[Mapper(UseDeepCloning = true, AllowNullPropertyAssignment = true)]
+[Mapper(UseDeepCloning = true)]
 public partial class MapperlyMapper : IMapperlyMapper
 {
     /// <summary>
@@ -55,7 +55,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
     // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
-    public partial ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
+    public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentDto entity);
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentDto> entity);
@@ -70,6 +70,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
 
+    public partial List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);

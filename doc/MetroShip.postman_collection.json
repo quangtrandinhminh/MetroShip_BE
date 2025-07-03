@@ -1712,13 +1712,67 @@
 					"response": []
 				},
 				{
+					"name": "Tao Đàn - Bến Thành - TDY location - Hàng giá trị cao",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Tao Đàn - Bến Thành - TDY location - Hàng dễ vỡ",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Book a shipment",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-07-02T09:00:00+07:00\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-07-04T21:30:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1744,7 +1798,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "    {\r\n        \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n        \"destinationStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n        \"senderName\": \"Tang Du Yen\",\r\n        \"senderPhone\": \"0932754722\",\r\n        \"recipientName\": \"Yellannn\",\r\n        \"recipientPhone\": \"0932754711\",\r\n        \"recipientEmail\": \"\",\r\n        \"recipientNationalId\": \"\",\r\n        \"scheduledDateTime\": \"2025-07-04T10:30:00.000Z\",\r\n        \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n        \"totalShippingFeeVnd\": 231000,\r\n        \"totalCostVnd\": 231000,\r\n        \"insuranceFeeVnd\": 0,\r\n        \"totalKm\": 20.39,\r\n        \"shipmentItineraries\": [\r\n            {\r\n                \"routeId\": \"3e3fd340-0392-4b0f-ae72-9f06bc4180e7\",\r\n                \"legOrder\": 1\r\n            },\r\n            {\r\n                \"routeId\": \"c392ab22-e058-413a-84dd-410a05ab1d30\",\r\n                \"legOrder\": 2\r\n            }\r\n        ],\r\n        \"parcels\": [\r\n            {\r\n                \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n                \"weightKg\": 11,\r\n                \"lengthCm\": 111,\r\n                \"widthCm\": 11,\r\n                \"heightCm\": 11,\r\n                \"shippingFeeVnd\": 77000,\r\n                \"insuranceFeeVnd\": 0,\r\n                \"chargeableWeight\": 11,\r\n                \"isBulk\": false,\r\n                \"priceVnd\": 231000,\r\n                \"valueVnd\": null\r\n            }\r\n        ]\r\n    }",
+							"raw": "    {\r\n        \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n        \"destinationStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n        \"senderName\": \"Tang Du Yen\",\r\n        \"senderPhone\": \"0932754722\",\r\n        \"recipientName\": \"Yellannn\",\r\n        \"recipientPhone\": \"0932754711\",\r\n        \"recipientEmail\": null,\r\n        \"recipientNationalId\": \"\",\r\n        \"scheduledDateTime\": \"2025-07-05T21:30:00.000Z\",\r\n        \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n        \"totalShippingFeeVnd\": 231000,\r\n        \"totalCostVnd\": 231000,\r\n        \"insuranceFeeVnd\": 0,\r\n        \"totalKm\": 20.39,\r\n        \"shipmentItineraries\": [\r\n            {\r\n                \"routeId\": \"3e3fd340-0392-4b0f-ae72-9f06bc4180e7\",\r\n                \"legOrder\": 1\r\n            },\r\n            {\r\n                \"routeId\": \"c392ab22-e058-413a-84dd-410a05ab1d30\",\r\n                \"legOrder\": 2\r\n            }\r\n        ],\r\n        \"parcels\": [\r\n            {\r\n                \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n                \"weightKg\": 11,\r\n                \"lengthCm\": 111,\r\n                \"widthCm\": 11,\r\n                \"heightCm\": 11,\r\n                \"shippingFeeVnd\": 77000,\r\n                \"insuranceFeeVnd\": 0,\r\n                \"chargeableWeight\": 11,\r\n                \"isBulk\": false,\r\n                \"priceVnd\": 231000,\r\n                \"valueVnd\": null\r\n            }\r\n        ]\r\n    }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2072,32 +2126,6 @@
 					"response": []
 				},
 				{
-					"name": "Get shipment by line and date",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/shipments/metroline/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/date/2025-06-04",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"shipments",
-								"metroline",
-								"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
-								"date",
-								"2025-06-04"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Check shipment itineraries",
 					"request": {
 						"method": "GET",
@@ -2108,26 +2136,107 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/shipments/available-time-slots?TrackingCode=a&MaxAttempts=3",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/shipments/available-time-slots?ShipmentId=d95c5798-2f19-4284-8bab-5a4f52949089&MaxAttempts=3",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"shipments",
 								"available-time-slots"
 							],
 							"query": [
 								{
-									"key": "TrackingCode",
-									"value": "a"
+									"key": "ShipmentId",
+									"value": "d95c5798-2f19-4284-8bab-5a4f52949089"
 								},
 								{
 									"key": "MaxAttempts",
 									"value": "3"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff Picked Up Confirmation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"523a4d87-ad84-43bf-94e7-840f66178ae8\",\n  \"pickedUpImageLink\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/staff/pickup-confirmation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"staff",
+								"pickup-confirmation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff Reject a Shipment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"523a4d87-ad84-43bf-94e7-840f66178ae8\",\n  \"reason\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/staff/reject-confirmation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"staff",
+								"reject-confirmation"
 							]
 						}
 					},
@@ -2606,6 +2715,50 @@
 								"api",
 								"metro-lines",
 								"dropdown"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add itineraries to train",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"LineNameVi\": \"Tuyến 4: Thạnh Xuân – Bến Tàu Hiệp Phước\",\r\n    \"LineNameEn\": \"Metro 4: Thanh Xuan – Ben Tau Hiep Phuoc\",\r\n    \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n    \"Stations\": [\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-01\",\r\n            \"StationNameVi\": \"Thạnh Xuân\",\r\n            \"StationNameEn\": \"Thanh Xuan\",\r\n            \"Address\": \"Khu vực Thạnh Xuân, P.Thạnh Xuân, Q.12, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8673,\r\n            \"Longitude\": 106.6635\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-02\",\r\n            \"StationNameVi\": \"Giao Khẩu\",\r\n            \"StationNameEn\": \"Giao Khau\",\r\n            \"Address\": \"Khu vực Giao Khẩu, P.Thạnh Xuân, Q.12, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8612,\r\n            \"Longitude\": 106.6701\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-03\",\r\n            \"StationNameVi\": \"Ngã 4 Ga\",\r\n            \"StationNameEn\": \"Nga 4 Ga\",\r\n            \"Address\": \"Ngã 4 Ga, P.Thạnh Xuân, Q.12, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8549,\r\n            \"Longitude\": 106.6728\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-04\",\r\n            \"StationNameVi\": \"An Lộc\",\r\n            \"StationNameEn\": \"An Loc\",\r\n            \"Address\": \"Khu vực An Lộc, P.Thạnh Lộc, Q.12, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8491,\r\n            \"Longitude\": 106.6759\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-05\",\r\n            \"StationNameVi\": \"An Nhơn\",\r\n            \"StationNameEn\": \"An Nhon\",\r\n            \"Address\": \"Khu vực An Nhơn, P.An Phú Đông, Q.12, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8385,\r\n            \"Longitude\": 106.6784\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-06\",\r\n            \"StationNameVi\": \"Lam Sơn\",\r\n            \"StationNameEn\": \"Lam Son\",\r\n            \"Address\": \"Khu vực Lam Sơn, P.6, Q.Gò Vấp, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8324,\r\n            \"Longitude\": 106.6811\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-07\",\r\n            \"StationNameVi\": \"Ngã 6 Gò Vấp\",\r\n            \"StationNameEn\": \"Nga 6 Go Vap\",\r\n            \"Address\": \"Ngã 6 Gò Vấp, P.6, Q.Gò Vấp, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8225,\r\n            \"Longitude\": 106.6783\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-08\",\r\n            \"StationNameVi\": \"Bệnh Viện 175\",\r\n            \"StationNameEn\": \"Hospital 175\",\r\n            \"Address\": \"Bệnh viện 175, P.8, Q.Gò Vấp, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8159,\r\n            \"Longitude\": 106.6829\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-09\",\r\n            \"StationNameVi\": \"Công Viên Gia Định\",\r\n            \"StationNameEn\": \"Gia Dinh Park\",\r\n            \"Address\": \"Công viên Gia Định, P.1, Q.Gò Vấp, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.8106,\r\n            \"Longitude\": 106.6853\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-10\",\r\n            \"StationNameVi\": \"Ngã 4 Phú Nhuận\",\r\n            \"StationNameEn\": \"Nga 4 Phu Nhuan\",\r\n            \"Address\": \"Ngã 4 Phú Nhuận, P.2, Q.Phú Nhuận, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7989,\r\n            \"Longitude\": 106.6841\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-11\",\r\n            \"StationNameVi\": \"Cầu Kiệu\",\r\n            \"StationNameEn\": \"Cau Kieu\",\r\n            \"Address\": \"Cầu Kiệu, P.2, Q.Phú Nhuận, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7915,\r\n            \"Longitude\": 106.6893\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-12\",\r\n            \"StationNameVi\": \"Công Viên Lê Văn Tám\",\r\n            \"StationNameEn\": \"Le Van Tam Park\",\r\n            \"Address\": \"Công viên Lê Văn Tám, P.6, Q.3, TP.HCM\",\r\n            \"IsUnderground\": true,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7871,\r\n            \"Longitude\": 106.6934\r\n        },\r\n        {\r\n            \"Id\": \"c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8\"\r\n        },\r\n        {\r\n            \"Id\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\"\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-15\",\r\n            \"StationNameVi\": \"Hoàng Diệu\",\r\n            \"StationNameEn\": \"Hoang Dieu\",\r\n            \"Address\": \"Đường Hoàng Diệu, P.6, Q.4, TP.HCM\",\r\n            \"IsUnderground\": true,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7621,\r\n            \"Longitude\": 106.7028\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-16\",\r\n            \"StationNameVi\": \"Tôn Đản\",\r\n            \"StationNameEn\": \"Ton Dan\",\r\n            \"Address\": \"Đường Tôn Đản, P.6, Q.4, TP.HCM\",\r\n            \"IsUnderground\": true,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7563,\r\n            \"Longitude\": 106.7081\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-17\",\r\n            \"StationNameVi\": \"Nguyễn Thị Thập\",\r\n            \"StationNameEn\": \"Nguyen Thi Thap\",\r\n            \"Address\": \"Đường Nguyễn Thị Thập, P.Tân Phong, Q.7, TP.HCM\",\r\n            \"IsUnderground\": true,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7441,\r\n            \"Longitude\": 106.7132\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-18\",\r\n            \"StationNameVi\": \"Nguyễn Văn Linh\",\r\n            \"StationNameEn\": \"Nguyen Van Linh\",\r\n            \"Address\": \"Đường Nguyễn Văn Linh, P.Tân Phong, Q.7, TP.HCM\",\r\n            \"IsUnderground\": true,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7328,\r\n            \"Longitude\": 106.7195\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-19\",\r\n            \"StationNameVi\": \"Phước Kiểng\",\r\n            \"StationNameEn\": \"Phuoc Kieng\",\r\n            \"Address\": \"Khu vực Phước Kiểng, P.Phước Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7215,\r\n            \"Longitude\": 106.7098\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-20\",\r\n            \"StationNameVi\": \"Vĩnh Phước\",\r\n            \"StationNameEn\": \"Vinh Phuoc\",\r\n            \"Address\": \"Khu vực Vĩnh Phước, P.Phước Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.7136,\r\n            \"Longitude\": 106.7053\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-21\",\r\n            \"StationNameVi\": \"Phạm Hữu Lầu\",\r\n            \"StationNameEn\": \"Pham Huu Lau\",\r\n            \"Address\": \"Khu vực Phạm Hữu Lầu, P.Phước Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6989,\r\n            \"Longitude\": 106.7112\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-22\",\r\n            \"StationNameVi\": \"Kho B\",\r\n            \"StationNameEn\": \"Kho B\",\r\n            \"Address\": \"Khu vực Kho B, P.Phước Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6891,\r\n            \"Longitude\": 106.7164\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-23\",\r\n            \"StationNameVi\": \"Long Kiểng\",\r\n            \"StationNameEn\": \"Long Kieng\",\r\n            \"Address\": \"Khu vực Long Kiểng, P.Long Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6807,\r\n            \"Longitude\": 106.7211\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-24\",\r\n            \"StationNameVi\": \"Bà Chiêm\",\r\n            \"StationNameEn\": \"Ba Chiem\",\r\n            \"Address\": \"Khu vực Bà Chiêm, P.Long Kiểng, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6701,\r\n            \"Longitude\": 106.7265\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-25\",\r\n            \"StationNameVi\": \"Long Thới\",\r\n            \"StationNameEn\": \"Long Thoi\",\r\n            \"Address\": \"Khu vực Long Thới, P.Long Thới, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6625,\r\n            \"Longitude\": 106.7303\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-26\",\r\n            \"StationNameVi\": \"Rạch Dơi\",\r\n            \"StationNameEn\": \"Rach Doi\",\r\n            \"Address\": \"Khu vực Rạch Dơi, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6509,\r\n            \"Longitude\": 106.7368\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-27\",\r\n            \"StationNameVi\": \"Hiệp Phước\",\r\n            \"StationNameEn\": \"Hiep Phuoc\",\r\n            \"Address\": \"Khu vực Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6398,\r\n            \"Longitude\": 106.7421\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-28\",\r\n            \"StationNameVi\": \"Công Viên Thể Thao\",\r\n            \"StationNameEn\": \"Sports Park\",\r\n            \"Address\": \"Công viên Thể thao, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6281,\r\n            \"Longitude\": 106.7479\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-29\",\r\n            \"StationNameVi\": \"Bệnh Viện Quốc Tế\",\r\n            \"StationNameEn\": \"International Hospital\",\r\n            \"Address\": \"Bệnh viện Quốc tế, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6199,\r\n            \"Longitude\": 106.7523\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-30\",\r\n            \"StationNameVi\": \"Thị Trấn Hiệp Phước\",\r\n            \"StationNameEn\": \"Hiep Phuoc Town\",\r\n            \"Address\": \"Thị trấn Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6117,\r\n            \"Longitude\": 106.7568\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-31\",\r\n            \"StationNameVi\": \"Công Viên Cây Xanh\",\r\n            \"StationNameEn\": \"Green Park\",\r\n            \"Address\": \"Công viên Cây xanh, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.6035,\r\n            \"Longitude\": 106.7612\r\n        },\r\n        {\r\n            \"Id\": null,\r\n            \"StationCode\": \"L4-32\",\r\n            \"StationNameVi\": \"Bến Tàu Hiệp Phước\",\r\n            \"StationNameEn\": \"Ben Tau Hiep Phuoc\",\r\n            \"Address\": \"Bến tàu Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM\",\r\n            \"IsUnderground\": false,\r\n            \"IsActive\": true,\r\n            \"RegionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\r\n            \"Latitude\": 10.5928,\r\n            \"Longitude\": 106.7674\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Category",
+			"item": [
+				{
+					"name": "get all categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcel-category",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcel-category"
 							]
 						}
 					},

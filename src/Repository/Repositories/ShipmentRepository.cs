@@ -90,6 +90,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             BookedAt = s.BookedAt.Value,
             TotalCostVnd = s.TotalCostVnd,
             ScheduledDateTime = s.ScheduledDateTime,
+            TotalVolumeM3 = s.TotalVolumeM3,
+            TotalWeightKg = s.TotalWeightKg,
+            TotalKm = s.TotalKm,
         });
 
         // Use your existing paging helper on the projection
@@ -137,6 +140,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 LegOrder = itinerary.LegOrder,
                 Route = new RouteDto
                 {
+                    Id = itinerary.Route.Id,
                     LineId = itinerary.Route.LineId,
                     LineName = itinerary.Route.MetroLine.LineNameVi,
                     FromStationId = itinerary.Route.FromStationId,
@@ -145,7 +149,11 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     Direction = itinerary.Route.Direction,
                     TravelTimeMin = itinerary.Route.TravelTimeMin,
                     LengthKm = itinerary.Route.LengthKm,
-                }
+                },
+                TrainId = itinerary.TrainId,
+                TimeSlotId = itinerary.TimeSlotId,
+                Date = itinerary.Date,
+                IsCompleted = itinerary.IsCompleted,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
             DepartureStationName = shipment.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
@@ -159,6 +167,15 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TotalShippingFeeVnd = shipment.TotalShippingFeeVnd,
             TotalInsuranceFeeVnd = shipment.TotalInsuranceFeeVnd,
             TotalSurchargeFeeVnd = shipment.TotalSurchargeFeeVnd,
+            TotalVolumeM3 = shipment.TotalVolumeM3,
+            TotalWeightKg = shipment.TotalWeightKg,
+            PickedUpImageLink = shipment.PickedUpImageLink,
+            RejectedAt = shipment.RejectedAt,
+            RejectionReason = shipment.RejectionReason,
+            RejectedBy = shipment.RejectedBy,
+            ConfirmedBy = shipment.ConfirmedBy,
+            PickedUpBy = shipment.PickedUpBy,
+            ReturnPickupAt = shipment.ReturnPickupAt,
             Parcels = shipment.Parcels
             .Select(parcel => new Parcel
             {

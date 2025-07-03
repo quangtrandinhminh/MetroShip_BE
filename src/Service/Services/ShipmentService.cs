@@ -27,6 +27,7 @@ using MetroShip.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using System.Linq;
 
 namespace MetroShip.Service.Services;
 
@@ -143,7 +144,7 @@ public class ShipmentService : IShipmentService
         return shipmentListResponse;
     }
 
-    public async Task<string> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default)
+    public async Task<(string, string)> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Book shipment with request: {@request}", request);
@@ -214,8 +215,12 @@ public class ShipmentService : IShipmentService
 
         if (_isInitializedPricingTable == false) await InitializePricingTableAsync();
         shipment.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
+        shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Check if all itineraries have been scheduled
+        await CheckAvailableTimeSlotsAsync(shipment.Id, 3);
 
         // send email to customer
         _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
@@ -246,7 +251,7 @@ public class ShipmentService : IShipmentService
             _emailSender.SendMail(recipientSendMailModel);
         }
 
-        return shipment.TrackingCode;
+        return (shipment.Id, shipment.TrackingCode);
     }
 
     private async Task InitializeGraphAsync()
@@ -275,222 +280,6 @@ public class ShipmentService : IShipmentService
         _isInitializedPricingTable = true;
     }
 
-    /*public async Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request)
-    {
-        await InitializeGraphAsync();
-
-        // Sử dụng đồ thị để tìm đường đi
-        var path = _metroGraph.FindShortestPathByBFS(request.DepartureStationId, request.DestinationStationId);
-
-        if (path == null || !path.Any())
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.PATH_NOT_FOUND,
-            StatusCodes.Status404NotFound);
-
-        // Chuyển đổi đường đi thành itinerary
-        return _metroGraph.CreateResponseFromPath(path, _mapperlyMapper);
-    }*/
-
-    // v0
-    /*public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
-    {
-        _logger.Information("Get itinerary and total price with request: {@request}", request);
-        _shipmentValidator.ValidateTotalPriceCalcRequest(request);
-
-        // check if schedule shipment date is min 48h and max 14 days in advance
-        CheckShipmentDate(request.ScheduleShipmentDate);
-
-        // get departure stations near user location, which accepts the shipment
-        var maxDistanceInMeters = int.Parse(_systemConfigRepository
-                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
-        var maxStationCount = int.Parse(_systemConfigRepository
-                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_COUNT_STATION_NEAR_USER)));
-
-        // add departure station to the list
-        var stationIds = new HashSet<string> { request.DepartureStationId };
-        if (request is { UserLongitude: not null, UserLatitude: not null })
-        {
-            // get all stations near user location, ordered by distance
-            stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
-
-            // stationIds should contain at least 2 stations, if not, extend maxDistanceInMeters more 1000
-            /*while (stationIds.Count < 2 && maxDistanceInMeters < 10000)
-            {
-                maxDistanceInMeters += 1000; // extend distance by 1000 meters
-                stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
-                                       request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
-            }#1#
-        }
-
-        var response = new TotalPriceResponse();
-        // calculate chargeable weight and check if parcel is bulk
-        response.ParcelRequests = request.Parcels;
-        foreach (var parcel in request.Parcels)
-        {
-            parcel.ChargeableWeight = CalculateHelper.CalculateChargeableWeight(
-                parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
-
-            parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
-        }
-
-        // Assume stationIds is a HashSet<string> where:
-        // - stationIds.ElementAt(0) is the user's chosen departure station
-        // - stationIds.ElementAt(1) is the nearest station
-        var stationIdList = stationIds.ToList();
-
-        // use algorithm to find paths from each departure station to the destination
-        InitializeAsync().Wait(); // Ensure the graph is initialized
-        var pathTasks = stationIdList.Select(async departureStationId => {
-            List<string> path = _stationRepository.AreStationsInSameMetroLine(departureStationId, request.DestinationStationId)
-                ? _metroGraph.FindShortestPathByBFS(departureStationId, request.DestinationStationId)
-                : _metroGraph.FindShortestPathByDijkstra(departureStationId, request.DestinationStationId);
-            return (StationId: departureStationId, Path: path);
-        }).ToList();
-        var allPaths = await Task.WhenAll(pathTasks);
-
-        // Filter out null/empty paths and keep mapping
-        List<(string StationId, List<string> Path)> pathResults = allPaths
-            .Where(r => r.Path != null && r.Path.Any())
-            .ToList();
-
-        // Now create responses (BestPathGraphResponse) from those valid paths
-        var bestPathResponses = pathResults.Select(r => new {
-            StationId = r.StationId,
-            Response = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper)
-        }).ToList();
-
-        // Assign Standard (user choice), Nearest, and Cheapest
-        response.Standard = bestPathResponses
-            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
-
-        response.Nearest = bestPathResponses.Count > 1
-            ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
-            : null;
-
-        response.Cheapest = bestPathResponses.Count > 1
-            ? bestPathResponses
-                //.OrderBy(r => r.Response.ShippingFeeByItinerary)
-                .FirstOrDefault()?.Response
-            : null;
-
-        response.StationsInDistanceMeter = maxDistanceInMeters;
-        return response;
-    }*/
-
-    // v1
-    /*public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
-    {
-        _logger.Information("Get itinerary and total price with request: {@request}", request);
-        _shipmentValidator.ValidateTotalPriceCalcRequest(request);
-
-        // Check if schedule shipment date is min 48h and max 14 days in advance
-        CheckShipmentDate(request.ScheduleShipmentDate);
-
-        // Get departure stations near user location, which accepts the shipment
-        var maxDistanceInMeters = int.Parse(_systemConfigRepository
-                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
-        var maxStationCount = int.Parse(_systemConfigRepository
-                       .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_COUNT_STATION_NEAR_USER)));
-
-        // Add departure station to the list
-        var stationIds = new HashSet<string> { request.DepartureStationId };
-        if (request is { UserLongitude: not null, UserLatitude: not null })
-        {
-            stationIds.UnionWith(await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount));
-        }
-
-        var response = new TotalPriceResponse();
-        var stationIdList = stationIds.ToList();
-        // Use algorithm to find paths from each departure station to the destination
-        InitializeAsync().Wait();
-        var pathTasks = stationIdList.Select(async departureStationId => {
-            List<string> path = _stationRepository.AreStationsInSameMetroLine(departureStationId, request.DestinationStationId)
-                ? _metroGraph.FindShortestPathByBFS(departureStationId, request.DestinationStationId)
-                : _metroGraph.FindShortestPathByDijkstra(departureStationId, request.DestinationStationId);
-            return (StationId: departureStationId, Path: path);
-        }).ToList();
-        var allPaths = await Task.WhenAll(pathTasks);
-
-        List<(string StationId, List<string> Path)> pathResults = allPaths
-            .Where(r => r.Path != null && r.Path.Any())
-            .ToList();
-
-        // Create responses with calculated shipping fees
-        var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
-        var categories = _parcelCategoryRepository.GetAllWithCondition
-
-            (x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null);
-        var category = new ParcelCategory();
-        var chargeableWeight = 0m;
-        // Build pricing table from system configs
-        var allConfigs = await _systemConfigRepository.GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
-        var pricingTableBuilder = new PricingTableBuilder();
-        var pricingTable = pricingTableBuilder.BuildPricingTable(allConfigs);
-        var priceCalculationService = new PriceCalculationService(pricingTable);
-        var bestPathResponses = pathResults.Select(r => {
-            var pathResponse = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper);
-
-            // Calculate chargeable weight and check if parcel is bulk
-            foreach (var parcel in request.Parcels)
-            {
-                chargeableWeight = CalculateHelper.CalculateChargeableWeight(
-                    parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
-                parcel.ChargeableWeight = chargeableWeight;
-                parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
-
-                // Calculate shipping fee based on total weight and path distance
-                parcel.PriceVnd = priceCalculationService.CalculateShippingPrice(chargeableWeight
-                    , pathResponse.TotalKm);
-                pathResponse.TotalShippingFeeVnd += (decimal) parcel.PriceVnd;
-
-                category = categories
-                    .FirstOrDefault(c => c.Id == parcel.ParcelCategoryId);
-
-                if (category != null && category.IsInsuranceRequired)
-                {
-                    if (category.InsuranceRate != null)
-                    {
-                        parcel.InsuranceFeeVnd = parcel.PriceVnd * category.InsuranceRate;
-                    }
-                    else
-                    {
-                        parcel.InsuranceFeeVnd = category.InsuranceFeeVnd;
-                    }
-
-                    parcel.PriceVnd += parcel.InsuranceFeeVnd;
-                }
-            }
-            //response.ParcelRequests = request.Parcels;
-            pathResponse.Parcels = request.Parcels;
-
-            return new
-            {
-                StationId = r.StationId,
-                Response = pathResponse
-            };
-        }).ToList();
-
-        // Assign Standard (user choice), Nearest, and Cheapest
-        response.Standard = bestPathResponses
-            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
-
-        response.Nearest = bestPathResponses.Count > 1
-            ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
-            : null;
-
-        response.Cheapest = bestPathResponses.Count > 1
-            ? bestPathResponses
-                .OrderBy(r => r.Response.TotalKm)
-                .FirstOrDefault()?.Response
-            : null;
-
-        response.StationsInDistanceMeter = maxDistanceInMeters;
-        return response;
-    }*/
-
     // v2
     public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
     {
@@ -512,24 +301,11 @@ public class ShipmentService : IShipmentService
         return BuildTotalPriceResponse(bestPathResponses, stationIds.ToList());
     }
 
-    /*public async Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentByLineAndDate(
-        PaginatedListRequest request, string lineCode, DateTimeOffset date, string? regionCode, ShiftEnum? shift)
+    public async Task PickUpShipment (ShipmentPickUpRequest request)
     {
-        _logger.Information("Get shipment by line code: {@lineCode} and date: {@date}", lineCode, date);
-        var shipments = await _shipmentRepository.GetShipmentsByLineIdAndDateAsync(
-            request.PageNumber, request.PageSize, 
-            lineCode, date, regionCode, shift);
-
-        var shipmentResponses =
-            _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
-        return shipmentResponses;
-    }*/
-
-    /*public async Task AcceptShipment (string shipmentId)
-    {
-        _logger.Information("Confirm shipment with ID: {@shipmentId}", shipmentId);
+        _logger.Information("Confirm shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == shipmentId, false,
+                       x => x.Id == request.ShipmentId, false,
                        x => x.Parcels, x => x.ShipmentItineraries);
 
         // Check if the shipment exists
@@ -542,7 +318,7 @@ public class ShipmentService : IShipmentService
         }
 
         // Check if the shipment is already confirmed
-        if (shipment.ShipmentStatus > ShipmentStatusEnum.Processing)
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
         {
             throw new AppException(
             ErrorCode.BadRequest,
@@ -560,13 +336,10 @@ public class ShipmentService : IShipmentService
         }
 
         // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Accepted;
-        shipment.ApprovedAt = CoreHelper.SystemTimeNow;
-        await shipment.Parcels.ParallelForEachAsync(p =>
-        {
-            p.ParcelStatus = ParcelStatusEnum.AwaitingPayment;
-            return Task.CompletedTask;
-        });
+        shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
+        shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        shipment.PickedUpAt = CoreHelper.SystemTimeNow;
+        shipment.PickedUpImageLink = request.PickedUpImageLink;
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -584,13 +357,13 @@ public class ShipmentService : IShipmentService
             };
             _emailSender.SendMail(sendMailModel);
         }
-    }*/
+    }
 
-    /*public async Task RejectShipment(string shipmentId, string rejectReason)
+    public async Task RejectShipment(ShipmentRejectRequest request)
     {
-        _logger.Information("Reject shipment with ID: {@shipmentId}", shipmentId);
+        _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
-                x => x.Id == shipmentId, false,
+                x => x.Id == request.ShipmentId, false,
                 x => x.Parcels, x => x.ShipmentItineraries);
 
         // Check if the shipment exists
@@ -602,8 +375,8 @@ public class ShipmentService : IShipmentService
             StatusCodes.Status404NotFound);
         }
 
-        // Check if the shipment is already confirmed
-        if (shipment.ShipmentStatus > ShipmentStatusEnum.Processing)
+        // Check if the shipment is awaiting drop-off
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
         {
             throw new AppException(
             ErrorCode.BadRequest,
@@ -613,12 +386,9 @@ public class ShipmentService : IShipmentService
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
+        shipment.RejectedBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        shipment.RejectionReason = request.Reason;
         shipment.RejectedAt = CoreHelper.SystemTimeNow;
-        await shipment.Parcels.ParallelForEachAsync(p =>
-        {
-            p.ParcelStatus = ParcelStatusEnum.Rejected;
-            return Task.CompletedTask;
-        });
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -633,11 +403,11 @@ public class ShipmentService : IShipmentService
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
                 Message = $"Your shipment with tracking code {shipment.TrackingCode} has been rejected. " +
-                $"Reason: {rejectReason}",
+                $"Reason: {request.Reason}",
             };
             _emailSender.SendMail(sendMailModel);
         }
-    }*/
+    }
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
@@ -648,7 +418,8 @@ public class ShipmentService : IShipmentService
             .GetSystemConfigValueByKey(nameof(_systemConfigSetting.PAYMENT_REQUEST_HOUR)));
         var maxScheduleDay = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_SCHEDULE_SHIPMENT_DAY)));
-        var minBookDate = CoreHelper.SystemTimeNow.AddHours(confirmationHour + paymentRequestHour);
+        //var minBookDate = CoreHelper.SystemTimeNow.AddHours(confirmationHour + paymentRequestHour);
+        var minBookDate = CoreHelper.SystemTimeNow;
         var maxBookDate = CoreHelper.SystemTimeNow.AddDays(maxScheduleDay);
 
         if (scheduledDateTime < minBookDate || scheduledDateTime > maxBookDate)
@@ -992,7 +763,8 @@ public class ShipmentService : IShipmentService
         return response;
     }
 
-    public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request)
+    /*public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync
+        (ShipmentAvailableTimeSlotsRequest request)
     {
         var shipment = await _shipmentRepository.GetByIdAsync(request.ShipmentId);
         if (shipment?.Parcels == null)
@@ -1044,5 +816,269 @@ public class ShipmentService : IShipmentService
         }).ToList();
 
         return _mapperlyMapper.MapToAvailableTimeSlotResponseList(mappedSlots);
+    }*/
+
+    public record CalculatedItinerary
+    {
+        public DateTimeOffset? Date { get; init; } = null;
+        public string TimeSlotId { get; init; } = string.Empty;
+        public string ShipmentId { get; init; } = string.Empty;
+        public decimal? TotalWeightKg { get; init; } = null;
+        public decimal? TotalVolumeM3 { get; init; } = null;
+        public ShiftEnum? Shift { get; init; } = null;
+        public string? LineId { get; init; } = null;
+        public string? RouteId { get; init; } = null;
     }
+
+    public async Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(
+        string shipmentId, int maxAttempt)
+    {
+        _logger.Information("Checking available time slots for shipment ID: {@ShipmentId}, Max Attempts: {@MaxAttempts}",
+            shipmentId, maxAttempt);
+
+        // 1. Get shipment with itineraries and routes
+        var shipment = await _shipmentRepository.GetAll()
+            .Include(x => x.ShipmentItineraries.OrderBy(i => i.LegOrder))
+            .ThenInclude(x => x.Route)
+            .FirstOrDefaultAsync(x => x.Id == shipmentId && x.DeletedAt == null);
+
+        if (shipment == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+                StatusCodes.Status400BadRequest);
+        }
+
+        // 2. Get system configuration
+        var maxWeightKg = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_KG)));
+        var maxVolumeM3 = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_M3)));
+
+        // 3. Get all available time slots
+        var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                x => !x.IsAbnormal && x.DeletedAt == null)
+            .OrderBy(x => x.Shift)
+            .ToListAsync();
+
+        // 4. Bulk fetch all relevant itineraries for capacity calculation
+        var capacityData = await BulkFetchCapacityDataAsync(shipment, maxAttempt);
+
+        // 5. Process slot assignment for each itinerary
+        await ProcessSlotAssignmentAsync(shipment, capacityData, timeSlots, maxWeightKg, maxVolumeM3, maxAttempt);
+
+        // 6. Save changes to database
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        return _mapperlyMapper.MapToListShipmentItineraryResponse(shipment.ShipmentItineraries.ToList());
+    }
+
+    /// <summary>
+    /// Bulk fetch all itineraries that could affect capacity calculation
+    /// This is the key performance optimization
+    /// </summary>
+    private async Task<Dictionary<CapacityKey, List<CalculatedItinerary>>> BulkFetchCapacityDataAsync(
+        Shipment shipment, int maxAttempts)
+    {
+        // Define valid shipment statuses for capacity calculation
+        var validStatuses = new[]
+        {
+            ShipmentStatusEnum.AwaitingPayment,
+            ShipmentStatusEnum.AwaitingDropOff,
+            ShipmentStatusEnum.PickedUp,
+            ShipmentStatusEnum.InTransit,
+            ShipmentStatusEnum.ToReturn,
+            ShipmentStatusEnum.Returning
+        };
+
+        // Calculate date range for bulk fetch
+        var startDate = shipment.ScheduledDateTime.Value;
+        var endDate = startDate.AddDays(4 * maxAttempts); // 4 shifts per day
+
+        // Get all lines involved in this shipment
+        var routeIds = shipment.ShipmentItineraries.Select(i => i.RouteId).Distinct().ToList();
+
+        // Bulk fetch ALL relevant itineraries for capacity calculation
+        var allRelevantItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
+            x => routeIds.Contains(x.RouteId) &&
+                 validStatuses.Contains(x.Shipment.ShipmentStatus) &&
+                 x.Date.HasValue &&
+                 x.Date.Value >= startDate &&
+                 x.Date.Value <= endDate &&
+                 x.DeletedAt == null)
+            .Include(x => x.Shipment)
+            .Include(x => x.Route)
+            .Include(x => x.TimeSlot)
+            .Select(x => new CalculatedItinerary
+            {
+                Date = x.Date.Value.Date,
+                TimeSlotId = x.TimeSlotId,
+                ShipmentId = x.ShipmentId,
+                TotalWeightKg = x.Shipment.TotalWeightKg,
+                TotalVolumeM3 = x.Shipment.TotalVolumeM3,
+                Shift = x.TimeSlot.Shift,
+                LineId = x.Route.LineId,
+                RouteId = x.RouteId
+            })
+            .ToListAsync();
+
+        // Group by (RouteId, Date, Shift) for fast lookup
+        return allRelevantItineraries
+            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value.Date, x.Shift.Value))
+            .ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    /// <summary>
+    /// Process slot assignment for all itineraries in the shipment
+    /// </summary>
+    private async Task ProcessSlotAssignmentAsync(
+        Shipment shipment,
+        Dictionary<CapacityKey, List<CalculatedItinerary>> capacityData,
+        List<MetroTimeSlot> timeSlots,
+        decimal maxWeightKg,
+        decimal maxVolumeM3,
+        int maxAttempts)
+    {
+        // Initialize with shipment's scheduled date and shift
+        var currentDate = shipment.ScheduledDateTime.Value;
+        var currentSlot = timeSlots.FirstOrDefault(ts => ts.Shift == shipment.ScheduledShift);
+
+        if (currentSlot == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                $"No time slot found for shift {shipment.ScheduledShift}",
+                StatusCodes.Status400BadRequest);
+        }
+
+        string previousLineId = null;
+
+        foreach (var itinerary in shipment.ShipmentItineraries.OrderBy(i => i.LegOrder))
+        {
+            var currentLineId = itinerary.Route.LineId;
+
+            // If not first itinerary and different line, find next available slot
+            if (itinerary.LegOrder > 1 && currentLineId != previousLineId)
+            {
+                (currentDate, currentSlot) = GetNextSlot(currentDate, currentSlot, timeSlots);
+            }
+
+            // Find available slot with capacity check
+            var (assignedDate, assignedSlot) = await FindAvailableSlotWithCapacityAsync(
+                currentDate, currentSlot, itinerary, shipment,
+                capacityData, timeSlots, maxWeightKg, maxVolumeM3, maxAttempts);
+
+            // Assign slot to itinerary
+            itinerary.TimeSlotId = assignedSlot.Id;
+            itinerary.Date = assignedDate;
+            _shipmentItineraryRepository.Update(itinerary);
+
+            // Update for next iteration
+            currentDate = assignedDate;
+            currentSlot = assignedSlot;
+            previousLineId = currentLineId;
+
+            _logger.Information("Assigned slot {SlotId} on {Date} to itinerary {ItineraryId} (Line: {LineId})",
+                assignedSlot.Id, assignedDate, itinerary.Id, currentLineId);
+        }
+    }
+
+    /// Find available slot with capacity check using pre-fetched data
+    private async Task<(DateTimeOffset, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
+        DateTimeOffset startDate,
+        MetroTimeSlot startSlot,
+        ShipmentItinerary itinerary,
+        Shipment shipment,
+        Dictionary<CapacityKey, List<CalculatedItinerary>> capacityData,
+        List<MetroTimeSlot> timeSlots,
+        decimal maxWeightKg,
+        decimal maxVolumeM3,
+        int maxAttempts)
+    {
+        var currentDate = startDate;
+        var currentSlot = startSlot;
+        var attempts = 0;
+
+        while (attempts < maxAttempts)
+        {
+            var capacityKey = new CapacityKey(itinerary.Route.LineId, currentDate, currentSlot.Shift);
+
+            // Get existing capacity for this line/date/shift
+            var existingItineraries = capacityData
+                .GetValueOrDefault(capacityKey, new List<CalculatedItinerary>());
+
+            var totalWeightKg = existingItineraries.Sum(i => i.TotalWeightKg ?? 0);
+            var totalVolumeM3 = existingItineraries.Sum(i => i.TotalVolumeM3 ?? 0);
+
+            // Check if adding this shipment exceeds capacity
+            if (totalWeightKg + (shipment.TotalWeightKg ?? 0) <= maxWeightKg &&
+                totalVolumeM3 + (shipment.TotalVolumeM3 ?? 0) <= maxVolumeM3)
+            {
+                // Add this shipment to capacity data for future iterations
+                var newItinerary = new CalculatedItinerary
+                {
+                    Date = currentDate,
+                    TimeSlotId = currentSlot.Id,
+                    ShipmentId = shipment.Id,
+                    TotalWeightKg = shipment.TotalWeightKg,
+                    TotalVolumeM3 = shipment.TotalVolumeM3,
+                    Shift = currentSlot.Shift,
+                    LineId = itinerary.Route.LineId,
+                    RouteId = itinerary.RouteId
+                };
+
+                if (!capacityData.ContainsKey(capacityKey))
+                    capacityData[capacityKey] = new List<CalculatedItinerary>();
+                capacityData[capacityKey].Add(newItinerary);
+
+                return (currentDate, currentSlot);
+            }
+
+            // Try next slot
+            (currentDate, currentSlot) = GetNextSlot(currentDate, currentSlot, timeSlots);
+            attempts++;
+
+            _logger.Debug("Attempt {Attempt}: Slot {SlotId} on {Date} has insufficient capacity for route {Route}",
+                attempts, currentSlot.Id, currentDate, itinerary.Route.RouteNameEn);
+        }
+
+        _shipmentRepository.Delete(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        throw new AppException(
+            ErrorCode.BadRequest,
+            $"No available slot found for itinerary on route {itinerary.Route.RouteNameEn} after {maxAttempts} attempts",
+            StatusCodes.Status400BadRequest);
+    }
+
+    /// Get next slot
+    private (DateTimeOffset, MetroTimeSlot) GetNextSlot(
+        DateTimeOffset date,
+        MetroTimeSlot currentSlot,
+        List<MetroTimeSlot> timeSlots)
+    {
+        var nextShift = currentSlot.Shift switch
+        {
+            ShiftEnum.Morning => ShiftEnum.Afternoon,
+            ShiftEnum.Afternoon => ShiftEnum.Evening,
+            ShiftEnum.Evening => ShiftEnum.Night,
+            ShiftEnum.Night => ShiftEnum.Morning,
+            _ => ShiftEnum.Morning
+        };
+
+        // If current slot is Night, move to next date's Morning
+        var nextDate = currentSlot.Shift == ShiftEnum.Night ? date.AddDays(1) : date;
+        var nextSlot = timeSlots.FirstOrDefault(ts => ts.Shift == nextShift);
+
+        if (nextSlot == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                $"No time slot found for shift {nextShift}",
+                StatusCodes.Status500InternalServerError);
+        }
+
+        return (nextDate, nextSlot);
+    }
+
+    public record CapacityKey(string RouteId, DateTimeOffset Date, ShiftEnum Shift);
 }
