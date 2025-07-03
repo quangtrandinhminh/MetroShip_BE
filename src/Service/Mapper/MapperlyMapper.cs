@@ -22,10 +22,11 @@ using static MetroShip.Repository.Repositories.ShipmentRepository;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Utility.Enums;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
 
-[Mapper]
+[Mapper(UseDeepCloning = true, AllowNullPropertyAssignment = true)]
 public partial class MapperlyMapper : IMapperlyMapper
 {
     /// <summary>
@@ -102,10 +103,15 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
 
+    public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
+
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
     public partial void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
+
+    [MapperRequiredMapping(RequiredMappingStrategy.Target)]
     public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
     // transaction
@@ -118,23 +124,6 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial TrainListResponse MapToTrainListResponse(MetroTrain entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
-
-    public int? MapToVoucherId(int? voucherId)
-    {
-        // if voucherId is null, return null
-        if (voucherId == null)
-        {
-            return null;
-        }
-
-        // if voucherId is 0, return null
-        if (voucherId == 0)
-        {
-            return null;
-        }
-
-        return voucherId;
-    }
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

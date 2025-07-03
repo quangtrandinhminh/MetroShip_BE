@@ -65,6 +65,7 @@ public interface IMapperlyMapper
     // parcel
     PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
     ParcelResponse MapToParcelResponse(Parcel entity);
+    void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);

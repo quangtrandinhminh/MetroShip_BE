@@ -182,12 +182,13 @@ public class ShipmentService : IShipmentService
             StatusCodes.Status404NotFound);
         };
         shipment.ScheduledShift = timeSlot.Shift;
-        firstItinerary.TimeSlotId = request.TimeSlotId;
-        firstItinerary.Date = request.ScheduledDateTime;
+        firstItinerary.TimeSlotId = shipment.TimeSlotId;
+        firstItinerary.Date = shipment.ScheduledDateTime.Value;
 
         // generate shipment tracking code
+        var systemTime = request.ScheduledDateTime.UtcToSystemTime();
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
-            departureStation.Region.RegionCode, shipment.ScheduledDateTime.Value);
+            departureStation.Region.RegionCode, systemTime);
 
         // foreach parcel, set shipment id and generate parcel code
         int index = 0;
@@ -220,7 +221,7 @@ public class ShipmentService : IShipmentService
         _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
-        shipment.ScheduledDateTime = request.ScheduledDateTime;
+        shipment.ScheduledDateTime = systemTime;
         var sendMailModel = new SendMailModel
         {
             Email = user.Email,
@@ -893,11 +894,10 @@ public class ShipmentService : IShipmentService
         return pathResults.Select(r =>
         {
             var pathResponse = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper);
+            _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
-            CalculateParcelPricing(request.Parcels, pathResponse, priceCalculationService, categories);
-
-            pathResponse.Parcels = request.Parcels;
+            CalculateParcelPricing(pathResponse.Parcels, pathResponse, priceCalculationService, categories);
 
             return new
             {
