@@ -18,7 +18,7 @@ public partial class Shipment : BaseEntity
     public Shipment()
     {
         BookedAt = CoreHelper.SystemTimeNow;
-        ShipmentStatus = ShipmentStatusEnum.AwaitingConfirmation;
+        ShipmentStatus = ShipmentStatusEnum.AwaitingPayment;
     }
 
     [Required]
@@ -57,10 +57,10 @@ public partial class Shipment : BaseEntity
     public decimal? TotalKm { get; set; }
 
     [Column(TypeName = "decimal(10, 2)")]
-    public decimal? TotalWeightKg { get; set; }
+    public decimal? TotalWeightKg { get; set; } = 0;
 
     [Column(TypeName = "decimal(10, 2)")]
-    public decimal? TotalVolumeM3 { get; set; }
+    public decimal? TotalVolumeM3 { get; set; } = 0;
 
     [StringLength(50)]
     public string? TimeSlotId { get; set; }
@@ -71,9 +71,14 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? BookedAt { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }
     public DateTimeOffset? RejectedAt { get; set; }
+    public string? RejectionReason { get; set; } // Reason for rejection, if applicable
+    public string? RejectedBy { get; set; } // User who rejected the shipment   
     public string? ConfirmedBy { get; set; }
+
+    public DateTimeOffset? PaymentDealine { get; set; } // Deadline for payment, if applicable
     public DateTimeOffset? PaidAt { get; set; }
     public DateTimeOffset? PickedUpAt { get; set; }
+    public string? PickedUpBy { get; set; } // User who picked up the shipment
     public DateTimeOffset? AwaitedDeliveryAt { get; set; }
     public DateTimeOffset? DeliveredAt { get; set; }
     public DateTimeOffset? SurchargeAppliedAt { get; set; }
@@ -117,8 +122,11 @@ public partial class Shipment : BaseEntity
     [StringLength(20)]
     public string? RecipientNationalId { get; set; }
 
-    public string? PickedUpPicture { get; set; } // URL to the picture taken at pickup
-    public string? DeliveredPicture { get; set; } // URL to the picture taken at delivery
+    public string? PickedUpImageLink { get; set; } // URL to the picture taken at pickup
+    public string? DeliveredImageLink { get; set; } // URL to the picture taken at delivery
+    public string? NationalIdImageFrontLink { get; set; } // URL to the picture of the front of recipient's national ID, if applicable
+    public string? NationalIdImageBackLink { get; set; } // URL to the picture of the back of the recipient's national ID, if applicable
+
     public byte? Rating { get; set; } // Rating given by the customer, if applicable
 
     [StringLength(500)]

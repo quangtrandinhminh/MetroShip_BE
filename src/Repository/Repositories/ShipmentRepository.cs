@@ -10,6 +10,7 @@ using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using MetroShip.Utility.Enums;
+using System.Runtime.CompilerServices;
 
 
 namespace MetroShip.Repository.Repositories;
@@ -89,6 +90,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             BookedAt = s.BookedAt.Value,
             TotalCostVnd = s.TotalCostVnd,
             ScheduledDateTime = s.ScheduledDateTime,
+            TotalVolumeM3 = s.TotalVolumeM3,
+            TotalWeightKg = s.TotalWeightKg,
+            TotalKm = s.TotalKm,
         });
 
         // Use your existing paging helper on the projection
@@ -136,6 +140,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 LegOrder = itinerary.LegOrder,
                 Route = new RouteDto
                 {
+                    Id = itinerary.Route.Id,
                     LineId = itinerary.Route.LineId,
                     LineName = itinerary.Route.MetroLine.LineNameVi,
                     FromStationId = itinerary.Route.FromStationId,
@@ -144,7 +149,11 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     Direction = itinerary.Route.Direction,
                     TravelTimeMin = itinerary.Route.TravelTimeMin,
                     LengthKm = itinerary.Route.LengthKm,
-                }
+                },
+                TrainId = itinerary.TrainId,
+                TimeSlotId = itinerary.TimeSlotId,
+                Date = itinerary.Date,
+                IsCompleted = itinerary.IsCompleted,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
             DepartureStationName = shipment.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
@@ -154,10 +163,19 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 .OrderBy(i => i.LegOrder)
                 .Select(i => i.Route.ToStation.StationNameVi)
                 .LastOrDefault(),
-            
+
             TotalShippingFeeVnd = shipment.TotalShippingFeeVnd,
             TotalInsuranceFeeVnd = shipment.TotalInsuranceFeeVnd,
             TotalSurchargeFeeVnd = shipment.TotalSurchargeFeeVnd,
+            TotalVolumeM3 = shipment.TotalVolumeM3,
+            TotalWeightKg = shipment.TotalWeightKg,
+            PickedUpImageLink = shipment.PickedUpImageLink,
+            RejectedAt = shipment.RejectedAt,
+            RejectionReason = shipment.RejectionReason,
+            RejectedBy = shipment.RejectedBy,
+            ConfirmedBy = shipment.ConfirmedBy,
+            PickedUpBy = shipment.PickedUpBy,
+            ReturnPickupAt = shipment.ReturnPickupAt,
             Parcels = shipment.Parcels
             .Select(parcel => new Parcel
             {
@@ -247,4 +265,143 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return await PaginatedList<ShipmentDto>.CreateAsync(shipmentDtos, pageNumber, pageSize);
     }*/
+
+    public class CheckAvailableTimeSlotsRequest
+    {
+        public string ShipmentId { get; set; }
+        public int? MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
+    }
+
+    public class AvailableTimeSlotDto
+    {
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset Date { get; set; }
+        public string TimeSlotId { get; set; }
+        public string TimeSlotName { get; set; }
+        public decimal RemainingWeightKg { get; set; }
+        public decimal RemainingVolumeM3 { get; set; }
+        public List<string>? ParcelIds { get; set; }
+
+        // 🆕 Thêm chi tiết MetroTimeSlot
+        public DayOfWeekEnum? DayOfWeek { get; set; }
+        public DateOnly? SpecialDate { get; set; }
+        public TimeOnly OpenTime { get; set; }
+        public TimeOnly CloseTime { get; set; }
+        public ShiftEnum Shift { get; set; }
+        public bool IsAbnormal { get; set; }
+        public int ScheduleBeforeShiftMinutes { get; set; }=30; // Thời gian đặt trước ca (phút)
+    }
+
+    public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
+    {
+        var result = new List<AvailableTimeSlotDto>();
+        const decimal maxWeight = 20000m;
+        const decimal maxVolume = 160m;
+
+        var shipment = await _context.Shipments
+            .Include(s => s.Parcels)
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .FirstOrDefaultAsync(s => s.Id == request.ShipmentId);
+
+        if (shipment == null || !shipment.Parcels.Any())
+            return result;
+
+        var bookedAt = shipment.BookedAt ?? DateTimeOffset.UtcNow;
+        var offset = bookedAt.Offset;
+
+        // ✅ Nếu người dùng đã chọn thời gian thì ưu tiên
+        var startDate = shipment.ScheduledDateTime?.Date ?? bookedAt.Date;
+
+        var routeId = shipment.ShipmentItineraries.FirstOrDefault()?.RouteId;
+        if (routeId == null)
+            return result;
+
+        var totalWeight = shipment.Parcels.Sum(p => p.WeightKg);
+        var totalVolume = shipment.Parcels.Sum(p => (p.LengthCm * p.WidthCm * p.HeightCm) / 1_000_000m);
+
+        shipment.TotalWeightKg = totalWeight;
+        shipment.TotalVolumeM3 = totalVolume;
+
+        if (totalWeight > maxWeight || totalVolume > maxVolume)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
+            await _context.SaveChangesAsync();
+            return result;
+        }
+
+        var timeSlots = await _context.MetroTimeSlots.ToListAsync();
+
+        for (int dayOffset = 0; dayOffset <= request.MaxAttempts; dayOffset++)
+        {
+            var currentDate = startDate.AddDays(dayOffset);
+
+            var itineraries = await _context.ShipmentItineraries
+                .Include(i => i.Shipment)
+                .Where(i =>
+                    i.Date.HasValue &&
+                    i.Date.Value.Date == currentDate &&
+                    i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff)
+                .ToListAsync();
+
+            foreach (var slot in timeSlots)
+            {
+                var usage = itineraries.Where(i => i.TimeSlotId == slot.Id).ToList();
+
+                var usedVolume = usage.Sum(x => x.Shipment.TotalVolumeM3 ?? 0);
+                var usedWeight = usage.Sum(x => x.Shipment.TotalWeightKg ?? 0);
+
+                var remainingVol = maxVolume - usedVolume;
+                var remainingWgt = maxWeight - usedWeight;
+
+                if (remainingVol >= totalVolume && remainingWgt >= totalWeight)
+                {
+                    var shiftStartTime = slot.Shift switch
+                    {
+                        ShiftEnum.Morning => new TimeSpan(8, 0, 0),
+                        ShiftEnum.Afternoon => new TimeSpan(13, 0, 0),
+                        ShiftEnum.Evening => new TimeSpan(18, 0, 0),
+                        ShiftEnum.Night => new TimeSpan(22, 0, 0),
+                        _ => new TimeSpan(0, 0, 0)
+                    };
+
+                    var scheduledDateTime = new DateTimeOffset(
+                        currentDate.Year, currentDate.Month, currentDate.Day,
+                        shiftStartTime.Hours, shiftStartTime.Minutes, shiftStartTime.Seconds,
+                        offset
+                    );
+
+                    var finalStartDate = new DateTimeOffset(startDate, offset);
+
+                    // ✅ Logging để xác minh
+                    Console.WriteLine($"Slot Found - Shipment: {shipment.Id}, StartDate: {finalStartDate}, Date: {scheduledDateTime}");
+
+                    result.Add(new AvailableTimeSlotDto
+                    {
+                        StartDate = finalStartDate,
+                        Date = scheduledDateTime,
+                        TimeSlotId = slot.Id,
+                        TimeSlotName = slot.Shift.ToString(),
+                        RemainingWeightKg = remainingWgt,
+                        RemainingVolumeM3 = remainingVol,
+                        ParcelIds = shipment.Parcels.Select(p => p.Id).ToList(),
+
+                        DayOfWeek = slot.DayOfWeek,
+                        SpecialDate = slot.SpecialDate,
+                        OpenTime = slot.OpenTime,
+                        CloseTime = slot.CloseTime,
+                        Shift = slot.Shift,
+                        IsAbnormal = slot.IsAbnormal,
+                        ScheduleBeforeShiftMinutes = 30
+                    });
+                }
+            }
+
+            // ✅ Dừng sau khi có 3 slots hợp lệ
+            if (result.Count >= 3)
+                break;
+        }
+
+        return result;
+    }
 }

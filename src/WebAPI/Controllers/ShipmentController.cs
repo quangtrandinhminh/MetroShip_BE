@@ -111,5 +111,29 @@ namespace MetroShip.WebAPI.Controllers
             var response = await shipmentService.GetShipmentByLineAndDate(request, lineCode, date, regionCode, shift);
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }*/
+
+        /*[HttpGet(WebApiEndpoint.ShipmentEndpoint.GetAvailableTimeSlots)]
+        public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
+        {
+            var response = await shipmentService.CheckAvailableTimeSlotsAsync(
+                request.ShipmentId, request.MaxAttempts.Value);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }*/
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.PickUpShipment)]
+        public async Task<IActionResult> PickUpShipment([FromBody] ShipmentPickUpRequest request)
+        {
+            await shipmentService.PickUpShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.PICKED_UP_SUCCESS, null));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.RejectShipment)]
+        public async Task<IActionResult> RejectShipment([FromBody] ShipmentRejectRequest request)
+        {
+            await shipmentService.RejectShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
+        }
     }
 }

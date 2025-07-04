@@ -7,7 +7,7 @@ public sealed record RouteResponse
 {
     public string RouteId { get; set; }
     public string RouteName { get; set; }
-    public int LegOrder { get; set; }
+    public int SeqOrder { get; set; }
     public decimal LengthKm { get; set; }
     public int TravelTimeMin { get; set; }
     public string FromStationId { get; set; }
