@@ -152,7 +152,8 @@
         public const string USER_COORDINATE_INVALID = "User coordinates (latitude and longitude) are invalid.";
         public const string SHIFT_REQUIRED = "Shift is required.";
         public const string SHIFT_INVALID = "Shift is invalid.";
-        public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment has already been confirmed.";
+        public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment must be in 'AwaitingDropoff' status to confirm. " +
+            "Please check the shipment status before confirming.";
         public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
             "Please schedule the itinerary before confirming the shipment.";
         public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
@@ -160,6 +161,13 @@
         public const string TIME_SLOT_NOT_FOUND = "Time slot not found.";
         public const string TOTAL_KM_REQUIRED = "Total kilometers are required.";
         public const string TOTAL_KM_INVALID = "Total kilometers must be greater than to 0.";
+        public const string PICKED_UP_IMAGE_LINK_REQUIRED = "Picked up image link is required.";
+        public const string PICKED_UP_IMAGE_LINK_INVALID = "Picked up image link is invalid.";
+        public const string DELIVERED_IMAGE_LINK_REQUIRED = "Delivered image link is required.";
+        public const string DELIVERED_IMAGE_LINK_INVALID = "Delivered image link is invalid.";
+        public const string PICKED_UP_SUCCESS = "Shipment picked up successfully.";
+        public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
+        public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
     }
 
     public class ResponseMessageItinerary

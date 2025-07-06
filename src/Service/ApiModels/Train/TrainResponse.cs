@@ -1,4 +1,4 @@
-﻿namespace MetroShip.Service.ApiModels;
+﻿namespace MetroShip.Service.ApiModels.Train;
 
 public record TrainListResponse
 {
@@ -7,6 +7,9 @@ public record TrainListResponse
     public string ModelName { get; set; } = string.Empty;
     public string LineId { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+
+    public decimal CurrentWeightKg { get; set; } = 0;
+    public decimal CurrentVolumeM3 { get; set; } = 0;
 }
 
 public sealed record TrainResponse : TrainListResponse

@@ -63,6 +63,8 @@
             public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
             public const string GetShipmentsByLineAndDate = BaseEndpoint + "/metroline/{lineCode}/date/{date}";
             public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
+            public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
+            public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
         }
 
         public static class TransactionEndpoint

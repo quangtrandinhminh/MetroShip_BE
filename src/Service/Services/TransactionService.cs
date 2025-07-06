@@ -83,7 +83,8 @@ public class TransactionService : ITransactionService
                 StatusCodes.Status400BadRequest);
         }
 
-        if (shipment.Transactions.FirstOrDefault(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+        if (shipment.Transactions.FirstOrDefault(
+            t => t.TransactionType == TransactionTypeEnum.ShipmentCost
         && t.PaymentStatus == PaymentStatusEnum.Pending) is null)
         {
             var transaction = _mapper.MapToTransactionEntity(request);
@@ -114,7 +115,8 @@ public class TransactionService : ITransactionService
         }
 
         var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == vnPaymentResponse.OrderId || x.TrackingCode == vnPaymentResponse.OrderId, 
+                       x => x.Id == vnPaymentResponse.OrderId 
+                       || x.TrackingCode == vnPaymentResponse.OrderId, 
                        false,
                        x => x.Transactions, x => x.Parcels
                        );

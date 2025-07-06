@@ -5,11 +5,10 @@ namespace MetroShip.Utility.Enums;
 public enum ShipmentStatusEnum
 {
     // Initial booking
-    AwaitingConfirmation,
+    AwaitingPayment,             // all parcels accepted
 
     // Pre-confirmation outcomes
     Rejected,             // all parcels rejected by staff
-    AwaitingPayment,             // all parcels accepted
 
     // Payment flows
     Unpaid,               // payment timeout

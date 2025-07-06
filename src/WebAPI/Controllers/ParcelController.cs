@@ -14,7 +14,6 @@ namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/parcels")]
-    [Authorize]
     public class ParcelController : ControllerBase
     {
         private readonly IParcelService _parcelService;

@@ -2,16 +2,18 @@
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
-using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Service.Mapper;
 
@@ -33,9 +35,11 @@ public interface IMapperlyMapper
     ShipmentListResponse MapToShipmentListResponse(Shipment entity);
     ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentRepository.ShipmentDto entity);
     Shipment MapToShipmentEntity(ShipmentRequest request);
-    ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
+    ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<ShipmentRepository.ShipmentDto> entity);
-    List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(List<(DateTimeOffset Date, MetroTimeSlot TimeSlot, decimal RemainingWeightKg, decimal RemainingVolumeM3)> slots);
+    List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
+    List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
 
     // station
     StationResponse MapToStationResponse(Station entity);
@@ -62,6 +66,7 @@ public interface IMapperlyMapper
     // parcel
     PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
     ParcelResponse MapToParcelResponse(Parcel entity);
+    void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);

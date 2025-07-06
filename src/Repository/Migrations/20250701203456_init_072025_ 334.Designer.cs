@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250701203456_init_072025_ 334")]
+    partial class init_072025_334
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -909,7 +912,7 @@ namespace MetroShip.Repository.Migrations
                     b.Property<DateTimeOffset?>("DeliveredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DeliveredImageLink")
+                    b.Property<string>("DeliveredPicture")
                         .HasColumnType("text");
 
                     b.Property<string>("DepartureStationId")
@@ -933,25 +936,13 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("NationalIdImageBackLink")
-                        .HasColumnType("text");
-
-                    b.Property<string>("NationalIdImageFrontLink")
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset?>("PaidAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("PaymentDealine")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("PickedUpAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PickedUpBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PickedUpImageLink")
+                    b.Property<string>("PickedUpPicture")
                         .HasColumnType("text");
 
                     b.Property<string>("PriceStructureDescriptionJSON")
@@ -987,12 +978,6 @@ namespace MetroShip.Repository.Migrations
 
                     b.Property<DateTimeOffset?>("RejectedAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("RejectedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("ReturnCancelledAt")
                         .HasColumnType("timestamp with time zone");
