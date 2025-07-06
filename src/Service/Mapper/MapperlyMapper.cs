@@ -127,6 +127,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // metro train
     public partial PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
     public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
+    public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
 
     // datetimeoffset to dateonly
