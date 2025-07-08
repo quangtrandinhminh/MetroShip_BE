@@ -319,7 +319,7 @@ public class MetroGraph
         return response;
     }
 
-    public List<string> BFS (string start, string end)
+    private List<string> BFS (string start, string end)
     {
         var queue = new Queue<string>();
         var visited = new HashSet<string>();
@@ -361,7 +361,7 @@ public class MetroGraph
         return null;
     }
 
-    public List<string> DFS (string start, string end)
+    private List<string> DFS (string start, string end)
     {
         var stack = new Stack<string>();
         var visited = new HashSet<string>();
@@ -405,7 +405,7 @@ public class MetroGraph
 
     // Chọn weight cho route dựa trên tỉ lệ các weights, weight nào vào trước thì độ ưu tiên cao hơn
     // Ưu tiên price (MetroBasePriceVndPerKm * Length) > EstMinute
-    public List<string> Dijkstra(string start, string end, 
+    private List<string> Dijkstra(string start, string end, 
         params Expression<Func<Route, object>>[] weights)
     {                                                                                                                                                                                                               
         // Khởi tạo cấu trúc dữ liệu
