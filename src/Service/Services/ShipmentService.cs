@@ -20,14 +20,7 @@ using MetroShip.Service.Validations;
 using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
-using MetroShip.Service.ApiModels.Graph;
-using MetroShip.Service.ApiModels.Parcel;
-using System;
-using MetroShip.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using MetroShip.Service.ApiModels.MetroTimeSlot;
-using System.Linq;
 
 namespace MetroShip.Service.Services;
 
