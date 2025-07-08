@@ -21,4 +21,7 @@ public interface IShipmentRepository : IBaseRepository<Shipment>
         int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift);*/
 
     Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request);
+    Task<ShipmentItinerary?> GetItineraryByShipmentIdAsync(string shipmentId);
+    Task UpdateShipmentStatusAsync(string shipmentId, ShipmentStatusEnum status);
+    Task AddParcelTrackingAsync(string parcelId, string status, string stationId, string updatedBy);
 }

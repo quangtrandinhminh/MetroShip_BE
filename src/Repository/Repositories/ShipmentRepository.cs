@@ -404,4 +404,38 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return result;
     }
+
+    public async Task<ShipmentItinerary?> GetItineraryByShipmentIdAsync(string shipmentId)
+    {
+        return await _context.ShipmentItineraries
+            .Include(si => si.Route)
+                .ThenInclude(r => r.ToStation)
+            .Include(si => si.Train)
+            .FirstOrDefaultAsync(si => si.ShipmentId == shipmentId);
+    }
+
+    public async Task UpdateShipmentStatusAsync(string shipmentId, ShipmentStatusEnum status)
+    {
+        var shipment = await _context.Shipments.FirstOrDefaultAsync(s => s.Id == shipmentId);
+        if (shipment != null)
+        {
+            shipment.ShipmentStatus = status;
+            _context.Shipments.Update(shipment);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task AddParcelTrackingAsync(string parcelId, string status, string stationId, string updatedBy)
+    {
+        var tracking = new ParcelTracking
+        {
+            ParcelId = parcelId,
+            Status = status,
+            StationId = stationId,
+            UpdatedBy = updatedBy,
+            EventTime = DateTimeOffset.UtcNow
+        };
+        _context.ParcelTrackings.Add(tracking);
+        await _context.SaveChangesAsync();
+    }
 }

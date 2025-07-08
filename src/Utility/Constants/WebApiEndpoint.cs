@@ -65,6 +65,8 @@
             public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
+            public const string GetLocation = BaseEndpoint + "/staff||cus/{trackingCode}/location";
+            public const string UpdateStatusAtStation = BaseEndpoint + "/update-status-at-station";
         }
 
         public static class TransactionEndpoint
@@ -141,6 +143,7 @@
             public const string UpdateTrain = BaseEndpoint + "/{id}";
             public const string DeleteTrain = BaseEndpoint + "/{id}";
             public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
+            public const string SendLocation = BaseEndpoint + "/staff/send-location";
         }
 
         public static class MediaEndpoint

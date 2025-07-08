@@ -23,7 +23,7 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
 
-        //[Authorize]
+        [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
         public async Task<IActionResult> Get(
             [FromQuery] PaginatedListRequest request, 
@@ -36,7 +36,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentByTrackingCode)]
         public async Task<IActionResult> Get([FromRoute] string shipmentTrackingCode)
         {
@@ -134,6 +134,23 @@ namespace MetroShip.WebAPI.Controllers
         {
             await shipmentService.RejectShipment(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
+        }
+
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetLocation)]
+        public async Task<IActionResult> GetShipmentLocation(string trackingCode)
+        {
+            var data = await shipmentService.GetShipmentLocationAsync(trackingCode);
+            return Ok(data);
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.UpdateStatusAtStation)]
+        public async Task<IActionResult> UpdateStatus([FromBody] UpdateShipmentStatusRequest request)
+        {
+            var staffId = User?.Identity?.Name ?? "unknown";
+            await shipmentService.UpdateShipmentStatusByStationAsync(request, staffId);
+            return Ok();
         }
     }
 }

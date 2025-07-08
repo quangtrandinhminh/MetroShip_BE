@@ -8,10 +8,12 @@ using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Utility.Config;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using SkiaSharp;
 
 namespace MetroShip.Service.Services;
 
@@ -125,5 +127,27 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             c.ConfigKey,
             c.ConfigValue
         }).ToList()];
+    }
+
+    public async Task<bool> IsShipmentDeliveredAsync(string trackingCode)
+    {
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(trackingCode);
+        return shipment.ShipmentStatus == ShipmentStatusEnum.Completed;
+    }
+
+    public async Task<IList<string>> GetTrackingCodesByTrainAsync(string trainId)
+    {
+        var shipments = await _trainRepository.GetShipmentsByTrainAsync(trainId);
+        var trackingCodes = shipments.Select(s => s.TrackingCode).ToList();
+
+        // Log the tracking codes  
+        _logger.Information("Tracking codes for train {TrainId}: {@TrackingCodes}", trainId, trackingCodes);
+
+        return trackingCodes;
+    }
+
+    public async Task UpdateTrainLocationAsync(string trainId, double lat, double lng, string stationId)
+    {
+        await _trainRepository.SaveTrainLocationAsync(trainId, lat, lng, stationId);
     }
 }

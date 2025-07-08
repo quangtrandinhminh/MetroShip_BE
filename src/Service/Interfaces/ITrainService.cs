@@ -11,4 +11,7 @@ public interface ITrainService
         string? lineId = null, string? timeSlotId = null, DateTimeOffset? date = null);
 
     Task<IList<object>> GetTrainSystemConfigAsync();
+    Task<bool> IsShipmentDeliveredAsync(string trackingCode);
+    Task<IList<string>> GetTrackingCodesByTrainAsync(string trainId);
+    Task UpdateTrainLocationAsync(string trainId, double lat, double lng, string stationId);
 }

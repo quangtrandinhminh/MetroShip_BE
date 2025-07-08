@@ -22,4 +22,6 @@ public interface IShipmentService
 
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
+    Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
+    Task<bool> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId);
 }

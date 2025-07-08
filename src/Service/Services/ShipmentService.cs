@@ -1011,4 +1011,68 @@ public class ShipmentService : IShipmentService
     }
 
     public record CapacityKey(string RouteId, DateTimeOffset Date, ShiftEnum Shift);
+
+    public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
+    {
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(trackingCode);
+
+        if (shipment == null)
+            throw new ArgumentException($"Không tìm thấy shipment với mã tracking {trackingCode}");
+
+        var itinerary = await _shipmentRepository.GetItineraryByShipmentIdAsync(shipment.Id);
+        var train = itinerary?.Train;
+
+        string currentStationId = itinerary?.Route?.ToStationId;
+        string currentStationName = itinerary?.Route?.ToStation?.StationNameVi;
+
+        // Lấy tất cả ParcelTracking theo shipment
+        var parcelTrackings = shipment.Parcels
+            .SelectMany(p => p.ParcelTrackings.Select(pt => new ParcelTrackingDto
+            {
+                ParcelCode = p.ParcelCode,
+                Status = pt.Status,
+                StationId = pt.StationId,
+                StationName = pt.StationId != null ? pt.Parcel?.Shipment?.ShipmentItineraries
+                                    .Select(i => i.Route?.ToStation)
+                                    .FirstOrDefault(s => s.Id == pt.StationId)?.StationNameVi : null,
+                EventTime = pt.EventTime,
+                Note = pt.Note
+            }))
+            .OrderByDescending(pt => pt.EventTime)
+            .ToList();
+
+        return new ShipmentLocationResponse
+        {
+            TrackingCode = shipment.TrackingCode,
+            TrainId = train?.Id,
+            TrainCode = train?.TrainCode,
+            Latitude = train?.Latitude,
+            Longitude = train?.Longitude,
+            CurrentStationId = currentStationId,
+            CurrentStationName = currentStationName,
+            ShipmentStatus = shipment.ShipmentStatus.ToString(),
+            EstimatedArrivalTime = itinerary?.Date,
+            ParcelTrackingHistory = parcelTrackings
+        };
+    }
+
+    public async Task<bool> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId)
+    {
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.TrackingCode);
+        var itinerary = await _shipmentRepository.GetItineraryByShipmentIdAsync(shipment.Id);
+
+        if (itinerary?.Route?.ToStationId == request.CurrentStationId)
+        {
+            await _shipmentRepository.UpdateShipmentStatusAsync(shipment.Id, ShipmentStatusEnum.Completed);
+            foreach (var parcel in shipment.Parcels)
+                await _shipmentRepository.AddParcelTrackingAsync(parcel.Id, "Đã giao hàng đến trạm", request.CurrentStationId, staffId);
+        }
+        else
+        {
+            foreach (var parcel in shipment.Parcels)
+                await _shipmentRepository.AddParcelTrackingAsync(parcel.Id, $"Đã qua trạm {request.CurrentStationId}", request.CurrentStationId, staffId);
+        }
+
+        return true;
+    }
 }
