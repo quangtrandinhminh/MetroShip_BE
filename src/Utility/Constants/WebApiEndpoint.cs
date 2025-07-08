@@ -66,7 +66,7 @@
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
             public const string GetLocation = BaseEndpoint + "/staff||cus/{trackingCode}/location";
-            public const string UpdateStatusAtStation = BaseEndpoint + "/update-status-at-station";
+            public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
         }
 
         public static class TransactionEndpoint
