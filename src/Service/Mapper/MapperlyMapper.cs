@@ -76,6 +76,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
 
+    public partial ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
+
     public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
 
     public partial StationListResponse MapToStationListResponse(Station entity);
@@ -129,6 +131,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
+
+    // time slot
+    public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

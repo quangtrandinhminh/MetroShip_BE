@@ -263,5 +263,7 @@
             " on the specified date.";
         public const string SHIPMENT_ITINERARIES_NOT_FOUND = 
             "Shipment itineraries not found for the specified train.";
+
+        public const string TRAIN_MUST_BE_SAME_LINE = "Train must be on the same line as the route.";
     }
 }

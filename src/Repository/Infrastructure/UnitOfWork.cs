@@ -3,7 +3,9 @@ using MetroShip.Repository.Models.Base;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using SkiaSharp;
 
 namespace MetroShip.Repository.Infrastructure
 {
@@ -16,6 +18,36 @@ namespace MetroShip.Repository.Infrastructure
         {
             _dbContext = serviceProvider.GetRequiredService<AppDbContext>();
         }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _dbContext.Database.BeginTransactionAsync();
+        }
+        public IDbContextTransaction BeginTransaction()
+        {
+            return _dbContext.Database.BeginTransaction();
+        }
+
+        // rollback the transaction
+        public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
+        {
+            if (transaction != null && transaction.GetDbTransaction().Connection != null)
+            {
+                await transaction.RollbackAsync();
+                await transaction.DisposeAsync();
+            }
+        }
+
+        public void RollbackTransaction(IDbContextTransaction transaction)
+        {
+            if (transaction != null && transaction.GetDbTransaction().Connection != null)
+            {
+                transaction.Rollback();
+                transaction.Dispose();
+            }
+        }
+
+
         #region Save
         public int SaveChange()
         {

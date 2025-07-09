@@ -17,7 +17,7 @@ namespace MetroShip.Service.ApiModels.Station
         public string? RegionId { get; set; }
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
-        public decimal ToNextStationKm { get; set; } = 0;
+        public decimal? ToNextStationKm { get; set; } = 0;
     }
     public class UpdateStationRequest : CreateStationRequest
     {

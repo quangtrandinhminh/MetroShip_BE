@@ -14,6 +14,7 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
 
+        [Authorize]
         [HttpGet]
         [Route(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
         public async Task<IActionResult> GetTrainsAsync([FromQuery] TrainListFilterRequest request)

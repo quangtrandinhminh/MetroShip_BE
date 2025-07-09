@@ -47,7 +47,10 @@ public interface IMapperlyMapper
     StationListResponse MapToStationListResponse(Station entity);
     StationDetailResponse MapToStationDetailResponse(Station entity);
     Station MapToStationEntity(CreateStationRequest request);
+    ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
     void MapToExistingStation(UpdateStationRequest request, Station entity);
+
+
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
@@ -84,4 +87,7 @@ public interface IMapperlyMapper
     IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     TrainResponse MapToTrainResponse(MetroTrain request);
+
+    // time slot
+    MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
 }

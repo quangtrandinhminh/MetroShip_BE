@@ -46,7 +46,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _logger.Information("Get all trains by line, slot, date with request: {@request}", request);
         _trainValidator.ValidateLineSlotDateFilterRequest(request);
 
-        var targetDate = CoreHelper.UtcToSystemTime(request.Date).Date;
+        var targetDate = request.Date.Date;
 
         // Query with combined Any() to improve SQL translation and performance
         var metroTrains = await _trainRepository.GetAllWithCondition(
@@ -194,8 +194,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 StatusCodes.Status400BadRequest);
         }
 
+        if (train.LineId != request.LineId)
+        {
+            throw new AppException(ErrorCode.NotFound,
+            ResponseMessageTrain.TRAIN_MUST_BE_SAME_LINE,
+            StatusCodes.Status400BadRequest);
+        }
+
         // Prevent double-assignment of train to same slot/date
-        var targetDate = CoreHelper.UtcToSystemTime(request.Date).Date;
+        var targetDate = request.Date.Date;
         var alreadyAssigned = await _trainRepository.GetAllWithCondition(
             t => t.Id == request.TrainId &&
                  t.ShipmentItineraries.Any(si =>
@@ -216,17 +223,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // ensure direction of previous shift itineraries not same as request direction
         // coming soon ...
 
-        // Fetch all shipment itineraries for the line, slot, and date
+        // Fetch all shipment itineraries for the line, slot, date, direction, and train id null
         var shipmentItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
             si => si.Route.LineId == request.LineId &&
                   si.TimeSlotId == request.TimeSlotId &&
                   si.Date.HasValue &&
                   si.Date.Value.Date == targetDate &&
-                  si.Shipment.ReturnForShipmentId == null && // Only consider non-return shipments
+                  si.Route.Direction == request.Direction &&
+                  si.TrainId == null && // Only consider itineraries not yet assigned to a train
                   (si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff ||
                     si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment ||
-                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit ||
-                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.ToReturn)
+                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit )
                   )
             .ToListAsync();
 

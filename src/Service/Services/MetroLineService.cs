@@ -13,29 +13,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MetroShip.Repository.Infrastructure;
+using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Mapper;
 using MetroShip.Service.Validations;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Service.Services
 {
-    public class MetroLineService : IMetroLineService
+    public class MetroLineService(IServiceProvider serviceProvider) : IMetroLineService
     {
-        private readonly IMetroLineRepository _metroLineRepository;
-        private readonly ILogger _logger;
-        private readonly IMapperlyMapper _mapper;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IStationRepository _stationRepository;
-        private readonly IBaseRepository<Route> _routeRepository;
-
-        public MetroLineService(IServiceProvider serviceProvider)
-        {
-            _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
-            _logger = serviceProvider.GetRequiredService<ILogger>();
-            _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-            _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-            _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
-            _routeRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
-        }
+        private readonly IMetroLineRepository _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+        private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+        private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+        private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+        private readonly IBaseRepository<Route> _routeRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
+        private readonly IRegionRepository _regionRepository = serviceProvider.GetRequiredService<IRegionRepository>();
 
         public async Task<List<MetrolineResponse>> GetAllMetroLine()
         {
@@ -73,105 +66,244 @@ namespace MetroShip.Service.Services
         public async Task<int> CreateMetroLine(MetroLineCreateRequest request)
         {
             _logger.Information("Creating new MetroLine: {LineNameVi}", request.LineNameVi);
-            MetroLineValidator.ValidateMetroLineCreateRequest(request);
 
-            var metroLine = _mapper.MapToMetroLineEntity(request);
-
-            // Fetch existing stations
-            var stationIds = request.Stations.Select(st => st.Id).ToList();
-            var existingStations = await _stationRepository.GetAll()
-                .Where(s => stationIds.Contains(s.Id))
-                .ToListAsync();
-
-            var existingStationIds = existingStations.Select(s => s.Id).ToHashSet();
-
-            // Mark existing stations as multiline
-            foreach (var station in existingStations)
+            try
             {
-                if (!station.IsMultiLine)
+                MetroLineValidator.ValidateMetroLineCreateRequest(request);
+                _logger.Information("Validation passed");
+
+                // Check if transaction is available
+                await using var transaction = await _unitOfWork.BeginTransactionAsync();
+                _logger.Information("Transaction started");
+
+                try
                 {
-                    station.IsMultiLine = true;
-                    _stationRepository.Update(station);
+                    var stationRegionIds = request.Stations
+                        .Select(st => st.RegionId)
+                        .ToArray();
+
+                    // Get region codes in request
+                    var regionCodes = await _regionRepository.GetAll()
+                        .Where(s => s.Id == request.RegionCode 
+                        || stationRegionIds.Contains(s.Id))
+                        .Select(s => new { s.Id, s.RegionCode })
+                        .Distinct()
+                        .ToListAsync();
+
+                   
+                    var metroLine = _mapper.MapToMetroLineEntity(request);
+                    if (request.LineNumber >= 0)
+                    {
+                        metroLine.LineCode = MetroCodeGenerator.GenerateMetroLineCode(
+                            regionCodes.FirstOrDefault(_ => _.Id == metroLine.RegionId)?.RegionCode,
+                            request.LineNumber);
+                        _logger.Information("MetroLine entity mapped: {LineCode}", metroLine.LineCode);
+                    }
+                    
+                    // Handle existing stations (none in your case since all IDs are null)
+                    var existingStationIds = request.Stations
+                        .Where(st => !string.IsNullOrEmpty(st.Id))
+                        .Select(st => st.Id)
+                        .ToList();
+
+                    _logger.Information("Found {Count} existing stations", existingStationIds.Count);
+
+                    var existingStations = new List<Station>();
+                    if (existingStationIds.Any())
+                    {
+                        existingStations = await _stationRepository.GetAll()
+                            .Where(s => existingStationIds.Contains(s.Id))
+                            .Include(s => s.RoutesFrom)
+                            .ToListAsync();
+
+                        _logger.Information("Retrieved {Count} existing stations from database", 
+                            existingStations.Count);
+                        // Update IsMultiLine for existing stations
+                        foreach (var station in existingStations)
+                        {
+                            // check if fromRoutes has more than 2 lineId
+                            var lineIds = station.RoutesFrom.Select(r => r.LineId).Distinct().ToList();
+                            if (lineIds.Count > 1)
+                            {
+                                station.IsMultiLine = true;
+                                _stationRepository.Update(station);
+                                _logger.Information("Updated IsMultiLine for station: {StationNameVi}", 
+                                    station.StationNameVi);
+                            }
+                        }
+                    }
+
+                    // Create new stations (all stations in your case)
+                    var newStations = request.Stations
+                        .Where(st => string.IsNullOrEmpty(st.Id))
+                        .Select(st => {
+                            var station = _mapper.MapToStationEntity(st);
+                            station.IsMultiLine = false;
+                            return station;
+                        })
+                        .ToList();
+
+                    foreach (var station in newStations)
+                    {
+                        // Set region code for new stations
+                        var regionCode = regionCodes.FirstOrDefault(r => r.Id == station.RegionId)?.RegionCode;
+                        if (regionCode != null)
+                        {
+                            var order = request.Stations.FirstOrDefault(
+                                s => s.StationNameEn.Equals(station.StationNameEn));
+
+                            station.StationCode = MetroCodeGenerator.GenerateStationCode(
+                                        request.Stations.IndexOf(order) + 1,
+                                        request.LineNumber,
+                                        regionCode);
+                            _logger.Information("Generated station code: {StationCode}", station.StationCode);
+                        }
+                    }
+                    _logger.Information("Creating {Count} new stations", newStations.Count);
+
+                    // Add metro line first
+                    await _metroLineRepository.AddAsync(metroLine);
+                    _logger.Information("MetroLine added to context");
+
+                    // Add new stations
+                    if (newStations.Any())
+                    {
+                        await _stationRepository.AddRangeAsync(newStations);
+                        _logger.Information("Stations added to context");
+                    }
+
+                    // Save metroLine & station to get IDs
+                    var saveResult1 = await _unitOfWork.SaveChangeAsync();
+                    _logger.Information("First save completed with result: {Result}", saveResult1);
+
+                    // Create ordered station list same as request order
+                    var orderedStations = new List<Station>();
+                    var newStationIndex = 0;
+
+                    for (int i = 0; i < request.Stations.Count; i++)
+                    {
+                        var requestStation = request.Stations[i];
+
+                        if (!string.IsNullOrEmpty(requestStation.Id))
+                        {
+                            var existingStation = existingStations.FirstOrDefault(s => s.Id == requestStation.Id);
+                            if (existingStation != null)
+                            {
+                                orderedStations.Add(existingStation);
+                            }
+                        }
+                        else
+                        {
+                            if (newStationIndex < newStations.Count)
+                            {
+                                orderedStations.Add(newStations[newStationIndex]);
+                                newStationIndex++;
+                            }
+                        }
+                    }
+
+                    _logger.Information("Ordered stations count: {Count}", orderedStations.Count);
+
+                    // Find active station indices
+                    var activeIndices = request.Stations
+                        .Select((s, idx) => new { s, idx })
+                        .Where(x => x.s.IsActive.GetValueOrDefault())
+                        .Select(x => x.idx)
+                        .ToList();
+
+                    _logger.Information("Active station indices: [{Indices}]", string.Join(", ", activeIndices));
+
+                    // Validate active stations
+                    if (!activeIndices.Any() || activeIndices.First() != 0 || activeIndices.Last() != request.Stations.Count - 1)
+                    {
+                        throw new Exception("First and last station must be active.");
+                    }
+
+                    // Create routes
+                    var routes = new List<Route>();
+                    int legOrder = 1;
+
+                    for (int i = 0; i < activeIndices.Count - 1; i++)
+                    {
+                        int fromIdx = activeIndices[i];
+                        int toIdx = activeIndices[i + 1];
+
+                        // Calculate length
+                        double lengthKm = 0;
+                        for (int j = fromIdx; j < toIdx; j++)
+                        {
+                            lengthKm += (double)(request.Stations[j].ToNextStationKm ?? 0);
+                        }
+
+                        var fromStation = orderedStations[fromIdx];
+                        var toStation = orderedStations[toIdx];
+
+                        _logger.Information("Creating route from {From} to {To}, length: {Length}km",
+                            fromStation.StationNameVi, toStation.StationNameVi, lengthKm);
+
+                        // Forward route
+                        routes.Add(new Route
+                        {
+                            LineId = metroLine.Id,
+                            FromStationId = fromStation.Id,
+                            ToStationId = toStation.Id,
+                            LengthKm = (decimal)lengthKm,
+                            SeqOrder = legOrder,
+                            Direction = DirectionEnum.Forward,
+                            RouteNameVi = $"{fromStation.StationNameVi} – {toStation.StationNameVi}",
+                            RouteNameEn = $"{fromStation.StationNameEn} – {toStation.StationNameEn}",
+                            RouteCode = MetroCodeGenerator.GenerateRouteCode(
+                                metroLine.LineCode, fromStation.StationCode, toStation.StationCode),
+                        });
+
+                        // Reverse route
+                        routes.Add(new Route
+                        {
+                            LineId = metroLine.Id,
+                            FromStationId = toStation.Id,
+                            ToStationId = fromStation.Id,
+                            LengthKm = (decimal)lengthKm,
+                            SeqOrder = activeIndices.Count - legOrder, // Reverse order
+                            Direction = DirectionEnum.Backward,
+                            RouteNameVi = $"{toStation.StationNameVi} – {fromStation.StationNameVi}",
+                            RouteNameEn = $"{toStation.StationNameEn} – {fromStation.StationNameEn}",
+                            RouteCode = MetroCodeGenerator.GenerateRouteCode(
+                                metroLine.LineCode, toStation.StationCode, fromStation.StationCode)
+                        });
+
+                        legOrder++;
+                    }
+
+                    _logger.Information("Created {Count} routes", routes.Count);
+
+                    // Add routes
+                    if (routes.Any())
+                    {
+                        await _routeRepository.AddRangeAsync(routes);
+                        _logger.Information("Routes added to context");
+                    }
+
+                    // Final save
+                    var finalResult = await _unitOfWork.SaveChangeAsync();
+                    _logger.Information("Final save completed with result: {Result}", finalResult);
+
+                    await transaction.CommitAsync();
+                    _logger.Information("Transaction committed successfully");
+
+                    return finalResult;
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error(ex, "Error in transaction, rolling back");
+                    await transaction.RollbackAsync();
+                    throw;
                 }
             }
-
-            // Add new stations if not exist
-            var newStations = request.Stations
-                .Where(st => !existingStationIds.Contains(st.Id))
-                .Select(st => _mapper.MapToStationEntity(st))
-                .ToList();
-
-            foreach (var newStation in newStations)
+            catch (Exception ex)
             {
-                newStation.IsMultiLine = false; // or true if logic demands
-                await _stationRepository.AddAsync(newStation);
+                _logger.Error(ex, "Error creating MetroLine: {Message}", ex.Message);
+                throw;
             }
-
-            // Collect all station entities for route creation
-            var allStations = existingStations.Concat(newStations).ToList();
-
-            // Create metro line
-            await _metroLineRepository.AddAsync(metroLine);
-
-            // request.Stations is the ordered list with ToNextStationKm
-            var requestStations = request.Stations; // List<StationDTO>, ordered
-
-            // Find indices of all active stations in request
-            var activeIndices = requestStations
-                .Select((s, idx) => new { s, idx })
-                .Where(x => x.s.IsActive.Value)
-                .Select(x => x.idx)
-                .ToList();
-
-            // Validate: first and last station must be active
-            if (activeIndices.First() != 0 || activeIndices.Last() != requestStations.Count - 1)
-                throw new Exception("First and last station must be active.");
-
-            // Forward routes (direction=0)
-            int legOrder = 1;
-            for (int i = 0; i < activeIndices.Count - 1; i++)
-            {
-                int fromIdx = activeIndices[i];
-                int toIdx = activeIndices[i + 1];
-
-                // Sum ToNextStationKm for all stations between fromIdx (inclusive) and toIdx (exclusive)
-                double lengthKm = 0;
-                for (int j = fromIdx; j < toIdx; j++)
-                {
-                    lengthKm += (double)requestStations[j].ToNextStationKm;
-                }
-
-                var fromStation = requestStations[fromIdx];
-                var toStation = requestStations[toIdx];
-
-                // Create forward route (direction=0)
-                await _routeRepository.AddAsync(new Route
-                {
-                    LineId = metroLine.Id,
-                    FromStationId = fromStation.Id,
-                    ToStationId = toStation.Id,
-                    LengthKm = (decimal)lengthKm,
-                    SeqOrder = legOrder,
-                    Direction = Utility.Enums.DirectionEnum.Forward, // Assuming DirectionEnum has Forward
-                    // Names, etc.
-                });
-
-                // Create reverse route (direction=1)
-                await _routeRepository.AddAsync(new Route
-                {
-                    LineId = metroLine.Id,
-                    FromStationId = toStation.Id,
-                    ToStationId = fromStation.Id,
-                    LengthKm = (decimal)lengthKm,
-                    SeqOrder = legOrder,
-                    Direction = Utility.Enums.DirectionEnum.Backward, // Assuming DirectionEnum has Reverse
-                    // Names, etc.
-                });
-
-                legOrder++;
-            }
-
-            return await _unitOfWork.SaveChangeAsync();
         }
     }
 }

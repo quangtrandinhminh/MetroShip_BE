@@ -194,10 +194,10 @@ namespace MetroShip.Repository.Base
         public async Task AddRangeAsync(IEnumerable<T?> entities)
         {
             await DbSet.AddRangeAsync(entities);
-            foreach (var entity in entities)
+            /*foreach (var entity in entities)
             {
                 _context.Entry(entity).State = EntityState.Detached;
-            }
+            }*/
         }
 
         public void Update(T entity)
