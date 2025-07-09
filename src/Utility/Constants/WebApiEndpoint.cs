@@ -65,7 +65,7 @@
             public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
-            public const string GetLocation = BaseEndpoint + "/staff||cus/{trackingCode}/location";
+            public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
             public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
         }

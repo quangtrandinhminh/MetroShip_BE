@@ -1018,26 +1018,43 @@ public class ShipmentService : IShipmentService
         if (shipment == null)
             throw new ArgumentException($"Không tìm thấy shipment với mã tracking {trackingCode}");
 
-        var itinerary = await _shipmentRepository.GetItineraryByShipmentIdAsync(shipment.Id);
+        var itinerary = shipment.ShipmentItineraries
+            .Where(i => !i.IsCompleted)
+            .OrderBy(i => i.LegOrder)
+            .FirstOrDefault();
+
         var train = itinerary?.Train;
 
-        string currentStationId = itinerary?.Route?.ToStationId;
-        string currentStationName = itinerary?.Route?.ToStation?.StationNameVi;
+        var currentStationId = itinerary?.Route?.FromStationId;
+        var currentStationName = currentStationId != null
+            ? await _stationRepository.GetStationNameByIdAsync(currentStationId)
+            : null;
 
-        // Lấy tất cả ParcelTracking theo shipment
-        var parcelTrackings = shipment.Parcels
-            .SelectMany(p => p.ParcelTrackings.Select(pt => new ParcelTrackingDto
+        // Lấy tracking history từ tất cả parcels
+        var parcelTrackingDtos = new List<ParcelTrackingDto>();
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            foreach (var pt in parcel.ParcelTrackings)
             {
-                ParcelCode = p.ParcelCode,
-                Status = pt.Status,
-                StationId = pt.StationId,
-                StationName = pt.StationId != null ? pt.Parcel?.Shipment?.ShipmentItineraries
-                                    .Select(i => i.Route?.ToStation)
-                                    .FirstOrDefault(s => s.Id == pt.StationId)?.StationNameVi : null,
-                EventTime = pt.EventTime,
-                Note = pt.Note
-            }))
-            .OrderByDescending(pt => pt.EventTime)
+                var stationName = !string.IsNullOrEmpty(pt.StationId)
+                    ? await _stationRepository.GetStationNameByIdAsync(pt.StationId)
+                    : null;
+
+                parcelTrackingDtos.Add(new ParcelTrackingDto
+                {
+                    ParcelCode = parcel.ParcelCode,
+                    Status = pt.Status,
+                    StationId = pt.StationId,
+                    StationName = stationName,
+                    EventTime = pt.EventTime,
+                    Note = pt.Note
+                });
+            }
+        }
+
+        parcelTrackingDtos = parcelTrackingDtos
+            .OrderByDescending(x => x.EventTime)
             .ToList();
 
         return new ShipmentLocationResponse
@@ -1051,7 +1068,7 @@ public class ShipmentService : IShipmentService
             CurrentStationName = currentStationName,
             ShipmentStatus = shipment.ShipmentStatus.ToString(),
             EstimatedArrivalTime = itinerary?.Date,
-            ParcelTrackingHistory = parcelTrackings
+            ParcelTrackingHistory = parcelTrackingDtos
         };
     }
 
@@ -1062,24 +1079,27 @@ public class ShipmentService : IShipmentService
         if (shipment == null)
             throw new Exception($"Không tìm thấy shipment với mã {request.TrackingCode}");
 
-        // Lấy itinerary hiện tại (chưa hoàn tất leg)
-        var itinerary = shipment.ShipmentItineraries
-            .FirstOrDefault(i => !i.IsCompleted);
+        var itineraries = shipment.ShipmentItineraries
+            .OrderBy(i => i.LegOrder)
+            .ToList();
 
-        if (itinerary == null)
-            throw new Exception("Không tìm thấy lịch trình chưa hoàn tất cho shipment này.");
+        if (!itineraries.Any())
+            throw new Exception("Không có lịch trình hợp lệ cho shipment này.");
 
-        var train = itinerary.Train;
-        var destinationStationId = itinerary?.Route?.ToStationId;
-        var destinationStationName = itinerary?.Route?.ToStation?.StationNameVi ?? "Không rõ";
+        var finalLeg = itineraries.Last();
+
+        var train = finalLeg.Train;
+        var destinationStationId = finalLeg.Route?.ToStationId;
+        var destinationStationName = finalLeg.Route?.ToStation?.StationNameVi ?? "Không rõ";
         var currentStationName = await _shipmentRepository.GetStationNameByIdAsync(request.CurrentStationId);
 
         string message;
         string shipmentStatus;
 
-        // ✅ Điều kiện cần: current station == destination mới được completed
-        if (!string.IsNullOrEmpty(destinationStationId) &&
-            destinationStationId.Equals(request.CurrentStationId, StringComparison.OrdinalIgnoreCase))
+        bool isArrivedAtFinalDestination = !string.IsNullOrEmpty(destinationStationId)
+            && destinationStationId.Equals(request.CurrentStationId, StringComparison.OrdinalIgnoreCase);
+
+        if (isArrivedAtFinalDestination)
         {
             await _shipmentRepository.UpdateShipmentStatusAsync(shipment.Id, ShipmentStatusEnum.Completed);
 
@@ -1107,10 +1127,9 @@ public class ShipmentService : IShipmentService
             }
 
             message = $"✅ Đơn hàng đã đi qua trạm **{currentStationName}**, chưa đến trạm đích.";
-            shipmentStatus = ShipmentStatusEnum.InTransit.ToString(); // ✅ Forced
+            shipmentStatus = ShipmentStatusEnum.InTransit.ToString();
         }
 
-        // Build tracking history
         var parcelTrackingDtos = shipment.Parcels
             .SelectMany(p => p.ParcelTrackings.Select(pt => new ParcelTrackingDto
             {
@@ -1135,7 +1154,7 @@ public class ShipmentService : IShipmentService
             CurrentStationId = request.CurrentStationId,
             CurrentStationName = currentStationName,
             ShipmentStatus = shipmentStatus,
-            EstimatedArrivalTime = itinerary?.Date,
+            EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
