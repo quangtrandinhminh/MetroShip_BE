@@ -7,6 +7,7 @@ using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Services;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -149,8 +150,8 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> UpdateStatus([FromBody] UpdateShipmentStatusRequest request)
         {
             var staffId = User?.Identity?.Name ?? "unknown";
-            await shipmentService.UpdateShipmentStatusByStationAsync(request, staffId);
-            return Ok();
+            var result = await shipmentService.UpdateShipmentStatusByStationAsync(request, staffId);
+            return Ok(result);
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]

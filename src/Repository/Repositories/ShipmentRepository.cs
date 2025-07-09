@@ -417,12 +417,15 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     public async Task UpdateShipmentStatusAsync(string shipmentId, ShipmentStatusEnum status)
     {
         var shipment = await _context.Shipments.FirstOrDefaultAsync(s => s.Id == shipmentId);
-        if (shipment != null)
+
+        if (shipment == null)
         {
-            shipment.ShipmentStatus = status;
-            _context.Shipments.Update(shipment);
-            await _context.SaveChangesAsync();
+            throw new InvalidOperationException($"Không tìm thấy shipment với ID {shipmentId}");
         }
+
+        shipment.ShipmentStatus = status;
+        _context.Shipments.Update(shipment);
+        await _context.SaveChangesAsync();
     }
 
     public async Task AddParcelTrackingAsync(string parcelId, string status, string stationId, string updatedBy)
@@ -437,5 +440,12 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         };
         _context.ParcelTrackings.Add(tracking);
         await _context.SaveChangesAsync();
+    }
+    public async Task<string> GetStationNameByIdAsync(string stationId)
+    {
+        return await _context.Stations
+            .Where(s => s.Id == stationId)
+            .Select(s => s.StationNameVi)
+            .FirstOrDefaultAsync();
     }
 }
