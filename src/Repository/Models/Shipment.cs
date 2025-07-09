@@ -36,6 +36,9 @@ public partial class Shipment : BaseEntity
     [StringLength(50)]
     public string? ReturnForShipmentId { get; set; } // Nullable, if not return shipment
 
+    [StringLength(50)]
+    public string? CurrentStationId { get; set; }
+
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
