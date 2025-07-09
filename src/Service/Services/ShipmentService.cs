@@ -34,7 +34,6 @@ public class ShipmentService : IShipmentService
     private readonly ILogger _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IStationRepository _stationRepository;
-    private readonly ShipmentValidator _shipmentValidator;
     private readonly ISystemConfigRepository _systemConfigRepository;
     private readonly SystemConfigSetting _systemConfigSetting;
     private readonly IEmailService _emailSender;
@@ -141,7 +140,7 @@ public class ShipmentService : IShipmentService
 
         // validate shipment request, min 48h max 14 days in advance
         CheckShipmentDate(request.ScheduledDateTime);
-        _shipmentValidator.ValidateShipmentRequest(request);
+        ShipmentValidator.ValidateShipmentRequest(request);
 
         // get departure station, which accepts the shipment
         var departureStation = await _stationRepository.GetSingleAsync(
@@ -276,7 +275,7 @@ public class ShipmentService : IShipmentService
         _logger.Information("Get itinerary and total price with request: {@request}", request);
 
         // Validation
-        _shipmentValidator.ValidateTotalPriceCalcRequest(request);
+        ShipmentValidator.ValidateTotalPriceCalcRequest(request);
 
         // Get station options
         var stationIds = await GetNearUserStations(request);
@@ -424,7 +423,7 @@ public class ShipmentService : IShipmentService
     private Expression<Func<Shipment, bool>> BuildShipmentFilterExpression(ShipmentFilterRequest? request)
     {
         _logger.Information("Building filter expression for request: {@request}", request);
-        _shipmentValidator.ValidateShipmentFilterRequest(request);
+        ShipmentValidator.ValidateShipmentFilterRequest(request);
 
         // Start with base filter for non-deleted items
         Expression<Func<Shipment, bool>> expression = x => x.DeletedAt == null;

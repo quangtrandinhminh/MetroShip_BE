@@ -12,9 +12,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace MetroShip.Service.Validations;
 
-public class ShipmentValidator
+public static class ShipmentValidator
 {
-    private readonly IValidator<ShipmentRequest> _shipmentRequestValidator;
+    /*private readonly IValidator<ShipmentRequest> _shipmentRequestValidator;
     private readonly IValidator<ShipmentItineraryRequest> _itineraryRequestValidator;
     private readonly IValidator<ParcelRequest> _parcelRequestValidator;
     private readonly IValidator<TotalPriceCalcRequest> _totalPriceCalcRequestValidator;
@@ -26,10 +26,13 @@ public class ShipmentValidator
         _parcelRequestValidator = new ParcelRequestValidator();
         _totalPriceCalcRequestValidator = new TotalPriceCalcRequestValidator();
         _shipmentFilterRequestValidator = new ShipmentFilterRequestValidator();
-    }
+    }*/
 
-    public void ValidateShipmentRequest(ShipmentRequest request)
+    public static void ValidateShipmentRequest(ShipmentRequest request)
     {
+        var _shipmentRequestValidator = new ShipmentRequestValidator();
+        var _itineraryRequestValidator = new ShipmentItineraryRequestValidator();
+        var _parcelRequestValidator = new ParcelRequestValidator();
         _shipmentRequestValidator.ValidateApiModel(request);
 
         foreach (var parcel in request.Parcels)
@@ -43,18 +46,21 @@ public class ShipmentValidator
         }
     }
 
-    public void ValidateTotalPriceCalcRequest(TotalPriceCalcRequest request)
+    public static void ValidateTotalPriceCalcRequest(TotalPriceCalcRequest request)
     {
+        var _totalPriceCalcRequestValidator = new TotalPriceCalcRequestValidator();
         _totalPriceCalcRequestValidator.ValidateApiModel(request);
 
+        var _parcelRequestValidator = new ParcelRequestValidator();
         foreach (var parcel in request.Parcels)
         {
             _parcelRequestValidator.ValidateApiModel(parcel);
         }
     }
 
-    public void ValidateShipmentFilterRequest(ShipmentFilterRequest request)
+    public static void ValidateShipmentFilterRequest(ShipmentFilterRequest request)
     {
+        var _shipmentFilterRequestValidator = new ShipmentFilterRequestValidator();
         _shipmentFilterRequestValidator.ValidateApiModel(request);
     }
 }
