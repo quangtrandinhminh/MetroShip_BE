@@ -1106,13 +1106,20 @@ public class ShipmentService : IShipmentService
         string message;
         string shipmentStatus;
 
-        // ✅ Check nếu đã tới trạm đích của leg cuối cùng
         bool isArrivedAtFinalDestination = !string.IsNullOrEmpty(destinationStationId)
             && destinationStationId.Equals(currentStationId, StringComparison.OrdinalIgnoreCase);
 
         if (isArrivedAtFinalDestination)
         {
+            // ✅ Đánh dấu shipment hoàn tất
             shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+
+            // ✅ Đánh dấu tất cả itinerary cũng hoàn tất
+            foreach (var itinerary in shipment.ShipmentItineraries)
+            {
+                itinerary.IsCompleted = true;
+            }
+
             message = $"🎯 Đơn hàng đã được giao thành công tại trạm **{destinationStationName}**.";
             shipmentStatus = ShipmentStatusEnum.Completed.ToString();
 
@@ -1141,11 +1148,13 @@ public class ShipmentService : IShipmentService
             }
         }
 
-        // ✅ Cập nhật station hiện tại vào shipment
+        // ✅ Ghi lại station hiện tại
         shipment.CurrentStationId = currentStationId;
-        await _shipmentRepository.UpdateShipmentAsync(shipment);
 
-        // Lấy history
+        // ✅ Lưu toàn bộ thay đổi
+        _shipmentRepository.Update(shipment);
+
+        // Tạo tracking history
         var parcelTrackingDtos = shipment.Parcels
             .SelectMany(p => p.ParcelTrackings.Select(pt => new ParcelTrackingDto
             {
