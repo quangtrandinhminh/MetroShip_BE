@@ -22,6 +22,10 @@ namespace MetroShip.Service.ApiModels.Shipment
 
         public string CurrentStationName { get; set; }
 
+        public string DestinationStationId { get; set; }
+
+        public string DestinationStationName { get; set; }
+
         public string ShipmentStatus { get; set; }
 
         public DateTimeOffset? EstimatedArrivalTime { get; set; }
