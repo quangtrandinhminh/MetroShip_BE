@@ -123,7 +123,8 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")
                               ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION")));
-
+        // Đảm bảo đặt trước dòng AddSignalR
+        services.AddSignalR();
         // Add Identity
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()

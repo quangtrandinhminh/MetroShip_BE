@@ -5,6 +5,7 @@ using MetroShip.WebAPI.Extensions;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
+using MetroShip.WebAPI.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,10 +51,10 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 }
-
+app.UseCors("SignalR");
 // Configure middleware
 app.UseSwaggerDocumentation(appName, "v1");
 app.UseApplicationMiddleware();
-
+app.MapHub<TrackingHub>("/trackingHub");
 app.MapControllers();
 app.Run();
