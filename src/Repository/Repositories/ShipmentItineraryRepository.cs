@@ -57,4 +57,34 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
 
         return (routes, stations, metroLines);
     }
+
+    public async Task<List<ShipmentItinerary>> AssignTrainIdToEmptyLegsAsync(string shipmentTrackingCode, string trainId)
+    {
+        // Lấy shipment và các leg chưa có train
+        var shipment = await _context.Shipments
+            .Include(s => s.ShipmentItineraries.Where(it => string.IsNullOrEmpty(it.TrainId)))
+            .FirstOrDefaultAsync(s => s.TrackingCode == shipmentTrackingCode);
+
+        if (shipment == null)
+            throw new Exception($"Shipment with tracking code '{shipmentTrackingCode}' not found.");
+
+        if (!shipment.ShipmentItineraries.Any())
+            return new List<ShipmentItinerary>(); // Không có leg để cập nhật
+
+        // Gán trainId
+        foreach (var itinerary in shipment.ShipmentItineraries)
+        {
+            itinerary.TrainId = trainId;
+        }
+
+        await _context.SaveChangesAsync();
+
+        // Lấy lại toàn bộ leg để trả ra (kèm TrainCode)
+        var updatedItineraries = await _context.ShipmentItineraries
+            .Where(it => it.ShipmentId == shipment.Id)
+            .Include(it => it.Train)
+            .ToListAsync();
+
+        return updatedItineraries;
+    }
 }

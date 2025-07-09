@@ -1075,4 +1075,20 @@ public class ShipmentService : IShipmentService
 
         return true;
     }
+
+    public async Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId)
+    {
+        var updatedItineraries = await _shipmentItineraryRepository.AssignTrainIdToEmptyLegsAsync(trackingCode, trainId);
+
+        return updatedItineraries.Select(it => new ShipmentItineraryResponseDto
+        {
+            LegOrder = it.LegOrder,
+            RouteId = it.RouteId,
+            TrainId = it.TrainId,
+            TrainCode = it.Train?.TrainCode,
+            Date = it.Date,
+            TimeSlotId = it.TimeSlotId,
+            IsCompleted = it.IsCompleted
+        }).ToList();
+    }
 }

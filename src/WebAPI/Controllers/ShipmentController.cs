@@ -26,7 +26,7 @@ namespace MetroShip.WebAPI.Controllers
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
         public async Task<IActionResult> Get(
-            [FromQuery] PaginatedListRequest request, 
+            [FromQuery] PaginatedListRequest request,
             [FromQuery] ShipmentFilterRequest filterRequest,
             [FromQuery] OrderByRequest orderByRequest
             )
@@ -57,7 +57,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> Create([FromBody] ShipmentRequest request)
         {
             var shipmentId = await shipmentService.BookShipment(request);
-            return Created(nameof(Create), 
+            return Created(nameof(Create),
                 BaseResponse.OkResponseDto(shipmentId));
         }
 
@@ -151,6 +151,14 @@ namespace MetroShip.WebAPI.Controllers
             var staffId = User?.Identity?.Name ?? "unknown";
             await shipmentService.UpdateShipmentStatusByStationAsync(request, staffId);
             return Ok();
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.AssignTrainToShipment)]
+        public async Task<IActionResult> AssignTrainToShipment(string trackingCode, string trainId)
+        {
+            var result = await shipmentService.AssignTrainToShipmentAsync(trackingCode, trainId);
+            return Ok(BaseResponse.OkResponseDto(result));
         }
     }
 }
