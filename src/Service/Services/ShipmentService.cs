@@ -20,14 +20,7 @@ using MetroShip.Service.Validations;
 using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
-using MetroShip.Service.ApiModels.Graph;
-using MetroShip.Service.ApiModels.Parcel;
-using System;
-using MetroShip.Repository.Repositories;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using MetroShip.Service.ApiModels.MetroTimeSlot;
-using System.Linq;
 
 namespace MetroShip.Service.Services;
 
@@ -41,7 +34,6 @@ public class ShipmentService : IShipmentService
     private readonly ILogger _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IStationRepository _stationRepository;
-    private readonly ShipmentValidator _shipmentValidator;
     private readonly ISystemConfigRepository _systemConfigRepository;
     private readonly SystemConfigSetting _systemConfigSetting;
     private readonly IEmailService _emailSender;
@@ -51,7 +43,6 @@ public class ShipmentService : IShipmentService
     private MetroGraph _metroGraph;
     private bool _isInitializedPricingTable = false;
     private PricingTable _pricingTable;
-    public readonly IParcelRepository _parcelRepository;
 
     public ShipmentService(
         IServiceProvider serviceProvider,
@@ -63,8 +54,7 @@ public class ShipmentService : IShipmentService
         IEmailService emailSender,
         IParcelCategoryRepository parcelCategoryRepository,
         IBaseRepository<MetroTimeSlot> metroTimeSlotRepository,
-        IUserRepository userRepository,
-        IParcelRepository parcelRepository)
+        IUserRepository userRepository)
     {
         _unitOfWork = unitOfWork;
         _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
@@ -72,14 +62,13 @@ public class ShipmentService : IShipmentService
         _shipmentItineraryRepository = shipmentItineraryRepository;
         _logger = serviceProvider.GetRequiredService<ILogger>();
         _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-        _shipmentValidator = new ShipmentValidator();
+
         _stationRepository = stationRepository;
         _systemConfigRepository = systemConfigRepository;
         _emailSender = emailSender;
         _userRepository = userRepository;
         _parcelCategoryRepository = parcelCategoryRepository;
         _metroTimeSlotRepository = metroTimeSlotRepository;
-        _parcelRepository = parcelRepository;
     }
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
@@ -151,7 +140,7 @@ public class ShipmentService : IShipmentService
 
         // validate shipment request, min 48h max 14 days in advance
         CheckShipmentDate(request.ScheduledDateTime);
-        _shipmentValidator.ValidateShipmentRequest(request);
+        ShipmentValidator.ValidateShipmentRequest(request);
 
         // get departure station, which accepts the shipment
         var departureStation = await _stationRepository.GetSingleAsync(
@@ -286,7 +275,7 @@ public class ShipmentService : IShipmentService
         _logger.Information("Get itinerary and total price with request: {@request}", request);
 
         // Validation
-        _shipmentValidator.ValidateTotalPriceCalcRequest(request);
+        ShipmentValidator.ValidateTotalPriceCalcRequest(request);
 
         // Get station options
         var stationIds = await GetNearUserStations(request);
@@ -434,7 +423,7 @@ public class ShipmentService : IShipmentService
     private Expression<Func<Shipment, bool>> BuildShipmentFilterExpression(ShipmentFilterRequest? request)
     {
         _logger.Information("Building filter expression for request: {@request}", request);
-        _shipmentValidator.ValidateShipmentFilterRequest(request);
+        ShipmentValidator.ValidateShipmentFilterRequest(request);
 
         // Start with base filter for non-deleted items
         Expression<Func<Shipment, bool>> expression = x => x.DeletedAt == null;
@@ -668,7 +657,8 @@ public class ShipmentService : IShipmentService
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
-            CalculateParcelPricing(pathResponse.Parcels, pathResponse, priceCalculationService, categories);
+            ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, priceCalculationService, categories);
 
             return new
             {
@@ -676,67 +666,6 @@ public class ShipmentService : IShipmentService
                 Response = pathResponse
             };
         }).ToList<dynamic>();
-    }
-
-    private void CalculateParcelPricing(
-        List<ParcelRequest> parcels,
-        BestPathGraphResponse pathResponse,
-        PriceCalculationService priceCalculationService,
-        List<ParcelCategory> categories)
-    {
-        foreach (var parcel in parcels)
-        {
-            // Calculate chargeable weight
-            var chargeableWeight = CalculateHelper.CalculateChargeableWeight(
-                parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
-
-            parcel.ChargeableWeight = chargeableWeight;
-            parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
-
-            // Calculate shipping fee
-            parcel.ShippingFeeVnd = priceCalculationService.
-                CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);
-            parcel.PriceVnd += parcel.ShippingFeeVnd;
-
-            // Calculate insurance if required
-            CalculateInsurance(parcel, categories);
-        }
-    }
-
-    private void CalculateInsurance(ParcelRequest parcel, List<ParcelCategory> categories)
-    {
-        var category = categories.FirstOrDefault(c => c.Id == parcel.ParcelCategoryId);
-        if (category.IsInsuranceRequired && !parcel.ValueVnd.HasValue)
-        {
-            throw new AppException(
-                ErrorCode.BadRequest,
-                $"Category '{category.CategoryName}' has required insurance " +
-                $"and requires ValueVnd of the parcel for insurance calculation.",
-                StatusCodes.Status400BadRequest);
-        }
-
-        // Calculate insurance fee if any insurance configuration exists
-        if (category.InsuranceRate != null || category.InsuranceFeeVnd != null)
-        {
-            parcel.InsuranceFeeVnd = CalculateInsuranceFee(parcel, category);
-
-            // Add to price only if insurance is required
-            if (category.IsInsuranceRequired)
-            {
-                parcel.PriceVnd += parcel.InsuranceFeeVnd;
-                parcel.IsInsuranceIncluded = true;
-            }
-        }
-    }
-
-    private decimal? CalculateInsuranceFee(ParcelRequest parcel, ParcelCategory category)
-    {
-        if (category.InsuranceRate != null)
-        {
-            return parcel.ValueVnd * category.InsuranceRate;
-        }
-
-        return category.InsuranceFeeVnd;
     }
 
     private TotalPriceResponse BuildTotalPriceResponse(List<dynamic> bestPathResponses, List<string> stationIdList)
@@ -818,7 +747,7 @@ public class ShipmentService : IShipmentService
         return _mapperlyMapper.MapToAvailableTimeSlotResponseList(mappedSlots);
     }*/
 
-    public record CalculatedItinerary
+    private record CalculatedItinerary
     {
         public DateTimeOffset? Date { get; init; } = null;
         public string TimeSlotId { get; init; } = string.Empty;

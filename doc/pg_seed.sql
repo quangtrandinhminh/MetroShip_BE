@@ -534,6 +534,415 @@ VALUES
  'Từ Dũ – Cộng Hòa','Tu Du – Cong Hoa',1,10,1,0.47,
  NULL,NULL,NULL,'2025-06-11 08:40:31+00:00','2025-06-11 08:40:31+00:00',NULL);*/
 
+-- Metro Line 4 Forward Routes (2 Direction) - old
+/*INSERT INTO public."Routes"
+("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
+ "SeqOrder","TravelTimeMin","LengthKm",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+VALUES
+-- L4-01-02: Thanh Xuan to Giao Khau
+('1a2b3c4d-5e6f-7890-abcd-ef1234567890','L4-01-02','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7','b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6',
+ 'Thạnh Xuân – Giao Khẩu','Thanh Xuan – Giao Khau',0,1,2,0.73,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-02-03: Giao Khau to Nga 4 Ga
+('2b3c4d5e-6f70-8901-bcde-f2345678901a','L4-02-03','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7',
+ 'Giao Khẩu – Ngã 4 Ga','Giao Khau – Nga 4 Ga',0,2,1,0.35,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-03-04: Nga 4 Ga to An Loc
+('3c4d5e6f-7081-9012-cdef-345678901abc','L4-03-04','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8',
+ 'Ngã 4 Ga – An Lộc','Nga 4 Ga – An Loc',0,3,1,0.40,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-04-05: An Loc to An Nhon
+('4d5e6f70-8192-a123-def0-456789012bcd','L4-04-05','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9',
+ 'An Lộc – An Nhơn','An Loc – An Nhon',0,4,2,1.18,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-05-06: An Nhon to Lam Son
+('5e6f7081-92a3-b234-ef01-56789012cdef','L4-05-06','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8',
+ 'An Nhơn – Lam Sơn','An Nhon – Lam Son',0,5,2,0.95,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-06-07: Lam Son to Nga 6 Go Vap
+('6f708192-a3b4-c345-f012-6789012def01','L4-06-07','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7',
+ 'Lam Sơn – Ngã 6 Gò Vấp','Lam Son – Nga 6 Go Vap',0,6,2,1.25,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-07-08: Nga 6 Go Vap to Benh Vien 175
+('708192a3-b4c5-d456-0123-789012ef0123','L4-07-08','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6',
+ 'Ngã 6 Gò Vấp – Bệnh Viện 175','Nga 6 Go Vap – Hospital 175',0,7,2,0.87,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-08-09: Benh Vien 175 to Cong Vien Gia Dinh
+('8192a3b4-c5d6-e567-1234-89012f012345','L4-08-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
+ 'Bệnh Viện 175 – Công Viên Gia Định','Hospital 175 – Gia Dinh Park',0,8,1,0.68,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-09-10: Cong Vien Gia Dinh to Nga 4 Phu Nhuan
+('92a3b4c5-d6e7-f678-2345-9012f0123456','L4-09-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4',
+ 'Công Viên Gia Định – Ngã 4 Phú Nhuận','Gia Dinh Park – Nga 4 Phu Nhuan',0,9,2,1.45,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-10-11: Nga 4 Phu Nhuan to Cau Kieu
+('a3b4c5d6-e7f8-a789-3456-012f01234567','L4-10-11','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3',
+ 'Ngã 4 Phú Nhuận – Cầu Kiệu','Nga 4 Phu Nhuan – Cau Kieu',0,10,2,0.92,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-11-12: Cau Kieu to Cong Vien Le Van Tam
+('b4c5d6e7-f8a9-b890-4567-123f012345678','L4-11-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2',
+ 'Cầu Kiệu – Công Viên Lê Văn Tám','Cau Kieu – Le Van Tam Park',0,11,2,0.85,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-12-13: Cong Vien Le Van Tam to Ho Con Rua (interchange with L3B)
+('c5d6e7f8-a9b0-c901-5678-234f0123456789','L4-12-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
+ 'Công Viên Lê Văn Tám – Hồ Con Rùa','Le Van Tam Park – Ho Con Rua',0,12,2,0.95,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-13-14: Ho Con Rua to Ben Thanh (interchange with HCMC-L1, L2, L3A)
+('d6e7f8a9-b0c1-d012-6789-345f01234567890','L4-13-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
+ 'Hồ Con Rùa – Bến Thành','Ho Con Rua – Ben Thanh',0,13,1,0.68,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-14-15: Ben Thanh to Hoang Dieu
+('e7f8a9b0-c1d2-e123-789a-456f012345678901','L4-14-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
+ 'Bến Thành – Hoàng Diệu','Ben Thanh – Hoang Dieu',0,14,2,0.83,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-15-16: Hoang Dieu to Ton Dan
+('f8a9b0c1-d2e3-f234-89ab-567f0123456789012','L4-15-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2',
+ 'Hoàng Diệu – Tôn Đản','Hoang Dieu – Ton Dan',0,15,1,0.72,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-16-17: Ton Dan to Nguyen Thi Thap
+('a9b0c1d2-e3f4-a345-9abc-678f01234567890123','L4-16-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3',
+ 'Tôn Đản – Nguyễn Thị Thập','Ton Dan – Nguyen Thi Thap',0,16,2,1.38,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-17-18: Nguyen Thi Thap to Nguyen Van Linh
+('b0c1d2e3-f4a5-b456-abcd-789f012345678901234','L4-17-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','572e6743-c3de-4374-a70f-52ae566c64b2',
+ 'Nguyễn Thị Thập – Nguyễn Văn Linh','Nguyen Thi Thap – Nguyen Van Linh',0,17,2,1.25,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-18-19: Nguyen Van Linh to Phuoc Kieng
+('c1d2e3f4-a5b6-c567-bcde-89af0123456789012345','L4-18-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ '572e6743-c3de-4374-a70f-52ae566c64b2','e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5',
+ 'Nguyễn Văn Linh – Phước Kiểng','Nguyen Van Linh – Phuoc Kieng',0,18,2,1.42,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-19-20: Phuoc Kieng to Vinh Phuoc
+('d2e3f4a5-b6c7-d678-cdef-9abf01234567890123456','L4-19-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4',
+ 'Phước Kiểng – Vĩnh Phước','Phuoc Kieng – Vinh Phuoc',0,19,2,0.98,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-20-21: Vinh Phuoc to Pham Huu Lau
+('e3f4a5b6-c7d8-e789-def0-abcf012345678901234567','L4-20-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3',
+ 'Vĩnh Phước – Phạm Hữu Lầu','Vinh Phuoc – Pham Huu Lau',0,20,2,1.68,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-21-22: Pham Huu Lau to Kho B
+('f4a5b6c7-d8e9-f890-ef01-bcdf0123456789012345678','L4-21-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6',
+ 'Phạm Hữu Lầu – Kho B','Pham Huu Lau – Kho B',0,21,2,1.25,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-22-23: Kho B to Long Kieng
+('a5b6c7d8-e9f0-a901-f012-cdef01234567890123456789','L4-22-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5',
+ 'Kho B – Long Kiểng','Kho B – Long Kieng',0,22,2,1.15,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-23-24: Long Kieng to Ba Chiem
+('b6c7d8e9-f0a1-b012-0123-def0123456789012345678a','L4-23-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4',
+ 'Long Kiểng – Bà Chiêm','Long Kieng – Ba Chiem',0,23,2,1.32,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-24-25: Ba Chiem to Long Thoi
+('c7d8e9f0-a1b2-c123-1234-ef012345678901234567890ab','L4-24-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3',
+ 'Bà Chiêm – Long Thới','Ba Chiem – Long Thoi',0,24,2,0.95,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-25-26: Long Thoi to Rach Doi
+('d8e9f0a1-b2c3-d234-2345-f01234567890123456789abc','L4-25-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2',
+ 'Long Thới – Rạch Dơi','Long Thoi – Rach Doi',0,25,2,0.92,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-26-27: Rach Doi to Hiep Phuoc
+('e9f0a1b2-c3d4-e345-3456-0123456789012345678abcd','L4-26-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1',
+ 'Rạch Dơi – Hiệp Phước','Rach Doi – Hiep Phuoc',0,26,2,1.18,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-27-28: Hiep Phuoc to Cong Vien The Thao
+('f0a1b2c3-d4e5-f456-4567-123456789012345678bcde','L4-27-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8',
+ 'Hiệp Phước – Công Viên Thể Thao','Hiep Phuoc – Sports Park',0,27,2,1.05,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-28-29: Cong Vien The Thao to Benh Vien Quoc Te
+('a1b2c3d4-e5f6-a567-5678-23456789012345678cdef','L4-28-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7',
+ 'Công Viên Thể Thao – Bệnh Viện Quốc Tế','Sports Park – International Hospital',0,28,2,0.88,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-29-30: Benh Vien Quoc Te to Thi Tran Hiep Phuoc
+('b2c3d4e5-f6a7-b678-6789-3456789012345678def0','L4-29-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6',
+ 'Bệnh Viện Quốc Tế – Thị Trấn Hiệp Phước','International Hospital – Hiep Phuoc Town',0,29,2,0.93,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-30-31: Thi Tran Hiep Phuoc to Cong Vien Cay Xanh
+('c3d4e5f6-a7b8-c789-789a-456789012345678ef01','L4-30-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5',
+ 'Thị Trấn Hiệp Phước – Công Viên Cây Xanh','Hiep Phuoc Town – Green Park',0,30,2,0.89,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-31-32: Cong Vien Cay Xanh to Ben Tau Hiep Phuoc
+('d4e5f6a7-b8c9-d890-89ab-56789012345678f012','L4-31-32','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4',
+ 'Công Viên Cây Xanh – Bến Tàu Hiệp Phước','Green Park – Ben Tau Hiep Phuoc',0,31,2,1.15,
+ NULL,NULL,NULL,NOW(),NOW(),
+ NULL),
+
+-- L4-32-31: Ben Tau Hiep Phuoc to Cong Vien Cay Xanh
+('11f6d2e9-b4a9-4c11-f6d2-e9b4a9c11f6d','L4-32-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4','e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5',
+    'Bến Tàu Hiệp Phước – Công Viên Cây Xanh','Ben Tau Hiep Phuoc – Green Park',1,1,2,1.15,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-31-30: Cong Vien Cay Xanh to Thi Tran Hiep Phuoc
+('22e7c3d8-a59f-4822-e7c3-d8a59f8b22e7','L4-31-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6',
+    'Công Viên Cây Xanh – Thị Trấn Hiệp Phước','Green Park – Hiep Phuoc Town',1,2,2,0.89,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-30-29: Thi Tran Hiep Phuoc to Benh Vien Quoc Te
+('33d8b4c9-f68e-4933-d8b4-c9f68e9a33d8','L4-30-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'd8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7',
+    'Thị Trấn Hiệp Phước – Bệnh Viện Quốc Tế','Hiep Phuoc Town – International Hospital',1,3,2,0.93,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-29-28: Benh Vien Quoc Te to Cong Vien The Thao
+('44c1a5b8-e79d-4444-c1a5-b8e79d8f44c1','L4-29-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8',
+    'Bệnh Viện Quốc Tế – Công Viên Thể Thao','International Hospital – Sports Park',1,4,2,0.88,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-28-27: Cong Vien The Thao to Hiep Phuoc
+('55b2f6a9-d88c-4555-b2f6-a9d88c7e55b2','L4-28-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1',
+    'Công Viên Thể Thao – Hiệp Phước','Sports Park – Hiep Phuoc',1,5,2,1.05,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-27-26: Hiep Phuoc to Rach Doi
+('66a3e7f8-c19b-4666-a3e7-f8c19b6d66a3','L4-27-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2',
+    'Hiệp Phước – Rạch Dơi','Hiep Phuoc – Rach Doi',1,6,2,1.18,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-26-25: Rach Doi to Long Thoi
+('77f4d8e9-b28a-4777-f4d8-e9b28a9c77f4','L4-26-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3',
+    'Rạch Dơi – Long Thới','Rach Doi – Long Thoi',1,7,2,0.92,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-25-24: Long Thoi to Ba Chiem
+('88e5c1d8-a39f-4888-e5c1-d8a39f8b88e5','L4-25-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4',
+    'Long Thới – Bà Chiêm','Long Thoi – Ba Chiem',1,8,2,0.95,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-24-23: Ba Chiem to Long Kieng
+('99d6b2c9-f48e-4999-d6b2-c9f48e9a99d6','L4-24-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'd6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5',
+    'Bà Chiêm – Long Kiểng','Ba Chiem – Long Kieng',1,9,2,1.32,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-23-22: Long Kieng to Kho B
+('aac7a3b8-e59d-4aaa-c7a3-b8e59d8faac7','L4-23-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6',
+    'Long Kiểng – Kho B','Long Kieng – Kho B',1,10,2,1.15,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-22-21: Kho B to Pham Huu Lau
+('bbb8f4a9-d68c-4bbb-b8f4-a9d68c9ebbb8','L4-22-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3',
+    'Kho B – Phạm Hữu Lầu','Kho B – Pham Huu Lau',1,11,2,1.25,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-21-20: Pham Huu Lau to Vinh Phuoc
+('cca9e5f8-c39b-4ccc-a9e5-f8c39b7dcca9','L4-21-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4',
+    'Phạm Hữu Lầu – Vĩnh Phước','Pham Huu Lau – Vinh Phuoc',1,12,2,1.68,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-20-19: Vinh Phuoc to Phuoc Kieng
+('ddf8d6e9-b48a-4ddd-f8d6-e9b48a9cddf8','L4-20-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5',
+    'Vĩnh Phước – Phước Kiểng','Vinh Phuoc – Phuoc Kieng',1,13,2,0.98,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-19-18: Phuoc Kieng to Nguyen Van Linh
+('eee9c7d8-a59f-4eee-e9c7-d8a59f8beee9','L4-19-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','572e6743-c3de-4374-a70f-52ae566c64b2',
+    'Phước Kiểng – Nguyễn Văn Linh','Phuoc Kieng – Nguyen Van Linh',1,14,2,1.42,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-18-17: Nguyen Van Linh to Nguyen Thi Thap
+('fffd8b6c-9f48-4fff-d8b6-c9f48e9afffd','L4-18-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    '572e6743-c3de-4374-a70f-52ae566c64b2','c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3',
+    'Nguyễn Văn Linh – Nguyễn Thị Thập','Nguyen Van Linh – Nguyen Thi Thap',1,15,2,1.25,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-17-16: Nguyen Thi Thap to Ton Dan
+('111c7a5b-8e39-4111-c7a5-b8e39d8f111c','L4-17-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2',
+    'Nguyễn Thị Thập – Tôn Đản','Nguyen Thi Thap – Ton Dan',1,16,2,1.38,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-16-15: Ton Dan to Hoang Dieu
+('222b6f4a-9d28-4222-b6f4-a9d28c7e222b','L4-16-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
+    'Tôn Đản – Hoàng Diệu','Ton Dan – Hoang Dieu',1,17,1,0.72,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-15-14: Hoang Dieu to Ben Thanh
+('333a5e3f-8c19-4333-a5e3-f8c19b6d333a','L4-15-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
+    'Hoàng Diệu – Bến Thành','Hoang Dieu – Ben Thanh',1,18,2,0.83,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-14-13: Ben Thanh to Ho Con Rua
+('4445e9f3-c278-4444-5e9f-3c278d6b4445','L4-14-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
+    'Bến Thành – Hồ Con Rùa','Ben Thanh – Ho Con Rua',1,19,1,0.68,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-13-12: Ho Con Rua to Cong Vien Le Van Tam
+('555c3f6a-9e88-4555-c3f6-a9e88d4b555c','L4-13-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2',
+    'Hồ Con Rùa – Công Viên Lê Văn Tám','Ho Con Rua – Le Van Tam Park',1,20,2,0.95,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-12-11: Cong Vien Le Van Tam to Cau Kieu
+('666f6d4e-9b28-4666-f6d4-e9b28a9c666f','L4-12-11','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3',
+    'Công Viên Lê Văn Tám – Cầu Kiệu','Le Van Tam Park – Cau Kieu',1,21,2,0.85,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-11-10: Cau Kieu to Nga 4 Phu Nhuan
+('777e7c5d-8a39-4777-e7c5-d8a39f8b777e','L4-11-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4',
+    'Cầu Kiệu – Ngã 4 Phú Nhuận','Cau Kieu – Nga 4 Phu Nhuan',1,22,2,0.92,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-10-09: Nga 4 Phu Nhuan to Cong Vien Gia Dinh
+('888d8b6c-9f48-4888-d8b6-c9f48e9a888d','L4-10-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
+    'Ngã 4 Phú Nhuận – Công Viên Gia Định','Nga 4 Phu Nhuan – Gia Dinh Park',1,23,2,1.45,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-09-08: Cong Vien Gia Dinh to Benh Vien 175
+('999c9a7b-8e59-4999-c9a7-b8e59d8f999c','L4-09-08','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6',
+    'Công Viên Gia Định – Bệnh Viện 175','Gia Dinh Park – Hospital 175',1,24,1,0.68,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-08-07: Benh Vien 175 to Nga 6 Go Vap
+('aaab8f6a-9d68-4aaa-b8f6-a9d68c9eaaab','L4-08-07','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7',
+    'Bệnh Viện 175 – Ngã 6 Gò Vấp','Hospital 175 – Nga 6 Go Vap',1,25,2,0.87,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-07-06: Nga 6 Go Vap to Lam Son
+('bbba9e7f-8c79-4bbb-a9e7-f8c79b8dbbba','L4-07-06','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8',
+    'Ngã 6 Gò Vấp – Lam Sơn','Nga 6 Go Vap – Lam Son',1,26,2,1.25,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-06-05: Lam Son to An Nhon
+('cccf8d8e-9b88-4ccc-f8d8-e9b88a9ccccf','L4-06-05','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9',
+    'Lam Sơn – An Nhơn','Lam Son – An Nhon',1,27,2,0.95,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-05-04: An Nhon to An Loc
+('ddde7c9d-8a99-4ddd-e7c9-d8a99f8bddde','L4-05-04','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8',
+    'An Nhơn – An Lộc','An Nhon – An Loc',1,28,2,1.18,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-04-03: An Loc to Nga 4 Ga
+('eeed6b8c-7f88-4eee-d6b8-c7f88e9aeeee','L4-04-03','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'd6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7',
+    'An Lộc – Ngã 4 Ga','An Loc – Nga 4 Ga',1,29,1,0.40,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-03-02: Nga 4 Ga to Giao Khau
+('fffc5a9b-6e77-4fff-c5a9-b6e77d8fffff','L4-03-02','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6',
+    'Ngã 4 Ga – Giao Khẩu','Nga 4 Ga – Giao Khau',1,30,1,0.35,
+    NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-02-01: Giao Khau to Thanh Xuan
+('000b4f8a-5d66-4000-b4f8-a5d66c9e0000','L4-02-01','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+    'b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7',
+    'Giao Khẩu – Thạnh Xuân','Giao Khau – Thanh Xuan',1,31,2,0.73,
+    NULL,NULL,NULL,NOW(),NOW(),NULL);*/
+
 -- Regions
 INSERT INTO public."Regions"
 ("Id", "RegionCode", "RegionName", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
@@ -1295,13 +1704,13 @@ VALUES
 -- Metro Line 4: Thanh Xuan – Ben Tau Hiep Phuoc
 -- Generated on: 2025-06-11 08:58:39 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/metro-line-4
-/*INSERT INTO public."MetroLines"
+INSERT INTO public."MetroLines"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
  "LineOwner",
  /*"CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
  "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
  "DwellTimeMin",
- "ColorHex","TopSpeedKmH","TopSpeedUdgKmH","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+ "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
     (
         'f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',  -- Line 4 ID
@@ -1315,8 +1724,8 @@ VALUES
         5000,8,12,42,*/
         30,
         '#FF5722',  -- Deep Orange color for Line 4
-        100,80,TRUE,
-        NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL
+        /*100,80,*/TRUE,
+        NULL,NULL,NULL,NOW(),NOW(),NULL
     );
 
 -- Update station Ho Con Rua IsMultiLine to TRUE - HCMC-L3B - HCMC-L4
@@ -1330,563 +1739,274 @@ INSERT INTO public."Stations"
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
 -- L4-01: Thanh Xuan (elevated)
-('a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7','L4-01','Thạnh Xuân','Thanh Xuan',
- 'Khu vực Thạnh Xuân, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8673,106.6635,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7','HCMC-L4-01','Thạnh Xuân','Thanh Xuan',
+ 'Khu vực Thạnh Xuân, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8673,106.6635,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-02: Giao Khau (elevated)
-('b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','L4-02','Giao Khẩu','Giao Khau',
- 'Khu vực Giao Khẩu, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8612,106.6701,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','HCMC-L4-02','Giao Khẩu','Giao Khau',
+ 'Khu vực Giao Khẩu, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8612,106.6701,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-03: Nga 4 Ga (elevated)
-('c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','L4-03','Ngã 4 Ga','Nga 4 Ga',
- 'Ngã 4 Ga, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8549,106.6728,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','HCMC-L4-03','Ngã 4 Ga','Nga 4 Ga',
+ 'Ngã 4 Ga, P.Thạnh Xuân, Q.12, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8549,106.6728,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-04: An Loc (elevated)
-('d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','L4-04','An Lộc','An Loc',
- 'Khu vực An Lộc, P.Thạnh Lộc, Q.12, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8491,106.6759,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','HCMC-L4-04','An Lộc','An Loc',
+ 'Khu vực An Lộc, P.Thạnh Lộc, Q.12, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8491,106.6759,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-05: An Nhon (elevated)
-('e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','L4-05','An Nhơn','An Nhon',
- 'Khu vực An Nhơn, P.An Phú Đông, Q.12, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8385,106.6784,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','HCMC-L4-05','An Nhơn','An Nhon',
+ 'Khu vực An Nhơn, P.An Phú Đông, Q.12, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8385,106.6784,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-06: Lam Son (elevated)
-('f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','L4-06','Lam Sơn','Lam Son',
- 'Khu vực Lam Sơn, P.6, Q.Gò Vấp, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8324,106.6811,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','HCMC-L4-06','Lam Sơn','Lam Son',
+ 'Khu vực Lam Sơn, P.6, Q.Gò Vấp, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8324,106.6811,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-07: Nga 6 Go Vap (elevated)
-('a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','L4-07','Ngã 6 Gò Vấp','Nga 6 Go Vap',
- 'Ngã 6 Gò Vấp, P.6, Q.Gò Vấp, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8225,106.6783,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','HCMC-L4-07','Ngã 6 Gò Vấp','Nga 6 Go Vap',
+ 'Ngã 6 Gò Vấp, P.6, Q.Gò Vấp, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8225,106.6783,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-08: Benh Vien 175 (elevated)
-('b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','L4-08','Bệnh Viện 175','Hospital 175',
- 'Bệnh viện 175, P.8, Q.Gò Vấp, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8159,106.6829,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','HCMC-L4-08','Bệnh Viện 175','Hospital 175',
+ 'Bệnh viện 175, P.8, Q.Gò Vấp, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8159,106.6829,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-09: Cong Vien Gia Dinh (elevated)
-('c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','L4-09','Công Viên Gia Định','Gia Dinh Park',
- 'Công viên Gia Định, P.1, Q.Gò Vấp, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8106,106.6853,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','HCMC-L4-09','Công Viên Gia Định','Gia Dinh Park',
+ 'Công viên Gia Định, P.1, Q.Gò Vấp, TP.HCM',FALSE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.8106,106.6853,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-10: Nga 4 Phu Nhuan (elevated)
-('d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','L4-10','Ngã 4 Phú Nhuận','Nga 4 Phu Nhuan',
- 'Ngã 4 Phú Nhuận, P.2, Q.Phú Nhuận, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7989,106.6841,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','HCMC-L4-10','Ngã 4 Phú Nhuận','Nga 4 Phu Nhuan',
+ 'Ngã 4 Phú Nhuận, P.2, Q.Phú Nhuận, TP.HCM',FALSE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7989,106.6841,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-11: Cau Kieu (elevated)
-('e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','L4-11','Cầu Kiệu','Cau Kieu',
- 'Cầu Kiệu, P.2, Q.Phú Nhuận, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7915,106.6893,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','HCMC-L4-11','Cầu Kiệu','Cau Kieu',
+ 'Cầu Kiệu, P.2, Q.Phú Nhuận, TP.HCM',FALSE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7915,106.6893,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-12: Cong Vien Le Van Tam (underground)
-('f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','L4-12','Công Viên Lê Văn Tám','Le Van Tam Park',
- 'Công viên Lê Văn Tám, P.6, Q.3, TP.HCM',TRUE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7871,106.6934,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','HCMC-L4-12','Công Viên Lê Văn Tám','Le Van Tam Park',
+ 'Công viên Lê Văn Tám, P.6, Q.3, TP.HCM',TRUE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7871,106.6934,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
+
+-- L4-13: Ho Con Rua (underground)
+-- L4-14: Ben Thanh (underground)
 
 -- L4-15: Hoang Dieu (underground)
-('a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','L4-15','Hoàng Diệu','Hoang Dieu',
- 'Đường Hoàng Diệu, P.6, Q.4, TP.HCM',TRUE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7621,106.7028,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','HCMC-L4-15','Hoàng Diệu','Hoang Dieu',
+ 'Đường Hoàng Diệu, P.6, Q.4, TP.HCM',TRUE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7621,106.7028,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-16: Ton Dan (underground)
-('b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','L4-16','Tôn Đản','Ton Dan',
- 'Đường Tôn Đản, P.6, Q.4, TP.HCM',TRUE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7563,106.7081,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','HCMC-L4-16','Tôn Đản','Ton Dan',
+ 'Đường Tôn Đản, P.6, Q.4, TP.HCM',TRUE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7563,106.7081,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-17: Nguyen Thi Thap (underground)
-('c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','L4-17','Nguyễn Thị Thập','Nguyen Thi Thap',
- 'Đường Nguyễn Thị Thập, P.Tân Phong, Q.7, TP.HCM',TRUE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7441,106.7132,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','HCMC-L4-17','Nguyễn Thị Thập','Nguyen Thi Thap',
+ 'Đường Nguyễn Thị Thập, P.Tân Phong, Q.7, TP.HCM',TRUE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7441,106.7132,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-18: Nguyen Van Linh (underground)
-('572e6743-c3de-4374-a70f-52ae566c64b2','L4-18','Nguyễn Văn Linh','Nguyen Van Linh',
- 'Đường Nguyễn Văn Linh, P.Tân Phong, Q.7, TP.HCM',TRUE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7328,106.7195,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('572e6743-c3de-4374-a70f-52ae566c64b2','HCMC-L4-18','Nguyễn Văn Linh','Nguyen Van Linh',
+ 'Đường Nguyễn Văn Linh, P.Tân Phong, Q.7, TP.HCM',TRUE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7328,106.7195,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-19: Phuoc Kieng (elevated)
-('e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','L4-19','Phước Kiểng','Phuoc Kieng',
- 'Khu vực Phước Kiểng, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7215,106.7098,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','HCMC-L4-19','Phước Kiểng','Phuoc Kieng',
+ 'Khu vực Phước Kiểng, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7215,106.7098,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-20: Vinh Phuoc (elevated)
-('f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','L4-20','Vĩnh Phước','Vinh Phuoc',
- 'Khu vực Vĩnh Phước, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7136,106.7053,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','HCMC-L4-20','Vĩnh Phước','Vinh Phuoc',
+ 'Khu vực Vĩnh Phước, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.7136,106.7053,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-21: Pham Huu Lau (elevated)
-('a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','L4-21','Phạm Hữu Lầu','Pham Huu Lau',
- 'Khu vực Phạm Hữu Lầu, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6989,106.7112,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','HCMC-L4-21','Phạm Hữu Lầu','Pham Huu Lau',
+ 'Khu vực Phạm Hữu Lầu, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6989,106.7112,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-22: Kho B (elevated)
-('b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','L4-22','Kho B','Kho B',
- 'Khu vực Kho B, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6891,106.7164,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','HCMC-L4-22','Kho B','Kho B',
+ 'Khu vực Kho B, P.Phước Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6891,106.7164,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-23: Long Kieng (elevated)
-('c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','L4-23','Long Kiểng','Long Kieng',
- 'Khu vực Long Kiểng, P.Long Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6807,106.7211,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','HCMC-L4-23','Long Kiểng','Long Kieng',
+ 'Khu vực Long Kiểng, P.Long Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6807,106.7211,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-24: Ba Chiem (elevated)
-('d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','L4-24','Bà Chiêm','Ba Chiem',
- 'Khu vực Bà Chiêm, P.Long Kiểng, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6701,106.7265,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','HCMC-L4-24','Bà Chiêm','Ba Chiem',
+ 'Khu vực Bà Chiêm, P.Long Kiểng, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6701,106.7265,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-25: Long Thoi (elevated)
-('e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','L4-25','Long Thới','Long Thoi',
- 'Khu vực Long Thới, P.Long Thới, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6625,106.7303,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','HCMC-L4-25','Long Thới','Long Thoi',
+ 'Khu vực Long Thới, P.Long Thới, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6625,106.7303,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-26: Rach Doi (elevated)
-('f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','L4-26','Rạch Dơi','Rach Doi',
- 'Khu vực Rạch Dơi, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6509,106.7368,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','HCMC-L4-26','Rạch Dơi','Rach Doi',
+ 'Khu vực Rạch Dơi, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6509,106.7368,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-27: Hiep Phuoc (elevated)
-('a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','L4-27','Hiệp Phước','Hiep Phuoc',
- 'Khu vực Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6398,106.7421,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','HCMC-L4-27','Hiệp Phước','Hiep Phuoc',
+ 'Khu vực Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6398,106.7421,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-28: Cong Vien The Thao (elevated)
-('b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','L4-28','Công Viên Thể Thao','Sports Park',
- 'Công viên Thể thao, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6281,106.7479,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','HCMC-L4-28','Công Viên Thể Thao','Sports Park',
+ 'Công viên Thể thao, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6281,106.7479,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-29: Benh Vien Quoc Te (elevated)
-('c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','L4-29','Bệnh Viện Quốc Tế','International Hospital',
- 'Bệnh viện Quốc tế, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6199,106.7523,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','HCMC-L4-29','Bệnh Viện Quốc Tế','International Hospital',
+ 'Bệnh viện Quốc tế, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6199,106.7523,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-30: Thi Tran Hiep Phuoc (elevated)
-('d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','L4-30','Thị Trấn Hiệp Phước','Hiep Phuoc Town',
- 'Thị trấn Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6117,106.7568,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','HCMC-L4-30','Thị Trấn Hiệp Phước','Hiep Phuoc Town',
+ 'Thị trấn Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6117,106.7568,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-31: Cong Vien Cay Xanh (elevated)
-('e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','L4-31','Công Viên Cây Xanh','Green Park',
- 'Công viên Cây xanh, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6035,106.7612,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL),
+('e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','HCMC-L4-31','Công Viên Cây Xanh','Green Park',
+ 'Công viên Cây xanh, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,FALSE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.6035,106.7612,
+ NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 -- L4-32: Ben Tau Hiep Phuoc (elevated)
-('f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4','L4-32','Bến Tàu Hiệp Phước','Ben Tau Hiep Phuoc',
- 'Bến tàu Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.5928,106.7674,
- NULL,NULL,NULL,'2025-06-11 08:58:39+00:00','2025-06-11 08:58:39+00:00',NULL);
+('f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4','HCMC-L4-32','Bến Tàu Hiệp Phước','Ben Tau Hiep Phuoc',
+ 'Bến tàu Hiệp Phước, P.Hiệp Phước, H.Nhà Bè, TP.HCM',FALSE,TRUE,
+ 'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.5928,106.7674,
+ NULL,NULL,NULL,NOW(),NOW(),NULL);
 
--- Metro Line 4 Forward Routes (2 Direction) ()
+-- FORWARD DIRECTION (seqOrder 1..7)
 INSERT INTO public."Routes"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
- "SeqOrder","TravelTimeMin","LengthKm",
- "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+ "SeqOrder","TravelTimeMin","LengthKm","CreatedAt","LastUpdatedAt")
 VALUES
--- L4-01-02: Thanh Xuan to Giao Khau
-('1a2b3c4d-5e6f-7890-abcd-ef1234567890','L4-01-02','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7','b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6',
- 'Thạnh Xuân – Giao Khẩu','Thanh Xuan – Giao Khau',0,1,2,0.73,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 1. Thạnh Xuân → Công Viên Gia Định
+('fd92d1b9-1e4c-4b5a-9392-d6ae1c92e6a1','HCMC-L4-01-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
+ 'Thạnh Xuân – Công Viên Gia Định','Thanh Xuan – Gia Dinh Park',0,1,12,5.24,NOW(),NOW()),
 
--- L4-02-03: Giao Khau to Nga 4 Ga
-('2b3c4d5e-6f70-8901-bcde-f2345678901a','L4-02-03','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7',
- 'Giao Khẩu – Ngã 4 Ga','Giao Khau – Nga 4 Ga',0,2,1,0.35,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-03-04: Nga 4 Ga to An Loc
-('3c4d5e6f-7081-9012-cdef-345678901abc','L4-03-04','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8',
- 'Ngã 4 Ga – An Lộc','Nga 4 Ga – An Loc',0,3,1,0.40,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-04-05: An Loc to An Nhon
-('4d5e6f70-8192-a123-def0-456789012bcd','L4-04-05','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'd6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9',
- 'An Lộc – An Nhơn','An Loc – An Nhon',0,4,2,1.18,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-05-06: An Nhon to Lam Son
-('5e6f7081-92a3-b234-ef01-56789012cdef','L4-05-06','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8',
- 'An Nhơn – Lam Sơn','An Nhon – Lam Son',0,5,2,0.95,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-06-07: Lam Son to Nga 6 Go Vap
-('6f708192-a3b4-c345-f012-6789012def01','L4-06-07','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7',
- 'Lam Sơn – Ngã 6 Gò Vấp','Lam Son – Nga 6 Go Vap',0,6,2,1.25,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-07-08: Nga 6 Go Vap to Benh Vien 175
-('708192a3-b4c5-d456-0123-789012ef0123','L4-07-08','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6',
- 'Ngã 6 Gò Vấp – Bệnh Viện 175','Nga 6 Go Vap – Hospital 175',0,7,2,0.87,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-08-09: Benh Vien 175 to Cong Vien Gia Dinh
-('8192a3b4-c5d6-e567-1234-89012f012345','L4-08-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
- 'Bệnh Viện 175 – Công Viên Gia Định','Hospital 175 – Gia Dinh Park',0,8,1,0.68,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-09-10: Cong Vien Gia Dinh to Nga 4 Phu Nhuan
-('92a3b4c5-d6e7-f678-2345-9012f0123456','L4-09-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+-- 2. Công Viên Gia Định → Ngã 4 Phú Nhuận
+('e3f6e81b-2b6a-4b6d-bf6a-8e1e3f6e81b2','HCMC-L4-09-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4',
- 'Công Viên Gia Định – Ngã 4 Phú Nhuận','Gia Dinh Park – Nga 4 Phu Nhuan',0,9,2,1.45,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+ 'Công Viên Gia Định – Ngã 4 Phú Nhuận','Gia Dinh Park – Nga 4 Phu Nhuan',0,2,2,1.45,NOW(),NOW()),
 
--- L4-10-11: Nga 4 Phu Nhuan to Cau Kieu
-('a3b4c5d6-e7f8-a789-3456-012f01234567','L4-10-11','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3',
- 'Ngã 4 Phú Nhuận – Cầu Kiệu','Nga 4 Phu Nhuan – Cau Kieu',0,10,2,0.92,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 3. Ngã 4 Phú Nhuận → Hồ Con Rùa
+('f8a9e1b7-3c7d-4a6d-9e1b-7c7df8a9e1b7','HCMC-L4-10-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
+ 'Ngã 4 Phú Nhuận – Hồ Con Rùa','Nga 4 Phu Nhuan – Ho Con Rua',0,3,6,2.72,NOW(),NOW()),
 
--- L4-11-12: Cau Kieu to Cong Vien Le Van Tam
-('b4c5d6e7-f8a9-b890-4567-123f012345678','L4-11-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2',
- 'Cầu Kiệu – Công Viên Lê Văn Tám','Cau Kieu – Le Van Tam Park',0,11,2,0.85,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-12-13: Cong Vien Le Van Tam to Ho Con Rua (interchange with L3B)
-('c5d6e7f8-a9b0-c901-5678-234f0123456789','L4-12-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
- 'Công Viên Lê Văn Tám – Hồ Con Rùa','Le Van Tam Park – Ho Con Rua',0,12,2,0.95,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-13-14: Ho Con Rua to Ben Thanh (interchange with HCMC-L1, L2, L3A)
-('d6e7f8a9-b0c1-d012-6789-345f01234567890','L4-13-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+-- 4. Hồ Con Rùa → Bến Thành
+('b2d3c4a5-7e8f-4b6d-a2c4-7e8fb2d3c4a5','HCMC-L4-13-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
- 'Hồ Con Rùa – Bến Thành','Ho Con Rua – Ben Thanh',0,13,1,0.68,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+ 'Hồ Con Rùa – Bến Thành','Ho Con Rua – Ben Thanh',0,4,1,0.68,NOW(),NOW()),
 
--- L4-14-15: Ben Thanh to Hoang Dieu
-('e7f8a9b0-c1d2-e123-789a-456f012345678901','L4-14-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+-- 5. Bến Thành → Hoàng Diệu
+('a7c8d9e1-1e2a-4f3b-b4e5-1e2aa7c8d9e1','HCMC-L4-14-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
- 'Bến Thành – Hoàng Diệu','Ben Thanh – Hoang Dieu',0,14,2,0.83,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+ 'Bến Thành – Hoàng Diệu','Ben Thanh – Hoang Dieu',0,5,2,0.83,NOW(),NOW()),
 
--- L4-15-16: Hoang Dieu to Ton Dan
-('f8a9b0c1-d2e3-f234-89ab-567f0123456789012','L4-15-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2',
- 'Hoàng Diệu – Tôn Đản','Hoang Dieu – Ton Dan',0,15,1,0.72,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 6. Hoàng Diệu → Nguyễn Văn Linh
+('c7b2a1f3-5e4d-4b6c-9d2a-5e4dc7b2a1f3','HCMC-L4-15-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','572e6743-c3de-4374-a70f-52ae566c64b2',
+ 'Hoàng Diệu – Nguyễn Văn Linh','Hoang Dieu – Nguyen Van Linh',0,6,5,3.35,NOW(),NOW()),
 
--- L4-16-17: Ton Dan to Nguyen Thi Thap
-('a9b0c1d2-e3f4-a345-9abc-678f01234567890123','L4-16-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3',
- 'Tôn Đản – Nguyễn Thị Thập','Ton Dan – Nguyen Thi Thap',0,16,2,1.38,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 7. Nguyễn Văn Linh → Bến Tàu Hiệp Phước
+('b2a1c3d4-7e8f-4a6d-9c3b-7e8fb2a1c3d4','HCMC-L4-18-32','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ '572e6743-c3de-4374-a70f-52ae566c64b2','f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4',
+ 'Nguyễn Văn Linh – Bến Tàu Hiệp Phước','Nguyen Van Linh – Ben Tau Hiep Phuoc',0,7,31,20.86,NOW(),NOW());
 
--- L4-17-18: Nguyen Thi Thap to Nguyen Van Linh
-('b0c1d2e3-f4a5-b456-abcd-789f012345678901234','L4-17-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','572e6743-c3de-4374-a70f-52ae566c64b2',
- 'Nguyễn Thị Thập – Nguyễn Văn Linh','Nguyen Thi Thap – Nguyen Van Linh',0,17,2,1.25,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- BACKWARD DIRECTION (seqOrder 1..7)
+INSERT INTO public."Routes"
+("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
+ "SeqOrder","TravelTimeMin","LengthKm","CreatedAt","LastUpdatedAt")
+VALUES
+-- 1. Bến Tàu Hiệp Phước → Nguyễn Văn Linh
+('c1e2f3d4-5a6b-4c7d-8e9f-5a6bc1e2f3d4','HCMC-L4-32-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4','572e6743-c3de-4374-a70f-52ae566c64b2',
+ 'Bến Tàu Hiệp Phước – Nguyễn Văn Linh','Ben Tau Hiep Phuoc – Nguyen Van Linh',
+ 1,1,31,20.86,NOW(),NOW()),
 
--- L4-18-19: Nguyen Van Linh to Phuoc Kieng
-('c1d2e3f4-a5b6-c567-bcde-89af0123456789012345','L4-18-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- '572e6743-c3de-4374-a70f-52ae566c64b2','e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5',
- 'Nguyễn Văn Linh – Phước Kiểng','Nguyen Van Linh – Phuoc Kieng',0,18,2,1.42,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 2. Nguyễn Văn Linh → Hoàng Diệu
+('f2e3d4c5-6b7a-4d8c-9e1f-6b7af2e3d4c5','HCMC-L4-18-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ '572e6743-c3de-4374-a70f-52ae566c64b2','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
+ 'Nguyễn Văn Linh – Hoàng Diệu','Nguyen Van Linh – Hoang Dieu',
+ 1,2,5,3.35,NOW(),NOW()),
 
--- L4-19-20: Phuoc Kieng to Vinh Phuoc
-('d2e3f4a5-b6c7-d678-cdef-9abf01234567890123456','L4-19-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4',
- 'Phước Kiểng – Vĩnh Phước','Phuoc Kieng – Vinh Phuoc',0,19,2,0.98,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 3. Hoàng Diệu → Bến Thành
+('d3a2b1c4-7e8f-4a6d-9c1b-7e8fd3a2b1c4','HCMC-L4-15-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
+ 'Hoàng Diệu – Bến Thành','Hoang Dieu – Ben Thanh',
+ 1,3,2,0.83,NOW(),NOW()),
 
--- L4-20-21: Vinh Phuoc to Pham Huu Lau
-('e3f4a5b6-c7d8-e789-def0-abcf012345678901234567','L4-20-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3',
- 'Vĩnh Phước – Phạm Hữu Lầu','Vinh Phuoc – Pham Huu Lau',0,20,2,1.68,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 4. Bến Thành → Hồ Con Rùa
+('e2b3c1d4-6a7f-4b6d-a3c1-6a7fe2b3c1d4','HCMC-L4-14-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
+ 'Bến Thành – Hồ Con Rùa','Ben Thanh – Ho Con Rua',
+ 1,4,1,0.68,NOW(),NOW()),
 
--- L4-21-22: Pham Huu Lau to Kho B
-('f4a5b6c7-d8e9-f890-ef01-bcdf0123456789012345678','L4-21-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6',
- 'Phạm Hữu Lầu – Kho B','Pham Huu Lau – Kho B',0,21,2,1.25,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 5. Hồ Con Rùa → Ngã 4 Phú Nhuận
+('c8d9e1a7-1e2a-4f3b-b4e5-1e2ac8d9e1a7','HCMC-L4-13-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4',
+ 'Hồ Con Rùa – Ngã 4 Phú Nhuận','Ho Con Rua – Nga 4 Phu Nhuan',
+ 1,5,6,2.72,NOW(),NOW()),
 
--- L4-22-23: Kho B to Long Kieng
-('a5b6c7d8-e9f0-a901-f012-cdef01234567890123456789','L4-22-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5',
- 'Kho B – Long Kiểng','Kho B – Long Kieng',0,22,2,1.15,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
+-- 6. Ngã 4 Phú Nhuận → Công Viên Gia Định
+('f3b2c1d4-7e8f-4a6d-9c3b-7e8ff3b2c1d4','HCMC-L4-10-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
+ 'Ngã 4 Phú Nhuận – Công Viên Gia Định','Nga 4 Phu Nhuan – Gia Dinh Park',
+ 1,6,2,1.45,NOW(),NOW()),
 
--- L4-23-24: Long Kieng to Ba Chiem
-('b6c7d8e9-f0a1-b012-0123-def0123456789012345678a','L4-23-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4',
- 'Long Kiểng – Bà Chiêm','Long Kieng – Ba Chiem',0,23,2,1.32,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-24-25: Ba Chiem to Long Thoi
-('c7d8e9f0-a1b2-c123-1234-ef012345678901234567890ab','L4-24-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'd6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3',
- 'Bà Chiêm – Long Thới','Ba Chiem – Long Thoi',0,24,2,0.95,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-25-26: Long Thoi to Rach Doi
-('d8e9f0a1-b2c3-d234-2345-f01234567890123456789abc','L4-25-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2',
- 'Long Thới – Rạch Dơi','Long Thoi – Rach Doi',0,25,2,0.92,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-26-27: Rach Doi to Hiep Phuoc
-('e9f0a1b2-c3d4-e345-3456-0123456789012345678abcd','L4-26-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1',
- 'Rạch Dơi – Hiệp Phước','Rach Doi – Hiep Phuoc',0,26,2,1.18,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-27-28: Hiep Phuoc to Cong Vien The Thao
-('f0a1b2c3-d4e5-f456-4567-123456789012345678bcde','L4-27-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8',
- 'Hiệp Phước – Công Viên Thể Thao','Hiep Phuoc – Sports Park',0,27,2,1.05,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-28-29: Cong Vien The Thao to Benh Vien Quoc Te
-('a1b2c3d4-e5f6-a567-5678-23456789012345678cdef','L4-28-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7',
- 'Công Viên Thể Thao – Bệnh Viện Quốc Tế','Sports Park – International Hospital',0,28,2,0.88,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-29-30: Benh Vien Quoc Te to Thi Tran Hiep Phuoc
-('b2c3d4e5-f6a7-b678-6789-3456789012345678def0','L4-29-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6',
- 'Bệnh Viện Quốc Tế – Thị Trấn Hiệp Phước','International Hospital – Hiep Phuoc Town',0,29,2,0.93,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-30-31: Thi Tran Hiep Phuoc to Cong Vien Cay Xanh
-('c3d4e5f6-a7b8-c789-789a-456789012345678ef01','L4-30-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'd8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5',
- 'Thị Trấn Hiệp Phước – Công Viên Cây Xanh','Hiep Phuoc Town – Green Park',0,30,2,0.89,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-31-32: Cong Vien Cay Xanh to Ben Tau Hiep Phuoc
-('d4e5f6a7-b8c9-d890-89ab-56789012345678f012','L4-31-32','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
- 'e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4',
- 'Công Viên Cây Xanh – Bến Tàu Hiệp Phước','Green Park – Ben Tau Hiep Phuoc',0,31,2,1.15,
- NULL,NULL,NULL,'2025-06-11 09:52:38+00:00','2025-06-11 09:52:38+00:00',
- NULL),
-
--- L4-32-31: Ben Tau Hiep Phuoc to Cong Vien Cay Xanh
-('11f6d2e9-b4a9-4c11-f6d2-e9b4a9c11f6d','L4-32-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4','e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5',
-    'Bến Tàu Hiệp Phước – Công Viên Cây Xanh','Ben Tau Hiep Phuoc – Green Park',1,1,2,1.15,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-31-30: Cong Vien Cay Xanh to Thi Tran Hiep Phuoc
-('22e7c3d8-a59f-4822-e7c3-d8a59f8b22e7','L4-31-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6',
-    'Công Viên Cây Xanh – Thị Trấn Hiệp Phước','Green Park – Hiep Phuoc Town',1,2,2,0.89,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-30-29: Thi Tran Hiep Phuoc to Benh Vien Quoc Te
-('33d8b4c9-f68e-4933-d8b4-c9f68e9a33d8','L4-30-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'd8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7',
-    'Thị Trấn Hiệp Phước – Bệnh Viện Quốc Tế','Hiep Phuoc Town – International Hospital',1,3,2,0.93,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-29-28: Benh Vien Quoc Te to Cong Vien The Thao
-('44c1a5b8-e79d-4444-c1a5-b8e79d8f44c1','L4-29-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8',
-    'Bệnh Viện Quốc Tế – Công Viên Thể Thao','International Hospital – Sports Park',1,4,2,0.88,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-28-27: Cong Vien The Thao to Hiep Phuoc
-('55b2f6a9-d88c-4555-b2f6-a9d88c7e55b2','L4-28-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1',
-    'Công Viên Thể Thao – Hiệp Phước','Sports Park – Hiep Phuoc',1,5,2,1.05,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-27-26: Hiep Phuoc to Rach Doi
-('66a3e7f8-c19b-4666-a3e7-f8c19b6d66a3','L4-27-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2',
-    'Hiệp Phước – Rạch Dơi','Hiep Phuoc – Rach Doi',1,6,2,1.18,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-26-25: Rach Doi to Long Thoi
-('77f4d8e9-b28a-4777-f4d8-e9b28a9c77f4','L4-26-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3',
-    'Rạch Dơi – Long Thới','Rach Doi – Long Thoi',1,7,2,0.92,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-25-24: Long Thoi to Ba Chiem
-('88e5c1d8-a39f-4888-e5c1-d8a39f8b88e5','L4-25-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4',
-    'Long Thới – Bà Chiêm','Long Thoi – Ba Chiem',1,8,2,0.95,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-24-23: Ba Chiem to Long Kieng
-('99d6b2c9-f48e-4999-d6b2-c9f48e9a99d6','L4-24-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'd6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5',
-    'Bà Chiêm – Long Kiểng','Ba Chiem – Long Kieng',1,9,2,1.32,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-23-22: Long Kieng to Kho B
-('aac7a3b8-e59d-4aaa-c7a3-b8e59d8faac7','L4-23-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6',
-    'Long Kiểng – Kho B','Long Kieng – Kho B',1,10,2,1.15,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-22-21: Kho B to Pham Huu Lau
-('bbb8f4a9-d68c-4bbb-b8f4-a9d68c9ebbb8','L4-22-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3',
-    'Kho B – Phạm Hữu Lầu','Kho B – Pham Huu Lau',1,11,2,1.25,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-21-20: Pham Huu Lau to Vinh Phuoc
-('cca9e5f8-c39b-4ccc-a9e5-f8c39b7dcca9','L4-21-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4',
-    'Phạm Hữu Lầu – Vĩnh Phước','Pham Huu Lau – Vinh Phuoc',1,12,2,1.68,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-20-19: Vinh Phuoc to Phuoc Kieng
-('ddf8d6e9-b48a-4ddd-f8d6-e9b48a9cddf8','L4-20-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5',
-    'Vĩnh Phước – Phước Kiểng','Vinh Phuoc – Phuoc Kieng',1,13,2,0.98,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-19-18: Phuoc Kieng to Nguyen Van Linh
-('eee9c7d8-a59f-4eee-e9c7-d8a59f8beee9','L4-19-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','572e6743-c3de-4374-a70f-52ae566c64b2',
-    'Phước Kiểng – Nguyễn Văn Linh','Phuoc Kieng – Nguyen Van Linh',1,14,2,1.42,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-18-17: Nguyen Van Linh to Nguyen Thi Thap
-('fffd8b6c-9f48-4fff-d8b6-c9f48e9afffd','L4-18-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    '572e6743-c3de-4374-a70f-52ae566c64b2','c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3',
-    'Nguyễn Văn Linh – Nguyễn Thị Thập','Nguyen Van Linh – Nguyen Thi Thap',1,15,2,1.25,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-17-16: Nguyen Thi Thap to Ton Dan
-('111c7a5b-8e39-4111-c7a5-b8e39d8f111c','L4-17-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2',
-    'Nguyễn Thị Thập – Tôn Đản','Nguyen Thi Thap – Ton Dan',1,16,2,1.38,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-16-15: Ton Dan to Hoang Dieu
-('222b6f4a-9d28-4222-b6f4-a9d28c7e222b','L4-16-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
-    'Tôn Đản – Hoàng Diệu','Ton Dan – Hoang Dieu',1,17,1,0.72,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-15-14: Hoang Dieu to Ben Thanh
-('333a5e3f-8c19-4333-a5e3-f8c19b6d333a','L4-15-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
-    'Hoàng Diệu – Bến Thành','Hoang Dieu – Ben Thanh',1,18,2,0.83,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-14-13: Ben Thanh to Ho Con Rua
-('4445e9f3-c278-4444-5e9f-3c278d6b4445','L4-14-13','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8',
-    'Bến Thành – Hồ Con Rùa','Ben Thanh – Ho Con Rua',1,19,1,0.68,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-13-12: Ho Con Rua to Cong Vien Le Van Tam
-('555c3f6a-9e88-4555-c3f6-a9e88d4b555c','L4-13-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2',
-    'Hồ Con Rùa – Công Viên Lê Văn Tám','Ho Con Rua – Le Van Tam Park',1,20,2,0.95,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-12-11: Cong Vien Le Van Tam to Cau Kieu
-('666f6d4e-9b28-4666-f6d4-e9b28a9c666f','L4-12-11','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2','e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3',
-    'Công Viên Lê Văn Tám – Cầu Kiệu','Le Van Tam Park – Cau Kieu',1,21,2,0.85,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-11-10: Cau Kieu to Nga 4 Phu Nhuan
-('777e7c5d-8a39-4777-e7c5-d8a39f8b777e','L4-11-10','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4',
-    'Cầu Kiệu – Ngã 4 Phú Nhuận','Cau Kieu – Nga 4 Phu Nhuan',1,22,2,0.92,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-10-09: Nga 4 Phu Nhuan to Cong Vien Gia Dinh
-('888d8b6c-9f48-4888-d8b6-c9f48e9a888d','L4-10-09','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'd8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4','c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5',
-    'Ngã 4 Phú Nhuận – Công Viên Gia Định','Nga 4 Phu Nhuan – Gia Dinh Park',1,23,2,1.45,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-09-08: Cong Vien Gia Dinh to Benh Vien 175
-('999c9a7b-8e59-4999-c9a7-b8e59d8f999c','L4-09-08','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6',
-    'Công Viên Gia Định – Bệnh Viện 175','Gia Dinh Park – Hospital 175',1,24,1,0.68,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-08-07: Benh Vien 175 to Nga 6 Go Vap
-('aaab8f6a-9d68-4aaa-b8f6-a9d68c9eaaab','L4-08-07','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6','a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7',
-    'Bệnh Viện 175 – Ngã 6 Gò Vấp','Hospital 175 – Nga 6 Go Vap',1,25,2,0.87,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-07-06: Nga 6 Go Vap to Lam Son
-('bbba9e7f-8c79-4bbb-a9e7-f8c79b8dbbba','L4-07-06','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7','f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8',
-    'Ngã 6 Gò Vấp – Lam Sơn','Nga 6 Go Vap – Lam Son',1,26,2,1.25,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-06-05: Lam Son to An Nhon
-('cccf8d8e-9b88-4ccc-f8d8-e9b88a9ccccf','L4-06-05','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8','e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9',
-    'Lam Sơn – An Nhơn','Lam Son – An Nhon',1,27,2,0.95,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-05-04: An Nhon to An Loc
-('ddde7c9d-8a99-4ddd-e7c9-d8a99f8bddde','L4-05-04','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9','d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8',
-    'An Nhơn – An Lộc','An Nhon – An Loc',1,28,2,1.18,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-04-03: An Loc to Nga 4 Ga
-('eeed6b8c-7f88-4eee-d6b8-c7f88e9aeeee','L4-04-03','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'd6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8','c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7',
-    'An Lộc – Ngã 4 Ga','An Loc – Nga 4 Ga',1,29,1,0.40,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-03-02: Nga 4 Ga to Giao Khau
-('fffc5a9b-6e77-4fff-c5a9-b6e77d8fffff','L4-03-02','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7','b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6',
-    'Ngã 4 Ga – Giao Khẩu','Nga 4 Ga – Giao Khau',1,30,1,0.35,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL),
-
--- L4-02-01: Giao Khau to Thanh Xuan
-('000b4f8a-5d66-4000-b4f8-a5d66c9e0000','L4-02-01','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
-    'b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6','a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7',
-    'Giao Khẩu – Thạnh Xuân','Giao Khau – Thanh Xuan',1,31,2,0.73,
-    NULL,NULL,NULL,'2025-06-11 09:54:57+00:00','2025-06-11 09:54:57+00:00',NULL);*/
+-- 7. Công Viên Gia Định → Thạnh Xuân
+('a1b2c3d4-5e6f-4a7d-9e8f-5e6fa1b2c3d4','HCMC-L4-09-01','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+ 'c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5','a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7',
+ 'Công Viên Gia Định – Thạnh Xuân','Gia Dinh Park – Thanh Xuan',
+ 1,7,12,5.24,NOW(),NOW());
 
 -- ───────────────────────────────────────────────────────────────
 DO $$
