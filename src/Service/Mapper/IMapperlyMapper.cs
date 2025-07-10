@@ -37,8 +37,8 @@ public interface IMapperlyMapper
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<ShipmentRepository.ShipmentDto> entity);
-    List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
-    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
+    /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
 
     // station

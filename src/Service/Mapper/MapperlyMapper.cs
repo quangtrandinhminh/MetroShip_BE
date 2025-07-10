@@ -50,6 +50,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
+
     public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentDto entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
@@ -60,7 +61,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentDto> entity);
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
-    [MapProperty("Item1", "StartDate")]
+    /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
     [MapProperty("Item3", "SlotDetail")]
     [MapProperty("Item4", "RemainingVolumeM3")]
@@ -68,7 +69,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty("Item6", "ShipmentStatus")]
     [MapProperty("Item7", "ParcelIds")]
     public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
-    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
 
     public partial List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
     // station
