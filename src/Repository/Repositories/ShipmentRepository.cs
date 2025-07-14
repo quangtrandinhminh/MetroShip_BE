@@ -249,6 +249,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     Id = parcel.ParcelCategory.Id,
                     CategoryName = parcel.ParcelCategory.CategoryName,
                     Description = parcel.ParcelCategory.Description,
+                    InsuranceRate = parcel.ParcelCategory.InsuranceRate,
+                    InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
+                    IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
                 },
             })
             .ToList(),

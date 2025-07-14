@@ -31,6 +31,7 @@ public sealed record ShipmentRequest
     public decimal TotalShippingFeeVnd { get; set; }
     public decimal? TotalInsuranceFeeVnd { get; set; } = 0;
     public decimal TotalKm { get; set; }
+    public string? TrackingLink { get; set; }
     public IList<ShipmentItineraryRequest> ShipmentItineraries { get; set; } = new List<ShipmentItineraryRequest>();
     public IList<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
 }

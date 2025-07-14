@@ -222,6 +222,7 @@ public class ShipmentService : IShipmentService
             Type = MailTypeEnum.Shipment,
             Name = request.SenderName,
             Data = shipment,
+            Message = request.TrackingLink
         };
         _emailSender.SendMail(sendMailModel);
 
@@ -236,6 +237,7 @@ public class ShipmentService : IShipmentService
                 Type = MailTypeEnum.Shipment,
                 Name = request.RecipientName,
                 Data = shipment,
+                Message = request.TrackingLink
             };
             _emailSender.SendMail(recipientSendMailModel);
         }

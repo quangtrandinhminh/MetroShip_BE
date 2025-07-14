@@ -50,7 +50,7 @@ public static class TrackingCodeGenerator
     }
 
     // Gnerate QR code
-    public static string GenerateQRCode(string content)
+    /*public static string GenerateQRCode(string content)
     {
         // Create QR code generator instance
         QRCodeGenerator qrGenerator = new ();
@@ -63,6 +63,16 @@ public static class TrackingCodeGenerator
 
         // Return the base64 string of the QR code image
         return $"data:image/png;base64,{base64String}";
+    }*/
+
+    // Gnerate QR code from qrserver.com
+    public static string GenerateQRCode(string content)
+    {
+        var baseUrl = "https://api.qrserver.com/v1/create-qr-code/";
+        var size = "100x100"; // Default size if not provided
+        var encodedContent = Uri.EscapeDataString(content);
+        var qrCodeUrl = $"{baseUrl}?size={size}&data={encodedContent}";
+        return qrCodeUrl;
     }
 
     private static string GenerateRandomString(int length)
