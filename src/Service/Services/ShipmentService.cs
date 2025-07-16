@@ -21,6 +21,7 @@ using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using MetroShip.Service.ApiModels.Graph;
 
 namespace MetroShip.Service.Services;
 
@@ -662,6 +663,9 @@ public class ShipmentService : IShipmentService
             ParcelPriceCalculator.CalculateParcelPricing(
                 pathResponse.Parcels, pathResponse, priceCalculationService, categories);
 
+            // Check est arrival time
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
+
             return new
             {
                 StationId = r.StationId,
@@ -675,7 +679,7 @@ public class ShipmentService : IShipmentService
         var response = new TotalPriceResponse();
 
         response.Standard = bestPathResponses
-.FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
+            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
 
         response.Nearest = bestPathResponses.Count > 1
             ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
@@ -692,6 +696,63 @@ public class ShipmentService : IShipmentService
         response.StationsInDistanceMeter = maxDistanceInMeters;
         //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
+    }
+
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateTimeOffset date)
+    {
+        _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
+
+        // for each line, get next time slot
+        var nextTimeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                       x => !x.IsAbnormal && x.DeletedAt == null)
+            .ToListAsync();
+
+        if (nextTimeSlots == null || !nextTimeSlots.Any())
+        {
+            _logger.Warning("No available time slots found for estimation.");
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Find the current time slot in the list
+        var currentSlot = nextTimeSlots.FirstOrDefault(x => x.Id == currentSlotId);
+        if (currentSlot == null)
+        {
+            _logger.Warning("Current time slot with ID {CurrentSlotId} not found in available time slots.",
+                               currentSlotId);
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // -1 is eliminate if only 1 line, does not change to next slot
+        for (var i = 0; i < pathResponse.TotalMetroLines-1; i++)
+        {
+            (date, currentSlot) = GetNextSlot(date, currentSlot, nextTimeSlots);
+        }
+
+        // Normalize date to start of the day, gmt +7, include if for loop not run
+        var result = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.FromHours(7));
+
+        // + hour from 0 to close time
+        var hour = currentSlot.CloseTime.ToTimeSpan().TotalHours;
+        // calculate how many hour from current slot
+        if (currentSlot.CloseTime.ToTimeSpan().TotalHours > currentSlot.OpenTime.ToTimeSpan().TotalHours)
+        {
+            // date to be 00:00 and add hour
+            result = result.AddHours(hour);
+        }
+        else
+        {
+            result = result.AddDays(1).AddHours(hour);
+        }
+
+        // cus timeonly from slot is +7, convert to +0
+        result = result.ToUniversalTime();
+        return result;
     }
 
     /*public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync
@@ -803,6 +864,7 @@ public class ShipmentService : IShipmentService
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         return _mapperlyMapper.MapToListShipmentItineraryResponse(shipment.ShipmentItineraries.ToList());
     }
+
 
     /// <summary>
     /// Bulk fetch all itineraries that could affect capacity calculation
@@ -987,6 +1049,8 @@ public class ShipmentService : IShipmentService
         MetroTimeSlot currentSlot,
         List<MetroTimeSlot> timeSlots)
     {
+        // Normalize date to start of the day, default to UTC+0
+        date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var nextShift = currentSlot.Shift switch
         {
             ShiftEnum.Morning => ShiftEnum.Afternoon,
