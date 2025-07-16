@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
@@ -26,6 +27,8 @@ public partial class MetroTrain : BaseEntity
     public string LineId { get; set; }
 
     public bool IsActive { get; set; }
+
+    public TrainStatusEnum Status { get; set; }
 
     public int NumberOfCarriages { get; set; }
 
