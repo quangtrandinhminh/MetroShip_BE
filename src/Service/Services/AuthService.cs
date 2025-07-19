@@ -25,29 +25,32 @@ using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using MetroShip.Service.ApiModels.RefreshToken;
+using System;
+using System.Security;
 
 namespace MetroShip.Service.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(IServiceProvider serviceProvider) : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMapperlyMapper _mapper;
-        private readonly RoleManager<RoleEntity> _roleManager;
-        private readonly UserManager<UserEntity> _userManager;
-        private readonly ILogger _logger;
+        private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
+        private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+        private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
+        private readonly UserManager<UserEntity> _userManager = serviceProvider.GetRequiredService<UserManager<UserEntity>>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         //private readonly IBaseRepository<RefreshToken> _refreshTokenRepository;
-        private readonly IEmailService _emailService;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly AuthValidator _authValidator;
+        private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
+        private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+        private readonly IStaffAssignmentService _staffAssignmentService = serviceProvider.GetRequiredService<IStaffAssignmentService>();
 
-        public AuthService(
+        /*public AuthService(
             IServiceProvider serviceProvider,
             IUserRepository userRepository,
             RoleManager<RoleEntity> roleManager,
             UserManager<UserEntity> userManager,
             //IBaseRepository<RefreshToken> refreshTokenRepository,
             IUnitOfWork unitOfWork,
-            IMapperlyMapper mapperlyMapper
+            IMapperlyMapper mapperlyMapper,
+            IStaffAssignmentService staffAssignmentService
             )
         {
             _userRepository = userRepository;
@@ -58,8 +61,9 @@ namespace MetroShip.Service.Services
             //_refreshTokenRepository = refreshTokenRepository;
             _emailService = serviceProvider.GetRequiredService<IEmailService>();
             _unitOfWork = unitOfWork;
-            _authValidator = new AuthValidator();
-        }
+            AuthValidator = new AuthValidator();
+            _staffAssignmentService = staffAssignmentService;
+        }*/
 
         // get all roles
         public async Task<IList<RoleResponse>> GetAllRoles()
@@ -73,7 +77,7 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Authenticate user: {@request}", request.Username);
             var account = await GetUserByUserName(request.Username);
-            _authValidator.ValidateLogin(request, account);
+            AuthValidator.ValidateLogin(request, account);
 
             try
             {
@@ -97,7 +101,7 @@ namespace MetroShip.Service.Services
         public async Task Register(RegisterRequest request, CancellationToken cancellationToken = default)
         {
             _logger.Information("Register new user: {@request}", request.UserName);
-            _authValidator.ValidateRegisterRequest(request);
+            AuthValidator.ValidateRegisterRequest(request);
             // get user by name
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)
@@ -401,6 +405,21 @@ namespace MetroShip.Service.Services
                 }
             }
 
+            // Add permission claims
+            if (roles.Contains(UserRoleEnum.Staff.ToString()))
+            {
+                var assignedRole = await _staffAssignmentService.GetByStaffIdAsync(loggedUser.Id);
+
+                if (assignedRole != null)
+                {
+                    // Add AssignmentRole claim based on assigned role
+                    claims.Add(new Claim("AssignmentRole", assignedRole.AssignedRole.ToString()));
+
+                    // Add station claim if user is assigned to a station
+                    claims.Add(new Claim("StationId", assignedRole.StationId));
+                }
+            }
+
             claims.AddRange(new[]
             {
                 new Claim(ClaimTypes.Sid, loggedUser.Id.ToString()),
@@ -542,7 +561,7 @@ namespace MetroShip.Service.Services
         public async Task<LoginResponse> AuthenticateByPhone(PhoneLoginRequest request)
         {
             _logger.Information("Authenticate user by phone: {@request}", request.PhoneNumber);
-            _authValidator.ValidatePhoneLogin(request);
+            AuthValidator.ValidatePhoneLogin(request);
             var account = await GetUserByPhone(request.PhoneNumber);
             if (account == null)
             {
@@ -565,7 +584,7 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Authenticate user: {@request}", request.Username);
             var account = await GetUserByUserName(request.Username);
-            _authValidator.ValidateLogin(request, account);
+            AuthValidator.ValidateLogin(request, account);
 
             try
             {

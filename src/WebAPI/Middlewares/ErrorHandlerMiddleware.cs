@@ -33,7 +33,8 @@ namespace MetroShip.WebAPI.Middlewares
                 if (context.Response.StatusCode == StatusCodes.Status403Forbidden)
                 {
                     var roles = GetRequiredRoles(context);
-                    await HandleForbiddenAsync(context, roles ?? string.Empty);
+                    var policy = GetRequiredPolicy(context);
+                    await HandleForbiddenAsync(context, roles ?? string.Empty, policy ?? string.Empty);
                 }
             }
             catch (AppException ex)
@@ -56,6 +57,33 @@ namespace MetroShip.WebAPI.Middlewares
             return authorizeData?.Roles;
         }
 
+        private static string? GetRequiredPolicy(HttpContext context)
+        {
+            var endpoint = context.GetEndpoint();
+            var authorizeData = endpoint?.Metadata?.GetMetadata<IAuthorizeData>();
+
+            // Then check for policy-based roles
+            if (!string.IsNullOrEmpty(authorizeData?.Policy))
+            {
+                return ExtractPolicy(authorizeData.Policy);
+            }
+
+            return null;
+        }
+
+        private static string? ExtractPolicy(string policy)
+        {
+            // Handle your specific policy format: "RequireAssignmentRole.Checker"
+            if (policy.StartsWith("RequireAssignmentRole."))
+            {
+                var role = policy.Substring("RequireAssignmentRole.".Length);
+                return $"AssignmentRole: {role}";
+            }
+
+            // Add other policy patterns as needed
+            return policy; // Return the policy name as fallback
+        }
+
         // handle 401 error
         public static Task HandleUnauthorizedAsync(HttpContext context)
         {
@@ -69,7 +97,7 @@ namespace MetroShip.WebAPI.Middlewares
         }
 
         // handle 403 error
-        private static Task HandleForbiddenAsync(HttpContext context, string requiredRoles)
+        private static Task HandleForbiddenAsync(HttpContext context, string requiredRoles, string assignedRole)
         {
             var response = context.Response;
             response.ContentType = "application/json";
@@ -78,6 +106,11 @@ namespace MetroShip.WebAPI.Middlewares
             var message = !string.IsNullOrEmpty(requiredRoles)
                 ? ResponseMessageIdentity.USER_NOT_ALLOWED + $" You need '{requiredRoles}' role to access this resource."
                 : ResponseMessageIdentity.USER_NOT_ALLOWED;
+
+            if (!string.IsNullOrEmpty(assignedRole))
+            {
+                message += $" You need assigned role '{assignedRole}' to handle this resource";
+            }
 
             var result = ParseResponse(response, HttpResponseCodeConstants.FORBIDDEN, message);
             return context.Response.WriteAsync(result);

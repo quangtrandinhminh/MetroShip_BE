@@ -2,6 +2,6 @@
 
 public sealed record ShipmentPickUpRequest
 {
-    public string ShipmentId { get; set; } = string.Empty;
-    public string PickedUpImageLink { get; set; } = string.Empty;
+    public string ShipmentId { get; set; }
+    public IList<ShipmentMediaRequest> PickedUpMedias { get; set; } = new List<ShipmentMediaRequest>();
 }

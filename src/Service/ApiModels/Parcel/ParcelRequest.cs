@@ -19,4 +19,5 @@ public record ParcelRequest
     public bool? IsBulk { get; set; }
     public decimal? PriceVnd { get; set; } = 0;
     public decimal? ValueVnd { get; set; } = null;
+    public string? DescriptionImageUrl { get; set; } = null;
 }

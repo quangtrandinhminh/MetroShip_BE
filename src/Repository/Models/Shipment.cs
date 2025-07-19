@@ -125,11 +125,6 @@ public partial class Shipment : BaseEntity
     [StringLength(20)]
     public string? RecipientNationalId { get; set; }
 
-    public string? PickedUpImageLink { get; set; } // URL to the picture taken at pickup
-    public string? DeliveredImageLink { get; set; } // URL to the picture taken at delivery
-    public string? NationalIdImageFrontLink { get; set; } // URL to the picture of the front of recipient's national ID, if applicable
-    public string? NationalIdImageBackLink { get; set; } // URL to the picture of the back of the recipient's national ID, if applicable
-
     public byte? Rating { get; set; } // Rating given by the customer, if applicable
 
     [StringLength(500)]
@@ -153,4 +148,7 @@ public partial class Shipment : BaseEntity
 
     [ForeignKey(nameof(ReturnForShipmentId))]
     public virtual Shipment? ReturnForShipment { get; set; }
+
+    [InverseProperty(nameof(ShipmentMedia.Shipment))]
+    public virtual ICollection<ShipmentMedia> ShipmentMedias { get; set; } = new List<ShipmentMedia>();
 }

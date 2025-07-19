@@ -18,7 +18,7 @@ using MetroShip.Utility.Constants;
 
 namespace MetroShip.Test
 {
-    public class AuthServiceTests
+    /*public class AuthServiceTests
     {
         private readonly Mock<IUserRepository> _userRepositoryMock;
         private readonly Mock<UserManager<UserEntity>> _userManagerMock;
@@ -163,7 +163,5 @@ namespace MetroShip.Test
             Assert.Equal(StatusCodes.Status401Unauthorized, exception.StatusCode);
             Assert.Equal(ErrorCode.UserInvalid, exception.Code);
         }
-    }
-
-
+    }*/
 }

@@ -22,6 +22,8 @@
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
             public const string GetUserRoles = BaseEndpoint + "/roles";
+            public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
+            public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
         }
 
         public static class ParcelCategory
@@ -149,7 +151,13 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/media";
             public const string UploadImage = BaseEndpoint + "/image";
-            public const string DeleteImage = BaseEndpoint + "/image";
+            public const string UploadMultipleImages = BaseEndpoint + "/images";
+            public const string UploadVideo = BaseEndpoint + "/video";
+            public const string UploadMultipleVideos = BaseEndpoint + "/videos";
+            public const string UploadRawFile = BaseEndpoint + "/raw-file";
+            public const string UploadMultipleRawFiles = BaseEndpoint + "/raw-files";
+            public const string DeleteResource = BaseEndpoint + "/resource";
+            public const string DeleteMultipleResources = BaseEndpoint + "/resources";
         }
 
         public static class ReportEndpoint

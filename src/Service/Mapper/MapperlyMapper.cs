@@ -136,6 +136,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     // time slot
     public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
 
+    // media
+    public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)
     {

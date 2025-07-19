@@ -14,4 +14,8 @@
       <ProjectReference Include="..\Repository\MetroShip.Repository.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="ApiModels\StaffAssignment\" />
+    </ItemGroup>
+
 </Project>

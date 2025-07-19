@@ -90,4 +90,7 @@ public interface IMapperlyMapper
 
     // time slot
     MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+
+    // media
+    ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
 }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using MetroShip.Repository.Models.Base;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Identity;
+using Serilog.Parsing;
 
 namespace MetroShip.Repository.Models.Identity;
 
@@ -65,6 +66,9 @@ public class UserEntity : IdentityUser
 
     [InverseProperty(nameof(Transaction.PaidBy))]
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
+
+    [InverseProperty(nameof(StaffAssignment.Staff))]
+    public virtual ICollection<StaffAssignment>? StaffAssignments { get; set; }
 
     [NotMapped]
     public override string SecurityStamp { get => base.SecurityStamp; set => base.SecurityStamp = value; }

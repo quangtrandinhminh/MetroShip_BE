@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using AngleSharp.Attributes;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Http;
 
 namespace MetroShip.Service.Utils;
@@ -27,5 +28,18 @@ public class JwtClaimUltils
     {
         var userClaimsPrincipal = GetLoginedUser(accessor);
         return userClaimsPrincipal?.FindFirst(ClaimTypes.Sid)?.Value ?? string.Empty;
+    }
+
+    public static string? GetUserStation(IHttpContextAccessor accessor)
+    {
+        var user = GetLoginedUser(accessor);
+        return user.FindFirst("StationId")?.Value;
+    }
+
+    public static AssignmentRoleEnum? GetAssignmentRole(IHttpContextAccessor accessor)
+    {
+        var user = GetLoginedUser(accessor);
+        var roleClaim = user.FindFirst("AssignmentRole")?.Value;
+        return Enum.TryParse<AssignmentRoleEnum>(roleClaim, out var role) ? role : null;
     }
 }

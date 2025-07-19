@@ -25,27 +25,26 @@ using MetroShip.Service.ApiModels.Graph;
 
 namespace MetroShip.Service.Services;
 
-public class ShipmentService : IShipmentService
+public class ShipmentService(IServiceProvider serviceProvider) : IShipmentService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapperlyMapper _mapperlyMapper;
-    private readonly IShipmentRepository _shipmentRepository;
-    private readonly IShipmentItineraryRepository _shipmentItineraryRepository;
-    private readonly IParcelCategoryRepository _parcelCategoryRepository;
-    private readonly ILogger _logger;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IStationRepository _stationRepository;
-    private readonly ISystemConfigRepository _systemConfigRepository;
-    private readonly SystemConfigSetting _systemConfigSetting;
-    private readonly IEmailService _emailSender;
-    private readonly IUserRepository _userRepository;
-    private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository;
+    private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+    private readonly IMapperlyMapper _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+    private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();
+    private readonly IShipmentItineraryRepository _shipmentItineraryRepository = serviceProvider.GetRequiredService<IShipmentItineraryRepository>();
+    private readonly IParcelCategoryRepository _parcelCategoryRepository = serviceProvider.GetRequiredService<IParcelCategoryRepository>();
+    private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+    private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
+    private readonly IEmailService _emailSender = serviceProvider.GetRequiredService<IEmailService>();
+    private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
+    private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
     private bool _isInitializedGraph = false;
     private MetroGraph _metroGraph;
     private bool _isInitializedPricingTable = false;
     private PricingTable _pricingTable;
 
-    public ShipmentService(
+    /*public ShipmentService(
         IServiceProvider serviceProvider,
         IUnitOfWork unitOfWork,
         IShipmentRepository shipmentRepository,
@@ -70,7 +69,7 @@ public class ShipmentService : IShipmentService
         _userRepository = userRepository;
         _parcelCategoryRepository = parcelCategoryRepository;
         _metroTimeSlotRepository = metroTimeSlotRepository;
-    }
+    }*/
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
         PaginatedListRequest request
@@ -187,8 +186,6 @@ public class ShipmentService : IShipmentService
         {
             parcel.ParcelCode = TrackingCodeGenerator.GenerateParcelCode(
                                shipment.TrackingCode, index);
-            // shipment.TotalCostVnd += parcel.PriceVnd;
-            // shipment.TotalShippingFeeVnd += parcel.PriceVnd;
 
             shipment.TotalVolumeM3 += parcel.VolumeCm3 /1000000;
             shipment.TotalWeightKg += parcel.WeightKg;
@@ -267,7 +264,7 @@ public class ShipmentService : IShipmentService
         // Lấy tất cả cấu hình giá từ hệ thống
         var allConfigs = await _systemConfigRepository
             .GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
-        var pricingTableBuilder = new PricingTableBuilder();
+        var pricingTableBuilder = new PricingTableBuilder(); 
         _pricingTable = pricingTableBuilder.BuildPricingTable(allConfigs);
         _isInitializedPricingTable = true;
     }
@@ -331,7 +328,14 @@ public class ShipmentService : IShipmentService
         shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
         shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
         shipment.PickedUpAt = CoreHelper.SystemTimeNow;
-        shipment.PickedUpImageLink = request.PickedUpImageLink;
+        foreach (var media in request.PickedUpMedias)
+        {
+            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
+            mediaEntity.ShipmentId = shipment.Id;
+            mediaEntity.ShipmentMediaType = ShipmentMediaTypeEnum.Pickup;
+            mediaEntity.MediaType = mediaEntity.IsImage(mediaEntity.MediaUrl);
+            shipment.ShipmentMedias.Add(mediaEntity);
+        }
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -405,11 +409,11 @@ public class ShipmentService : IShipmentService
     {
         // Get system config values
         var confirmationHour = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.CONFIRMATION_HOUR)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.CONFIRMATION_HOUR)));
         var paymentRequestHour = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.PAYMENT_REQUEST_HOUR)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.PAYMENT_REQUEST_HOUR)));
         var maxScheduleDay = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_SCHEDULE_SHIPMENT_DAY)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_SCHEDULE_SHIPMENT_DAY)));
         //var minBookDate = CoreHelper.SystemTimeNow.AddHours(confirmationHour + paymentRequestHour);
         var minBookDate = CoreHelper.SystemTimeNow;
         var maxBookDate = CoreHelper.SystemTimeNow.AddDays(maxScheduleDay);
@@ -568,9 +572,9 @@ public class ShipmentService : IShipmentService
     private async Task<HashSet<string>> GetNearUserStations(TotalPriceCalcRequest request)
     {
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         var maxStationCount = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_COUNT_STATION_NEAR_USER)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER)));
 
         var stationIds = new HashSet<string> { request.DepartureStationId };
 
@@ -692,7 +696,7 @@ public class ShipmentService : IShipmentService
             : null;
 
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         response.StationsInDistanceMeter = maxDistanceInMeters;
         //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
@@ -844,9 +848,9 @@ public class ShipmentService : IShipmentService
 
         // 2. Get system configuration
         var maxWeightKg = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_KG)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
         var maxVolumeM3 = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_M3)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
 
         // 3. Get all available time slots
         var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(

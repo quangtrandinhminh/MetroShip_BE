@@ -100,6 +100,7 @@
         public const string DELETE_USER_SUCCESS = "User deleted successfully.";
         public const string ADMIN_NOT_FOUND = "Administrator not found.";
         public const string CUSTOMER_NOT_FOUND = "Customer not found.";
+        public const string ASSIGN_ROLE_SUCCESS = "Role assigned successfully.";
     }
 
     public class ResponseMessageConstrantsImage
@@ -107,7 +108,7 @@
         public const string INVALID_IMAGE = "Hình ảnh không hợp lệ. ";
         public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ. ";
         public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ. ";
-        public const string INVALID_URL = "Đường dẫn hình ảnh không hợp lệ. ";
+        public const string INVALID_URL = "Đường dẫn không hợp lệ. ";
     }
 
     public static class ResponseMessageConstantsParcelCategory

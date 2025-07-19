@@ -182,12 +182,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             RecipientEmail = s.RecipientEmail,
             RecipientNationalId = s.RecipientNationalId,
 
-            // Image fields
-            PickedUpImageLink = s.PickedUpImageLink,
-            DeliveredImageLink = s.DeliveredImageLink,
-            NationalIdImageFrontLink = s.NationalIdImageFrontLink,
-            NationalIdImageBackLink = s.NationalIdImageBackLink,
-
             // Feedback fields
             Rating = s.Rating,
             Feedback = s.Feedback,
