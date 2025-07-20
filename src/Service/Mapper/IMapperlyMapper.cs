@@ -37,8 +37,8 @@ public interface IMapperlyMapper
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<ShipmentRepository.ShipmentDto> entity);
-    List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
-    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);
+    /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
 
     // station
@@ -47,7 +47,10 @@ public interface IMapperlyMapper
     StationListResponse MapToStationListResponse(Station entity);
     StationDetailResponse MapToStationDetailResponse(Station entity);
     Station MapToStationEntity(CreateStationRequest request);
+    ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
     void MapToExistingStation(UpdateStationRequest request, Station entity);
+
+
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
@@ -70,6 +73,7 @@ public interface IMapperlyMapper
 
     // metroline
     MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+    MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
 
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
@@ -80,7 +84,13 @@ public interface IMapperlyMapper
 
     // train
     PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
-    TrainListResponse MapToTrainListResponse (MetroTrain entity);
+    IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
+    IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     TrainResponse MapToTrainResponse(MetroTrain request);
 
+    // time slot
+    MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+
+    // media
+    ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
 }

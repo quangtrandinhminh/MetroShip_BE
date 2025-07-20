@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
@@ -17,6 +18,7 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IUserService _userService = serviceProvider.GetRequiredService<IUserService>();
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<UserRoleEnum>();
+        private readonly IStaffAssignmentService _staffAssignmentService = serviceProvider.GetRequiredService<IStaffAssignmentService>();
 
         [HttpGet]
         [Route(WebApiEndpoint.User.GetUserRoles)]
@@ -66,6 +68,24 @@ namespace MetroShip.WebAPI.Controllers
         {
             await _userService.DeleteUserAsync(id);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.DELETE_USER_SUCCESS, null));
+        }
+
+        [HttpPost]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [Route(WebApiEndpoint.User.AssignRoleToStaff)]
+        public async Task<IActionResult> AssignRole([FromBody] StaffAssignmentRequest request)
+        {
+            var result = await _staffAssignmentService.AssignAsync(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.ASSIGN_ROLE_SUCCESS, result));
+        }
+
+        // Get all assignmentRole enums
+        [HttpGet]
+        [Route(WebApiEndpoint.User.GetAssignmentRoles)]
+        public IActionResult GetAssignmentRoles()
+        {
+            var assignmentRoles = EnumHelper.GetEnumList<AssignmentRoleEnum>();
+            return Ok(BaseResponse.OkResponseDto(assignmentRoles));
         }
     }
 }

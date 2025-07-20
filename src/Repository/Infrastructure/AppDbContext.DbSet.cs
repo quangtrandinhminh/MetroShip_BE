@@ -32,6 +32,8 @@ public sealed partial class AppDbContext
 
     public DbSet<Shipment> Shipments { get; set; }
 
+    public DbSet<ShipmentMedia> ShipmentImages { get; set; }
+
     public DbSet<Transaction> Transactions { get; set; }
 
     public DbSet<Notification> Notifications { get; set; }
@@ -39,6 +41,8 @@ public sealed partial class AppDbContext
     public DbSet<ShipmentItinerary> ShipmentItineraries { get; set; }
 
     public DbSet<Station> Stations { get; set; }
+
+    public DbSet<StaffAssignment> StaffAssignments { get; set; }
 
     public DbSet<SupportingTicket> SupportingTickets { get; set; }
 

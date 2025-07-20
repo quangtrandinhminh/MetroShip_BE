@@ -29,8 +29,9 @@ public sealed record ShipmentRequest
     public string TimeSlotId { get; set; } 
     public decimal TotalCostVnd { get; set; }
     public decimal TotalShippingFeeVnd { get; set; }
-    public decimal? TotalInsuranceFeeVnd { get; set; }
+    public decimal? TotalInsuranceFeeVnd { get; set; } = 0;
     public decimal TotalKm { get; set; }
+    public string? TrackingLink { get; set; } = "https://fe-metro-ship.vercel.app/tracking-order";
     public IList<ShipmentItineraryRequest> ShipmentItineraries { get; set; } = new List<ShipmentItineraryRequest>();
     public IList<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
 }

@@ -19,13 +19,12 @@ namespace MetroShip.WebAPI.Controllers
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
         private readonly IHubContext<TrackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<TrackingHub>>();
 
-        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Admin)}")]
-        [HttpGet(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
-        public async Task<IActionResult> GetAllTrainsAsync(
-                       [FromQuery] PaginatedListRequest request,
-                       [FromQuery] string? lineId = null)
+        [Authorize]
+        [HttpGet]
+        [Route(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
+        public async Task<IActionResult> GetTrainsAsync([FromQuery] TrainListFilterRequest request)
         {
-            var response = await _trainService.GetAllTrainsAsync(request, lineId);
+            var response = await _trainService.PaginatedListResponse(request);
             var additionalData = await _trainService.GetTrainSystemConfigAsync();
             return Ok(BaseResponse.OkResponseDto(response, additionalData));
         }
@@ -44,5 +43,23 @@ namespace MetroShip.WebAPI.Controllers
 
             return Ok();
         }
-    }
+
+        [Authorize]
+        [HttpGet(WebApiEndpoint.MetroTrainEndpoint.GetTrainsByLineSlotAndDate)]
+        public async Task<IActionResult> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
+        {
+            var response = await _trainService.GetAllTrainsByLineSlotDateAsync(request);
+            var additionalData = await _trainService.GetTrainSystemConfigAsync();
+            return Ok(BaseResponse.OkResponseDto(response, additionalData));
+        }
+
+        [Authorize]
+        [HttpPost(WebApiEndpoint.MetroTrainEndpoint.AddShipmentItinerariesForTrain)]
+        public async Task<IActionResult> AddShipmentItinerariesForTrainAsync(
+            [FromBody] AddTrainToItinerariesRequest request)
+        {
+            var response = await _trainService.AddShipmentItinerariesForTrain(request);
+            return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+    } 
 }

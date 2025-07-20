@@ -32,7 +32,15 @@ public static class AuthenticationExtensions
             });
 
         // Add authorization
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            // Permission policies
+            foreach (AssignmentRoleEnum assignmentRoleEnum in Enum.GetValues<AssignmentRoleEnum>())
+            {
+                options.AddPolicy($"RequireAssignmentRole.{assignmentRoleEnum}", policy =>
+                    policy.RequireClaim("AssignmentRole", assignmentRoleEnum.ToString()));
+            }
+        });
 
         services.AddHttpContextAccessor();
 

@@ -100,6 +100,7 @@
         public const string DELETE_USER_SUCCESS = "User deleted successfully.";
         public const string ADMIN_NOT_FOUND = "Administrator not found.";
         public const string CUSTOMER_NOT_FOUND = "Customer not found.";
+        public const string ASSIGN_ROLE_SUCCESS = "Role assigned successfully.";
     }
 
     public class ResponseMessageConstrantsImage
@@ -107,7 +108,7 @@
         public const string INVALID_IMAGE = "Hình ảnh không hợp lệ. ";
         public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ. ";
         public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ. ";
-        public const string INVALID_URL = "Đường dẫn hình ảnh không hợp lệ. ";
+        public const string INVALID_URL = "Đường dẫn không hợp lệ. ";
     }
 
     public static class ResponseMessageConstantsParcelCategory
@@ -237,5 +238,33 @@
         public const string TRANSACTION_UPDATE_SUCCESS = "Transaction updated successfully.";
         public const string TRANSACTION_DELETE_SUCCESS = "Transaction deleted successfully.";
         public const string TRANSACTION_CREATE_SUCCESS = "Transaction created successfully.";
+    }
+
+    public class ResponseMessageTrain
+    {
+        public const string TRAIN_NOT_FOUND = "Train not found.";
+        public const string TRAIN_EXISTED = "Train already exists.";
+        public const string TRAIN_UPDATE_SUCCESS = "Train updated successfully.";
+        public const string TRAIN_DELETE_SUCCESS = "Train deleted successfully.";
+        public const string TRAIN_CREATE_SUCCESS = "Train created successfully.";
+        public const string LINE_ID_REQUIRED = "Line ID is required.";
+        public const string TIME_SLOT_ID_REQUIRED = "Time slot ID is required.";
+        public const string DATE_REQUIRED = "Date is required.";
+        public const string LINE_ID_INVALID = "Line ID is invalid.";
+        public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
+        public const string DATE_INVALID = "Date is invalid.";
+        public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
+        public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
+        public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";
+        public const string TRAIN_ID_REQUIRED = "Train ID is required.";
+        public const string TRAIN_ID_INVALID = "Train ID is invalid.";
+        public const string ITINERARY_IDS_REQUIRED = "Itinerary IDs are required.";
+        public const string ITINERARY_IDS_INVALID = "Itinerary IDs are invalid.";
+        public const string TRAIN_ALREADY_ASSIGNED_TO_SLOT_ON_DATE = "Train is already assigned to this time slot" +
+            " on the specified date.";
+        public const string SHIPMENT_ITINERARIES_NOT_FOUND = 
+            "Shipment itineraries not found for the specified train.";
+
+        public const string TRAIN_MUST_BE_SAME_LINE = "Train must be on the same line as the route.";
     }
 }

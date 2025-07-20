@@ -378,6 +378,9 @@ namespace MetroShip.Repository.Migrations
                     b.Property<int>("NumberOfCarriages")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("TopSpeedKmH")
                         .HasColumnType("decimal(8, 2)");
 
@@ -480,6 +483,9 @@ namespace MetroShip.Repository.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
+
+                    b.Property<string>("DescriptionImageUrl")
+                        .HasColumnType("text");
 
                     b.Property<decimal>("HeightCm")
                         .HasColumnType("decimal(10, 2)");
@@ -919,9 +925,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<DateTimeOffset?>("DeliveredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DeliveredImageLink")
-                        .HasColumnType("text");
-
                     b.Property<string>("DepartureStationId")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -943,12 +946,6 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("NationalIdImageBackLink")
-                        .HasColumnType("text");
-
-                    b.Property<string>("NationalIdImageFrontLink")
-                        .HasColumnType("text");
-
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -959,9 +956,6 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PickedUpBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PickedUpImageLink")
                         .HasColumnType("text");
 
                     b.Property<string>("PriceStructureDescriptionJSON")
@@ -1174,6 +1168,124 @@ namespace MetroShip.Repository.Migrations
                     b.HasIndex("TrainId");
 
                     b.ToTable("ShipmentItineraries");
+                });
+
+            modelBuilder.Entity("MetroShip.Repository.Models.ShipmentMedia", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MediaUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ShipmentId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("ShipmentMediaType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("ShipmentId");
+
+                    b.ToTable("ShipmentImages");
+                });
+
+            modelBuilder.Entity("MetroShip.Repository.Models.StaffAssignment", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AssignedRole")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<DateTimeOffset>("FromTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("StaffId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("StationId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset>("ToTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("StationId");
+
+                    b.ToTable("StaffAssignments");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.Station", b =>
@@ -1718,6 +1830,30 @@ namespace MetroShip.Repository.Migrations
                     b.Navigation("Train");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.ShipmentMedia", b =>
+                {
+                    b.HasOne("MetroShip.Repository.Models.Shipment", "Shipment")
+                        .WithMany("ShipmentMedias")
+                        .HasForeignKey("ShipmentId");
+
+                    b.Navigation("Shipment");
+                });
+
+            modelBuilder.Entity("MetroShip.Repository.Models.StaffAssignment", b =>
+                {
+                    b.HasOne("MetroShip.Repository.Models.Identity.UserEntity", "Staff")
+                        .WithMany("StaffAssignments")
+                        .HasForeignKey("StaffId");
+
+                    b.HasOne("MetroShip.Repository.Models.Station", "Station")
+                        .WithMany("Staffs")
+                        .HasForeignKey("StationId");
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("Station");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.Station", b =>
                 {
                     b.HasOne("MetroShip.Repository.Models.Region", "Region")
@@ -1829,6 +1965,8 @@ namespace MetroShip.Repository.Migrations
 
                     b.Navigation("Shipments");
 
+                    b.Navigation("StaffAssignments");
+
                     b.Navigation("SupportingTickets");
 
                     b.Navigation("Transactions");
@@ -1881,6 +2019,8 @@ namespace MetroShip.Repository.Migrations
 
                     b.Navigation("ShipmentItineraries");
 
+                    b.Navigation("ShipmentMedias");
+
                     b.Navigation("SupportingTickets");
 
                     b.Navigation("Transactions");
@@ -1891,6 +2031,8 @@ namespace MetroShip.Repository.Migrations
                     b.Navigation("RoutesFrom");
 
                     b.Navigation("RoutesTo");
+
+                    b.Navigation("Staffs");
                 });
 #pragma warning restore 612, 618
         }

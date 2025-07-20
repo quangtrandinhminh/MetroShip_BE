@@ -158,6 +158,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMetroLineService, MetroLineService>();
         services.AddScoped<IMetroTimeSlotService, MetroTimeSlotService>();
         services.AddScoped<ITrainService, TrainService>();
+        services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -172,6 +173,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMetroLineRepository, MetroLineRepository>();
         services.AddScoped<IParcelRepository, ParcelRepository>();
         services.AddScoped<ITrainRepository, TrainRepository>();
+        services.AddScoped<IMetroTimeSlotRepository, MetroTimeSlotRepository>();
+        services.AddScoped<IRegionRepository, RegionRepository>();
+        services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

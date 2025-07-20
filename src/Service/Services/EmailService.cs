@@ -12,6 +12,8 @@ using Serilog;
 using Serilog.Core;
 using MetroShip.Repository.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using QRCoder;
+using MetroShip.Service.BusinessModels;
 
 namespace MetroShip.Service.Services
 {
@@ -170,7 +172,7 @@ namespace MetroShip.Service.Services
                 mailmsg.To.Add(model.Email);
 
                 // Create formatted email body instead of raw JSON
-                mailmsg.Body = CreateShipmentEmailBody(shipment, model.Name, APP_NAME);
+                mailmsg.Body = CreateShipmentEmailBody(shipment, model.Name, APP_NAME, model.Message);
 
                 SmtpClient smtp = new SmtpClient
                 {
@@ -192,7 +194,7 @@ namespace MetroShip.Service.Services
             }
         }
 
-        private string CreateShipmentEmailBody(Shipment shipment, string customerName, string APP_NAME)
+        private string CreateShipmentEmailBody(Shipment shipment, string customerName, string APP_NAME, string? trackingLink)
         {
             var sb = new StringBuilder();
 
@@ -245,13 +247,24 @@ namespace MetroShip.Service.Services
                 sb.AppendLine($"</table>");
             }
 
-            sb.AppendLine($"<p>Bạn có thể theo dõi tình trạng vận đơn bằng mã: <strong>{shipment.TrackingCode}</strong></p>");
-            sb.AppendLine($"<p>Đơn hàng của bạn sẽ được chúng tôi xác nhận trong <strong>" +
+            sb.AppendLine($"<p>Vui lòng thanh toán trong 15 phút sau khi đặt đơn, nếu đã hoàn thành bạn có thể bỏ qua thông báo này</p>");
+            sb.AppendLine($"<p>Bạn có thể theo dõi tình trạng vận đơn bằng cách nhập mã: <strong>{shipment.TrackingCode}</strong>" +
+                $"<a href='{trackingLink ?? "#"}'>tại đây</a>" +
+                $"</p>");
+            sb.AppendLine($"<p>Hoặc quét mã QR bên dưới để theo dõi đơn hàng:</p>");
+            // add qr code with tracking link
+            if (trackingLink != null)
+            {
+                var qrCodeUrl = TrackingCodeGenerator.GenerateQRCode(trackingLink);
+                sb.AppendLine($"<img src='{qrCodeUrl}' alt='QR Code for {shipment.TrackingCode}'/>");
+            }
+
+            /*sb.AppendLine($"<p>Đơn hàng của bạn sẽ được chúng tôi xác nhận trong <strong>" +
                 $"{_systemConfigRepository.GetSystemConfigValueByKey(
                                        nameof(SystemConfigSetting.CONFIRMATION_HOUR)) ?? "24"}h</strong>!</p>");
             sb.AppendLine($"<p>Vui lòng theo dõi thông báo và thanh toán ngay sau khi đơn được xác nhận trong <strong>" +
                 $"{_systemConfigRepository.GetSystemConfigValueByKey(
-                    nameof(SystemConfigSetting.PAYMENT_REQUEST_HOUR)) ?? "24"}h</strong> kế tiếp!</p>");
+                    nameof(SystemConfigSetting.PAYMENT_REQUEST_HOUR)) ?? "24"}h</strong> kế tiếp!</p>");*/
 
             sb.AppendLine($"<p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của chúng tôi!</p>");
             sb.AppendLine($"<p>Trân trọng,<br/>Đội ngũ {APP_NAME}</p>");

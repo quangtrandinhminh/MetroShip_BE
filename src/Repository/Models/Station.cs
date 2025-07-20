@@ -55,4 +55,7 @@ public partial class Station : BaseEntity
 
     [InverseProperty(nameof(Region.Stations))]
     public virtual Region Region { get; set; }
+
+    [InverseProperty(nameof(StaffAssignment.Station))]
+    public virtual ICollection<StaffAssignment> Staffs { get; set; } = new List<StaffAssignment>();
 }

@@ -8,33 +8,23 @@ using MetroShip.Utility.Exceptions;
 
 namespace MetroShip.Service.Validations;
 
-public sealed class AuthValidator
+public static class AuthValidator
 {
-    private readonly IValidator<LoginRequest> _loginRequestValidator;
-    private readonly IValidator<RegisterRequest> _registerRequestValidator;
-    private readonly IValidator<PhoneLoginRequest> _phoneLoginRequestValidator;
-    private readonly UserEntityValidator _entityValidator;
-
-    public AuthValidator()
+    public static void ValidateLoginRequest(LoginRequest request)
     {
-        _loginRequestValidator = new LoginRequestValidator();
-        _entityValidator = new UserEntityValidator();
-        _registerRequestValidator = new RegisterRequestValidator();
-        _phoneLoginRequestValidator = new PhoneLoginRequestValidator();
+        var loginRequestValidator = new LoginRequestValidator();
+        loginRequestValidator.ValidateApiModel(request);
     }
 
-    public void ValidateLoginRequest(LoginRequest request)
+    public static void ValidateRegisterRequest(RegisterRequest request)
     {
-        _loginRequestValidator.ValidateApiModel(request);
+        var registerRequestValidator = new RegisterRequestValidator();
+        registerRequestValidator.ValidateApiModel(request);
     }
 
-    public void ValidateRegisterRequest(RegisterRequest request)
+    public static void ValidateLogin(LoginRequest dto, UserEntity? account)
     {
-        _registerRequestValidator.ValidateApiModel(request);
-    }
-
-    public void ValidateLogin(LoginRequest dto, UserEntity? account)
-    {
+        var entityValidator = new UserEntityValidator();
         // Validate Entity
         if (account == null)
         {
@@ -43,12 +33,13 @@ public sealed class AuthValidator
         }
 
         var entity = (account, dto.Password);
-        _entityValidator.ValidateBusiness(entity, StatusCodes.Status401Unauthorized);
+        entityValidator.ValidateBusiness(entity, StatusCodes.Status401Unauthorized);
     }
 
-    public void ValidatePhoneLogin (PhoneLoginRequest request)
+    public static void ValidatePhoneLogin (PhoneLoginRequest request)
     {
-        _phoneLoginRequestValidator.ValidateApiModel(request);
+        var phoneLoginRequestValidator = new PhoneLoginRequestValidator();
+        phoneLoginRequestValidator.ValidateApiModel(request);
     }
 }
 

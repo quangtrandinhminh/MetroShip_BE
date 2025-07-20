@@ -22,6 +22,8 @@
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
             public const string GetUserRoles = BaseEndpoint + "/roles";
+            public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
+            public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
         }
 
         public static class ParcelCategory
@@ -139,19 +141,28 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-trains";
             public const string GetAllTrains = BaseEndpoint;
+            public const string GetTrainsByLineSlotAndDate = BaseEndpoint 
+                + "/line/{LineId}/slot/{TimeSlotId}/date/{Date}";
             public const string GetTrainById = BaseEndpoint + "/{id}";
             public const string CreateTrain = BaseEndpoint;
             public const string UpdateTrain = BaseEndpoint + "/{id}";
             public const string DeleteTrain = BaseEndpoint + "/{id}";
             public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
             public const string SendLocation = BaseEndpoint + "/staff/send-location";
+            public const string AddShipmentItinerariesForTrain = BaseEndpoint + "/itineraries";
         }
 
         public static class MediaEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/media";
             public const string UploadImage = BaseEndpoint + "/image";
-            public const string DeleteImage = BaseEndpoint + "/image";
+            public const string UploadMultipleImages = BaseEndpoint + "/images";
+            public const string UploadVideo = BaseEndpoint + "/video";
+            public const string UploadMultipleVideos = BaseEndpoint + "/videos";
+            public const string UploadRawFile = BaseEndpoint + "/raw-file";
+            public const string UploadMultipleRawFiles = BaseEndpoint + "/raw-files";
+            public const string DeleteResource = BaseEndpoint + "/resource";
+            public const string DeleteMultipleResources = BaseEndpoint + "/resources";
         }
 
         public static class ReportEndpoint

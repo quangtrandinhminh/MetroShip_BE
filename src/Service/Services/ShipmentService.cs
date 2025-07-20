@@ -21,30 +21,30 @@ using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
+using MetroShip.Service.ApiModels.Graph;
 
 namespace MetroShip.Service.Services;
 
-public class ShipmentService : IShipmentService
+public class ShipmentService(IServiceProvider serviceProvider) : IShipmentService
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapperlyMapper _mapperlyMapper;
-    private readonly IShipmentRepository _shipmentRepository;
-    private readonly IShipmentItineraryRepository _shipmentItineraryRepository;
-    private readonly IParcelCategoryRepository _parcelCategoryRepository;
-    private readonly ILogger _logger;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IStationRepository _stationRepository;
-    private readonly ISystemConfigRepository _systemConfigRepository;
-    private readonly SystemConfigSetting _systemConfigSetting;
-    private readonly IEmailService _emailSender;
-    private readonly IUserRepository _userRepository;
-    private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository;
+    private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+    private readonly IMapperlyMapper _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+    private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();
+    private readonly IShipmentItineraryRepository _shipmentItineraryRepository = serviceProvider.GetRequiredService<IShipmentItineraryRepository>();
+    private readonly IParcelCategoryRepository _parcelCategoryRepository = serviceProvider.GetRequiredService<IParcelCategoryRepository>();
+    private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+    private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
+    private readonly IEmailService _emailSender = serviceProvider.GetRequiredService<IEmailService>();
+    private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
+    private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
     private bool _isInitializedGraph = false;
     private MetroGraph _metroGraph;
     private bool _isInitializedPricingTable = false;
     private PricingTable _pricingTable;
 
-    public ShipmentService(
+    /*public ShipmentService(
         IServiceProvider serviceProvider,
         IUnitOfWork unitOfWork,
         IShipmentRepository shipmentRepository,
@@ -69,7 +69,7 @@ public class ShipmentService : IShipmentService
         _userRepository = userRepository;
         _parcelCategoryRepository = parcelCategoryRepository;
         _metroTimeSlotRepository = metroTimeSlotRepository;
-    }
+    }*/
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
         PaginatedListRequest request
@@ -186,8 +186,6 @@ public class ShipmentService : IShipmentService
         {
             parcel.ParcelCode = TrackingCodeGenerator.GenerateParcelCode(
                                shipment.TrackingCode, index);
-            // shipment.TotalCostVnd += parcel.PriceVnd;
-            // shipment.TotalShippingFeeVnd += parcel.PriceVnd;
 
             shipment.TotalVolumeM3 += parcel.VolumeCm3 /1000000;
             shipment.TotalWeightKg += parcel.WeightKg;
@@ -222,6 +220,7 @@ public class ShipmentService : IShipmentService
             Type = MailTypeEnum.Shipment,
             Name = request.SenderName,
             Data = shipment,
+            Message = request.TrackingLink
         };
         _emailSender.SendMail(sendMailModel);
 
@@ -236,6 +235,7 @@ public class ShipmentService : IShipmentService
                 Type = MailTypeEnum.Shipment,
                 Name = request.RecipientName,
                 Data = shipment,
+                Message = request.TrackingLink
             };
             _emailSender.SendMail(recipientSendMailModel);
         }
@@ -264,7 +264,7 @@ public class ShipmentService : IShipmentService
         // Lấy tất cả cấu hình giá từ hệ thống
         var allConfigs = await _systemConfigRepository
             .GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
-        var pricingTableBuilder = new PricingTableBuilder();
+        var pricingTableBuilder = new PricingTableBuilder(); 
         _pricingTable = pricingTableBuilder.BuildPricingTable(allConfigs);
         _isInitializedPricingTable = true;
     }
@@ -328,7 +328,14 @@ public class ShipmentService : IShipmentService
         shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
         shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
         shipment.PickedUpAt = CoreHelper.SystemTimeNow;
-        shipment.PickedUpImageLink = request.PickedUpImageLink;
+        foreach (var media in request.PickedUpMedias)
+        {
+            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
+            mediaEntity.ShipmentId = shipment.Id;
+            mediaEntity.ShipmentMediaType = ShipmentMediaTypeEnum.Pickup;
+            mediaEntity.MediaType = mediaEntity.IsImage(mediaEntity.MediaUrl);
+            shipment.ShipmentMedias.Add(mediaEntity);
+        }
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -402,11 +409,11 @@ public class ShipmentService : IShipmentService
     {
         // Get system config values
         var confirmationHour = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.CONFIRMATION_HOUR)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.CONFIRMATION_HOUR)));
         var paymentRequestHour = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.PAYMENT_REQUEST_HOUR)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.PAYMENT_REQUEST_HOUR)));
         var maxScheduleDay = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_SCHEDULE_SHIPMENT_DAY)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_SCHEDULE_SHIPMENT_DAY)));
         //var minBookDate = CoreHelper.SystemTimeNow.AddHours(confirmationHour + paymentRequestHour);
         var minBookDate = CoreHelper.SystemTimeNow;
         var maxBookDate = CoreHelper.SystemTimeNow.AddDays(maxScheduleDay);
@@ -565,9 +572,9 @@ public class ShipmentService : IShipmentService
     private async Task<HashSet<string>> GetNearUserStations(TotalPriceCalcRequest request)
     {
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         var maxStationCount = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_COUNT_STATION_NEAR_USER)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER)));
 
         var stationIds = new HashSet<string> { request.DepartureStationId };
 
@@ -660,6 +667,9 @@ public class ShipmentService : IShipmentService
             ParcelPriceCalculator.CalculateParcelPricing(
                 pathResponse.Parcels, pathResponse, priceCalculationService, categories);
 
+            // Check est arrival time
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
+
             return new
             {
                 StationId = r.StationId,
@@ -673,7 +683,7 @@ public class ShipmentService : IShipmentService
         var response = new TotalPriceResponse();
 
         response.Standard = bestPathResponses
-.FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
+            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
 
         response.Nearest = bestPathResponses.Count > 1
             ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
@@ -686,10 +696,67 @@ public class ShipmentService : IShipmentService
             : null;
 
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         response.StationsInDistanceMeter = maxDistanceInMeters;
         //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
+    }
+
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateTimeOffset date)
+    {
+        _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
+
+        // for each line, get next time slot
+        var nextTimeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                       x => !x.IsAbnormal && x.DeletedAt == null)
+            .ToListAsync();
+
+        if (nextTimeSlots == null || !nextTimeSlots.Any())
+        {
+            _logger.Warning("No available time slots found for estimation.");
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Find the current time slot in the list
+        var currentSlot = nextTimeSlots.FirstOrDefault(x => x.Id == currentSlotId);
+        if (currentSlot == null)
+        {
+            _logger.Warning("Current time slot with ID {CurrentSlotId} not found in available time slots.",
+                               currentSlotId);
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // -1 is eliminate if only 1 line, does not change to next slot
+        for (var i = 0; i < pathResponse.TotalMetroLines-1; i++)
+        {
+            (date, currentSlot) = GetNextSlot(date, currentSlot, nextTimeSlots);
+        }
+
+        // Normalize date to start of the day, gmt +7, include if for loop not run
+        var result = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.FromHours(7));
+
+        // + hour from 0 to close time
+        var hour = currentSlot.CloseTime.ToTimeSpan().TotalHours;
+        // calculate how many hour from current slot
+        if (currentSlot.CloseTime.ToTimeSpan().TotalHours > currentSlot.OpenTime.ToTimeSpan().TotalHours)
+        {
+            // date to be 00:00 and add hour
+            result = result.AddHours(hour);
+        }
+        else
+        {
+            result = result.AddDays(1).AddHours(hour);
+        }
+
+        // cus timeonly from slot is +7, convert to +0
+        result = result.ToUniversalTime();
+        return result;
     }
 
     /*public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync
@@ -781,9 +848,9 @@ public class ShipmentService : IShipmentService
 
         // 2. Get system configuration
         var maxWeightKg = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_KG)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
         var maxVolumeM3 = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_CAPACITY_PER_LINE_M3)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
 
         // 3. Get all available time slots
         var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
@@ -801,6 +868,7 @@ public class ShipmentService : IShipmentService
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         return _mapperlyMapper.MapToListShipmentItineraryResponse(shipment.ShipmentItineraries.ToList());
     }
+
 
     /// <summary>
     /// Bulk fetch all itineraries that could affect capacity calculation
@@ -985,6 +1053,8 @@ public class ShipmentService : IShipmentService
         MetroTimeSlot currentSlot,
         List<MetroTimeSlot> timeSlots)
     {
+        // Normalize date to start of the day, default to UTC+0
+        date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var nextShift = currentSlot.Shift switch
         {
             ShiftEnum.Morning => ShiftEnum.Afternoon,

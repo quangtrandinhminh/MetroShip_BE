@@ -7,11 +7,15 @@ namespace MetroShip.Service.Interfaces;
 
 public interface ITrainService
 {
-    Task<PaginatedListResponse<TrainListResponse>> GetAllTrainsAsync(PaginatedListRequest request,
-        string? lineId = null, string? timeSlotId = null, DateTimeOffset? date = null);
+    Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request);
+
+    Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
+        TrainListFilterRequest request);
 
     Task<IList<object>> GetTrainSystemConfigAsync();
     Task<bool> IsShipmentDeliveredAsync(string trackingCode);
     Task<IList<string>> GetTrackingCodesByTrainAsync(string trainId);
     Task UpdateTrainLocationAsync(string trainId, double lat, double lng, string stationId);
+
+    Task<string> AddShipmentItinerariesForTrain(AddTrainToItinerariesRequest request);
 }

@@ -37,6 +37,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         public string DepartureStationName { get; set; }
         public string DestinationStationName { get; set; }
+        public string? CurrentStationName { get; set; } 
     }
 
     public class RouteDto : Route
@@ -74,12 +75,19 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TrackingCode = s.TrackingCode,
             DepartureStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
-                .Select(i => i.Route.FromStation.StationNameVi)
-                .FirstOrDefault(),
+                .FirstOrDefault().Route.FromStation.StationNameVi,
+
             DestinationStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
-                .Select(i => i.Route.ToStation.StationNameVi)
-                .LastOrDefault(),
+                .LastOrDefault().Route.ToStation.StationNameVi,
+
+            CurrentStationName = s.ShipmentItineraries
+                                     .Where(i => i.IsCompleted)
+                                     .OrderBy(i => i.LegOrder)
+                                     .LastOrDefault().Route.ToStation.StationNameVi ??
+                                 s.ShipmentItineraries
+                                     .OrderBy(i => i.LegOrder)
+                                     .FirstOrDefault().Route.FromStation.StationNameVi,
 
             SenderName = s.SenderName,
             SenderPhone = s.SenderPhone,
@@ -105,35 +113,80 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         var shipment = _context.Shipments.AsNoTracking();
 
-        if (shipment == null) return null;
-
-        var shipmentDto = await shipment.Select(shipment => new ShipmentDto
+        var shipmentDto = await shipment.Select(s => new ShipmentDto
         {
-            // info 
-            Id = shipment.Id,
-            SenderId = shipment.SenderId,
-            SenderName = shipment.SenderName,
-            SenderPhone = shipment.SenderPhone,
-            RecipientName = shipment.RecipientName,
-            RecipientPhone = shipment.RecipientPhone,
-            RecipientEmail = shipment.RecipientEmail,
-            RecipientNationalId = shipment.RecipientNationalId,
-            TrackingCode = shipment.TrackingCode,
+            // Base Entity fields
+            Id = s.Id,
 
-            // status tracking
-            ApprovedAt = shipment.ApprovedAt,
-            BookedAt = shipment.BookedAt.Value,
-            TotalCostVnd = shipment.TotalCostVnd,
-            ScheduledDateTime = shipment.ScheduledDateTime,
-            PaidAt = shipment.PaidAt,
-            PickedUpAt = shipment.PickedUpAt,
-            DeliveredAt = shipment.DeliveredAt,
-            SurchargeAppliedAt = shipment.SurchargeAppliedAt,
-            CancelledAt = shipment.CancelledAt,
-            RefundedAt = shipment.RefundedAt,
-            ShipmentStatus = shipment.ShipmentStatus,
-            TotalKm = shipment.TotalKm,
-            ShipmentItineraries = shipment.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
+            // Basic shipment info
+            TrackingCode = s.TrackingCode,
+            DepartureStationId = s.DepartureStationId,
+            DestinationStationId = s.DestinationStationId,
+            ReturnForShipmentId = s.ReturnForShipmentId,
+            CurrentStationId = s.CurrentStationId,
+            ShipmentStatus = s.ShipmentStatus,
+
+            // Financial fields
+            TotalCostVnd = s.TotalCostVnd,
+            TotalShippingFeeVnd = s.TotalShippingFeeVnd,
+            TotalInsuranceFeeVnd = s.TotalInsuranceFeeVnd,
+            TotalSurchargeFeeVnd = s.TotalSurchargeFeeVnd,
+            TotalOverdueSurchargeFee = s.TotalOverdueSurchargeFee,
+
+            // Measurement fields
+            TotalKm = s.TotalKm,
+            TotalWeightKg = s.TotalWeightKg,
+            TotalVolumeM3 = s.TotalVolumeM3,
+
+            // Scheduling fields
+            TimeSlotId = s.TimeSlotId,
+            ScheduledDateTime = s.ScheduledDateTime,
+            ScheduledShift = s.ScheduledShift,
+            PriceStructureDescriptionJSON = s.PriceStructureDescriptionJSON,
+
+            // Status tracking timestamps
+            BookedAt = s.BookedAt,
+            ApprovedAt = s.ApprovedAt,
+            RejectedAt = s.RejectedAt,
+            RejectionReason = s.RejectionReason,
+            RejectedBy = s.RejectedBy,
+            ConfirmedBy = s.ConfirmedBy,
+            PaymentDealine = s.PaymentDealine,
+            PaidAt = s.PaidAt,
+            PickedUpAt = s.PickedUpAt,
+            PickedUpBy = s.PickedUpBy,
+            AwaitedDeliveryAt = s.AwaitedDeliveryAt,
+            DeliveredAt = s.DeliveredAt,
+            SurchargeAppliedAt = s.SurchargeAppliedAt,
+            CancelledAt = s.CancelledAt,
+            RefundedAt = s.RefundedAt,
+
+            // Return fields
+            ReturnRequestedAt = s.ReturnRequestedAt,
+            ReturnConfirmedAt = s.ReturnConfirmedAt,
+            ReturnReason = s.ReturnReason,
+            ReturnConfirmedBy = s.ReturnConfirmedBy,
+            ReturnPickupAt = s.ReturnPickupAt,
+            ReturnDeliveredAt = s.ReturnDeliveredAt,
+            ReturnCancelledAt = s.ReturnCancelledAt,
+
+            // Customer fields - Sender
+            SenderId = s.SenderId,
+            SenderName = s.SenderName,
+            SenderPhone = s.SenderPhone,
+
+            // Customer fields - Recipient
+            RecipientId = s.RecipientId,
+            RecipientName = s.RecipientName,
+            RecipientPhone = s.RecipientPhone,
+            RecipientEmail = s.RecipientEmail,
+            RecipientNationalId = s.RecipientNationalId,
+
+            // Feedback fields
+            Rating = s.Rating,
+            Feedback = s.Feedback,
+            
+            ShipmentItineraries = s.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
                 Id = itinerary.Id,
                 RouteId = itinerary.RouteId,
@@ -155,28 +208,22 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
-            DepartureStationName = shipment.ShipmentItineraries
+            DepartureStationName = s.ShipmentItineraries
                 .OrderBy(i => i.LegOrder)
-                .Select(i => i.Route.FromStation.StationNameVi)
-                .FirstOrDefault(),
-            DestinationStationName = shipment.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .Select(i => i.Route.ToStation.StationNameVi)
-                .LastOrDefault(),
+                .FirstOrDefault().Route.FromStation.StationNameVi,
 
-            TotalShippingFeeVnd = shipment.TotalShippingFeeVnd,
-            TotalInsuranceFeeVnd = shipment.TotalInsuranceFeeVnd,
-            TotalSurchargeFeeVnd = shipment.TotalSurchargeFeeVnd,
-            TotalVolumeM3 = shipment.TotalVolumeM3,
-            TotalWeightKg = shipment.TotalWeightKg,
-            PickedUpImageLink = shipment.PickedUpImageLink,
-            RejectedAt = shipment.RejectedAt,
-            RejectionReason = shipment.RejectionReason,
-            RejectedBy = shipment.RejectedBy,
-            ConfirmedBy = shipment.ConfirmedBy,
-            PickedUpBy = shipment.PickedUpBy,
-            ReturnPickupAt = shipment.ReturnPickupAt,
-            Parcels = shipment.Parcels
+            DestinationStationName = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault().Route.ToStation.StationNameVi,
+
+            CurrentStationName = s.ShipmentItineraries
+                .Where(i => i.IsCompleted)
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault().Route.ToStation.StationNameVi ??
+                s.ShipmentItineraries
+                    .OrderBy(i => i.LegOrder)
+                    .FirstOrDefault().Route.FromStation.StationNameVi,
+            Parcels = s.Parcels
             .Select(parcel => new Parcel
             {
                 Id = parcel.Id,
@@ -189,16 +236,26 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Description = parcel.Description,
                 PriceVnd = parcel.PriceVnd,
                 ParcelCategoryId = parcel.ParcelCategoryId,
+                ShippingFeeVnd = parcel.ShippingFeeVnd,
+                InsuranceFeeVnd = parcel.InsuranceFeeVnd,
                 ParcelCategory = new ParcelCategory
                 {
                     Id = parcel.ParcelCategory.Id,
                     CategoryName = parcel.ParcelCategory.CategoryName,
                     Description = parcel.ParcelCategory.Description,
+                    InsuranceRate = parcel.ParcelCategory.InsuranceRate,
+                    InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
+                    IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
                 },
             })
             .ToList(),
             //Transactions = shipment.Transactions.ToList(),
         }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
+
+        if (shipmentDto == null)
+        {
+            return null;
+        }
 
         return shipmentDto;
     }

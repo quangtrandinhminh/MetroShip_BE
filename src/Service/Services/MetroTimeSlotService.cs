@@ -20,7 +20,7 @@ namespace MetroShip.Service.Services
 {
     public class MetroTimeSlotService(IServiceProvider serviceProvider) : IMetroTimeSlotService
     {
-        private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
+        private readonly IMetroTimeSlotRepository _metroTimeSlotRepository = serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
         private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -36,7 +36,8 @@ namespace MetroShip.Service.Services
             var timeSlots = await _metroTimeSlotRepository.GetAll()
                 .Where(s => s.DeletedAt == null)
                 .OrderBy(s => s.OpenTime)
-                .Select(slot => new MetroTimeSlotResponse
+                .Select(slot => _mapper.MapToMetroTimeSlotResponse(slot) 
+                /*new MetroTimeSlotResponse
                 {
                     Id = slot.Id,
                     DayOfWeek = slot.DayOfWeek,
@@ -46,7 +47,8 @@ namespace MetroShip.Service.Services
                     Shift = slot.Shift,
                     IsAbnormal = slot.IsAbnormal,
                     ScheduleBeforeShiftMinutes = shiftConfig
-                }).OrderBy(slot => slot.OpenTime).ToListAsync();
+                }*/
+                ).ToListAsync();
             return timeSlots;
         }
     }
