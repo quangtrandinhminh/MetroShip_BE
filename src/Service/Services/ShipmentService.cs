@@ -332,8 +332,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
             mediaEntity.ShipmentId = shipment.Id;
-            mediaEntity.ShipmentMediaType = ShipmentMediaTypeEnum.Pickup;
-            mediaEntity.MediaType = mediaEntity.IsImage(mediaEntity.MediaUrl);
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
             shipment.ShipmentMedias.Add(mediaEntity);
         }
 
