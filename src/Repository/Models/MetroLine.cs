@@ -49,7 +49,7 @@ public partial class MetroLine : BaseEntity
 
     public int? DwellTimeMin { get; set; }
 
-    public string? StationCoordinateList { get; set; } // JSON string of coordinates
+    public string? StationListJSON { get; set; } // JSON string of coordinates
 
     [StringLength(20)]
     public string ColorHex { get; set; }
@@ -65,4 +65,17 @@ public partial class MetroLine : BaseEntity
 
     [InverseProperty(nameof(MetroTrain.Line))]
     public virtual ICollection<MetroTrain> Trains { get; set; } = new List<MetroTrain>();
+}
+
+[NotMapped]
+public class StationListItem
+{
+    public string StationId { get; set; }
+    public string StationCode { get; set; }
+    public string StationNameVi { get; set; }
+    public string StationNameEn { get; set; }
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public bool IsUnderground { get; set; }
+    public bool IsActive { get; set; }
 }

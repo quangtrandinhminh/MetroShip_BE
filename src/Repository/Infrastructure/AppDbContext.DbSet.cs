@@ -47,4 +47,12 @@ public sealed partial class AppDbContext
     public DbSet<SupportingTicket> SupportingTickets { get; set; }
 
     public DbSet<SystemConfig> SystemConfigs { get; set; }
+
+    public DbSet<PricingConfig> PricingConfig { get; set; }
+
+    public DbSet<WeightTier> WeightTier { get; set; }
+
+    public DbSet<DistanceTier> DistanceTier { get; set; }
+
+    public DbSet<ParcelMedia> ParcelMedia { get; set; }
 }
