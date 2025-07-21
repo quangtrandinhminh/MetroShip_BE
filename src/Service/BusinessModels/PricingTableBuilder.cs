@@ -36,7 +36,7 @@ public class PriceCalculationService
         else if (distanceKm <= maxKmTier2)
         {
             // Calculate price for tier 1
-            priceByKm = priceKmTier1 * distanceKm;
+            priceByKm = pricePerKmTier2 * distanceKm;
         }
         else if (distanceKm > maxKmTier2)
         {

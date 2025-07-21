@@ -44,33 +44,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private bool _isInitializedPricingTable = false;
     private PricingTable _pricingTable;
 
-    /*public ShipmentService(
-        IServiceProvider serviceProvider,
-        IUnitOfWork unitOfWork,
-        IShipmentRepository shipmentRepository,
-        IShipmentItineraryRepository shipmentItineraryRepository,
-        IStationRepository stationRepository,
-        ISystemConfigRepository systemConfigRepository,
-        IEmailService emailSender,
-        IParcelCategoryRepository parcelCategoryRepository,
-        IBaseRepository<MetroTimeSlot> metroTimeSlotRepository,
-        IUserRepository userRepository)
-    {
-        _unitOfWork = unitOfWork;
-        _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
-        _shipmentRepository = shipmentRepository;
-        _shipmentItineraryRepository = shipmentItineraryRepository;
-        _logger = serviceProvider.GetRequiredService<ILogger>();
-        _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
-
-        _stationRepository = stationRepository;
-        _systemConfigRepository = systemConfigRepository;
-        _emailSender = emailSender;
-        _userRepository = userRepository;
-        _parcelCategoryRepository = parcelCategoryRepository;
-        _metroTimeSlotRepository = metroTimeSlotRepository;
-    }*/
-
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
         PaginatedListRequest request
         , ShipmentFilterRequest? filterRequest = null, OrderByRequest? orderByRequest = null

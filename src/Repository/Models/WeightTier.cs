@@ -13,7 +13,7 @@ public class WeightTier : BaseEntity
 
     [ForeignKey(nameof(PricingConfigId))]
     [InverseProperty(nameof(PricingConfig.WeightTiers))]
-    public PricingConfig PricingConfig { get; set; }
+    public virtual PricingConfig PricingConfig { get; set; }
 
     public bool IsWeightInRange(decimal weightKg)
     {

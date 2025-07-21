@@ -42,7 +42,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         List<RoleEntity> roleEntity;
         if (role != null)
         {
-            predicate = predicate.And(x => x.UserRoles.Any(y => y.Role.Name == role.ToString()));
+            predicate = predicate.And(x => x.UserRoles.Any(y => y.Role.Name.Equals(role.ToString())));
             roleEntity = await _roleManager.Roles.Where(x => x.Name == role.ToString()).ToListAsync();
         }
         else

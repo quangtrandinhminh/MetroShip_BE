@@ -13,7 +13,7 @@ namespace MetroShip.Repository.Models;
 [Index(nameof(LineId))]
 [Index(nameof(FromStationId))]
 [Index(nameof(ToStationId))]
-[Index(nameof(LineId),nameof(FromStationId),nameof(ToStationId), IsUnique = true)]
+[Index(nameof(LineId),nameof(FromStationId),nameof(ToStationId))]
 public partial class Route : BaseEntity
 {
     public Route()
