@@ -89,34 +89,6 @@ VALUES
     ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity'),
     ('d56ba56c-6469-4494-913a-88d3639f905e','93155333-ab24-4410-b8f5-a77c77e81195','UserRoleEntity');
 
--- ─────────────────────────────────────────────────────────────────
--- 23/06/2025: CHANGE DATA
--- ─────────────────────────────────────────────────────────────────
--- Clear all transaction data
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."Transactions") THEN
-            DELETE FROM public."Transactions";
-        END IF;
-    END
-$$;
-
--- Clear all shipment data
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."ShipmentImages") THEN
-            DELETE FROM public."ShipmentImages";
-        END IF;
-    END
-$$;
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."Shipments") THEN
-            DELETE FROM public."Shipments";
-        END IF;
-    END
-$$;
-
 -- Clear all system configs
 DO $$
     BEGIN
@@ -182,43 +154,179 @@ VALUES
 
     -- Price -- type=3
     ('ae2856fc-485b-42b8-b986-a94318869b9e','DISTANCE_STEP_KM','300',
-    'Bước nhảy khoảng cách tính giá (km)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Bước nhảy khoảng cách tính giá (km)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('aa1bdb30-7df7-4efd-8fc0-663c9b0576f5','PRICE_STEP_PERCENT_PER_DISTANCE_TIER','0.5',
-    'Phần trăm giá theo từng bậc khoảng cách', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Phần trăm giá theo từng bậc khoảng cách', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('d5e99000-fd33-4eb6-b0ee-708c0ffbf5f7','DISTANCE_TIER_QUANTITY','10',
-    'Số lượng bậc khoảng cách', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Số lượng bậc khoảng cách', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('91c3f6a9-6f9a-4150-a31d-2b51ea2e7c07','WEIGHT_TIER_1_MAX_KG','5',
-    'Trọng lượng tối đa bậc 1 (kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Trọng lượng tối đa bậc 1 (kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('a3dbe011-5d6f-4c51-9714-2aa9a5a9246d','PRICE_TIER_1_VND','25000',
-    'Giá bậc 1 (VND)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Giá bậc 1 (VND)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('8ebaa2ee-b418-426b-bd86-5e5698324c80','WEIGHT_TIER_2_MAX_KG','10',
-    'Trọng lượng tối đa bậc 2 (kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Trọng lượng tối đa bậc 2 (kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('7cc423fb-925b-4031-9f19-92cb6dabc2e7','PRICE_TIER_2_VND_PER_KG','7500',
-    'Giá bậc 2 (VND/kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Giá bậc 2 (VND/kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('0631cfda-896c-4f77-bd96-2ad90e127521','WEIGHT_TIER_3_MAX_KG','50',
-    'Trọng lượng tối đa bậc 3 (kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Trọng lượng tối đa bậc 3 (kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('8f95513d-8b40-4f11-913a-9240fc8ab8bd','PRICE_TIER_3_VND_PER_KG','7000',
-    'Giá bậc 3 (VND/kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Giá bậc 3 (VND/kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('49159b29-8477-4927-bb98-a2342919c55c','WEIGHT_TIER_4_MAX_KG','100',
-    'Trọng lượng tối đa bậc 4 (kg)', 3,TRUE,
+     'Trọng lượng tối đa bậc 4 (kg)', 3,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('3df009ac-6562-484e-9acd-299138b5aa42','PRICE_TIER_4_VND_PER_KG','6500',
-    'Giá bậc 4 (VND/kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL),
+     'Giá bậc 4 (VND/kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('7000f9a3-1a1d-4f73-aacf-704ffcaa3ee6','PRICE_TIER_5_VND_PER_KG','6000',
-    'Giá bậc 5 (VND/kg)', 3,TRUE,
-    NULL,NULL,NULL,NOW(),NOW(),NULL);
+     'Giá bậc 5 (VND/kg)', 3,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+
+-- ───────────────────────────────────────────────────────────────
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."ParcelCategories") THEN
+            DELETE FROM public."ParcelCategories";
+        END IF;
+    END
+$$;
+-- Parcel Category
+INSERT INTO public."ParcelCategories"
+("Id","CategoryName","Description","WeightLimitKg","VolumeLimitCm3",
+ "LengthLimitCm","WidthLimitCm","HeightLimitCm","IsActive",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt",
+ "TotalSizeLimitCm", "InsuranceRate", "InsuranceFeeVnd", "IsInsuranceRequired")
+VALUES
+    -- Hàng hóa chung / General cargo
+    ('0a1b2c3d-4e5f-6789-abcd-0fedcba98765',
+     'Hàng hóa chung',
+     'Hàng bình thường, không cần xử lý đặc biệt',
+     NULL,   NULL,
+     150, 150, 150,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL,
+     300, NULL, 5000, FALSE),
+
+    -- Hàng dễ hư hỏng / Perishable goods
+    ('3d4e5f6a-7b8c-9012-def0-3fedcba98765',
+     'Hàng dễ hư hỏng',
+     'Hàng cần bảo quản lạnh hoặc kiểm soát nhiệt độ',
+     NULL,   NULL,
+     150, 150, 150,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL,
+     300, NULL, 5000, FALSE),
+
+    -- Hàng giá trị / Valuable goods
+    ('4e5f6a7b-8c9d-0123-ef01-4fedcba98765',
+     'Hàng giá trị',
+     'Hàng giá trị cao, cần bảo mật và giám sát',
+     NULL,   NULL,
+     150, 150, 150,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL,
+     300, 0.005, NULL, TRUE),
+
+    -- Hàng dễ vỡ
+    ('9c50210e-5670-4608-b58a-c54d0b3cc249',
+     'Hàng dễ vỡ',
+     'Hàng dễ vỡ, cần đóng gói cẩn thận',
+     NULL,   NULL,
+     150, 150, 150,
+     TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL,
+     300, NULL, 20000, TRUE);
+-- ───────────────────────────────────────────────────────────────
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."MetroTrains") THEN
+            DELETE FROM public."MetroTrains";
+        END IF;
+    END
+$$;
+-- Train Seed Data
+INSERT INTO public."MetroTrains"
+("Id", "TrainCode", "ModelName", "LineId","IsActive", "NumberOfCarriages",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0', 'HCMC-L1-T01','HITACHI',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('87eca124-25e8-4994-a07d-8715bfdef44b', 'HCMC-L1-T02','HITACHI',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('f8f195af-4db7-4786-a1a7-acf8812b4e71', 'HCMC-L2-T01','HITACHI',
+     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('8d466e7b-df3e-421b-9080-9f13ae4fc0cc', 'HCMC-L2-T02','HITACHI',
+     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('f0e189a5-e649-47f6-aa77-7ba543208f42', 'HCMC-L3A-T01','HITACHI',
+     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('76c5f4b0-1b32-4284-b9a6-7a0deeccba64', 'HCMC-L3A-T02','HITACHI',
+     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('7d26d6af-fe31-4564-8930-0f3d8d28b526', 'HCMC-L3B-T01','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('66243ad8-7a3d-40b9-986e-a6d258ba6e97', 'HCMC-L3B-T02','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL)
+;
+
 -- ─────────────────────────────────────────────────────────────────
--- Clear all routes, metro lines, and stations
+-- 22/07/2025: CHANGE DATA
+-- ─────────────────────────────────────────────────────────────────
+-- Clear all transaction data
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Transactions") THEN
+            DELETE FROM public."Transactions";
+        END IF;
+    END
+$$;
+
+-- Clear all shipment data
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."ShipmentImages") THEN
+            DELETE FROM public."ShipmentImages";
+        END IF;
+    END
+$$;
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."Shipments") THEN
+            DELETE FROM public."Shipments";
+        END IF;
+    END
+$$;
+-- ─────────────────────────────────────────────────────────────────
+-- Clear all routes, metro lines, and stations, staff assignments
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."StaffAssignments") THEN
+            DELETE FROM public."StaffAssignments";
+        END IF;
+    END
+$$;
 DO $$
     BEGIN
         IF EXISTS (SELECT 1 FROM public."Routes") THEN
@@ -1807,103 +1915,6 @@ VALUES
 
 UPDATE public."Stations"
 SET "IsActive" = TRUE;
--- ───────────────────────────────────────────────────────────────
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM public."ParcelCategories") THEN
-        DELETE FROM public."ParcelCategories";
-    END IF;
-END
-$$;
--- Parcel Category
-INSERT INTO public."ParcelCategories"
-("Id","CategoryName","Description","WeightLimitKg","VolumeLimitCm3",
- "LengthLimitCm","WidthLimitCm","HeightLimitCm","IsActive",
- "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt",
- "TotalSizeLimitCm", "InsuranceRate", "InsuranceFeeVnd", "IsInsuranceRequired")
-VALUES
-    -- Hàng hóa chung / General cargo
-    ('0a1b2c3d-4e5f-6789-abcd-0fedcba98765',
-     'Hàng hóa chung',
-     'Hàng bình thường, không cần xử lý đặc biệt',
-     NULL,   NULL,
-     150, 150, 150,
-     TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL,
-     300, NULL, 5000, FALSE),
 
-    -- Hàng dễ hư hỏng / Perishable goods
-    ('3d4e5f6a-7b8c-9012-def0-3fedcba98765',
-     'Hàng dễ hư hỏng',
-     'Hàng cần bảo quản lạnh hoặc kiểm soát nhiệt độ',
-     NULL,   NULL,
-     150, 150, 150,
-     TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL,
-     300, NULL, 5000, FALSE),
 
-    -- Hàng giá trị / Valuable goods
-    ('4e5f6a7b-8c9d-0123-ef01-4fedcba98765',
-     'Hàng giá trị',
-     'Hàng giá trị cao, cần bảo mật và giám sát',
-     NULL,   NULL,
-     150, 150, 150,
-     TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL,
-     300, 0.005, NULL, TRUE),
 
-    -- Hàng dễ vỡ
-    ('9c50210e-5670-4608-b58a-c54d0b3cc249',
-     'Hàng dễ vỡ',
-     'Hàng dễ vỡ, cần đóng gói cẩn thận',
-     NULL,   NULL,
-     150, 150, 150,
-     TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL,
-     300, NULL, 20000, TRUE);
--- ───────────────────────────────────────────────────────────────
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."MetroTrains") THEN
-            DELETE FROM public."MetroTrains";
-        END IF;
-    END
-$$;
--- Train Seed Data
-INSERT INTO public."MetroTrains"
-("Id", "TrainCode", "ModelName", "LineId","IsActive", "NumberOfCarriages",
- "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
-VALUES
-    ('2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0', 'HCMC-L1-T01','HITACHI',
-     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
-      TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('87eca124-25e8-4994-a07d-8715bfdef44b', 'HCMC-L1-T02','HITACHI',
-     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('f8f195af-4db7-4786-a1a7-acf8812b4e71', 'HCMC-L2-T01','HITACHI',
-    '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
-    TRUE, 3,
-    NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('8d466e7b-df3e-421b-9080-9f13ae4fc0cc', 'HCMC-L2-T02','HITACHI',
-    '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
-    TRUE, 3,
-    NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('f0e189a5-e649-47f6-aa77-7ba543208f42', 'HCMC-L3A-T01','HITACHI',
-     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('76c5f4b0-1b32-4284-b9a6-7a0deeccba64', 'HCMC-L3A-T02','HITACHI',
-     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('7d26d6af-fe31-4564-8930-0f3d8d28b526', 'HCMC-L3B-T01','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('66243ad8-7a3d-40b9-986e-a6d258ba6e97', 'HCMC-L3B-T02','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL)
-;
