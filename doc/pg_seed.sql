@@ -244,52 +244,6 @@ VALUES
      TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL,
      300, NULL, 20000, TRUE);
--- ───────────────────────────────────────────────────────────────
-DO $$
-    BEGIN
-        IF EXISTS (SELECT 1 FROM public."MetroTrains") THEN
-            DELETE FROM public."MetroTrains";
-        END IF;
-    END
-$$;
--- Train Seed Data
-INSERT INTO public."MetroTrains"
-("Id", "TrainCode", "ModelName", "LineId","IsActive", "NumberOfCarriages",
- "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
-VALUES
-    ('2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0', 'HCMC-L1-T01','HITACHI',
-     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('87eca124-25e8-4994-a07d-8715bfdef44b', 'HCMC-L1-T02','HITACHI',
-     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('f8f195af-4db7-4786-a1a7-acf8812b4e71', 'HCMC-L2-T01','HITACHI',
-     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('8d466e7b-df3e-421b-9080-9f13ae4fc0cc', 'HCMC-L2-T02','HITACHI',
-     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('f0e189a5-e649-47f6-aa77-7ba543208f42', 'HCMC-L3A-T01','HITACHI',
-     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('76c5f4b0-1b32-4284-b9a6-7a0deeccba64', 'HCMC-L3A-T02','HITACHI',
-     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('7d26d6af-fe31-4564-8930-0f3d8d28b526', 'HCMC-L3B-T01','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL),
-    ('66243ad8-7a3d-40b9-986e-a6d258ba6e97', 'HCMC-L3B-T02','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
-     TRUE, 3,
-     NULL, NULL, NULL, NOW(), NOW(), NULL)
-;
 
 -- ─────────────────────────────────────────────────────────────────
 -- 22/07/2025: CHANGE DATA
@@ -319,7 +273,14 @@ DO $$
     END
 $$;
 -- ─────────────────────────────────────────────────────────────────
--- Clear all routes, metro lines, and stations, staff assignments
+-- Clear all routes, metro lines, and stations, staff assignments, trains
+DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM public."MetroTrains") THEN
+            DELETE FROM public."MetroTrains";
+        END IF;
+    END
+$$;
 DO $$
     BEGIN
         IF EXISTS (SELECT 1 FROM public."StaffAssignments") THEN
@@ -334,7 +295,6 @@ DO $$
         END IF;
     END
 $$;
-
 DO $$
     BEGIN
         IF EXISTS (SELECT 1 FROM public."MetroLines") THEN
@@ -342,7 +302,6 @@ DO $$
         END IF;
     END
 $$;
-
 DO $$
     BEGIN
         IF EXISTS (SELECT 1 FROM public."Stations") THEN
@@ -1915,6 +1874,46 @@ VALUES
 
 UPDATE public."Stations"
 SET "IsActive" = TRUE;
+
+-- ───────────────────────────────────────────────────────────────
+-- Train Seed Data
+INSERT INTO public."MetroTrains"
+("Id", "TrainCode", "ModelName", "LineId","IsActive", "NumberOfCarriages",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0', 'HCMC-L1-T01','HITACHI',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('87eca124-25e8-4994-a07d-8715bfdef44b', 'HCMC-L1-T02','HITACHI',
+     'e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('f8f195af-4db7-4786-a1a7-acf8812b4e71', 'HCMC-L2-T01','HITACHI',
+     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('8d466e7b-df3e-421b-9080-9f13ae4fc0cc', 'HCMC-L2-T02','HITACHI',
+     '2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('f0e189a5-e649-47f6-aa77-7ba543208f42', 'HCMC-L3A-T01','HITACHI',
+     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('76c5f4b0-1b32-4284-b9a6-7a0deeccba64', 'HCMC-L3A-T02','HITACHI',
+     '8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('7d26d6af-fe31-4564-8930-0f3d8d28b526', 'HCMC-L3B-T01','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('66243ad8-7a3d-40b9-986e-a6d258ba6e97', 'HCMC-L3B-T02','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL)
+;
 
 
 
