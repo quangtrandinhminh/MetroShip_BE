@@ -68,7 +68,7 @@ public class UserEntity : IdentityUser
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
     [InverseProperty(nameof(StaffAssignment.Staff))]
-    public virtual ICollection<StaffAssignment>? StaffAssignments { get; set; }
+    public virtual ICollection<StaffAssignment?> StaffAssignments { get; set; }
 
     [NotMapped]
     public override string SecurityStamp { get => base.SecurityStamp; set => base.SecurityStamp = value; }

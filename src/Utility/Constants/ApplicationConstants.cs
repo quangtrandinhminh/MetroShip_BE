@@ -97,7 +97,7 @@
         public const string USER_EXISTED = "User already exists";
         public const string CREATE_USER_SUCCESS = "User added successfully.";
         public const string UPDATE_USER_SUCCESS = "User updated successfully.";
-        public const string DELETE_USER_SUCCESS = "User deleted successfully.";
+        public const string BAN_USER_SUCCESS = "User banned successfully.";
         public const string ADMIN_NOT_FOUND = "Administrator not found.";
         public const string CUSTOMER_NOT_FOUND = "Customer not found.";
         public const string ASSIGN_ROLE_SUCCESS = "Role assigned successfully.";
