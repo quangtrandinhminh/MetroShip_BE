@@ -71,7 +71,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         {
             user.Role = _mapper.MapRoleToRoleName(roleEntity);
 
-            if (user.StaffAssignments.Any())
+            if (user.StaffAssignments != null && user.StaffAssignments.Any())
             {
                 foreach (var assignment in user.StaffAssignments)
                 {
@@ -197,7 +197,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     {
         _logger.Information($"Get user by id {id}");
         var user = await _userRepository.GetSingleAsync(e => e.Id == id,
-            x => x.UserRoles
+            x => x.UserRoles, _ => _.StaffAssignments
             );
         if (user == null)
         {
@@ -205,9 +205,30 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                 ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status404NotFound);
         }
 
+        var stationIds = user.StaffAssignments
+            .Select(sa => sa.StationId)
+            .Distinct()
+            .ToList();
+
+        var stationList = _stationRepository.GetAll()
+            .Where(x => x.DeletedAt == null && stationIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.StationNameVi });
+
         var response = _mapper.MapToUserResponse(user);
         var roles = await _userManager.GetRolesAsync(user);
         response.Role = roles;
+        if (response.StaffAssignments != null && response.StaffAssignments.Any())
+        {
+            foreach (var assignment in response.StaffAssignments)
+            {
+                // get station name for staff
+                var station = stationList.FirstOrDefault(x => x.Id == assignment.StationId);
+                if (station != null)
+                {
+                    assignment.StationName = station.StationNameVi;
+                }
+            }
+        }
         return response;
     }
 
