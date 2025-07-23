@@ -10,5 +10,5 @@ public interface IUserService
     Task CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(UserUpdateRequest request);
     Task<UserResponse> GetByIdAsync(object id);
-    Task DeleteUserAsync(object id);
+    Task BanUserAsync(object id);
 }

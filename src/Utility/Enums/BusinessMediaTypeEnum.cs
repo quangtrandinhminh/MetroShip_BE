@@ -1,6 +1,6 @@
 ﻿namespace MetroShip.Utility.Enums;
 
-public enum ShipmentMediaTypeEnum
+public enum BusinessMediaTypeEnum
 {
     Pickup = 1,
     TransitTracking,

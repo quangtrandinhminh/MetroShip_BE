@@ -163,6 +163,7 @@
             public const string UploadMultipleRawFiles = BaseEndpoint + "/raw-files";
             public const string DeleteResource = BaseEndpoint + "/resource";
             public const string DeleteMultipleResources = BaseEndpoint + "/resources";
+            public const string GetBusinessMediaType = BaseEndpoint + "/business-media-type";
         }
 
         public static class ReportEndpoint

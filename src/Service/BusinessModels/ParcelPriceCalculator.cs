@@ -26,8 +26,11 @@ public static class ParcelPriceCalculator
             parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
 
             // Calculate shipping fee
+            /*parcel.ShippingFeeVnd = priceCalculationService.
+                CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);*/
+
             parcel.ShippingFeeVnd = priceCalculationService.
-                CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);
+                CalculateShippingPriceDemo(chargeableWeight, pathResponse.TotalKm);
             parcel.PriceVnd += parcel.ShippingFeeVnd;
 
             // Calculate insurance if required

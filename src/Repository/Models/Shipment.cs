@@ -69,6 +69,8 @@ public partial class Shipment : BaseEntity
     public string? TimeSlotId { get; set; }
     public DateTimeOffset? ScheduledDateTime { get; set; } 
     public ShiftEnum? ScheduledShift { get; set; }
+
+    public string? PricingConfigId { get; set; }
     public string? PriceStructureDescriptionJSON { get; set; }
 
     public DateTimeOffset? BookedAt { get; set; }
@@ -151,4 +153,8 @@ public partial class Shipment : BaseEntity
 
     [InverseProperty(nameof(ShipmentMedia.Shipment))]
     public virtual ICollection<ShipmentMedia> ShipmentMedias { get; set; } = new List<ShipmentMedia>();
+
+    [ForeignKey(nameof(PricingConfigId))]
+    [InverseProperty(nameof(PricingConfig.Shipments))]
+    public virtual PricingConfig? PricingConfig { get; set; }
 }

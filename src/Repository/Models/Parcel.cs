@@ -72,4 +72,7 @@ public partial class Parcel : BaseEntity
 
     [InverseProperty(nameof(ParcelTracking.Parcel))]
     public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; } = new List<ParcelTracking>();
+
+    [InverseProperty(nameof(ParcelMedia.Parcel))]
+    public virtual ICollection<ParcelMedia> ParcelMedias { get; set; } = new List<ParcelMedia>();
 }

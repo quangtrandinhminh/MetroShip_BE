@@ -23,6 +23,7 @@ using MetroShip.Service.ApiModels.Train;
 using MetroShip.Utility.Helpers;
 using MetroShip.Utility.Enums;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.StaffAssignment;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
@@ -138,6 +139,10 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // media
     public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+
+    // staff assignment
+    public partial StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);
+    public partial List<StaffAssignmentResponse> MapToStaffAssignmentResponseList(ICollection<StaffAssignment> entity);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

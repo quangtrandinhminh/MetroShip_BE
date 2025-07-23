@@ -11,6 +11,60 @@ public class PriceCalculationService
         _pricingTable = pricingTable;
     }
 
+    public decimal CalculateShippingPriceDemo(decimal weight, decimal distanceKm)
+    {
+        // For demo purposes, we will use a simple fixed price calculation
+        var weightMaxTier1 = 10; // Example max weight for tier 1
+        var pricePerKgAndKmTier1 = 30; // Example price per kg and km for tier 1
+        var weightMaxTier2 = 50; // Example max weight for tier 2
+        var pricePerKgAndKmTier2 = 25; // Example price per kg and km for tier 2
+        var weightMaxTier3 = 100; // Example max weight for tier 3
+        var pricePerKgAndKmTier3 = 22; // Example price per kg and km for tier 3
+        var weightMaxTier4 = 200; // Example max weight for tier 4
+        var pricePerKgAndKmTier4 = 20; // Example price per kg and km for tier 4
+        var maxKmTier1 = 7; // Example max km for tier 1
+        var priceKmTier1 = 5000; // Example price per km for tier 1 (vnd)
+        var maxKmTier2 = 100; // Example max km for tier 2
+        var pricePerKmTier2 = 800; // Example price per km for tier 2 (vnd/km)
+
+        // Shipping fee = ((price by km*km) + (price by kg and km*kg*km))
+        var priceByKm = 0m;
+        if (distanceKm <= maxKmTier1)
+        {
+            priceByKm = priceKmTier1;
+        }
+        else if (distanceKm <= maxKmTier2)
+        {
+            // Calculate price for tier 1
+            priceByKm = pricePerKmTier2 * distanceKm;
+        }
+        else if (distanceKm > maxKmTier2)
+        {
+            // free for distance > maxKmTier2
+            priceByKm = 0;
+        }
+
+        var priceByKmAndKg = 0m;
+        if (weight <= weightMaxTier1)
+        {
+            priceByKmAndKg = pricePerKgAndKmTier1 * weight * distanceKm;
+        }
+        else if (weight > weightMaxTier1 && weight <= weightMaxTier2)
+        {
+            priceByKmAndKg = pricePerKgAndKmTier2 * weight * distanceKm;
+        }
+        else if (weight > weightMaxTier2 && weight <= weightMaxTier3)
+        {
+            priceByKmAndKg = pricePerKgAndKmTier3 * weight * distanceKm;
+        }
+        else if (weight > weightMaxTier3 && weight <= weightMaxTier4)
+        {
+            priceByKmAndKg = pricePerKgAndKmTier4 * weight * distanceKm;
+        }
+
+        return priceByKm + priceByKmAndKg;
+    }
+
     public decimal CalculateShippingPrice(decimal weight, decimal distanceKm)
     {
         // Find appropriate weight tier

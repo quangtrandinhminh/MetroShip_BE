@@ -17,30 +17,10 @@ public partial class ShipmentMedia : BaseEntity
     public string ShipmentId { get; set; }
     public string MediaUrl { get; set; } = null!;
     public string? Description { get; set; }
-    public ShipmentMediaTypeEnum ShipmentMediaType { get; set; }
+    public BusinessMediaTypeEnum BusinessMediaType { get; set; }
     public MediaTypeEnum MediaType { get; set; }
 
     [ForeignKey(nameof(ShipmentId))]
     [InverseProperty(nameof(Shipment.ShipmentMedias))]
     public virtual Shipment Shipment { get; set; }
-
-    public MediaTypeEnum IsImage(string mediaUrl)
-    {
-        if (mediaUrl.Contains("image"))
-        {
-            return MediaTypeEnum.Image;
-        }
-        
-        if (mediaUrl.Contains("video"))
-        {
-            return MediaTypeEnum.Video;
-        }
-
-        if (mediaUrl.Contains("raw"))
-        {
-            return MediaTypeEnum.Raw;
-        }
-
-        return MediaTypeEnum.Other;
-    }
 }

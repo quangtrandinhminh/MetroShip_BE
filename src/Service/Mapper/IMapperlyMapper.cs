@@ -9,6 +9,7 @@ using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.ApiModels.Transaction;
@@ -49,8 +50,6 @@ public interface IMapperlyMapper
     Station MapToStationEntity(CreateStationRequest request);
     ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
     void MapToExistingStation(UpdateStationRequest request, Station entity);
-
-
 
     // route
     RouteResponse MapToRouteResponse(Route entity);
@@ -93,4 +92,8 @@ public interface IMapperlyMapper
 
     // media
     ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+
+    // staff assignment
+    StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);
+    List<StaffAssignmentResponse> MapToStaffAssignmentResponseList(ICollection<StaffAssignment> entity);
 }

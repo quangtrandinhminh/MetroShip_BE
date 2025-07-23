@@ -1,6 +1,8 @@
 ﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +14,13 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly ICloudinaryService _cloudinaryService = 
             serviceProvider.GetRequiredService<ICloudinaryService>();
+
+        [HttpGet(WebApiEndpoint.MediaEndpoint.GetBusinessMediaType)]
+        public IActionResult GetBaseEndpoint()
+        {
+            var businessMediaTypeEnum = EnumHelper.GetEnumList<BusinessMediaTypeEnum>();
+            return Ok(BaseResponse.OkResponseDto(businessMediaTypeEnum));
+        }
 
         [HttpPost(WebApiEndpoint.MediaEndpoint.UploadImage)]
         [RequestSizeLimit(10_000_000)] // 10MB limit for single file
