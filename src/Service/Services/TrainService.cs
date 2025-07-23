@@ -21,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using SkiaSharp;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
 
@@ -40,6 +41,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly IBaseRepository<ShipmentItinerary> _shipmentItineraryRepository =
         serviceProvider.GetRequiredService<IBaseRepository<ShipmentItinerary>>();
+    private readonly IMemoryCache _cache =
+        serviceProvider.GetRequiredService<IMemoryCache>();                 
+
 
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
@@ -329,4 +333,96 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
     }
 
+    // for getting train position based on trainId
+    public async Task<TrainPositionResult> GetTrainPositionAsync(string trainId)
+    {
+        if (_cache.TryGetValue<TrainPositionResult>(trainId, out var cached))
+        {
+            _logger.Information("Returning cached train position for {TrainId}", trainId);
+            return cached;
+        }
+
+        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId);
+        if (train == null || train.ShipmentItineraries == null || !train.ShipmentItineraries.Any())
+            throw new AppException(ErrorCode.NotFound, "Train or its itinerary not found", StatusCodes.Status404NotFound);
+
+        var itinerary = train.ShipmentItineraries
+            .Where(it => it.Route != null && it.Route.FromStation != null && it.Route.ToStation != null)
+            .OrderBy(it => it.LegOrder)
+            .FirstOrDefault();
+
+        if (itinerary == null)
+            throw new AppException(ErrorCode.NotFound, "Valid itinerary not found", StatusCodes.Status404NotFound);
+
+        var from = itinerary.Route.FromStation;
+        var to = itinerary.Route.ToStation;
+
+        if (from.Latitude == null || from.Longitude == null || to.Latitude == null || to.Longitude == null)
+            throw new AppException(ErrorCode.BadRequest, "Station coordinates are incomplete", StatusCodes.Status400BadRequest);
+
+        var startTime = itinerary.Date ?? DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        var elapsedSeconds = (now - startTime).TotalSeconds;
+
+        var distanceKm = Haversine(from.Latitude.Value, from.Longitude.Value, to.Latitude.Value, to.Longitude.Value);
+        var speedKmH = train.TopSpeedKmH ?? 40;
+        var etaSeconds = (distanceKm / speedKmH) * 3600;
+
+        var progressFraction = Math.Clamp(elapsedSeconds / etaSeconds, 0, 1);
+        var (lat, lng) = Interpolate(from.Latitude.Value, from.Longitude.Value, to.Latitude.Value, to.Longitude.Value, progressFraction);
+
+        var result = new TrainPositionResult
+        {
+            TrainId = trainId,
+            Latitude = lat,
+            Longitude = lng,
+            FromStation = from.StationNameVi,
+            ToStation = to.StationNameVi,
+            StartTime = startTime,
+            ETA = TimeSpan.FromSeconds(etaSeconds),
+            Elapsed = TimeSpan.FromSeconds(elapsedSeconds),
+            ProgressPercent = (int)(progressFraction * 100),
+            Status = train.Status.ToString()
+        };
+
+        _cache.Set(trainId, result, TimeSpan.FromSeconds(5));
+        return result;
+    }
+
+    // for getting train position based on tracking code
+    public async Task<TrainPositionResult> GetPositionByTrackingCodeAsync(string trackingCode)
+    {
+        var shipment = await _trainRepository.GetShipmentWithTrainAsync(trackingCode);
+        if (shipment == null)
+            throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
+
+        var itinerary = shipment.ShipmentItineraries?.FirstOrDefault(i => i.TrainId != null);
+        if (itinerary?.TrainId == null)
+            throw new AppException(ErrorCode.NotFound, "Train not assigned to shipment", StatusCodes.Status404NotFound);
+
+        return await GetTrainPositionAsync(itinerary.TrainId);
+    }
+    #region Helpers
+    private static double Haversine(double lat1, double lon1, double lat2, double lon2)
+    {
+        var R = 6371; // Earth radius in km
+        var dLat = DegreesToRadians(lat2 - lat1);
+        var dLon = DegreesToRadians(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
+    private static double DegreesToRadians(double deg) => deg * Math.PI / 180;
+
+    private static (double lat, double lng) Interpolate(double lat1, double lng1, double lat2, double lng2, double frac)
+    {
+        return (
+            lat1 + (lat2 - lat1) * frac,
+            lng1 + (lng2 - lng1) * frac
+        );
+    }
+    #endregion
 }

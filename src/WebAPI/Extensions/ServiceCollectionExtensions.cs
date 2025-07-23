@@ -125,6 +125,9 @@ public static class ServiceCollectionExtensions
                               ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION")));
         // Đảm bảo đặt trước dòng AddSignalR
         services.AddSignalR();
+
+        // Add Cache
+        services.AddMemoryCache();
         // Add Identity
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()

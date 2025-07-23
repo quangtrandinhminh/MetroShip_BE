@@ -17,7 +17,7 @@ namespace MetroShip.WebAPI.Controllers
     public class TrainController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
-        private readonly IHubContext<TrackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<TrackingHub>>();
+        private readonly IHubContext<trackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<trackingHub>>();
 
         [Authorize]
         [HttpGet]
@@ -60,6 +60,26 @@ namespace MetroShip.WebAPI.Controllers
         {
             var response = await _trainService.AddShipmentItinerariesForTrain(request);
             return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+
+        /// <summary>
+        /// for test first
+        /// </summary>
+        /// <param name="trackingCode"></param>
+        /// <returns></returns>
+        [HttpGet("{trackingCode}/position")]
+        public async Task<IActionResult> GetPositionByTrackingCode(string trackingCode)
+        {
+            var result = await _trainService.GetPositionByTrackingCodeAsync(trackingCode);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpGet("/api/train/{trainId}/position")]
+        public async Task<IActionResult> GetPositionByTrainId(string trainId)
+        {
+            var result = await _trainService.GetTrainPositionAsync(trainId);
+            return Ok(result);
         }
     } 
 }

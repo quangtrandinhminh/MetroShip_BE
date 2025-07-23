@@ -18,4 +18,8 @@ public interface ITrainService
     Task UpdateTrainLocationAsync(string trainId, double lat, double lng, string stationId);
 
     Task<string> AddShipmentItinerariesForTrain(AddTrainToItinerariesRequest request);
+
+    Task<TrainPositionResult> GetTrainPositionAsync(string trainId);
+    Task<TrainPositionResult> GetPositionByTrackingCodeAsync(string trackingCode);
+
 }

@@ -23,6 +23,9 @@ public enum ShipmentStatusEnum
     InTransit,            // en-route on metro
     AwaitingDelivery,  // all parcels at delivery station
     ApplyingSurcharge,    // parcels overdue → surcharge period
+    UnloadingAtStation,         // Being unloaded at a transit station
+    WaitingForNextTrain,        // Waiting for the next connecting train
+    TransferringToNextTrain,    // Being loaded onto the next train
     Expired,              // long-term storage after surcharge window
 
     // Return flows

@@ -42,4 +42,24 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             await _context.SaveChangesAsync();
         }
     }
+    public async Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId)
+    {
+        return await _context.MetroTrains
+            .Include(t => t.ShipmentItineraries
+                .Where(si => si.TrainId == trainId && si.Route != null))
+                .ThenInclude(si => si.Route)
+                    .ThenInclude(r => r.FromStation)
+            .Include(t => t.ShipmentItineraries)
+                .ThenInclude(si => si.Route)
+                    .ThenInclude(r => r.ToStation)
+            .FirstOrDefaultAsync(t => t.Id == trainId);
+    }
+
+    public async Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode)
+    {
+        return await _context.Shipments
+            .Include(s => s.ShipmentItineraries)
+                .ThenInclude(i => i.Train)
+            .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode);
+    }
 }
