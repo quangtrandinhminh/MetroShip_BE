@@ -1931,7 +1931,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1958,7 +1958,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-07-22T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2994,7 +2994,7 @@
 					"response": []
 				},
 				{
-					"name": "Add metroline - all new active stations",
+					"name": "Add metroline - ben thanh - tao dan - 4 new stations",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -3009,42 +3009,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"stations\": [\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/metro-lines",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"metro-lines"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add metroline - inactive stations between",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json-patch+json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"stations\": [\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": false,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": false,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
+							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"lineType\": \"\",\n  \"lineOwner\": \"\",\n  \"colorHex\": \"\",\n  \"RouteTimeMin\": \"\",\n  \"DwellTimeMin\": \"\",\n  \"stations\": [\n    {\n        \"Id\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\n        \"isActive\": true,\n        \"toNextStationKm\": 5.5\n    },\n    {\n        \"Id\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\n        \"isActive\": true,\n        \"toNextStationKm\": 4.5\n    },\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 3.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
