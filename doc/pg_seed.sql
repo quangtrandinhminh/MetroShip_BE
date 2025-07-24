@@ -2281,11 +2281,11 @@ VALUES
     ('a242c7cb-6443-4d31-8cf9-f82a98101754',
      'dfe95016-f1cd-4c6e-b03f-ee917550584e', '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
      3, NOW(), TRUE,
-     NOW(), NOW(), NULL, NULL,NULL,NULL),
+     NULL, NULL, NULL, NOW(),NOW(),NULL),
     ('ba35c7a8-255b-487f-86b2-f04a1ceecb32',
      'd87ac817-eaa4-4b90-8bc3-3c1e04175a15', '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
      2, NOW(), TRUE,
-     NOW(), NOW(), NULL, NULL,NULL,NULL);
+     NULL, NULL, NULL, NOW(),NOW(),NULL);
 -- ───────────────────────────────────────────────────────────────
 -- Train Seed Data
 INSERT INTO public."MetroTrains"
