@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Serilog;
 using System.Linq.Expressions;
-using System.Net;
 
 namespace MetroShip.Service.Services;
 
@@ -93,7 +92,7 @@ public class TransactionService : ITransactionService
             transaction.PaymentStatus = PaymentStatusEnum.Pending;
             transaction.PaymentAmount = shipment.TotalCostVnd;
             transaction.TransactionType = TransactionTypeEnum.ShipmentCost;
-            transaction.Description = JsonConvert.SerializeObject(request);
+            transaction.Description = request.ToJsonString();
             shipment.Transactions.Add(transaction);
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);

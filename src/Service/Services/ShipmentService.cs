@@ -9,7 +9,6 @@ using MetroShip.Utility.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Linq.Expressions;
-using System.Text.Json;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.BusinessModels;
@@ -174,7 +173,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         if (_isInitializedPricingTable == false) await InitializePricingTableAsync();
-        shipment.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
+        shipment.PriceStructureDescriptionJSON = _pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);

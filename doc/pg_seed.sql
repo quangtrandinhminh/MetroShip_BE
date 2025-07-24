@@ -48,37 +48,61 @@ VALUES
         '5ca7e417-15c3-4bf4-b31c-d57b861e4ab3', 0, NULL, NULL, NULL,
         'https://via.placeholder.com/150', NULL, NULL,
         '6c4a58fc-041f-4677-9d88-45f5ca60e831', NULL,
-        '2025-05-19T15:48:50.1689055+00:00', NULL, NULL,
+        NOW(), NULL, NULL,
         'admin@example.com', FALSE, 'Admin User', NULL,
-        '2025-05-19T15:48:50.1689055+00:00',
+        NOW(),
         FALSE, NULL, 'admin@example.com', 'ADMIN',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         NULL, FALSE, FALSE,
-        'admin', '2025-05-19T15:48:50.1689062+00:00'
+        'admin', NOW()
     ),
     (
         '64b4c4c2-48ab-4a97-af1c-b25f1aa86362', 0, NULL, NULL, NULL,
         'https://via.placeholder.com/150', NULL, NULL,
         '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
-        '2025-05-19T15:48:50.1689069+00:00', NULL, NULL,
+        NOW(), NULL, NULL,
         'staff@example.com', FALSE, 'Staff', NULL,
-        '2025-05-19T15:48:50.1689069+00:00',
+        NOW(),
         FALSE, NULL, 'staff@example.com', 'STAFF',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         NULL, FALSE, FALSE,
-        'staff', '2025-05-19T15:48:50.1689071+00:00'
+        'staff', NOW()
     ),
     (
         '93155333-ab24-4410-b8f5-a77c77e81195', 0, NULL, NULL, NULL,
         'https://via.placeholder.com/150', NULL, NULL,
         '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
-        '2025-05-19T15:48:50.1689069+00:00', NULL, NULL,
+        NOW(), NULL, NULL,
         'quang@example.com', FALSE, 'Quang', NULL,
-        '2025-05-19T15:48:50.1689069+00:00',
+        NOW(),
         FALSE, NULL, 'quang@example.com', 'CUSTOMER',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         '012345678', FALSE, FALSE,
-        'quangtdm', '2025-05-19T15:48:50.1689071+00:00'
+        'quangtdm', NOW()
+    ),
+    (
+        'dfe95016-f1cd-4c6e-b03f-ee917550584e', 0, NULL, NULL, NULL,
+        'https://via.placeholder.com/150', NULL, NULL,
+        '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
+        NOW(), NULL, NULL,
+        'staff@example.com', FALSE, 'Staff cargo ben thanh', NULL,
+        NOW(),
+        FALSE, NULL, 'staff@example.com', 'STAFF-CG-BT',
+        NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
+        NULL, FALSE, FALSE,
+        'staff-cg-bt', NOW()
+    ),
+    (
+        'd87ac817-eaa4-4b90-8bc3-3c1e04175a15', 0, NULL, NULL, NULL,
+        'https://via.placeholder.com/150', NULL, NULL,
+        '9f6e38a8-f982-46fb-b031-0e717614d8eb', NULL,
+        NOW(), NULL, NULL,
+        'staff@example.com', FALSE, 'Staff checker ben thanh', NULL,
+        NOW(),
+        FALSE, NULL, 'staff@example.com', 'STAFF-CK-BT',
+        NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
+        NULL, FALSE, FALSE,
+        'staff-ck-bt', NOW()
     );
 
 -- Seed UserRoles
@@ -87,7 +111,9 @@ INSERT INTO public."UserRoles"
 VALUES
     ('021239ef-1d1f-4676-a402-aff9fd24c0c8','5ca7e417-15c3-4bf4-b31c-d57b861e4ab3','UserRoleEntity'),
     ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','64b4c4c2-48ab-4a97-af1c-b25f1aa86362','UserRoleEntity'),
-    ('d56ba56c-6469-4494-913a-88d3639f905e','93155333-ab24-4410-b8f5-a77c77e81195','UserRoleEntity');
+    ('d56ba56c-6469-4494-913a-88d3639f905e','93155333-ab24-4410-b8f5-a77c77e81195','UserRoleEntity'),
+    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','dfe95016-f1cd-4c6e-b03f-ee917550584e','UserRoleEntity'),
+    ('d76a73b5-f94f-4fc9-9009-00a8f1716b7d','d87ac817-eaa4-4b90-8bc3-3c1e04175a15','UserRoleEntity');
 
 -- Clear all system configs
 DO $$
@@ -315,7 +341,7 @@ $$;
 -- Delete Carriage & price
 INSERT INTO public."MetroLines"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "LineType",
- "LineOwner",
+ "LineOwner", "StationListJSON",
 /* "CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter", "CarriageHeightMeter",
  "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
  "DwellTimeMin","ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -328,6 +354,64 @@ VALUES
         'HCMC-L1',19.70,14,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
+        '[
+          {
+            "StationId": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+            "StationCode": "HCMC-L1-01"
+          },
+          {
+            "StationId": "1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a9",
+            "StationCode": "HCMC-L1-02"
+          },
+          {
+            "StationId": "2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0",
+            "StationCode": "HCMC-L1-03"
+          },
+          {
+            "StationId": "3c4d5e6f-7081-92a3-b4c5-d6e7f8a9b0c1",
+            "StationCode": "HCMC-L1-04"
+          },
+          {
+            "StationId": "4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2",
+            "StationCode": "HCMC-L1-05"
+          },
+          {
+            "StationId": "5e6f7081-92a3-b4c5-d6e7-f8a9b0c1d2e3",
+            "StationCode": "HCMC-L1-06"
+          },
+          {
+            "StationId": "6f708192-a3b4-c5d6-e7f8-a9b0c1d2e3f4",
+            "StationCode": "HCMC-L1-07"
+          },
+          {
+            "StationId": "708192a3-b4c5-d6e7-f8a9-b0c1d2e3f4a5",
+            "StationCode": "HCMC-L1-08"
+          },
+          {
+            "StationId": "8192a3b4-c5d6-e7f8-a9b0-c1d2e3f4a5b6",
+            "StationCode": "HCMC-L1-09"
+          },
+          {
+            "StationId": "92a3b4c5-d6e7-f8a9-b0c1-d2e3f4a5b6c7",
+            "StationCode": "HCMC-L1-10"
+          },
+          {
+            "StationId": "a3b4c5d6-e7f8-a9b0-c1d2-e3f4a5b6c7d8",
+            "StationCode": "HCMC-L1-11"
+          },
+          {
+            "StationId": "b4c5d6e7-f8a9-b0c1-d2e3-f4a5b6c7d8e9",
+            "StationCode": "HCMC-L1-12"
+          },
+          {
+            "StationId": "c5d6e7f8-a9b0-c1d2-e3f4-a5b6c7d8e9f0",
+            "StationCode": "HCMC-L1-13"
+          },
+          {
+            "StationId": "d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1",
+            "StationCode": "HCMC-L1-14"
+          }
+        ]',
         /*3,20.25,2.95,4.08,
         27, 5000,
         8,12,34,*/
@@ -415,7 +499,7 @@ VALUES
      'Xa lộ Hà Nội, Long Bình, TP. Thủ Đức & Phường Bình Thắng, TP. Dĩ An, Bình Dương',
      FALSE,TRUE,'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',
      10.87952,106.81411,NULL,NULL,NULL,NOW(),NOW(),
-     NULL, TRUE);
+     NULL, FALSE);
 
 -- Metro Line 1: Routes between each adjacent station (26 segments) - old
 INSERT INTO public."Routes"
@@ -506,16 +590,9 @@ VALUES
      'Nhà hát Thành phố – Bến Thành','Opera House – Ben Thanh', 1, 13,2,0.715,NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 2: Ben Thanh – Tham Luong -- Delete Carriage & price
--- update station Ben Thành IsMultiline to TRUE
-/*UPDATE public."Stations"
-SET "IsMultiLine" = TRUE
-WHERE "Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0';*/
 INSERT INTO public."MetroLines"
-("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
- "LineOwner",
-/* "CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
- "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
- "DwellTimeMin",
+("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","DwellTimeMin",
+ "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
     (
@@ -523,12 +600,55 @@ VALUES
         'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',  -- HCMC Region ID (existing)
         'Tuyến 2: Bến Thành – Tân Bình',
         'Metro 2: Ben Thanh – Tan Binh',
-        'HCMC-L2', 10.23, 11,
+        'HCMC-L2', 10.23, 11,30,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
-        /*3,20.25,2.95,4.08,27,
-        5000,8,12,18,*/
-        30,
+        '[
+          {
+            "StationId": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+            "StationCode": "HCMC-L2-01"
+          },
+          {
+            "StationId": "8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a",
+            "StationCode": "HCMC-L2-02"
+          },
+          {
+            "StationId": "7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b",
+            "StationCode": "HCMC-L2-03"
+          },
+          {
+            "StationId": "6c8e4f73-1d7a-4b5c-9e8c-4f6a1d7b9e2c",
+            "StationCode": "HCMC-L2-04"
+          },
+          {
+            "StationId": "5d9f7e64-2c8b-4a6d-8f9d-7e5c2c8a6f3d",
+            "StationCode": "HCMC-L2-05"
+          },
+          {
+            "StationId": "4e8a6f55-3d9c-4b7e-9a8e-6f4d3d9b7a4e",
+            "StationCode": "HCMC-L2-06"
+          },
+          {
+            "StationId": "3f9b5e46-4c8d-4a6f-8b9f-5e3c4c8a6b5f",
+            "StationCode": "HCMC-L2-07"
+          },
+          {
+            "StationId": "2a7c4d37-5b9e-4c8a-9c7a-4d2b5b9c8a7a",
+            "StationCode": "HCMC-L2-08"
+          },
+          {
+            "StationId": "1b8d3c28-6a7f-4d9b-8d6b-3c1a6a7d9b8b",
+            "StationCode": "HCMC-L2-09"
+          },
+          {
+            "StationId": "9c6e2b19-7d8a-4e6c-7e9c-2b9d7d8e6c2c",
+            "StationCode": "HCMC-L2-10"
+          },
+          {
+            "StationId": "8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d",
+            "StationCode": "HCMC-L2-11"
+          }
+        ]',
         '#E60012',TRUE,
         NULL,
         NULL,
@@ -712,11 +832,8 @@ VALUES
 -- Generated on: 2025-06-11 07:09:19 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/the-metro-line-3a
 INSERT INTO public."MetroLines"
-("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
- "LineOwner",
-/* "CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
- "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
- "DwellTimeMin",
+("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
+ "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
     (
@@ -724,12 +841,83 @@ VALUES
         'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',  -- HCMC Region ID (existing)
         'Tuyến 3A: Bến Thành – Tân Kiên',
         'Metro 3A: Ben Thanh – Tan Kien',
-        'HCMC-L3A', 19.80, 18,
+        'HCMC-L3A', 19.80, 18,30,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
-        /*3,20.25,2.95,4.08,27,
-        5000,8,12,34,*/
-        30,
+        '[
+          {
+            "StationId": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+            "StationCode": "HCMC-L3A-01"
+          },
+          {
+            "StationId": "b5f8e2a1-4c7d-4b5f-8e2a-1c7d4b5f8e2a",
+            "StationCode": "HCMC-L3A-02"
+          },
+          {
+            "StationId": "c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b",
+            "StationCode": "HCMC-L3A-03"
+          },
+          {
+            "StationId": "d7b8a4c3-6e9f-4d7b-8a4c-3e9f6d7b8a4c",
+            "StationCode": "HCMC-L3A-04"
+          },
+          {
+            "StationId": "e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d",
+            "StationCode": "HCMC-L3A-05"
+          },
+          {
+            "StationId": "f9d8c6e5-8a9b-4f9d-8c6e-5a9b8f9d8c6e",
+            "StationCode": "HCMC-L3A-06"
+          },
+          {
+            "StationId": "a8e7d9f6-9b8c-4a8e-7d9f-6b8c9a8e7d9f",
+            "StationCode": "HCMC-L3A-07"
+          },
+          {
+            "StationId": "b9f6e8a7-8c9d-4b9f-6e8a-7c9d8b9f6e8a",
+            "StationCode": "HCMC-L3A-08"
+          },
+          {
+            "StationId": "c8a7f9b8-9d8e-4c8a-7f9b-8d8e9c8a7f9b",
+            "StationCode": "HCMC-L3A-09"
+          },
+          {
+            "StationId": "d9b8a8c9-8e9f-4d9b-8a8c-9e9f8d9b8a8c",
+            "StationCode": "HCMC-L3A-10"
+          },
+          {
+            "StationId": "e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d",
+            "StationCode": "HCMC-L3A-11"
+          },
+          {
+            "StationId": "f9d8c8e9-8a9b-4f9d-8c8e-9a9b8f9d8c8e",
+            "StationCode": "HCMC-L3A-12"
+          },
+          {
+            "StationId": "a8e9d9f8-9b8c-4a8e-9d9f-8b8c9a8e9d9f",
+            "StationCode": "HCMC-L3A-13"
+          },
+          {
+            "StationId": "b9f8e8a9-8c9d-4b9f-8e8a-9c9d8b9f8e8a",
+            "StationCode": "HCMC-L3A-14"
+          },
+          {
+            "StationId": "c8a9f9b8-9d8e-4c8a-9f9b-8d8e9c8a9f9b",
+            "StationCode": "HCMC-L3A-15"
+          },
+          {
+            "StationId": "0455c97c-2013-4631-afc6-a6be62315481",
+            "StationCode": "HCMC-L3A-16"
+          },
+          {
+            "StationId": "c5873750-eed1-48f9-aa62-75ed00acde87",
+            "StationCode": "HCMC-L3A-17"
+          },
+          {
+            "StationId": "d0a40d5f-1e84-459e-bfeb-3f2105db3e0b",
+            "StationCode": "HCMC-L3A-18"
+          }
+        ]',
         '#00A651', TRUE,
         NULL,  -- quangtrandinhminh user ID
         NULL,
@@ -1043,11 +1231,8 @@ VALUES
 -- Generated on: 2025-06-11 08:40:31 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/the-metro-line-3b
 INSERT INTO public."MetroLines"
-("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
- "LineOwner",
-/* "CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
- "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
- "DwellTimeMin",
+("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
+ "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
     (
@@ -1055,12 +1240,51 @@ VALUES
         'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',  -- HCMC Region ID (existing)
         'Tuyến 3B: Cộng Hòa – Hiệp Bình Phước',
         'Metro 3B: Cong Hoa – Hiep Binh Phuoc',
-        'HCMC-L3B', 12.2, 10,
+        'HCMC-L3B', 12.2, 10,30,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
-        /*3,20.25,2.95,4.08,27,
-        5000,8,12,17,*/
-        30,
+        '[
+          {
+            "StationId": "c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b",
+            "StationCode": "HCMC-L3B-01"
+          },
+          {
+            "StationId": "b2e5f8d9-7c3a-4b2e-f8d9-7c3ab2e5f8d9",
+            "StationCode": "HCMC-L3B-02"
+          },
+          {
+            "StationId": "8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a",
+            "StationCode": "HCMC-L3B-03"
+          },
+          {
+            "StationId": "c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8",
+            "StationCode": "HCMC-L3B-04"
+          },
+          {
+            "StationId": "d4a7b8f7-9e5c-4d4a-b8f7-9e5cd4a7b8f7",
+            "StationCode": "HCMC-L3B-05"
+          },
+          {
+            "StationId": "e5b8c9a6-8f6d-4e5b-c9a6-8f6de5b8c9a6",
+            "StationCode": "HCMC-L3B-06"
+          },
+          {
+            "StationId": "f6c9d8b5-9a7e-4f6c-d8b5-9a7ef6c9d8b5",
+            "StationCode": "HCMC-L3B-07"
+          },
+          {
+            "StationId": "a7d8e9c4-8b6f-4a7d-e9c4-8b6fa7d8e9c4",
+            "StationCode": "HCMC-L3B-08"
+          },
+          {
+            "StationId": "b8e9f7d3-9c8a-4b8e-f7d3-9c8ab8e9f7d3",
+            "StationCode": "HCMC-L3B-09"
+          },
+          {
+            "StationId": "c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2",
+            "StationCode": "HCMC-L3B-10"
+          }
+        ]',
         '#8E44AD',TRUE,
         NULL,NULL,NULL,NOW(),NOW(),NULL
     );
@@ -1116,16 +1340,6 @@ VALUES
  'Khu vực Hiệp Bình Phước, P.Hiệp Bình Phước, TP.Thủ Đức, TP.HCM',FALSE,TRUE,
  'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',10.841231,106.714488,
  NULL,NULL,NULL,NOW(),NOW(),NULL);
-
--- update station Cong hoa IsMultiline to TRUE - HCMC-L2 - HCMC-L3B
-UPDATE public."Stations"
-SET "IsMultiLine" = TRUE
-WHERE "Id" = 'c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b';
-
--- update station Tao Dan IsMultiline to TRUE - HCMC-L2 - HCMC-L3B
-UPDATE public."Stations"
-SET "IsMultiLine" = TRUE
-WHERE "Id" = '8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a';
 
 -- Metro Line 3B: Routes Insert (calculated using Haversine + 5% curve adjustment) - old
 INSERT INTO public."Routes"
@@ -1247,11 +1461,8 @@ VALUES
 -- Generated on: 2025-06-11 08:58:39 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/metro-line-4
 INSERT INTO public."MetroLines"
-("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","LineType",
- "LineOwner",
- /*"CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter","CarriageHeightMeter",
- "CarriageWeightTons","BasePriceVndPerKm","MinHeadwayMin","MaxHeadwayMin","RouteTimeMin",*/
- "DwellTimeMin",
+("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
+ "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
     (
@@ -1262,18 +1473,141 @@ VALUES
         'HCMC-L4', 24.58, 32,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
-        /*3,20.25,2.95,4.08,27,
-        5000,8,12,42,*/
         30,
+        '[
+          {
+            "StationId": "a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7",
+            "StationCode": "HCMC-L4-01"
+          },
+          {
+            "StationId": "b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6",
+            "StationCode": "HCMC-L4-02"
+          },
+          {
+            "StationId": "c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7",
+            "StationCode": "HCMC-L4-03"
+          },
+          {
+            "StationId": "d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8",
+            "StationCode": "HCMC-L4-04"
+          },
+          {
+            "StationId": "e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9",
+            "StationCode": "HCMC-L4-05"
+          },
+          {
+            "StationId": "f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8",
+            "StationCode": "HCMC-L4-06"
+          },
+          {
+            "StationId": "a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7",
+            "StationCode": "HCMC-L4-07"
+          },
+          {
+            "StationId": "b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6",
+            "StationCode": "HCMC-L4-08"
+          },
+          {
+            "StationId": "c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5",
+            "StationCode": "HCMC-L4-09"
+          },
+          {
+            "StationId": "d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4",
+            "StationCode": "HCMC-L4-10"
+          },
+          {
+            "StationId": "e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3",
+            "StationCode": "HCMC-L4-11"
+          },
+          {
+            "StationId": "f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2",
+            "StationCode": "HCMC-L4-12"
+          },
+          {
+            "StationId": "c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8",
+            "StationCode": "HCMC-L4-13"
+          },
+          {
+            "StationId": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+            "StationCode": "HCMC-L4-14"
+          },
+          {
+            "StationId": "a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1",
+            "StationCode": "HCMC-L4-15"
+          },
+          {
+            "StationId": "b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2",
+            "StationCode": "HCMC-L4-16"
+          },
+          {
+            "StationId": "c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3",
+            "StationCode": "HCMC-L4-17"
+          },
+          {
+            "StationId": "572e6743-c3de-4374-a70f-52ae566c64b2",
+            "StationCode": "HCMC-L4-18"
+          },
+          {
+            "StationId": "e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5",
+            "StationCode": "HCMC-L4-19"
+          },
+          {
+            "StationId": "f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4",
+            "StationCode": "HCMC-L4-20"
+          },
+          {
+            "StationId": "a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3",
+            "StationCode": "HCMC-L4-21"
+          },
+          {
+            "StationId": "b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6",
+            "StationCode": "HCMC-L4-22"
+          },
+          {
+            "StationId": "c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5",
+            "StationCode": "HCMC-L4-23"
+          },
+          {
+            "StationId": "d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4",
+            "StationCode": "HCMC-L4-24"
+          },
+          {
+            "StationId": "e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3",
+            "StationCode": "HCMC-L4-25"
+          },
+          {
+            "StationId": "f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2",
+            "StationCode": "HCMC-L4-26"
+          },
+          {
+            "StationId": "a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1",
+            "StationCode": "HCMC-L4-27"
+          },
+          {
+            "StationId": "b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8",
+            "StationCode": "HCMC-L4-28"
+          },
+          {
+            "StationId": "c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7",
+            "StationCode": "HCMC-L4-29"
+          },
+          {
+            "StationId": "d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6",
+            "StationCode": "HCMC-L4-30"
+          },
+          {
+            "StationId": "e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5",
+            "StationCode": "HCMC-L4-31"
+          },
+          {
+            "StationId": "f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4",
+            "StationCode": "HCMC-L4-32"
+          }
+        ]',
         '#FF5722',  -- Deep Orange color for Line 4
-        /*100,80,*/TRUE,
+        TRUE,
         NULL,NULL,NULL,NOW(),NOW(),NULL
     );
-
--- Update station Ho Con Rua IsMultiLine to TRUE - HCMC-L3B - HCMC-L4
-UPDATE public."Stations"
-SET "IsMultiLine" = TRUE
-WHERE "Id" = 'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8';
 
 -- 2. Stations Insert (excluding existing Ho Con Rua and Ben Thanh)
 INSERT INTO public."Stations"
@@ -1875,6 +2209,83 @@ VALUES
 UPDATE public."Stations"
 SET "IsActive" = TRUE;
 
+-- update station Ben Thành IsMultiline to TRUE
+UPDATE public."Stations"
+SET "IsMultiLine" = TRUE, "StationCodeListJSON" = '[
+  {
+    "RouteId": "e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+    "StationCode": "HCMC‑L1‑01"
+  },
+  {
+    "RouteId": "2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f",
+    "StationCode": "HCMC‑L2‑01"
+  },
+  {
+    "RouteId": "8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45",
+    "StationCode": "HCMC‑L3A‑01"
+  },
+  {
+    "RouteId": "f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9",
+    "StationCode": "HCMC‑L4‑14"
+  }
+]'
+WHERE "Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0';
+
+-- update station Cong hoa IsMultiline to TRUE - HCMC-L2 - HCMC-L3B
+UPDATE public."Stations"
+SET "IsMultiLine" = TRUE, "StationCodeListJSON" = '[
+  {
+    "RouteId": "8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45",
+    "StationCode": "HCMC-L3A-03"
+  },
+  {
+    "RouteId": "a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8",
+    "StationCode": "HCMC-L3B-01"
+  }
+]'
+WHERE "Id" = 'c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b';
+
+-- update station Tao Dan IsMultiline to TRUE - HCMC-L2 - HCMC-L3B
+UPDATE public."Stations"
+SET "IsMultiLine" = TRUE, "StationCodeListJSON" = '[
+  {
+    "RouteId": "2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f",
+    "StationCode": "HCMC-L2-02"
+  },
+  {
+    "RouteId": "a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8",
+    "StationCode": "HCMC-L3B-03"
+  }
+]'
+WHERE "Id" = '8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a';
+
+-- Update station Ho Con Rua IsMultiLine to TRUE - HCMC-L3B - HCMC-L4
+UPDATE public."Stations"
+SET "IsMultiLine" = TRUE, "StationCodeListJSON" = '[
+  {
+    "RouteId": "a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8",
+    "StationCode": "HCMC-L3B-04"
+  },
+  {
+    "RouteId": "f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9",
+    "StationCode": "HCMC-L4-13"
+  }
+]'
+WHERE "Id" = 'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8';
+-- ───────────────────────────────────────────────────────────────
+-- Staff Assignments Seed Data
+INSERT INTO public."StaffAssignments"
+("Id", "StaffId", "StationId","AssignedRole","FromTime", "IsActive",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('a242c7cb-6443-4d31-8cf9-f82a98101754',
+     'dfe95016-f1cd-4c6e-b03f-ee917550584e', '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
+     3, NOW(), TRUE,
+     NOW(), NOW(), NULL, NULL,NULL,NULL),
+    ('ba35c7a8-255b-487f-86b2-f04a1ceecb32',
+     'd87ac817-eaa4-4b90-8bc3-3c1e04175a15', '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
+     2, NOW(), TRUE,
+     NOW(), NOW(), NULL, NULL,NULL,NULL);
 -- ───────────────────────────────────────────────────────────────
 -- Train Seed Data
 INSERT INTO public."MetroTrains"
@@ -1912,8 +2323,54 @@ VALUES
     ('66243ad8-7a3d-40b9-986e-a6d258ba6e97', 'HCMC-L3B-T02','HITACHI',
      'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
      TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('97ac027f-c0ba-4bb5-a70f-79aeb4f9caef', 'HCMC-L4-T01','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('89145ee1-6a8a-4df6-a485-acb2853a83ac', 'HCMC-L4-T02','HITACHI',
+     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     TRUE, 3,
      NULL, NULL, NULL, NOW(), NOW(), NULL)
 ;
+
+-- ───────────────────────────────────────────────────────────────
+-- Pricing Config Seed Data
+INSERT INTO public."PricingConfig"
+("Id", "IsActive", "EffectiveFrom", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('f6c0e0bf-7be8-4d5d-be84-8ed7047150dd', TRUE, NOW(),
+     NULL, NULL, NULL, NOW(), NOW(), NULL);
+
+INSERT INTO public."WeightTier"
+("Id", "PricingConfigId", "TierOrder", "MaxWeightKg", "BasePriceVndPerKmPerKg","IsPricePerKmAndKg",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('6862aa75-8eb1-47e2-b0c8-5deb9f7a60fc', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+     1,10, 30,TRUE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('d9d532a0-e10c-4100-a4ed-e1d4ba6ab384', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+     2,50, 25,TRUE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('77730cd8-8bf8-4347-a827-7cf53abfab3e', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+     3,100, 22,TRUE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('9a59e690-7b65-4826-8bb1-cd401de857e7', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+    4,200, 20,TRUE,
+    NULL, NULL, NULL, NOW(), NOW(), NULL);
+
+INSERT INTO public."DistanceTier"
+("Id", "PricingConfigId", "TierOrder","MaxDistanceKm", "BasePriceVnd","BasePriceVndPerKm","IsPricePerKm",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('d0f42872-8da6-4fc5-b11a-8e72ecf09d80', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+     1,7, 5000,NULL,FALSE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('57aa1280-27aa-41b7-8e83-fc0380b2e920', 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd',
+     2,100, NULL,800,TRUE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL);
+
+
 
 
 

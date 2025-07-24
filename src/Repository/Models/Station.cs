@@ -47,6 +47,12 @@ public partial class Station : BaseEntity
 
     public bool IsMultiLine { get; set; }
 
+    public string? StationCodeListJSON { get; set; }
+
+    public List<StationCodeListItem> StationCodeList =>
+        string.IsNullOrEmpty(StationCodeListJSON) ? new List<StationCodeListItem>() :
+        System.Text.Json.JsonSerializer.Deserialize<List<StationCodeListItem>>(StationCodeListJSON);
+
     [InverseProperty(nameof(Route.FromStation))]
     public virtual ICollection<Route> RoutesFrom { get; set; }
 
@@ -58,4 +64,11 @@ public partial class Station : BaseEntity
 
     [InverseProperty(nameof(StaffAssignment.Station))]
     public virtual ICollection<StaffAssignment> Staffs { get; set; } = new List<StaffAssignment>();
+}
+
+[NotMapped]
+public class StationCodeListItem
+{
+    public string RouteId { get; set; }
+    public string StationCode { get; set; }
 }
