@@ -21,5 +21,6 @@ public interface ITrainService
 
     Task<TrainPositionResult> GetTrainPositionAsync(string trainId);
     Task<TrainPositionResult> GetPositionByTrackingCodeAsync(string trackingCode);
+    Task<bool> UpdateTrainStatusAsync(string trainId);
 
 }

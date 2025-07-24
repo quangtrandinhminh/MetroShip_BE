@@ -286,6 +286,117 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         return response;
     }
 
+    public async Task<bool> UpdateTrainStatusAsync(string trainId)
+    {
+        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId);
+
+        if (train == null || train.ShipmentItineraries == null || !train.ShipmentItineraries.Any())
+            throw new AppException(ErrorCode.NotFound, "Train or its itineraries not found", StatusCodes.Status404NotFound);
+
+        var orderedLegs = train.ShipmentItineraries
+            .Where(it => it.Route != null && it.Route.FromStation != null && it.Route.ToStation != null)
+            .OrderBy(it => it.LegOrder)
+            .ToList();
+
+        if (!orderedLegs.Any())
+            throw new AppException(ErrorCode.NotFound, "Valid shipment itineraries not found", StatusCodes.Status404NotFound);
+
+        var currentLeg = orderedLegs.First();
+        var from = currentLeg.Route.FromStation;
+        var to = currentLeg.Route.ToStation;
+
+        if (from.Latitude == null || from.Longitude == null || to.Latitude == null || to.Longitude == null)
+            throw new AppException(ErrorCode.BadRequest, "Station coordinates are incomplete", StatusCodes.Status400BadRequest);
+
+        var startTime = currentLeg.Date ?? DateTimeOffset.UtcNow;
+        var now = DateTimeOffset.UtcNow;
+        var elapsedSeconds = (now - startTime).TotalSeconds;
+
+        var distanceKm = Haversine(from.Latitude.Value, from.Longitude.Value, to.Latitude.Value, to.Longitude.Value);
+        var speedKmH = train.TopSpeedKmH ?? 40;
+        var etaSeconds = (distanceKm / speedKmH) * 3600;
+        var progress = Math.Clamp(elapsedSeconds / etaSeconds, 0, 1);
+
+        // Determine new status & message
+        TrainStatusEnum newStatus;
+        string? stationMessage;
+
+        if (progress < 0.01)
+        {
+            newStatus = TrainStatusEnum.AwaitingDeparture;
+            stationMessage = $"Chờ khởi hành tại ga {from.StationNameVi}";
+        }
+        else if (progress < 1.0)
+        {
+            newStatus = TrainStatusEnum.Departed;
+            stationMessage = $"Đang di chuyển từ ga {from.StationNameVi} đến {to.StationNameVi}";
+        }
+        else if (progress >= 1.0 && orderedLegs.Count == 1)
+        {
+            newStatus = TrainStatusEnum.Completed;
+            stationMessage = $"Đã đến ga cuối cùng {to.StationNameVi}";
+        }
+        else
+        {
+            newStatus = TrainStatusEnum.ArrivedAtStation;
+            stationMessage = $"Đã đến ga trung chuyển {to.StationNameVi}";
+        }
+
+        if (train.Status == newStatus)
+        {
+            _logger.Information("No train status change for {TrainId}", trainId);
+            return false;
+        }
+
+        // Update train status
+        var oldStatus = train.Status;
+        train.Status = newStatus;
+        train.LastUpdatedAt = DateTimeOffset.UtcNow; // Fixed property name
+        _trainRepository.Update(train);
+
+        // Cập nhật ShipmentItineraries & Shipment & ParcelTracking
+        var relatedItineraries = train.ShipmentItineraries.ToList();
+
+        foreach (var it in relatedItineraries)
+        {
+            // Map train status to shipment status
+            var mappedShipmentStatus = MapTrainToShipmentStatus(newStatus);
+
+            // Update itinerary
+            it.IsCompleted = mappedShipmentStatus == ShipmentStatusEnum.Completed;
+            _shipmentItineraryRepository.Update(it);
+
+            // Update shipment
+            if (it.Shipment != null)
+            {
+                it.Shipment.LastUpdatedAt = DateTimeOffset.UtcNow; // Corrected property name
+                it.Shipment.ShipmentStatus = mappedShipmentStatus;
+                _shipmentRepository.Update(it.Shipment);
+            }
+        }
+
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        _logger.Information("Train {TrainId} status updated from {OldStatus} to {NewStatus}. {StationMessage}",
+            trainId, oldStatus, newStatus, stationMessage);
+
+        return true;
+    }
+
+    private static ShipmentStatusEnum MapTrainToShipmentStatus(TrainStatusEnum trainStatus)
+    {
+        return trainStatus switch
+        {
+            TrainStatusEnum.Completed => ShipmentStatusEnum.Completed,
+            TrainStatusEnum.AwaitingDeparture => ShipmentStatusEnum.WaitingForNextTrain,
+            TrainStatusEnum.Departed => ShipmentStatusEnum.InTransit,
+            TrainStatusEnum.InTransit => ShipmentStatusEnum.InTransit,
+            TrainStatusEnum.ArrivedAtStation => ShipmentStatusEnum.UnloadingAtStation,
+            TrainStatusEnum.ResumingTransit => ShipmentStatusEnum.TransferringToNextTrain,
+            _ => ShipmentStatusEnum.InTransit // fallback
+        };
+    }
+
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
     {
         _logger.Information("Calculating current capacity for trains");
@@ -346,6 +457,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (train == null || train.ShipmentItineraries == null || !train.ShipmentItineraries.Any())
             throw new AppException(ErrorCode.NotFound, "Train or its itinerary not found", StatusCodes.Status404NotFound);
 
+        // ✅ Chỉ cho phép khi trạng thái là Departed
+        if (train.Status != TrainStatusEnum.Departed)
+            throw new AppException(ErrorCode.BadRequest, $"Train must be in '{TrainStatusEnum.Departed}' state to get position", StatusCodes.Status400BadRequest);
+
         var itinerary = train.ShipmentItineraries
             .Where(it => it.Route != null && it.Route.FromStation != null && it.Route.ToStation != null)
             .OrderBy(it => it.LegOrder)
@@ -400,8 +515,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (itinerary?.TrainId == null)
             throw new AppException(ErrorCode.NotFound, "Train not assigned to shipment", StatusCodes.Status404NotFound);
 
-        return await GetTrainPositionAsync(itinerary.TrainId);
+        // ✅ Kiểm tra trạng thái tàu
+        var train = await _trainRepository.GetByIdAsync(itinerary.TrainId);
+        if (train == null)
+            throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+
+        if (train.Status != TrainStatusEnum.Departed)
+            throw new AppException(ErrorCode.BadRequest, $"Train must be in '{TrainStatusEnum.Departed}' state to get position", StatusCodes.Status400BadRequest);
+
+        return await GetTrainPositionAsync(train.Id);
     }
+
     #region Helpers
     private static double Haversine(double lat1, double lon1, double lat2, double lon2)
     {

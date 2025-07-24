@@ -81,5 +81,20 @@ namespace MetroShip.WebAPI.Controllers
             var result = await _trainService.GetTrainPositionAsync(trainId);
             return Ok(result);
         }
-    } 
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost("/api/train/{trainId}/status")]
+        public async Task<IActionResult> UpdateTrainStatus(string trainId)
+        {
+            var result = await _trainService.UpdateTrainStatusAsync(trainId);
+            if (result)
+            {
+                return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
+            }
+            else
+            {
+                return BadRequest(BaseResponse.BadRequestResponseDto("Failed to update train status", null));
+            }
+        }
+    }
 }
