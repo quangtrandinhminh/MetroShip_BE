@@ -1470,10 +1470,9 @@ VALUES
         'c29464b1-6b74-4cde-9e9c-51bf0ecc522f',  -- HCMC Region ID (existing)
         'Tuyến 4: Thạnh Xuân – Bến Tàu Hiệp Phước',
         'Metro 4: Thanh Xuan – Ben Tau Hiep Phuoc',
-        'HCMC-L4', 24.58, 32,
+        'HCMC-L4', 24.58, 32,30,
         'Đường sắt đô thị Thành Phố Hồ Chí Minh',
         'Ban Quản lý Đường sắt đô thị Thành phố Hồ Chí Minh (MAUR)',
-        30,
         '[
           {
             "StationId": "a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7",
