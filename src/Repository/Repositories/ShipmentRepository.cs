@@ -33,19 +33,19 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         return quantity;
     }
 
-    public class ShipmentDto : Shipment
+    /*public class ShipmentDto : Shipment
     {
         public string DepartureStationName { get; set; }
         public string DestinationStationName { get; set; }
         public string? CurrentStationName { get; set; } 
-    }
+    }*/
 
-    public class RouteDto : Route
+    /*public class RouteDto : Route
     {
         public string LineName { get; set; }
-    }
+    }*/
 
-    public async Task<PaginatedList<ShipmentDto>>
+    public async Task<PaginatedList<Shipment>>
         GetPaginatedListForListResponseAsync(
             int pageNumber,
             int pageSize,
@@ -69,7 +69,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             : q.OrderByDescending(s => s.CreatedAt);
 
         // Project into your DTO, grabbing only the first & last itinerary
-        var projected = q.Select(s => new ShipmentDto
+        var projected = q.Select(s => new Shipment
         {
             Id = s.Id,
             TrackingCode = s.TrackingCode,
@@ -104,16 +104,16 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         });
 
         // Use your existing paging helper on the projection
-        return await PaginatedList<ShipmentDto>
+        return await PaginatedList<Shipment>
             .CreateAsync(projected, pageNumber, pageSize);
     }
 
     // get shipment by trackingCode with all information in ShipmentDto
-    public async Task<ShipmentDto?> GetShipmentByTrackingCodeAsync(string trackingCode)
+    public async Task<Shipment?> GetShipmentByTrackingCodeAsync(string trackingCode)
     {
         var shipment = _context.Shipments.AsNoTracking();
 
-        var shipmentDto = await shipment.Select(s => new ShipmentDto
+        var shipmentDto = await shipment.Select(s => new Shipment
         {
             // Base Entity fields
             Id = s.Id,
@@ -185,13 +185,29 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             // Feedback fields
             Rating = s.Rating,
             Feedback = s.Feedback,
-            
+
+            DepartureStationName = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .FirstOrDefault().Route.FromStation.StationNameVi,
+
+            DestinationStationName = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault().Route.ToStation.StationNameVi,
+
+            CurrentStationName = s.ShipmentItineraries
+                                     .Where(i => i.IsCompleted)
+                                     .OrderBy(i => i.LegOrder)
+                                     .LastOrDefault().Route.ToStation.StationNameVi ??
+                                 s.ShipmentItineraries
+                                     .OrderBy(i => i.LegOrder)
+                                     .FirstOrDefault().Route.FromStation.StationNameVi,
+
             ShipmentItineraries = s.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
                 Id = itinerary.Id,
                 RouteId = itinerary.RouteId,
                 LegOrder = itinerary.LegOrder,
-                Route = new RouteDto
+                Route = new Route
                 {
                     Id = itinerary.Route.Id,
                     LineId = itinerary.Route.LineId,
@@ -208,21 +224,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
-            DepartureStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .FirstOrDefault().Route.FromStation.StationNameVi,
-
-            DestinationStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi,
-
-            CurrentStationName = s.ShipmentItineraries
-                .Where(i => i.IsCompleted)
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi ??
-                s.ShipmentItineraries
-                    .OrderBy(i => i.LegOrder)
-                    .FirstOrDefault().Route.FromStation.StationNameVi,
+            
             Parcels = s.Parcels
             .Select(parcel => new Parcel
             {

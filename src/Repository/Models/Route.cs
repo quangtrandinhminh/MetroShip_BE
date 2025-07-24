@@ -28,6 +28,9 @@ public partial class Route : BaseEntity
     [StringLength(50)]
     public string LineId { get; set; }
 
+    [NotMapped]
+    public string? LineName { get; set; }
+
     [Required]
     [StringLength(50)]
     public string FromStationId { get; set; }

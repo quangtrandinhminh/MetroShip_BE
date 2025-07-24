@@ -10,12 +10,12 @@ namespace MetroShip.Repository.Interfaces;
 public interface IShipmentRepository : IBaseRepository<Shipment>
 {
     int GetQuantityByBookedAtAndRegion(DateTimeOffset bookAtDate, string regionCode);
-    Task<PaginatedList<ShipmentDto>> GetPaginatedListForListResponseAsync(int pageNumber,
+    Task<PaginatedList<Shipment>> GetPaginatedListForListResponseAsync(int pageNumber,
         int pageSize,
         Expression<Func<Shipment, bool>> predicate = null,
         Expression<Func<Shipment, object>> orderBy = null, bool? isDesc = false);
 
-    Task<ShipmentDto?> GetShipmentByTrackingCodeAsync(string trackingCode);
+    Task<Shipment?> GetShipmentByTrackingCodeAsync(string trackingCode);
 
     /*Task<PaginatedList<ShipmentDto>> GetShipmentsByLineIdAndDateAsync(
         int pageNumber, int pageSize, string lineId, DateTimeOffset date, string? regionId, ShiftEnum? shift);*/
