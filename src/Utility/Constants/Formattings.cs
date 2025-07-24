@@ -8,7 +8,8 @@ namespace MetroShip.Utility.Constants
     {
         public const string DateTimeOffSetFormat = "yyyy'-'MM'-'dd'T'HH':'mm':'ss.FFFFFFFK";
 
-        public const string TimeZone = "Asia/Ho_Chi_Minh"; // "UTC"
+        //public const string TimeZone = "UTC";
+        public const string TimeZone = "Asia/Ho_Chi_Minh";
 
         public const string DateFormat = "dd/MM/yyyy";
 

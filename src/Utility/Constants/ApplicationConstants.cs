@@ -53,8 +53,11 @@
         public const string BIRTHDATE_INVALID = "Birth date is invalid, must be in the past.";
         public const string CLAIM_NOTFOUND = "Claim not found.";
         public const string EXISTED_ROLE = "Role already exists.";
+        public const string REFRESH_TOKEN_INVALID = "Refresh token is invalid or used";
+        public const string REFRESH_TOKEN_EXPIRED = "Refresh token has expired.";
 
         public const string USERNAME_REQUIRED = "Username cannot be empty.";
+        public const string USERNAME_INVALID = "Username cannot contain special characters or spaces.";
         public const string NAME_REQUIRED = "Name cannot be empty.";
         public const string NAME_INVALID = "Name cannot contain numbers.";
         public const string USERCODE_REQUIRED = "User code cannot be empty.";
@@ -94,9 +97,10 @@
         public const string USER_EXISTED = "User already exists";
         public const string CREATE_USER_SUCCESS = "User added successfully.";
         public const string UPDATE_USER_SUCCESS = "User updated successfully.";
-        public const string DELETE_USER_SUCCESS = "User deleted successfully.";
+        public const string BAN_USER_SUCCESS = "User banned successfully.";
         public const string ADMIN_NOT_FOUND = "Administrator not found.";
         public const string CUSTOMER_NOT_FOUND = "Customer not found.";
+        public const string ASSIGN_ROLE_SUCCESS = "Role assigned successfully.";
     }
 
     public class ResponseMessageConstrantsImage
@@ -104,7 +108,7 @@
         public const string INVALID_IMAGE = "Hình ảnh không hợp lệ. ";
         public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ. ";
         public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ. ";
-        public const string INVALID_URL = "Đường dẫn hình ảnh không hợp lệ. ";
+        public const string INVALID_URL = "Đường dẫn không hợp lệ. ";
     }
 
     public static class ResponseMessageConstantsParcelCategory
@@ -144,7 +148,27 @@
         public const string DESTINATION_STATION_ID_INVALID = "Destination station ID is invalid.";
         public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
         public const string PATH_NOT_FOUND = "Path not found between two stations.";
-        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) or Departure station ID are required.";
+        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) " +
+            "or Departure station ID are required.";
+        public const string USER_COORDINATE_INVALID = "User coordinates (latitude and longitude) are invalid.";
+        public const string SHIFT_REQUIRED = "Shift is required.";
+        public const string SHIFT_INVALID = "Shift is invalid.";
+        public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment must be in 'AwaitingDropoff' status to confirm. " +
+            "Please check the shipment status before confirming.";
+        public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
+            "Please schedule the itinerary before confirming the shipment.";
+        public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
+            "Please select a valid shift for the shipment.";
+        public const string TIME_SLOT_NOT_FOUND = "Time slot not found.";
+        public const string TOTAL_KM_REQUIRED = "Total kilometers are required.";
+        public const string TOTAL_KM_INVALID = "Total kilometers must be greater than to 0.";
+        public const string PICKED_UP_IMAGE_LINK_REQUIRED = "Picked up image link is required.";
+        public const string PICKED_UP_IMAGE_LINK_INVALID = "Picked up image link is invalid.";
+        public const string DELIVERED_IMAGE_LINK_REQUIRED = "Delivered image link is required.";
+        public const string DELIVERED_IMAGE_LINK_INVALID = "Delivered image link is invalid.";
+        public const string PICKED_UP_SUCCESS = "Shipment picked up successfully.";
+        public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
+        public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
     }
 
     public class ResponseMessageItinerary
@@ -181,6 +205,12 @@
         public const string LENGTH_INVALID = "Length must be greater than 0.";
         public const string IS_BULK_REQUIRED = "Is Bulk is required";
         public const string IS_BULK_INVALID = "Is Bulk must be true or false";
+        public const string PARCEL_CATEGORY_ID_INVALID = "Parcel category ID is invalid.";
+        public const string CHARGEABLE_WEIGHT_INVALID = "Chargeable weight must be greater than 0.";
+        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND must be greater than or equal to 0.";
+        public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND must be greater than or equal to 0.";
+        public const string PRICE_VND_INVALID = "Price in VND must be greater than or equal to 0.";
+        public const string VALUE_VND_INVALID = "Value in VND must be greater than to 0.";
     }
 
     public class ResponseMessageStation
@@ -208,5 +238,60 @@
         public const string TRANSACTION_UPDATE_SUCCESS = "Transaction updated successfully.";
         public const string TRANSACTION_DELETE_SUCCESS = "Transaction deleted successfully.";
         public const string TRANSACTION_CREATE_SUCCESS = "Transaction created successfully.";
+    }
+
+    public class ResponseMessageTrain
+    {
+        public const string TRAIN_NOT_FOUND = "Train not found.";
+        public const string TRAIN_EXISTED = "Train already exists.";
+        public const string TRAIN_UPDATE_SUCCESS = "Train updated successfully.";
+        public const string TRAIN_DELETE_SUCCESS = "Train deleted successfully.";
+        public const string TRAIN_CREATE_SUCCESS = "Train created successfully.";
+        public const string LINE_ID_REQUIRED = "Line ID is required.";
+        public const string TIME_SLOT_ID_REQUIRED = "Time slot ID is required.";
+        public const string DATE_REQUIRED = "Date is required.";
+        public const string LINE_ID_INVALID = "Line ID is invalid.";
+        public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
+        public const string DATE_INVALID = "Date is invalid.";
+        public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
+        public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
+        public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";
+        public const string TRAIN_ID_REQUIRED = "Train ID is required.";
+        public const string TRAIN_ID_INVALID = "Train ID is invalid.";
+        public const string ITINERARY_IDS_REQUIRED = "Itinerary IDs are required.";
+        public const string ITINERARY_IDS_INVALID = "Itinerary IDs are invalid.";
+        public const string TRAIN_ALREADY_ASSIGNED_TO_SLOT_ON_DATE = "Train is already assigned to this time slot" +
+            " on the specified date.";
+        public const string SHIPMENT_ITINERARIES_NOT_FOUND = 
+            "Shipment itineraries not found for the specified train.";
+
+        public const string TRAIN_MUST_BE_SAME_LINE = "Train must be on the same line as the route.";
+    }
+
+    public class RegionMessageConstants
+    {
+        public const string REGION_NOT_FOUND = "Region not found.";
+        public const string REGION_EXISTED = "Region already exists.";
+        public const string REGION_UPDATE_SUCCESS = "Region updated successfully.";
+        public const string REGION_DELETE_SUCCESS = "Region deleted successfully.";
+        public const string REGION_CREATE_SUCCESS = "Region created successfully.";
+        public const string REGION_CODE_REQUIRED = "Region code is required.";
+        public const string REGION_NAME_REQUIRED = "Region name is required.";
+        public const string REGION_CODE_INVALID = "Region code is invalid.";
+        public const string REGION_NAME_INVALID = "Region name is invalid.";
+    }
+
+    public class RouteMessageConstants
+    {
+        public const string ROUTE_NOT_FOUND = "Route not found.";
+        public const string ROUTE_EXISTED = "Route already exists.";
+        public const string ROUTE_UPDATE_SUCCESS = "Route updated successfully.";
+        public const string ROUTE_DELETE_SUCCESS = "Route deleted successfully.";
+        public const string ROUTE_CREATE_SUCCESS = "Route created successfully.";
+        public const string ROUTE_CODE_REQUIRED = "Route code is required.";
+        public const string ROUTE_NAME_REQUIRED = "Route name is required.";
+        public const string ROUTE_CODE_INVALID = "Route code is invalid.";
+        public const string ROUTE_NAME_INVALID = "Route name is invalid.";
+        public const string METROLINE_STATION_COUNT_LESS_THAN_2 = "Metro line must have at least 2 stations.";
     }
 }

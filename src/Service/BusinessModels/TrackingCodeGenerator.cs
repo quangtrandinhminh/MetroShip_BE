@@ -22,19 +22,18 @@ public static class TrackingCodeGenerator
     )
     {
         // 1) Compute sequence and check-digit
-        
-        int randomDigits = 3;
-        string datePart = shipmentDate.ToString("yyyyMMddHHmm");
+        int randomDigits = 4;
+        string datePart = shipmentDate.ToString("yyMMddHHmm");
         string randomPart = GenerateRandomString(randomDigits);
 
         // 2) Build tracking code via interpolation
-        return $"{DefaultAppCode}-" +                           // e.g. "MS"
-               $"{regionCode.ToUpperInvariant()}-" +            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
-               $"{shipmentDate:yyyyMMddHHmm}" +                     // e.g. "20230519" :contentReference[oaicite:2]{index=2}
+        return $"{DefaultAppCode}"                            // e.g. "MS"
+               + $"{regionCode.ToUpperInvariant()}"            // e.g. "HCM" :contentReference[oaicite:2]{index=2}
+               + $"{shipmentDate:yyMMddHHmm}"                    // e.g. "20230519" :contentReference[oaicite:2]{index=2}
                //$"{seq:D3}" +                                    // zero-padded 3-digit sequence
                //$"{check:D2}" +                                  // zero-padded 2-digit check-digit
-               $"{randomPart}";                                 // e.g. "103" :contentReference[oaicite:2]{index=2}
-               //$"{DefaultCountryName}";                         // e.g. "VN"
+               + $"{randomPart}";                                 // e.g. "103" :contentReference[oaicite:2]{index=2}
+               //+ $"{DefaultCountryName}";                         // e.g. "VN"
     }
 
     /// <summary>
@@ -51,7 +50,7 @@ public static class TrackingCodeGenerator
     }
 
     // Gnerate QR code
-    public static string GenerateQRCode(string content)
+    /*public static string GenerateQRCode(string content)
     {
         // Create QR code generator instance
         QRCodeGenerator qrGenerator = new ();
@@ -64,6 +63,16 @@ public static class TrackingCodeGenerator
 
         // Return the base64 string of the QR code image
         return $"data:image/png;base64,{base64String}";
+    }*/
+
+    // Gnerate QR code from qrserver.com
+    public static string GenerateQRCode(string content)
+    {
+        var baseUrl = "https://api.qrserver.com/v1/create-qr-code/";
+        var size = "100x100"; // Default size if not provided
+        var encodedContent = Uri.EscapeDataString(content);
+        var qrCodeUrl = $"{baseUrl}?size={size}&data={encodedContent}";
+        return qrCodeUrl;
     }
 
     private static string GenerateRandomString(int length)
@@ -72,5 +81,12 @@ public static class TrackingCodeGenerator
         var random = new Random();
         return new string(Enumerable.Repeat(chars, length)
             .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+
+    // Generate random string with guid and length
+    public static string GenerateRandomStringWithGuid(int length)
+    {
+        var guid = Guid.NewGuid().ToString("N").Substring(0, length);
+        return guid.ToUpperInvariant();
     }
 }

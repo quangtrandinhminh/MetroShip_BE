@@ -1,4 +1,6 @@
-﻿namespace MetroShip.Service.ApiModels.User;
+﻿using MetroShip.Service.ApiModels.StaffAssignment;
+
+namespace MetroShip.Service.ApiModels.User;
 
 public record UserResponse : BankInfoRequest
 {
@@ -11,4 +13,5 @@ public record UserResponse : BankInfoRequest
     public string? Avatar { get; set; } = string.Empty;
     public IList<string?> Role { get; set; } = new List<string?>();
     public DateOnly? BirthDate { get; set; }
+    public List<StaffAssignmentResponse>? StaffAssignments { get; set; }
 }

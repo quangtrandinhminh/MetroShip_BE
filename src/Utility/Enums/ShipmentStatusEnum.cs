@@ -5,12 +5,10 @@ namespace MetroShip.Utility.Enums;
 public enum ShipmentStatusEnum
 {
     // Initial booking
-    Processing,
+    AwaitingPayment,             // all parcels accepted
 
     // Pre-confirmation outcomes
     Rejected,             // all parcels rejected by staff
-    PartiallyConfirmed,   // ≥1 parcel accepted, ≥1 rejected
-    Accepted,             // all parcels accepted
 
     // Payment flows
     Unpaid,               // payment timeout
@@ -20,16 +18,24 @@ public enum ShipmentStatusEnum
     NoDropOff,            // paid but never dropped off
 
     // In-transit flows
-    Paid,                 // payment received
+    AwaitingDropOff,                 // payment received
     PickedUp,             // parcels scanned at origin station
     InTransit,            // en-route on metro
-    AwaitingForDelivery,  // all parcels at delivery station
+    AwaitingDelivery,  // all parcels at delivery station
     ApplyingSurcharge,    // parcels overdue → surcharge period
     Expired,              // long-term storage after surcharge window
 
+    // Return flows
+    ToReturn,            // parcels returned to origin station at delivery station
+    Returning,          // parcels in return transit
+    Returned,           // parcels returned to origin station
+
     // Completion
     AwaitingFeedback,     // delivered, waiting for rating
-    Completed             // feedback received, shipment closed
+    Completed,             // feedback received, shipment closed
+
+    // Unhappy case
+    Delayed,              // parcels delayed at any stage
 }
 
 /// <summary>

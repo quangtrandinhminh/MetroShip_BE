@@ -6,10 +6,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using MetroShip.Repository.Base;
 
 namespace MetroShip.Repository.Interfaces
 {
-    public interface IParcelCategoryRepository
+    public interface IParcelCategoryRepository : IBaseRepository<ParcelCategory>
     {
+
     }
 }

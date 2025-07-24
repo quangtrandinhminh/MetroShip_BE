@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
-[Index(nameof(StationCode), nameof(RegionId), IsUnique = true)]
+//[Index(nameof(StationCode), nameof(RegionId), IsUnique = true)]
 public partial class Station : BaseEntity
 {
     public Station()
@@ -17,13 +17,11 @@ public partial class Station : BaseEntity
         StationCode = this.GetType().Name.ToUpperInvariant();
         RoutesFrom = new HashSet<Route>();
         RoutesTo = new HashSet<Route>();
-        ParcelTrackings = new HashSet<ParcelTracking>();
         IsMultiLine = false;
     }
 
-    [Required]
     [StringLength(20)]
-    public string StationCode { get; set; }
+    public string? StationCode { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -49,6 +47,12 @@ public partial class Station : BaseEntity
 
     public bool IsMultiLine { get; set; }
 
+    public string? StationCodeListJSON { get; set; }
+
+    public List<StationCodeListItem> StationCodeList =>
+        string.IsNullOrEmpty(StationCodeListJSON) ? new List<StationCodeListItem>() :
+        System.Text.Json.JsonSerializer.Deserialize<List<StationCodeListItem>>(StationCodeListJSON);
+
     [InverseProperty(nameof(Route.FromStation))]
     public virtual ICollection<Route> RoutesFrom { get; set; }
 
@@ -58,6 +62,13 @@ public partial class Station : BaseEntity
     [InverseProperty(nameof(Region.Stations))]
     public virtual Region Region { get; set; }
 
-    [InverseProperty(nameof(ParcelTracking.Station))]
-    public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; }
+    [InverseProperty(nameof(StaffAssignment.Station))]
+    public virtual ICollection<StaffAssignment> Staffs { get; set; } = new List<StaffAssignment>();
+}
+
+[NotMapped]
+public class StationCodeListItem
+{
+    public string RouteId { get; set; }
+    public string StationCode { get; set; }
 }

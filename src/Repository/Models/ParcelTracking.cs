@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
@@ -19,18 +20,18 @@ public partial class ParcelTracking : BaseEntity
     [StringLength(255)]
     public string Status { get; set; }
 
+    public ShipmentStatusEnum TrackingForShipmentStatus { get; set; }
+
     [StringLength(50)]
     public string? StationId { get; set; }
 
     public DateTimeOffset EventTime { get; set; }
+
+    public string? UpdatedBy { get; set; }
 
     public string? Note { get; set; }
 
     [ForeignKey(nameof(ParcelId))]
     [InverseProperty(nameof(Parcel.ParcelTrackings))]
     public virtual Parcel Parcel { get; set; }
-
-    [ForeignKey(nameof(StationId))]
-    [InverseProperty(nameof(Station.ParcelTrackings))]
-    public virtual Station? Station { get; set; }
 }

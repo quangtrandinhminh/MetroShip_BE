@@ -2,6 +2,7 @@
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
@@ -13,10 +14,10 @@ namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/parcels")]
-    [Authorize]
     public class ParcelController : ControllerBase
     {
         private readonly IParcelService _parcelService;
+        private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ParcelStatusEnum>();
 
         public ParcelController(IParcelService parcelService)
         {
@@ -46,7 +47,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(BaseResponse.OkResponseDto(result));
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [HttpGet("qrcode/{parcelTrackingCode}")]
@@ -56,7 +57,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(qrCode);
         }
 
-        [HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
+        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         public async Task<IActionResult> ConfirmParcelAsync([FromRoute] Guid parcelId)
         {
@@ -70,6 +71,6 @@ namespace MetroShip.WebAPI.Controllers
         {
             await _parcelService.RejectParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel rejection processed successfully.", null));
-        }
+        }*/
     }
 }

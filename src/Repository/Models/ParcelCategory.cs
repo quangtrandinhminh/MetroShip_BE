@@ -13,8 +13,6 @@ public partial class ParcelCategory : BaseEntity
     [StringLength(255)]
     public string? Description { get; set; }
 
-    public bool IsBulk { get; set; }
-
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? WeightLimitKg { get; set; }
 
@@ -29,6 +27,17 @@ public partial class ParcelCategory : BaseEntity
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? HeightLimitCm { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? TotalSizeLimitCm { get; set; }
+
+    [Column(TypeName = "decimal(5, 2)")]
+    public decimal? InsuranceRate { get; set; }
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? InsuranceFeeVnd { get; set; }
+
+    public bool IsInsuranceRequired { get; set; }
 
     public bool IsActive { get; set; } = true;
 

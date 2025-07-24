@@ -20,18 +20,18 @@ public class MetroGraph
 {
     // Cấu trúc dữ liệu cho đồ thị
     private Dictionary<string, List<string>> _adjacencyList;
-    private Dictionary<(string from, string to), ShipmentItineraryRepository.RoutesForGraph> _routesMap;
+    private Dictionary<(string from, string to), Route> _routesMap;
     private Dictionary<string, Station> _stationsMap;
     private Dictionary<string, MetroLine> _linesMap;
 
     /// <summary>
     /// Khởi tạo một đồ thị metro từ dữ liệu routes, stations và metroLines
     /// </summary>
-    public MetroGraph(List<ShipmentItineraryRepository.RoutesForGraph> routes, List<Station> stations, List<MetroLine> metroLines)
+    public MetroGraph(List<Route> routes, List<Station> stations, List<MetroLine> metroLines)
     {
         // Khởi tạo cấu trúc dữ liệu
         _adjacencyList = new Dictionary<string, List<string>>();
-        _routesMap = new Dictionary<(string from, string to), ShipmentItineraryRepository.RoutesForGraph>();
+        _routesMap = new Dictionary<(string from, string to), Route>();
         _stationsMap = stations.ToDictionary(s => s.Id, s => s);
         _linesMap = metroLines.ToDictionary(l => l.Id, l => l);
 
@@ -141,7 +141,7 @@ public class MetroGraph
     /// </summary>
     /// <param name="fromStationId"></param>
     /// <param name="toStationId"></param>
-    /// <returns></returns>
+    /// <returns>List station Id on path, or null if not found</returns>
     /// <exception cref="AppException"></exception>
     public List<string> FindShortestPathByDFS(string fromStationId, string toStationId)
     {
@@ -177,9 +177,9 @@ public class MetroGraph
                 StatusCodes.Status404NotFound
             );
 
-        Expression<Func<ShipmentItineraryRepository.RoutesForGraph, object>>[] weights =
+        Expression<Func<Route, object>>[] weights =
         {
-            x => x.BasePriceVndPerKm * x.LengthKm, // Ưu tiên giá
+            //x => x.BasePriceVndPerKm * x.LengthKm, // Ưu tiên giá
             x => x.TravelTimeMin // Ưu tiên thời gian
         };
 
@@ -197,12 +197,12 @@ public class MetroGraph
     /// <returns>MetroGraph mới chứa các ga và tuyến đường trong path</returns>
     public BestPathGraphResponse CreateResponseFromPath(List<string> path, IMapperlyMapper _mapper)
     {
-        if (path == null || path.Count < 2)
+        if (!path.Any())
             return null;
 
         // Tạo cấu trúc dữ liệu mới
         var newAdjacencyList = new Dictionary<string, List<string>>();
-        var newRoutesMap = new Dictionary<(string from, string to), ShipmentItineraryRepository.RoutesForGraph>();
+        var newRoutesMap = new Dictionary<(string from, string to), Route>();
         var newStationsMap = new Dictionary<string, Station>();
         var newLinesMap = new Dictionary<string, MetroLine>();
 
@@ -249,15 +249,16 @@ public class MetroGraph
 
         foreach (var route in response.Routes)
         {
-            var basePricePerKm = _linesMap[route.LineId].BasePriceVndPerKm;
-            route.LegOrder = response.Routes.IndexOf(route) + 1;
-            route.BasePriceVndPerKm = basePricePerKm;
+            //var basePricePerKm = _linesMap[route.LineId].BasePriceVndPerKm;
+            route.SeqOrder = response.Routes.IndexOf(route) + 1;
+            //route.BasePriceVndPerKg = basePricePerKm;
         }
 
         return response;
     }
 
-    public BestPathGraphResponse CreateResponseFromPath(List<string> path, IMapperlyMapper _mapper, DateTimeOffset schduleDate)
+    public BestPathGraphResponse CreateResponseFromPath(
+        List<string> path, IMapperlyMapper _mapper, DateTimeOffset schduleDate)
     {
         if (path == null || path.Count < 2)
             return null;
@@ -267,7 +268,6 @@ public class MetroGraph
         var newRoutesMap = new Dictionary<(string from, string to), Route>();
         var newStationsMap = new Dictionary<string, Station>();
         var newLinesMap = new Dictionary<string, MetroLine>();
-        var timeOnly = TimeOnly.FromTimeSpan(schduleDate.TimeOfDay);
 
         // Thêm các ga trên đường đi vào map mới
         foreach (var stationId in path)
@@ -312,21 +312,14 @@ public class MetroGraph
 
         foreach (var route in response.Routes)
         {
-            var basePricePerKm = _linesMap[route.LineId].MetroBasePrices
-                .FirstOrDefault(
-                    x => x.TimeSlot.CloseTime <= timeOnly
-                         && x.TimeSlot.OpenTime >= timeOnly
-                         && x.IsActive
-                )!.BasePriceVndPerKm;
-
-            route.LegOrder = response.Routes.IndexOf(route) + 1;
-            route.BasePriceVndPerKm = basePricePerKm;
+            route.SeqOrder = response.Routes.IndexOf(route) + 1;
+            //route.BasePriceVndPerKg = basePricePerKm;
         }
 
         return response;
     }
 
-    public List<string> BFS (string start, string end)
+    private List<string> BFS (string start, string end)
     {
         var queue = new Queue<string>();
         var visited = new HashSet<string>();
@@ -339,7 +332,7 @@ public class MetroGraph
         {
             var current = queue.Dequeue();
 
-            // Nếu đã đến đích, xây dựng đường đi
+            // Nếu đã đến ga đích, xây dựng đường đi
             if (current == end)
             {
                 var path = new List<string>();
@@ -368,7 +361,7 @@ public class MetroGraph
         return null;
     }
 
-    public List<string> DFS (string start, string end)
+    private List<string> DFS (string start, string end)
     {
         var stack = new Stack<string>();
         var visited = new HashSet<string>();
@@ -412,8 +405,8 @@ public class MetroGraph
 
     // Chọn weight cho route dựa trên tỉ lệ các weights, weight nào vào trước thì độ ưu tiên cao hơn
     // Ưu tiên price (MetroBasePriceVndPerKm * Length) > EstMinute
-    public List<string> Dijkstra(string start, string end, 
-        params Expression<Func<ShipmentItineraryRepository.RoutesForGraph, object>>[] weights)
+    private List<string> Dijkstra(string start, string end, 
+        params Expression<Func<Route, object>>[] weights)
     {                                                                                                                                                                                                               
         // Khởi tạo cấu trúc dữ liệu
         var priorityQueue = new SortedSet<(decimal cost, string station)>();

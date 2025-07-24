@@ -19,10 +19,16 @@ using Microsoft.CodeAnalysis;
 using Riok.Mapperly.Abstractions;
 using MetroShip.Service.ApiModels.Transaction;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
+using MetroShip.Service.ApiModels.Train;
+using MetroShip.Utility.Helpers;
+using MetroShip.Utility.Enums;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.StaffAssignment;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
 
-[Mapper]
+[Mapper(UseDeepCloning = true)]
 public partial class MapperlyMapper : IMapperlyMapper
 {
     /// <summary>
@@ -46,19 +52,33 @@ public partial class MapperlyMapper : IMapperlyMapper
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
+
     public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentDto entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
     // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
-    public partial ItineraryResponse MapToShipmentItineraryRequest(ShipmentItinerary entity);
+    public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentDto entity);
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
         PaginatedList<ShipmentDto> entity);
+    // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
+    /*[MapProperty("Item1", "StartDate")]
+    [MapProperty("Item2", "Date")]
+    [MapProperty("Item3", "SlotDetail")]
+    [MapProperty("Item4", "RemainingVolumeM3")]
+    [MapProperty("Item5", "RemainingWeightKg")]
+    [MapProperty("Item6", "ShipmentStatus")]
+    [MapProperty("Item7", "ParcelIds")]
+    public partial List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
+    List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
 
+    public partial List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
+
+    public partial ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
 
     public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
 
@@ -70,14 +90,12 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial void MapToExistingStation(UpdateStationRequest request, Station entity);
 
+    public partial ICollection<Station> MapToStationEntityList(ICollection<CreateStationRequest> request);
+
     // route
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
     public partial RouteResponse MapToRouteResponse(Route entity);
-
-    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
-    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
-    public partial RouteResponse MapToRouteResponse(ShipmentItineraryRepository.RoutesForGraph entity);
 
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
@@ -86,42 +104,45 @@ public partial class MapperlyMapper : IMapperlyMapper
     // metroline
     [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]
     public partial MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
+    public partial MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
 
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
-    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
+
+    public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
 
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
     public partial void MapParcelCategoryUpdateRequestToEntity(ParcelCategoryUpdateRequest request, ParcelCategory entity);
-    public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
-    public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
+    [MapperRequiredMapping(RequiredMappingStrategy.Target)]
+    public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+
+    public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
     public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
     public partial TransactionResponse MapToTransactionResponse(Transaction transaction);
 
-    public int? MapToVoucherId(int? voucherId)
-    {
-        // if voucherId is null, return null
-        if (voucherId == null)
-        {
-            return null;
-        }
+    // metro train
+    public partial PaginatedListResponse<TrainListResponse> MapToTrainListResponsePaginatedList(PaginatedList<MetroTrain> entity);
+    public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
+    public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
+    public partial TrainResponse MapToTrainResponse(MetroTrain request);
 
-        // if voucherId is 0, return null
-        if (voucherId == 0)
-        {
-            return null;
-        }
+    // time slot
+    public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
 
-        return voucherId;
-    }
+    // media
+    public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+
+    // staff assignment
+    public partial StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);
+    public partial List<StaffAssignmentResponse> MapToStaffAssignmentResponseList(ICollection<StaffAssignment> entity);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

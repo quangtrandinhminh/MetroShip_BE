@@ -17,7 +17,6 @@ using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Serilog;
 using System.Linq.Expressions;
-using System.Net;
 
 namespace MetroShip.Service.Services;
 
@@ -30,7 +29,6 @@ public class TransactionService : ITransactionService
     private readonly ILogger _logger;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBaseRepository<Parcel> _parcelRepository;
-    private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository;
     private readonly TransactionValidator _transactionValidator;
 
     private readonly IBaseRepository<Transaction> _transaction;
@@ -43,7 +41,6 @@ public class TransactionService : ITransactionService
         IUnitOfWork unitOfWork,
         IVnPayService vnPayService,
         IBaseRepository<Parcel> parcelRepository,
-        IBaseRepository<ParcelTracking> parcelTrackingRepository,
         IBaseRepository<Transaction> transactionRepository) 
     {
         _vnPayService = vnPayService;
@@ -54,7 +51,6 @@ public class TransactionService : ITransactionService
         _transactionValidator = new TransactionValidator();
         _unitOfWork = unitOfWork;
         _parcelRepository = parcelRepository;
-        _parcelTrackingRepository = parcelTrackingRepository;
         _transaction = transactionRepository;
     }
 
@@ -75,10 +71,10 @@ public class TransactionService : ITransactionService
                 "Shipment not found",
                 StatusCodes.Status404NotFound);
         }
-
+        
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus is not (ShipmentStatusEnum.Accepted 
-            or ShipmentStatusEnum.PartiallyConfirmed))
+        if (shipment.ShipmentStatus is not (ShipmentStatusEnum.AwaitingPayment 
+            /*or ShipmentStatusEnum.PartiallyConfirmed*/))
         {
             throw new AppException(
                 ErrorCode.BadRequest,
@@ -86,7 +82,8 @@ public class TransactionService : ITransactionService
                 StatusCodes.Status400BadRequest);
         }
 
-        if (shipment.Transactions.FirstOrDefault(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+        if (shipment.Transactions.FirstOrDefault(
+            t => t.TransactionType == TransactionTypeEnum.ShipmentCost
         && t.PaymentStatus == PaymentStatusEnum.Pending) is null)
         {
             var transaction = _mapper.MapToTransactionEntity(request);
@@ -95,7 +92,7 @@ public class TransactionService : ITransactionService
             transaction.PaymentStatus = PaymentStatusEnum.Pending;
             transaction.PaymentAmount = shipment.TotalCostVnd;
             transaction.TransactionType = TransactionTypeEnum.ShipmentCost;
-            transaction.Description = JsonConvert.SerializeObject(request);
+            transaction.Description = request.ToJsonString();
             shipment.Transactions.Add(transaction);
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -117,7 +114,8 @@ public class TransactionService : ITransactionService
         }
 
         var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == vnPaymentResponse.OrderId || x.TrackingCode == vnPaymentResponse.OrderId, 
+                       x => x.Id == vnPaymentResponse.OrderId 
+                       || x.TrackingCode == vnPaymentResponse.OrderId, 
                        false,
                        x => x.Transactions, x => x.Parcels
                        );
@@ -159,11 +157,11 @@ public class TransactionService : ITransactionService
         if (vnPaymentResponse.VnPayResponseCode == "00")
         {
             _logger.Information("Payment successful for shipment: {shipmentId}", shipment.Id);
-            shipment.ShipmentStatus = ShipmentStatusEnum.Paid;
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
             shipment.PaidAt = CoreHelper.SystemTimeNow;
 
             transaction.PaymentStatus = PaymentStatusEnum.Paid;
-            await HandleShipmentParcelTransaction(shipment);
+            //await HandleShipmentParcelTransaction(shipment);
             response = transactionRequest.ReturnUrl;
         }
         else if (vnPaymentResponse.VnPayResponseCode == "24")
@@ -223,7 +221,7 @@ public class TransactionService : ITransactionService
         return _mapper.MapToTransactionPaginatedList(paginatedTransactions);
     }
 
-    private async Task HandleShipmentParcelTransaction(
+    /*private async Task HandleShipmentParcelTransaction(
                Shipment shipment)
     {
         foreach (var parcel in shipment.Parcels)
@@ -232,17 +230,7 @@ public class TransactionService : ITransactionService
             {
                 parcel.ParcelStatus = ParcelStatusEnum.AwaitingDropOff;
                 _parcelRepository.Update(parcel);
-
-                var parcelTracking = new ParcelTracking
-                {
-                    ParcelId = parcel.Id,
-                    Status = parcel.ParcelStatus.ToString(),
-                    //Note = "Khách hàng đã thanh toán, chờ đem hàng đến ga",
-                    EventTime = CoreHelper.SystemTimeNow
-                };
-
-                await _parcelTrackingRepository.AddAsync(parcelTracking);
             }
         }
-    }
+    }*/
 }

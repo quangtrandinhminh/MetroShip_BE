@@ -10,7 +10,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace MetroShip.Service.Services
 {
     private readonly IStationRepository _stationRepository;
     private readonly IMapperlyMapper _mapper;
-    private readonly ILogger<StationService> _logger;
+    private readonly ILogger _logger;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISystemConfigRepository _systemConfigRepository;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -32,7 +32,7 @@ namespace MetroShip.Service.Services
     public StationService(
         IStationRepository stationRepository,
         IMapperlyMapper mapper,
-        ILogger<StationService> logger,
+        ILogger logger,
         IUnitOfWork unitOfWork,
         ISystemConfigRepository systemConfigRepository,
         IHttpContextAccessor httpContextAccessor)
@@ -55,7 +55,7 @@ namespace MetroShip.Service.Services
 
         public async Task<StationDetailResponse> GetStationByIdAsync(Guid id)
         {
-            _logger.LogInformation("Fetching station by Id: {Id}", id);
+            _logger.Information("Fetching station by Id: {Id}", id);
 
             var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)
@@ -68,7 +68,7 @@ namespace MetroShip.Service.Services
 
         public async Task<StationDetailResponse> CreateStationAsync(CreateStationRequest request)
         {
-            _logger.LogInformation("Creating new station: {@Request}", request);
+            _logger.Information("Creating new station: {@Request}", request);
 
             var station = _mapper.MapToStationEntity(request);
             station.Id = Guid.NewGuid().ToString();
@@ -82,7 +82,7 @@ namespace MetroShip.Service.Services
 
         public async Task<StationDetailResponse> UpdateStationAsync(Guid id, UpdateStationRequest request)
         {
-            _logger.LogInformation("Updating station with Id: {Id}, {@Request}", id, request);
+            _logger.Information("Updating station with Id: {Id}, {@Request}", id, request);
 
             var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)
@@ -101,7 +101,7 @@ namespace MetroShip.Service.Services
 
         public async Task DeleteStationAsync(Guid id)
         {
-            _logger.LogInformation("Deleting station with Id: {Id}", id);
+            _logger.Information("Deleting station with Id: {Id}", id);
 
             var station = await _stationRepository.GetByIdAsync(id.ToString());
             if (station == null || station.DeletedAt != null)

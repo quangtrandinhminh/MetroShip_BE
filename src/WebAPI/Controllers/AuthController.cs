@@ -2,7 +2,9 @@ using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.RefreshToken;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Utils;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -11,23 +13,35 @@ namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/auth")]
-    [EnableRateLimiting("EndpointRateLimitPolicy")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
         private readonly IUserService _userService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthController(IAuthService authSevices,
             IUserService userService)
         {
             _userService = userService;
             _authService = authSevices;
+            _httpContextAccessor = new HttpContextAccessor();
         }
 
         [HttpGet(WebApiEndpoint.Authentication.Hello)]
         public IActionResult Hello()
         {
+            Console.WriteLine("Hello from AuthController");
             return Ok("Hello");
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff), 
+            Policy = $"RequireAssignmentRole.{nameof(AssignmentRoleEnum.Checker)}")]
+        [HttpGet(WebApiEndpoint.Authentication.Hello + "/{shipmentId}")]
+        public IActionResult Hello1([FromRoute] string shipmentId)
+        {
+            var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            var assignmentRole = JwtClaimUltils.GetAssignmentRole(_httpContextAccessor);
+            return Ok($"Hello from shipment {shipmentId} with assignmentRole {assignmentRole.ToString()} at station {stationId}");
         }
 
         [HttpGet]
@@ -73,7 +87,7 @@ namespace MetroShip.WebAPI.Controllers
             var refreshToken = request.Token ?? Request.Cookies["refreshToken"];
             var response = await _authService.RefreshToken(refreshToken);
             SetTokenCookie(response.RefreshToken);
-            return Created(nameof(RefreshToken), BaseResponse.OkResponseDto(response));
+            return Created(nameof(RefreshToken), response);
         }
 
         private void SetTokenCookie(string token)

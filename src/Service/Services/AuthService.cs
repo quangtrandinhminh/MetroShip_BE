@@ -24,29 +24,33 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
+using MetroShip.Service.ApiModels.RefreshToken;
+using System;
+using System.Security;
 
 namespace MetroShip.Service.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService(IServiceProvider serviceProvider) : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMapperlyMapper _mapper;
-        private readonly RoleManager<RoleEntity> _roleManager;
-        private readonly UserManager<UserEntity> _userManager;
-        private readonly ILogger _logger;
-        private readonly IBaseRepository<RefreshToken> _refreshTokenRepository;
-        private readonly IEmailService _emailService;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly AuthValidator _authValidator;
+        private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
+        private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+        private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
+        private readonly UserManager<UserEntity> _userManager = serviceProvider.GetRequiredService<UserManager<UserEntity>>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+        //private readonly IBaseRepository<RefreshToken> _refreshTokenRepository;
+        private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
+        private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+        private readonly IStaffAssignmentService _staffAssignmentService = serviceProvider.GetRequiredService<IStaffAssignmentService>();
 
-        public AuthService(
+        /*public AuthService(
             IServiceProvider serviceProvider,
             IUserRepository userRepository,
             RoleManager<RoleEntity> roleManager,
             UserManager<UserEntity> userManager,
-            IBaseRepository<RefreshToken> refreshTokenRepository,
+            //IBaseRepository<RefreshToken> refreshTokenRepository,
             IUnitOfWork unitOfWork,
-            IMapperlyMapper mapperlyMapper
+            IMapperlyMapper mapperlyMapper,
+            IStaffAssignmentService staffAssignmentService
             )
         {
             _userRepository = userRepository;
@@ -54,11 +58,12 @@ namespace MetroShip.Service.Services
             _roleManager = roleManager;
             _userManager = userManager;
             _logger = Log.Logger;
-            _refreshTokenRepository = refreshTokenRepository;
+            //_refreshTokenRepository = refreshTokenRepository;
             _emailService = serviceProvider.GetRequiredService<IEmailService>();
             _unitOfWork = unitOfWork;
-            _authValidator = new AuthValidator();
-        }
+            AuthValidator = new AuthValidator();
+            _staffAssignmentService = staffAssignmentService;
+        }*/
 
         // get all roles
         public async Task<IList<RoleResponse>> GetAllRoles()
@@ -72,21 +77,18 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Authenticate user: {@request}", request.Username);
             var account = await GetUserByUserName(request.Username);
-            _authValidator.ValidateLogin(request, account);
+            AuthValidator.ValidateLogin(request, account);
 
             try
             {
                 var roles = await _userManager.GetRolesAsync(account);
                 var token = await GenerateJwtToken(account, roles, 24);
-                var refreshToken = GenerateRefreshToken(account.Id, 48);
-                RemoveOldRefreshTokens(account.RefreshTokens);
-                await _refreshTokenRepository.AddAsync(refreshToken);
+
+                await GenerateRefreshToken(account, 48);
                 var count = await _unitOfWork.SaveChangeAsync();
 
                 var response = _mapper.MapToLoginResponse(account);
                 response.Token = token;
-                response.RefreshToken = refreshToken.Token;
-                response.RefreshTokenExpiredTime = refreshToken.Expires;
                 response.Role = roles;
                 return response;
             }
@@ -99,7 +101,7 @@ namespace MetroShip.Service.Services
         public async Task Register(RegisterRequest request, CancellationToken cancellationToken = default)
         {
             _logger.Information("Register new user: {@request}", request.UserName);
-            _authValidator.ValidateRegisterRequest(request);
+            AuthValidator.ValidateRegisterRequest(request);
             // get user by name
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)
@@ -128,6 +130,8 @@ namespace MetroShip.Service.Services
                 account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
                 account.SecurityStamp = Guid.NewGuid().ToString();
                 account.OTP = GenerateOTP();
+                account.NormalizedUserName = _userManager.NormalizeName(request.UserName);
+                account.NormalizedEmail = _userManager.NormalizeEmail(request.Email);
                 await _userRepository.CreateUserAsync(account, cancellationToken);
                 var roleEntity = await _roleManager.FindByNameAsync(UserRoleEnum.Customer.ToString());
                 var roleIds = new List<string> { roleEntity.Id };
@@ -236,15 +240,16 @@ namespace MetroShip.Service.Services
 
             var roles = await _userManager.GetRolesAsync(account);
             var token = await GenerateJwtToken(account, roles, 24);
-            var refreshToken = GenerateRefreshToken(account.Id, 48);
-            RemoveOldRefreshTokens(account.RefreshTokens);
-            await _refreshTokenRepository.AddAsync(refreshToken);
+            //var refreshToken = GenerateRefreshToken(account.Id, 48);
+            // RemoveOldRefreshTokens(account.RefreshTokens);
+            // await _refreshTokenRepository.AddAsync(refreshToken);
+            await GenerateRefreshToken(account, 48);
             await _unitOfWork.SaveChangeAsync();
 
             var response = _mapper.MapToLoginResponse(account);
             response.Token = token;
-            response.RefreshToken = refreshToken.Token;
-            response.RefreshTokenExpiredTime = refreshToken.Expires;
+            // response.RefreshToken = refreshToken.Token;
+            // response.RefreshTokenExpiredTime = refreshToken.Expires;
             response.Role = roles;
             return response;
         }
@@ -252,15 +257,8 @@ namespace MetroShip.Service.Services
         public async Task<LoginResponse> RefreshToken(string token)
         {
             _logger.Information("Refresh token: {@token}", token);
-            var (refreshToken, account) = await GetRefreshToken(token);
-            refreshToken.Expires = CoreHelper.SystemTimeNow;
-            _refreshTokenRepository.Update(refreshToken);
-            var newRefreshToken = GenerateRefreshToken(account.Id, 48);
-
-            newRefreshToken.UserId = account.Id;
-            await _refreshTokenRepository.AddAsync(newRefreshToken);
-
-            RemoveOldRefreshTokens(account.RefreshTokens);
+            var account = await GetUserByRefreshToken(token);
+            await GenerateRefreshToken(account, 48);
             var count = await _unitOfWork.SaveChangeAsync();
 
             try
@@ -269,8 +267,6 @@ namespace MetroShip.Service.Services
                 var jwtToken = await GenerateJwtToken(account, roles, 24);
                 var response = _mapper.MapToLoginResponse(account);
                 response.Token = jwtToken;
-                response.RefreshToken = newRefreshToken.Token;
-                response.RefreshTokenExpiredTime = refreshToken.Expires;
                 response.Role = roles;
                 return response;
             }
@@ -286,7 +282,8 @@ namespace MetroShip.Service.Services
             var account = await GetUserByUserName(request.UserName);
 
             if (account == null || account.OTP != request.OTP)
-                throw new AppException(ErrorCode.TokenInvalid, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+                throw new AppException(ErrorCode.TokenInvalid
+                    , ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
 
             account.Verified = CoreHelper.SystemTimeNow;
             account.OTP = null;
@@ -408,6 +405,21 @@ namespace MetroShip.Service.Services
                 }
             }
 
+            // Add permission claims
+            if (roles.Contains(UserRoleEnum.Staff.ToString()))
+            {
+                var assignedRole = await _staffAssignmentService.GetByStaffIdAsync(loggedUser.Id);
+
+                if (assignedRole != null)
+                {
+                    // Add AssignmentRole claim based on assigned role
+                    claims.Add(new Claim("AssignmentRole", assignedRole.AssignedRole.ToString()));
+
+                    // Add station claim if user is assigned to a station
+                    claims.Add(new Claim("StationId", assignedRole.StationId));
+                }
+            }
+
             claims.AddRange(new[]
             {
                 new Claim(ClaimTypes.Sid, loggedUser.Id.ToString()),
@@ -421,51 +433,35 @@ namespace MetroShip.Service.Services
             return JwtUtils.GenerateToken(claims.Distinct(), hour);
         }
 
-        private static RefreshToken GenerateRefreshToken(string userId, int hour)
+        private async Task GenerateRefreshToken(UserEntity user, int hour)
         {
             var randomByte = new byte[64];
             var rngCryptoServiceProvider = new RNGCryptoServiceProvider();
             rngCryptoServiceProvider.GetBytes(randomByte);
-            var refreshToken = new RefreshToken
-            {
-                UserId = userId,
-                Token = Convert.ToBase64String(randomByte),
-                Expires = CoreHelper.SystemTimeNow.AddHours(hour),
-            };
-            return refreshToken;
+            user.RefreshToken = Convert.ToBase64String(randomByte);
+            user.RefreshTokenExpiredTime = CoreHelper.SystemTimeNow.AddHours(hour);
+            await _userRepository.UpdateAsync(user);
         }
 
-        /// <summary>
-        /// Remove old refresh token from database which is inactive and expired more than 2 days
-        /// </summary>
-        /// <param name="refreshTokens"></param>
-        private void RemoveOldRefreshTokens(ICollection<RefreshToken> refreshTokens)
+        private async Task<UserEntity> GetUserByRefreshToken(string token)
         {
-            var removeList = refreshTokens.Where(x => !x.IsActive
-                                                      && x.CreatedAt.AddDays(2) <= CoreHelper.SystemTimeNow).ToList();
-            if (removeList.Any())
-            {
-                _refreshTokenRepository.DeleteRange(removeList);
-            }
-        }
-
-        private async Task<(RefreshToken, UserEntity)> GetRefreshToken(string token)
-        {
-            var account = await _userRepository.GetSingleAsync(y
-                                => y.RefreshTokens.Any(t => t.Token == token)
-                            , _ => _.RefreshTokens);
+            var account = await _userRepository.GetSingleAsync(
+                y=> y.RefreshToken.Equals(token));
             if (account == null || account.DeletedTime != null)
             {
-                throw new AppException(ErrorCode.TokenInvalid, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+                throw new AppException(ErrorCode.TokenInvalid, 
+                    ResponseMessageIdentity.REFRESH_TOKEN_INVALID, 
+                    StatusCodes.Status401Unauthorized);
             }
 
-            var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
-            if (!refreshToken.IsActive)
+            if (account.IsRefreshTokenExpired)
             {
-                throw new AppException(ErrorCode.TokenExpired, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+                throw new AppException(ErrorCode.TokenExpired, 
+                    ResponseMessageIdentity.REFRESH_TOKEN_EXPIRED, 
+                    StatusCodes.Status401Unauthorized);
             }
 
-            return (refreshToken, account);
+            return account;
         }
 
         public string GenerateOTP()
@@ -477,8 +473,7 @@ namespace MetroShip.Service.Services
         private async Task<UserEntity?> GetUserByUserName(string userName, CancellationToken cancellationToken = default)
         {
             userName = _userManager.NormalizeName(userName);
-            var user = await _userRepository.GetSingleAsync(_ => _.NormalizedUserName == userName,
-                x => x.RefreshTokens);
+            var user = await _userRepository.GetSingleAsync(_ => _.NormalizedUserName == userName);
 
             if (user != null && user.DeletedTime != null)
             {
@@ -490,7 +485,7 @@ namespace MetroShip.Service.Services
 
         private async Task<UserEntity?> GetUserByEmail(string email, CancellationToken cancellationToken = default)
         {
-            var user = await _userRepository.GetSingleAsync(_ => _.Email == email, x => x.RefreshTokens);
+            var user = await _userRepository.GetSingleAsync(_ => _.Email == email);
 
             if (user != null && user.DeletedTime != null)
             {
@@ -520,10 +515,10 @@ namespace MetroShip.Service.Services
             return null;
         }
 
-        private async Task<UserEntity?> GetUserByPhone(string phoneNumber, CancellationToken cancellationToken = default)
+        private async Task<UserEntity?> GetUserByPhone(string phoneNumber
+            , CancellationToken cancellationToken = default)
         {
-            var user = await _userRepository.GetSingleAsync(_ => _.PhoneNumber == phoneNumber,
-                               x => x.RefreshTokens);
+            var user = await _userRepository.GetSingleAsync(_ => _.PhoneNumber == phoneNumber);
 
             if (user != null && user.DeletedTime != null)
             {
@@ -531,20 +526,16 @@ namespace MetroShip.Service.Services
             }
 
             return user;
-        }   
+        }
 
-        private async Task<LoginResponse> GenerateLoginResponse (UserEntity account, IList<string> roles)
+        private async Task<LoginResponse> GenerateLoginResponse(UserEntity account, IList<string> roles)
         {
             var token = await GenerateJwtToken(account, roles, 24);
-            var refreshToken = GenerateRefreshToken(account.Id, 48);
-            RemoveOldRefreshTokens(account.RefreshTokens);
-            await _refreshTokenRepository.AddAsync(refreshToken);
+            await GenerateRefreshToken(account, 48);
             var count = await _unitOfWork.SaveChangeAsync();
 
             var response = _mapper.MapToLoginResponse(account);
             response.Token = token;
-            response.RefreshToken = refreshToken.Token;
-            response.RefreshTokenExpiredTime = refreshToken.Expires;
             response.Role = roles;
             return response;
         }
@@ -570,7 +561,7 @@ namespace MetroShip.Service.Services
         public async Task<LoginResponse> AuthenticateByPhone(PhoneLoginRequest request)
         {
             _logger.Information("Authenticate user by phone: {@request}", request.PhoneNumber);
-            _authValidator.ValidatePhoneLogin(request);
+            AuthValidator.ValidatePhoneLogin(request);
             var account = await GetUserByPhone(request.PhoneNumber);
             if (account == null)
             {
@@ -587,5 +578,166 @@ namespace MetroShip.Service.Services
                 throw new AppException(HttpResponseCodeConstants.FAILED, e.Message, StatusCodes.Status400BadRequest);
             }
         }
+
+        #region RefreshToken with a separate table
+        /*public async Task<LoginResponse> Authenticate(LoginRequest request)
+        {
+            _logger.Information("Authenticate user: {@request}", request.Username);
+            var account = await GetUserByUserName(request.Username);
+            AuthValidator.ValidateLogin(request, account);
+
+            try
+            {
+                var roles = await _userManager.GetRolesAsync(account);
+                var token = await GenerateJwtToken(account, roles, 24);
+                var refreshToken = GenerateRefreshToken(account.Id, 48);
+                RemoveOldRefreshTokens(account.RefreshTokens);
+                await _refreshTokenRepository.AddAsync(refreshToken);
+                var count = await _unitOfWork.SaveChangeAsync();
+
+                var response = _mapper.MapToLoginResponse(account);
+                response.Token = token;
+                response.RefreshToken = refreshToken.Token;
+                response.RefreshTokenExpiredTime = refreshToken.Expires;
+                response.Role = roles;
+                return response;
+            }
+            catch (Exception e)
+            {
+                throw new AppException(HttpResponseCodeConstants.FAILED, e.Message, StatusCodes.Status400BadRequest);
+            }
+        }
+        public async Task<LoginResponse> RefreshToken(string token)
+        {
+            _logger.Information("Refresh token: {@token}", token);
+            var (refreshToken, account) = await GetRefreshToken(token);
+            refreshToken.Expires = CoreHelper.SystemTimeNow;
+            _refreshTokenRepository.Update(refreshToken);
+            var newRefreshToken = GenerateRefreshToken(account.Id, 48);
+
+            newRefreshToken.UserId = account.Id;
+            await _refreshTokenRepository.AddAsync(newRefreshToken);
+            RemoveOldRefreshTokens(account.RefreshTokens);
+            var count = await _unitOfWork.SaveChangeAsync();
+
+            try
+            {
+                var roles = await _userManager.GetRolesAsync(account);
+                var jwtToken = await GenerateJwtToken(account, roles, 24);
+                var response = _mapper.MapToLoginResponse(account);
+                response.Token = jwtToken;
+                response.RefreshToken = newRefreshToken.Token;
+                response.RefreshTokenExpiredTime = refreshToken.Expires;
+                response.Role = roles;
+                return response;
+            }
+            catch (Exception e)
+            {
+                throw new AppException(HttpResponseCodeConstants.FAILED, e.Message, StatusCodes.Status400BadRequest);
+            }
+        }
+
+        private static RefreshToken GenerateRefreshToken(string userId, int hour)
+        {
+            var randomByte = new byte[64];
+            var rngCryptoServiceProvider = new RNGCryptoServiceProvider();
+            rngCryptoServiceProvider.GetBytes(randomByte);
+            var refreshToken = new RefreshToken
+            {
+                UserId = userId,
+                Token = Convert.ToBase64String(randomByte),
+                Expires = CoreHelper.SystemTimeNow.AddHours(hour),
+            };
+            return refreshToken;
+        }
+
+        private async Task<UserEntity?> GetUserByPhone(string phoneNumber, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetSingleAsync(_ => _.PhoneNumber == phoneNumber
+                ,x => x.RefreshTokens);
+
+            if (user != null && user.DeletedTime != null)
+            {
+                user = null;
+            }
+
+            return user;
+        }
+        private async Task<UserEntity?> GetUserByEmail(string email, CancellationToken cancellationToken = default)
+        {
+            var user = await _userRepository.GetSingleAsync(_ => _.Email == email
+            , x => x.RefreshTokens);
+
+            if (user != null && user.DeletedTime != null)
+            {
+                user = null;
+            }
+
+            return user;
+        }
+
+        private async Task<UserEntity?> GetUserByUserName(string userName, CancellationToken cancellationToken = default)
+        {
+            userName = _userManager.NormalizeName(userName);
+            var user = await _userRepository.GetSingleAsync(_ => _.NormalizedUserName == userName
+            ,x => x.RefreshTokens);
+
+            if (user != null && user.DeletedTime != null)
+            {
+                user = null;
+            }
+
+            return user;
+        }
+
+        /// <summary>
+        /// Remove old refresh token from database which is inactive and expired more than 2 days
+        /// </summary>
+        /// <param name="refreshTokens"></param>
+        private void RemoveOldRefreshTokens(ICollection<RefreshToken> refreshTokens)
+        {
+            var removeList = refreshTokens.Where(x => !x.IsActive
+                 && x.CreatedAt.AddDays(2) <= CoreHelper.SystemTimeNow).ToList();
+            if (removeList.Any())
+            {
+                _refreshTokenRepository.DeleteRange(removeList);
+            }
+        }
+
+        private async Task<(RefreshToken, UserEntity)> GetRefreshToken(string token)
+        {
+            var account = await _userRepository.GetSingleAsync(y
+                                => y.RefreshTokens.Any(t => t.Token == token)
+                            , _ => _.RefreshTokens);
+            if (account == null || account.DeletedTime != null)
+            {
+                throw new AppException(ErrorCode.TokenInvalid, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+            }
+
+            var refreshToken = account.RefreshTokens.Single(x => x.Token == token);
+            if (!refreshToken.IsActive)
+            {
+                throw new AppException(ErrorCode.TokenExpired, ResponseMessageIdentity.OTP_INVALID, StatusCodes.Status401Unauthorized);
+            }
+
+            return (refreshToken, account);
+        }
+
+        private async Task<LoginResponse> GenerateLoginResponse (UserEntity account, IList<string> roles)
+        {
+            var token = await GenerateJwtToken(account, roles, 24);
+            var refreshToken = GenerateRefreshToken(account.Id, 48);
+            RemoveOldRefreshTokens(account.RefreshTokens);
+            await _refreshTokenRepository.AddAsync(refreshToken);
+            var count = await _unitOfWork.SaveChangeAsync();
+
+            var response = _mapper.MapToLoginResponse(account);
+            response.Token = token;
+            response.RefreshToken = refreshToken.Token;
+            response.RefreshTokenExpiredTime = refreshToken.Expires;
+            response.Role = roles;
+            return response;
+        }*/
+        #endregion
     }
 }

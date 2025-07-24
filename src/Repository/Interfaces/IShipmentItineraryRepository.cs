@@ -6,5 +6,5 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface IShipmentItineraryRepository : IBaseRepository<ShipmentItinerary>
 {
-    Task<(List<ShipmentItineraryRepository.RoutesForGraph> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync();
+    Task<(List<Route> routes, List<Station> stations, List<MetroLine> metroLines)> GetRoutesAndStationsAsync();
 }

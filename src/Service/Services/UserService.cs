@@ -18,6 +18,7 @@ using MetroShip.Utility.Helpers;
 using MetroShip.Service.Validations;
 using Microsoft.EntityFrameworkCore;
 using Twilio.Rest.Api.V2010.Account;
+using MetroShip.Service.Utils;
 
 namespace MetroShip.Service.Services;
 
@@ -32,6 +33,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly UserValidator _userValidator = new();
     private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
     public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role)
     {
@@ -41,7 +43,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         List<RoleEntity> roleEntity;
         if (role != null)
         {
-            predicate = predicate.And(x => x.UserRoles.Any(y => y.Role.Name == role.ToString()));
+            predicate = predicate.And(x => x.UserRoles.Any(y => y.Role.Name.Equals(role.ToString())));
             roleEntity = await _roleManager.Roles.Where(x => x.Name == role.ToString()).ToListAsync();
         }
         else
@@ -51,12 +53,36 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
         var users = await _userRepository.GetAllPaginatedQueryable(
             pageNumber, pageSize,
-            predicate, null, e => e.UserRoles);
+            predicate, null, e => e.UserRoles, _ => _.StaffAssignments);
+
+        // get station for staff
+        var stationIds = users.Items
+            .SelectMany(u => u.StaffAssignments)
+            .Select(sa => sa.StationId)
+            .Distinct()
+            .ToList();
+
+        var stationList = _stationRepository.GetAll()
+        .Where(x => x.DeletedAt == null && stationIds.Contains(x.Id))
+        .Select(x => new { x.Id, x.StationNameVi });
 
         var userResponse = _mapper.MapToUserResponsePaginatedList(users);
         foreach (var user in userResponse.Items)
         {
             user.Role = _mapper.MapRoleToRoleName(roleEntity);
+
+            if (user.StaffAssignments != null && user.StaffAssignments.Any())
+            {
+                foreach (var assignment in user.StaffAssignments)
+                {
+                    // get station name for staff
+                    var station = stationList.FirstOrDefault(x => x.Id == assignment.StationId);
+                    if (station != null)
+                    {
+                        assignment.StationName = station.StationNameVi;
+                    }
+                }
+            }
         }
         return userResponse;
     }
@@ -68,14 +94,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         // parse role from request
         if (!Enum.TryParse<UserRoleEnum>(request.Role.ToString(), out var role))
         {
-            throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, ResponseMessageIdentity.ROLE_INVALID, 
+            throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, ResponseMessageIdentity.ROLE_INVALID,
                 StatusCodes.Status400BadRequest);
         }
         // check role is valid in system
         var roleEntity = await _roleManager.FindByNameAsync(role.ToString());
         if (roleEntity == null)
         {
-            throw new AppException(HttpResponseCodeConstants.BAD_REQUEST, 
+            throw new AppException(HttpResponseCodeConstants.BAD_REQUEST,
                 ResponseMessageIdentity.ROLE_INVALID, StatusCodes.Status400BadRequest);
         }
 
@@ -83,14 +109,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         var validateUser = await _userManager.FindByNameAsync(request.UserName);
         if (validateUser != null)
         {
-            throw new AppException(HttpResponseCodeConstants.EXISTED, 
+            throw new AppException(HttpResponseCodeConstants.EXISTED,
                 ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
         }
 
         var existingUserWithEmail = await _userManager.FindByEmailAsync(request.Email);
         if (existingUserWithEmail != null)
         {
-            throw new AppException(HttpResponseCodeConstants.EXISTED, 
+            throw new AppException(HttpResponseCodeConstants.EXISTED,
                 ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
         }
 
@@ -98,7 +124,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             x => x.PhoneNumber == request.PhoneNumber, cancellationToken);
         if (existingUserWithPhone != null)
         {
-            throw new AppException(HttpResponseCodeConstants.EXISTED, 
+            throw new AppException(HttpResponseCodeConstants.EXISTED,
                 ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
         }
 
@@ -108,6 +134,8 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
             account.SecurityStamp = Guid.NewGuid().ToString();
             account.Verified = CoreHelper.SystemTimeNow;
+            account.NormalizedUserName = _userManager.NormalizeName(request.UserName);
+            account.NormalizedEmail = _userManager.NormalizeEmail(request.Email);
             await _userRepository.CreateUserAsync(account, cancellationToken);
             var roleIds = new List<string> { roleEntity.Id };
             await _userRepository.AddUserToRoleAsync(account.Id, roleIds, cancellationToken);
@@ -136,16 +164,17 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
     public async Task UpdateUserAsync(UserUpdateRequest request)
     {
-        _logger.Information("Update user {@request}", request);
+        var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Update user {@request} for user {userId}", request, userId);
         _userValidator.ValidateUserUpdateRequest(request);
-        var user = await GetUserById(request.Id);
-        if (user.UserName != request.UserName)
+        var user = await GetUserById(userId);
+        if (user.UserName is not null && user.UserName != request.UserName)
         {
             var validateUser = await _userManager.FindByNameAsync(request.UserName);
             if (validateUser != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, 
-                    ResponseMessageIdentity.EXISTED_USER, 
+                throw new AppException(HttpResponseCodeConstants.EXISTED,
+                    ResponseMessageIdentity.EXISTED_USER,
                     StatusCodes.Status409Conflict);
             }
             /*var existingUser = await _userRepository.GetSingleAsync(u => u.UserName == request.UserName);
@@ -168,21 +197,42 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     {
         _logger.Information($"Get user by id {id}");
         var user = await _userRepository.GetSingleAsync(e => e.Id == id,
-            x => x.UserRoles
+            x => x.UserRoles, _ => _.StaffAssignments
             );
         if (user == null)
         {
-            throw new AppException(HttpResponseCodeConstants.NOT_FOUND, 
+            throw new AppException(HttpResponseCodeConstants.NOT_FOUND,
                 ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status404NotFound);
         }
+
+        var stationIds = user.StaffAssignments
+            .Select(sa => sa.StationId)
+            .Distinct()
+            .ToList();
+
+        var stationList = _stationRepository.GetAll()
+            .Where(x => x.DeletedAt == null && stationIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.StationNameVi });
 
         var response = _mapper.MapToUserResponse(user);
         var roles = await _userManager.GetRolesAsync(user);
         response.Role = roles;
+        if (response.StaffAssignments != null && response.StaffAssignments.Any())
+        {
+            foreach (var assignment in response.StaffAssignments)
+            {
+                // get station name for staff
+                var station = stationList.FirstOrDefault(x => x.Id == assignment.StationId);
+                if (station != null)
+                {
+                    assignment.StationName = station.StationNameVi;
+                }
+            }
+        }
         return response;
     }
 
-    public async Task DeleteUserAsync(object id)
+    public async Task BanUserAsync(object id)
     {
         _logger.Information($"Delete user by id {id}");
         var user = await GetUserById(id);
@@ -196,7 +246,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         var user = await _userRepository.GetSingleAsync(e => e.Id == id);
         if (user == null)
         {
-            throw new AppException(HttpResponseCodeConstants.NOT_FOUND, 
+            throw new AppException(HttpResponseCodeConstants.NOT_FOUND,
                 ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status404NotFound);
         }
 

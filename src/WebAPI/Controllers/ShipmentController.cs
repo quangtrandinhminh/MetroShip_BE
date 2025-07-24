@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/shipments")]
     public class ShipmentController(
@@ -24,14 +23,20 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
 
-
+        //[Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
-        public async Task<IActionResult> Get([FromQuery] PaginatedListRequest request)
+        public async Task<IActionResult> Get(
+            [FromQuery] PaginatedListRequest request, 
+            [FromQuery] ShipmentFilterRequest filterRequest,
+            [FromQuery] OrderByRequest orderByRequest
+            )
         {
-            var response = await shipmentService.GetAllShipments(request);
+            var response = await shipmentService.GetAllShipments(request, filterRequest, orderByRequest
+                );
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }
 
+        //[Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentByTrackingCode)]
         public async Task<IActionResult> Get([FromRoute] string shipmentTrackingCode)
         {
@@ -56,15 +61,16 @@ namespace MetroShip.WebAPI.Controllers
                 BaseResponse.OkResponseDto(shipmentId));
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        /*[Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetShipmentItinerary)]
         public async Task<ActionResult<List<ItineraryResponse>>> GetPath(
             [FromBody]  BestPathRequest request)
         {
             var result = await shipmentService.FindPathAsync(request);
             return Ok(BaseResponse.OkResponseDto(result));
-        }
+        }*/
 
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
         {
@@ -72,7 +78,6 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(paymentUrl));
         }
 
-        [AllowAnonymous]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
         public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
         {
@@ -86,12 +91,49 @@ namespace MetroShip.WebAPI.Controllers
             return Redirect(result);
         }
 
-        [AllowAnonymous]
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetTotalPrice)]
         public async Task<IActionResult> GetTotalPrice([FromBody] TotalPriceCalcRequest request)
         {
             var result = await shipmentService.GetItineraryAndTotalPrice(request);
             return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        /*[HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentsByLineAndDate)]
+        public async Task<IActionResult> GetShipmentByLineAndDate(
+            [FromRoute] string lineCode,
+            [FromRoute] DateTimeOffset date,
+                [FromQuery] PaginatedListRequest request,
+                string? regionCode,
+                ShiftEnum? shift
+            )
+        {
+            var response = await shipmentService.GetShipmentByLineAndDate(request, lineCode, date, regionCode, shift);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }*/
+
+        /*[HttpGet(WebApiEndpoint.ShipmentEndpoint.GetAvailableTimeSlots)]
+        public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
+        {
+            var response = await shipmentService.CheckAvailableTimeSlotsAsync(
+                request.ShipmentId, request.MaxAttempts.Value);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }*/
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.PickUpShipment)]
+        public async Task<IActionResult> PickUpShipment([FromBody] ShipmentPickUpRequest request)
+        {
+            await shipmentService.PickUpShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.PICKED_UP_SUCCESS, null));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.RejectShipment)]
+        public async Task<IActionResult> RejectShipment([FromBody] ShipmentRejectRequest request)
+        {
+            await shipmentService.RejectShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
         }
     }
 }

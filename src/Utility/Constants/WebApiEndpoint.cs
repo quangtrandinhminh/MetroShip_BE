@@ -22,6 +22,8 @@
             public const string UpdateUser = BaseEndpoint;
             public const string DeleteUser = BaseEndpoint + "/{id}";
             public const string GetUserRoles = BaseEndpoint + "/roles";
+            public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
+            public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
         }
 
         public static class ParcelCategory
@@ -61,6 +63,21 @@
             public const string CreateTransactionVnPay = BaseEndpoint + "/vnpay/payment-url";
             public const string VnpayExecute = BaseEndpoint + "/vnpay/payment-execute";
             public const string GetTotalPrice = BaseEndpoint + "/total-price-itinerary";
+            public const string GetShipmentsByLineAndDate = BaseEndpoint + "/metroline/{lineCode}/date/{date}";
+            public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
+            public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
+            public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
+        }
+
+        public static class TransactionEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/transactions";
+            public const string GetTransactions = BaseEndpoint;
+            public const string GetTransactionById = BaseEndpoint + "/{id}";
+            public const string CreateTransaction = BaseEndpoint;
+            public const string UpdateTransaction = BaseEndpoint + "/{id}";
+            public const string DeleteTransaction = BaseEndpoint + "/{id}";
+            public const string GetTransactionsByShipmentId = BaseEndpoint + "/shipment/{shipmentId}";
         }
 
         public static class Notification
@@ -88,7 +105,7 @@
             public const string GetUserDevices = BaseEndpoint;
         }
 
-        public static class Station 
+        public static class StationEndpoint 
         {
             private const string BaseEndpoint = "/" + AreaName + "/stations";
             public const string GetStations = BaseEndpoint;
@@ -96,6 +113,72 @@
             public const string CreateStation = BaseEndpoint;
             public const string UpdateStation = BaseEndpoint;
             public const string DeleteStation = BaseEndpoint + "/{id}";
+        }
+        public static class MetroLineEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
+            public const string GetMetroLineById = BaseEndpoint + "/{id}";
+            public const string CreateMetroLine = BaseEndpoint;
+            public const string UpdateMetroLine = BaseEndpoint;
+            public const string DeleteMetroLine = BaseEndpoint + "/{id}";
+            public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
+        }
+        public static class MetroTimeSlotEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-time-slots";
+            public const string GetMetroTimeSlots = BaseEndpoint;
+            public const string GetMetroTimeSlotById = BaseEndpoint + "/{id}";
+            public const string CreateMetroTimeSlot = BaseEndpoint;
+            public const string UpdateMetroTimeSlot = BaseEndpoint;
+            public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+        }
+
+        public static class MetroTrainEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/metro-trains";
+            public const string GetAllTrains = BaseEndpoint;
+            public const string GetTrainsByLineSlotAndDate = BaseEndpoint 
+                + "/line/{LineId}/slot/{TimeSlotId}/date/{Date}";
+            public const string GetTrainById = BaseEndpoint + "/{id}";
+            public const string CreateTrain = BaseEndpoint;
+            public const string UpdateTrain = BaseEndpoint + "/{id}";
+            public const string DeleteTrain = BaseEndpoint + "/{id}";
+            public const string AddShipmentItinerariesForTrain = BaseEndpoint + "/itineraries";
+        }
+
+        public static class MediaEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/media";
+            public const string UploadImage = BaseEndpoint + "/image";
+            public const string UploadMultipleImages = BaseEndpoint + "/images";
+            public const string UploadVideo = BaseEndpoint + "/video";
+            public const string UploadMultipleVideos = BaseEndpoint + "/videos";
+            public const string UploadRawFile = BaseEndpoint + "/raw-file";
+            public const string UploadMultipleRawFiles = BaseEndpoint + "/raw-files";
+            public const string DeleteResource = BaseEndpoint + "/resource";
+            public const string DeleteMultipleResources = BaseEndpoint + "/resources";
+            public const string GetBusinessMediaType = BaseEndpoint + "/business-media-type";
+        }
+
+        public static class ReportEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/reports";
+            public const string GetReports = BaseEndpoint;
+            public const string GetReportById = BaseEndpoint + "/{id}";
+            public const string CreateReport = BaseEndpoint;
+            public const string UpdateReport = BaseEndpoint + "/{id}";
+            public const string DeleteReport = BaseEndpoint + "/{id}";
+        }
+
+        public static class SystemConfigEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/system-configs";
+            public const string GetSystemConfigs = BaseEndpoint;
+            public const string GetSystemConfigById = BaseEndpoint + "/{id}";
+            public const string CreateSystemConfig = BaseEndpoint;
+            public const string UpdateSystemConfig = BaseEndpoint + "/{id}";
+            public const string DeleteSystemConfig = BaseEndpoint + "/{id}";
         }
     }
 }

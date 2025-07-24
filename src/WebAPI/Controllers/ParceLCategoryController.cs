@@ -20,14 +20,14 @@ namespace MetroShip.WebAPI.Controllers
             _parcelCategoryService = parcelCategoryService;
         }
 
-        [HttpGet("get-all")]
+        [HttpGet(WebApiEndpoint.ParcelCategory.GetCategories)]
         public async Task<IActionResult> GetAll([FromQuery] bool? isActive, [FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelCategoryService.GetAllAsync(isActive,request);
             return Ok(BaseResponse.OkResponseDto(result));
         }
 
-        [HttpPost]
+        [HttpPost(WebApiEndpoint.ParcelCategory.CreateCategory)]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Create([FromBody] ParcelCategoryCreateRequest request)
         {
@@ -35,7 +35,7 @@ namespace MetroShip.WebAPI.Controllers
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, BaseResponse.OkResponseDto(result));
         }
 
-        [HttpPut("{id}")]
+        [HttpPut(WebApiEndpoint.ParcelCategory.UpdateCategory)]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Update(Guid id, [FromBody] ParcelCategoryUpdateRequest request)
         {
@@ -48,7 +48,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsParcelCategory.UPDATE_SUCCESS));
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete(WebApiEndpoint.ParcelCategory.DeleteCategory)]
         [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -56,7 +56,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsParcelCategory.DELETE_SUCCESS));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet(WebApiEndpoint.ParcelCategory.GetCategory)]
         public async Task<IActionResult> GetById(Guid id)
         {
             var result = await _parcelCategoryService.GetByIdAsync(id);

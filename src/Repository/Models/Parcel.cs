@@ -13,11 +13,6 @@ namespace MetroShip.Repository.Models;
 [Index("ParcelCode", Name = "UQ__ParcelCode__A2A2A54B1E001898", IsUnique = true)]
 public partial class Parcel : BaseEntity
 {
-    public Parcel()
-    {
-        ParcelStatus = ParcelStatusEnum.AwaitingConfirmation;
-    }
-
     [Required]
     [StringLength(50)]
     public string ParcelCode { get; set; }
@@ -30,14 +25,8 @@ public partial class Parcel : BaseEntity
     [StringLength(50)]
     public string ParcelCategoryId { get; set; }
 
-    [Required]
-    public ParcelStatusEnum ParcelStatus { get; set; }
-
     [Column(TypeName = "decimal(10, 2)")]
     public decimal WeightKg { get; set; }
-
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal VolumeCm3 => LengthCm * WidthCm * HeightCm;
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal LengthCm { get; set; }
@@ -46,17 +35,29 @@ public partial class Parcel : BaseEntity
     [Column(TypeName = "decimal(10, 2)")]
     public decimal HeightCm { get; set; }
 
-    public bool IsBulk { get; set; }
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? ShippingFeeVnd { get; set; } = 0;
 
-    public int? IATACoefficient => IsBulk ? 6000 : 5000;
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? InsuranceFeeVnd { get; set; } = 0;
 
     [Column(TypeName = "decimal(10, 2)")]
-    public decimal ChargeableWeightKg => Math.Max(WeightKg, VolumeCm3 / 5000);
-    public string Barcode { get; set; }
-    public string QrCode { get; set; }
+    public decimal? KmSurchangeFeeVnd { get; set; } 
+
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? OverdueSurchangeFeeVnd { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal PriceVnd { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? ValueVnd { get; set; }
+    public bool IsBulk => ChargeableWeightKg > WeightKg;
+    public decimal VolumeCm3 => LengthCm * WidthCm * HeightCm;
+    public decimal ChargeableWeightKg => Math.Max(WeightKg, VolumeCm3 / 5000);
+    public decimal TotalLengthCm => LengthCm + WidthCm + HeightCm;
+
+    public string? DescriptionImageUrl { get; set; }
 
     [StringLength(255)]
     public string Description { get; set; }
@@ -71,4 +72,7 @@ public partial class Parcel : BaseEntity
 
     [InverseProperty(nameof(ParcelTracking.Parcel))]
     public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; } = new List<ParcelTracking>();
+
+    [InverseProperty(nameof(ParcelMedia.Parcel))]
+    public virtual ICollection<ParcelMedia> ParcelMedias { get; set; } = new List<ParcelMedia>();
 }

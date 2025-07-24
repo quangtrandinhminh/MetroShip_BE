@@ -24,6 +24,6 @@ public partial class MetroTimeSlot : BaseEntity
 
     public ShiftEnum Shift { get; set; }
 
-    [InverseProperty(nameof(MetroBasePrice.TimeSlot))]
-    public virtual ICollection<MetroBasePrice> MetroBasePrices { get; } = new List<MetroBasePrice>();
+    [InverseProperty(nameof(ShipmentItinerary.TimeSlot))]
+    public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new List<ShipmentItinerary>();
 }

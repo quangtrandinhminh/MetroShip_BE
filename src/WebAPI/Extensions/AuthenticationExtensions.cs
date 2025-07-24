@@ -34,9 +34,12 @@ public static class AuthenticationExtensions
         // Add authorization
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("RequireAdminRole", policy => policy.RequireRole(UserRoleEnum.Admin.ToString()));
-            options.AddPolicy("RequireShopOwnerRole", policy => policy.RequireRole(UserRoleEnum.Staff.ToString()));
-            options.AddPolicy("RequireCustomerRole", policy => policy.RequireRole(UserRoleEnum.Customer.ToString()));
+            // Permission policies
+            foreach (AssignmentRoleEnum assignmentRoleEnum in Enum.GetValues<AssignmentRoleEnum>())
+            {
+                options.AddPolicy($"RequireAssignmentRole.{assignmentRoleEnum}", policy =>
+                    policy.RequireClaim("AssignmentRole", assignmentRoleEnum.ToString()));
+            }
         });
 
         services.AddHttpContextAccessor();

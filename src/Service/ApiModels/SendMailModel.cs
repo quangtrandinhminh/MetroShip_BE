@@ -12,4 +12,5 @@ public class SendMailModel
     public string? Password { get; set; }
     public string? Role { get; set; }
     public object? Data { get; set; }
+    public string? Message { get; set; }
 }

@@ -1,8 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Security.Claims;
+using System.Text.Json.Serialization;
 using MetroShip.Repository.Models.Base;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Identity;
+using Serilog.Parsing;
 
 namespace MetroShip.Repository.Models.Identity;
 
@@ -20,7 +23,7 @@ public class UserEntity : IdentityUser
     public DateOnly? BirthDate { get; set; }
 
     public virtual ICollection<UserRoleEntity> UserRoles { get; set; }
-    public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
+    //public virtual ICollection<RefreshToken> RefreshTokens { get; set; }
 
     // Import Account from VietQR
     [MaxLength(6)]
@@ -39,12 +42,15 @@ public class UserEntity : IdentityUser
     public DateTimeOffset CreatedTime { get; set; }
     public DateTimeOffset LastUpdatedTime { get; set; }
     public DateTimeOffset? DeletedTime { get; set; }
-
     // Identity Property
     public DateTimeOffset? Verified { get; set; }
     public string? OTP { get; set; }
     public bool IsActive => PhoneConfirmed;
     public bool PhoneConfirmed => Verified.HasValue;
+    public string? RefreshToken { get; set; }
+    public DateTimeOffset? RefreshTokenExpiredTime { get; set; }
+    public bool IsRefreshTokenExpired => CoreHelper.SystemTimeNow >= RefreshTokenExpiredTime;
+
 
     [InverseProperty(nameof(Report.User))]
     public virtual ICollection<Report> Reports { get; set; } = new List<Report>();
@@ -61,6 +67,9 @@ public class UserEntity : IdentityUser
     [InverseProperty(nameof(Transaction.PaidBy))]
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();
 
+    [InverseProperty(nameof(StaffAssignment.Staff))]
+    public virtual ICollection<StaffAssignment>? StaffAssignments { get; set; }
+
     [NotMapped]
     public override string SecurityStamp { get => base.SecurityStamp; set => base.SecurityStamp = value; }
     [NotMapped]
@@ -69,12 +78,12 @@ public class UserEntity : IdentityUser
 
 public class RoleEntity : IdentityRole
 {
+
     public RoleEntity()
     {
         Id = Guid.NewGuid().ToString();
     }
     public virtual ICollection<UserRoleEntity> UserRoles { get; set; }
-    
 
     [NotMapped]
     public override string ConcurrencyStamp { get => base.ConcurrencyStamp; set => base.ConcurrencyStamp = value; }
@@ -89,6 +98,7 @@ public class UserRoleEntity : IdentityUserRole<string>
     public virtual RoleEntity Role { get; set; }
 }
 
+/*
 public class RefreshToken : BaseEntity
 {
     [ForeignKey(nameof(UserId))]
@@ -99,4 +109,5 @@ public class RefreshToken : BaseEntity
     public bool IsExpired => CoreHelper.SystemTimeNow >= Expires;
     public bool IsActive => !IsExpired;
 }
+*/
 
