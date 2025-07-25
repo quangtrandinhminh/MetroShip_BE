@@ -7,5 +7,8 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface ITrainRepository : IBaseRepository<MetroTrain>
 {
-
+    Task<IList<Shipment>> GetShipmentsByTrainAsync(string trainId);
+    Task SaveTrainLocationAsync(string trainId, double lat, double lng, string stationId);
+    Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId);
+    Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode);
 }

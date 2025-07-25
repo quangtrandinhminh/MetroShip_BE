@@ -24,6 +24,7 @@
             public const string GetUserRoles = BaseEndpoint + "/roles";
             public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
             public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
+            public const string CreateStaff = BaseEndpoint + "/staff-account";
         }
 
         public static class ParcelCategory
@@ -67,6 +68,9 @@
             public const string GetAvailableTimeSlots = BaseEndpoint + "/available-time-slots";
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
+            public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
+            public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
+            public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
         }
 
         public static class TransactionEndpoint
@@ -144,6 +148,8 @@
             public const string CreateTrain = BaseEndpoint;
             public const string UpdateTrain = BaseEndpoint + "/{id}";
             public const string DeleteTrain = BaseEndpoint + "/{id}";
+            public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
+            public const string SendLocation = BaseEndpoint + "/staff/send-location";
             public const string AddShipmentItinerariesForTrain = BaseEndpoint + "/itineraries";
         }
 
@@ -179,6 +185,28 @@
             public const string CreateSystemConfig = BaseEndpoint;
             public const string UpdateSystemConfig = BaseEndpoint + "/{id}";
             public const string DeleteSystemConfig = BaseEndpoint + "/{id}";
+        }
+
+        public static class RegionEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/regions";
+            public const string GetRegions = BaseEndpoint;
+            public const string GetRegionById = BaseEndpoint + "/{id}";
+            public const string CreateRegion = BaseEndpoint;
+            public const string UpdateRegion = BaseEndpoint + "/{id}";
+            public const string DeleteRegion = BaseEndpoint + "/{id}";
+        }
+
+        public static class PricingEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/pricing";
+            public const string GetPricing = BaseEndpoint;
+            public const string GetPricingById = BaseEndpoint + "/{id}";
+            public const string GetPricingTable = BaseEndpoint + "/table";
+            public const string CreatePricing = BaseEndpoint;
+            public const string UpdatePricing = BaseEndpoint + "/{id}";
+            public const string DeletePricing = BaseEndpoint + "/{id}";
+            public const string CalculatePrice = BaseEndpoint + "/calculation";
         }
     }
 }

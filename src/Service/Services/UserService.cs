@@ -55,6 +55,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             pageNumber, pageSize,
             predicate, null, e => e.UserRoles, _ => _.StaffAssignments);
 
+        // Keep only IsActive StaffAssignments in users
+        foreach (var user in users.Items)
+        {
+            user.StaffAssignments = user.StaffAssignments
+                .Where(sa => sa.IsActive && sa.DeletedAt == null)
+                .ToList();
+        }
+
         // get station for staff
         var stationIds = users.Items
             .SelectMany(u => u.StaffAssignments)
@@ -87,7 +95,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         return userResponse;
     }
 
-    public async Task CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default)
+    public async Task<string> CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default)
     {
         _logger.Information("Create user {@request}", request);
         _userValidator.ValidateUserCreateRequest(request);
@@ -106,15 +114,18 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         }
 
         // get user by name
-        var validateUser = await _userManager.FindByNameAsync(request.UserName);
-        if (validateUser != null)
+        var validateUser = await _userRepository.IsExistAsync(
+            u => u.UserName.Equals(request.UserName) 
+            || u.NormalizedUserName.Equals(request.UserName.Normalize()));
+        if (validateUser)
         {
             throw new AppException(HttpResponseCodeConstants.EXISTED,
                 ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
         }
 
-        var existingUserWithEmail = await _userManager.FindByEmailAsync(request.Email);
-        if (existingUserWithEmail != null)
+        var existingUserWithEmail = await _userRepository.IsExistAsync(
+            x => x.Email == request.Email || x.NormalizedEmail == request.Email.Normalize());
+        if (existingUserWithEmail)
         {
             throw new AppException(HttpResponseCodeConstants.EXISTED,
                 ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
@@ -155,6 +166,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                 };
                 _emailService.SendMail(sendMailModel);
             }
+            return account.Id;
         }
         catch (Exception e)
         {
@@ -228,6 +240,12 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                     assignment.StationName = station.StationNameVi;
                 }
             }
+
+            // orderByDescending by IsActive and FromTime
+            response.StaffAssignments = response.StaffAssignments
+                .OrderByDescending(sa => sa.IsActive)
+                .ThenByDescending(sa => sa.FromTime)
+                .ToList();
         }
         return response;
     }

@@ -5,5 +5,5 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface IRegionRepository : IBaseRepository<Region>
 {
-    
+
 }

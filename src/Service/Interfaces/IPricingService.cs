@@ -1,6 +1,9 @@
-﻿namespace MetroShip.Service.Interfaces;
+﻿using MetroShip.Service.ApiModels.Pricing;
 
-public class IPricingService
+namespace MetroShip.Service.Interfaces;
+
+public interface IPricingService
 {
-    
+    Task<decimal> CalculatePriceAsync(decimal weightKg, decimal distanceKm);
+    Task<PricingTableResponse> GetPricingTableAsync(string? pricingConfigId);
 }

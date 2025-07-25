@@ -67,4 +67,15 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
             )
             .Any();
     }
+
+    public async Task<string?> GetStationNameByIdAsync(string stationId)
+    {
+        if (string.IsNullOrEmpty(stationId))
+            return null;
+
+        return await _context.Stations
+            .Where(s => s.Id == stationId)
+            .Select(s => s.StationNameVi)
+            .FirstOrDefaultAsync();
+    }
 }

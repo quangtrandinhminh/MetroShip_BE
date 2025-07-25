@@ -39,6 +39,23 @@ public partial class Shipment : BaseEntity
     [StringLength(50)]
     public string? CurrentStationId { get; set; }
 
+    [NotMapped]
+    public string? DepartureStationName { get; set; } // Optional, if not provided
+
+    [NotMapped]
+    public string? DepartureStationAddress { get; set; } // Optional, if not provided
+
+    [NotMapped]
+    public string? DestinationStationName { get; set; } // Optional, if not provided
+
+    [NotMapped]
+    public string? DestinationStationAddress { get; set; } // Optional, if not provided
+
+    [NotMapped]
+    public string? CurrentStationName { get; set; } // Optional, if not provided
+    [NotMapped]
+    public string? CurrentStationAddress { get; set; } // Optional, if not provided
+
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]

@@ -121,8 +121,13 @@ public static class ServiceCollectionExtensions
 
         // Add DbContext
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")));
+          options.UseNpgsql(configuration.GetConnectionString("PostgresConnection")
+                      ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION")));
+        // Đảm bảo đặt trước dòng AddSignalR
+        services.AddSignalR();
 
+        // Add Cache
+        services.AddMemoryCache();
         // Add Identity
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()
@@ -158,6 +163,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITrainService, TrainService>();
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
         services.AddScoped<IPricingService, PricingService>();
+        services.AddScoped<IRegionService, RegionService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

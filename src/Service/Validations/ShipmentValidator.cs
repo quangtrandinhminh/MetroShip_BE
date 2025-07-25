@@ -9,6 +9,7 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using Microsoft.AspNetCore.Http;
+using RestSharp.Extensions;
 
 namespace MetroShip.Service.Validations;
 
@@ -31,31 +32,13 @@ public static class ShipmentValidator
     public static void ValidateShipmentRequest(ShipmentRequest request)
     {
         var _shipmentRequestValidator = new ShipmentRequestValidator();
-        var _itineraryRequestValidator = new ShipmentItineraryRequestValidator();
-        var _parcelRequestValidator = new ParcelRequestValidator();
         _shipmentRequestValidator.ValidateApiModel(request);
-
-        foreach (var parcel in request.Parcels)
-        {
-            _parcelRequestValidator.ValidateApiModel(parcel);
-        }
-
-        foreach (var itinerary in request.ShipmentItineraries)
-        {
-            _itineraryRequestValidator.ValidateApiModel(itinerary);
-        }
     }
 
     public static void ValidateTotalPriceCalcRequest(TotalPriceCalcRequest request)
     {
         var _totalPriceCalcRequestValidator = new TotalPriceCalcRequestValidator();
         _totalPriceCalcRequestValidator.ValidateApiModel(request);
-
-        var _parcelRequestValidator = new ParcelRequestValidator();
-        foreach (var parcel in request.Parcels)
-        {
-            _parcelRequestValidator.ValidateApiModel(parcel);
-        }
     }
 
     public static void ValidateShipmentFilterRequest(ShipmentFilterRequest request)
@@ -106,7 +89,7 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
         RuleFor(x => x.RecipientEmail)
             .EmailAddress()
             .WithMessage("Recipient " + ResponseMessageIdentity.EMAIL_INVALID)
-            .When(x => x.RecipientEmail != null);
+            .When(x => !string.IsNullOrEmpty( x.RecipientEmail));
 
         /*RuleFor(x => x.RecipientNationalId)
             // .NotEmpty()
@@ -149,6 +132,14 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
             .WithMessage(ResponseMessageShipment.TOTAL_KM_REQUIRED)
             .GreaterThan(0)
             .WithMessage(ResponseMessageShipment.TOTAL_KM_INVALID);
+
+        // for each itinerary, validate the route ID and leg order
+        RuleForEach(x => x.ShipmentItineraries)
+            .SetValidator(new ShipmentItineraryRequestValidator());
+
+        // for each parcel, validate the parcel category ID and dimensions
+        RuleForEach(x => x.Parcels)
+            .SetValidator(new ParcelRequestValidator());
     }
 
     private static bool BeAValidShipmentStatus(ShipmentStatusEnum? status)
@@ -171,25 +162,15 @@ public class ShipmentItineraryRequestValidator : AbstractValidator<ShipmentItine
     public ShipmentItineraryRequestValidator()
     {
         RuleFor(x => x.RouteId)
-            .NotNull()
+            .NotEmpty()
             .Must(x => Guid.TryParse(x, out _))
             .WithMessage(ResponseMessageItinerary.ROUTE_ID_REQUIRED);
 
         RuleFor(x => x.LegOrder)
-            .NotNull()
+            .NotEmpty()
             .WithMessage(ResponseMessageItinerary.LEG_ORDER_REQUIRED)
-
+            .GreaterThanOrEqualTo(1)
             .WithMessage(ResponseMessageItinerary.LEG_ORDER_INVALID);
-
-        /*RuleFor(x => x.BasePriceVndPerKm)
-            .NotNull()
-            .WithMessage(ResponseMessageItinerary.BASE_PRICE_VND_PER_KM_REQUIRED)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage(ResponseMessageItinerary.BASE_PRICE_VND_PER_KM_INVALID);*/
-
-        /*RuleFor(x => x.EstMinutes)
-            .GreaterThan(0)
-            .WithMessage(ResponseMessageItinerary.EST_MINUTES_INVALID);*/
     }
 }
 
@@ -289,6 +270,9 @@ public class TotalPriceCalcRequestValidator : AbstractValidator<TotalPriceCalcRe
         RuleFor(x => x.Parcels)
             .NotEmpty()
             .WithMessage(ResponseMessageParcel.PARCEL_REQUIRED);
+
+        RuleForEach(x => x.Parcels)
+            .SetValidator(new ParcelRequestValidator());
     }
 }
 

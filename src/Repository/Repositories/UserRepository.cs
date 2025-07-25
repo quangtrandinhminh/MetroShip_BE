@@ -134,5 +134,10 @@ namespace MetroShip.Repository.Repositories
 
             await Context.UserRoles.AddRangeAsync(userRoles, cancellationToken);
         }
+
+        public async Task<bool> IsExistAsync(Expression<Func<UserEntity, bool>> predicate)
+        {
+            return await _context.Users.AnyAsync(predicate);
+        }
     }
 }
