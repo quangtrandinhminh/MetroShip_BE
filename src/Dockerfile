@@ -8,6 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /MetroShip/
 
+COPY ["src/be.env", "/"]
 COPY ["src/WebAPI/MetroShip.WebAPI.csproj", "WebAPI/"]
 COPY ["src/Service/MetroShip.Service.csproj", "Service/"]
 COPY ["src/Repository/MetroShip.Repository.csproj", "Repository/"]
