@@ -21,5 +21,7 @@ namespace MetroShip.Repository.Interfaces
             params Expression<Func<UserEntity, object>>[]? includeProperties);
 
         Task AddUserToRoleAsync(string userId, List<string> lisRoleId, CancellationToken cancellationToken = default);
+
+        Task<bool> IsExistAsync(Expression<Func<UserEntity, bool>> predicate);
     }
 }

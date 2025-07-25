@@ -3,7 +3,7 @@ using MetroShip.Utility.Constants;
 
 namespace MetroShip.Service.ApiModels.User;
 
-public sealed record UserCreateRequest : BankInfoRequest
+public sealed record UserCreateRequest
 {
     public string UserName { get; set; }
 

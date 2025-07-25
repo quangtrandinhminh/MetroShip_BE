@@ -5,7 +5,9 @@ using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
+using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -56,7 +58,11 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             );
             if (pricingConfig == null)
             {
-                throw new AppException("The specified pricing configuration is not found or is inactive.");
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    "The specified pricing configuration is not found or is inactive.",
+                StatusCodes.Status400BadRequest
+                    );
             }
         }
         else
@@ -70,6 +76,15 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
 
     public async Task<decimal> CalculatePriceAsync(decimal weightKg, decimal distanceKm)
     {
+        if (weightKg <= 0 || distanceKm <= 0)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "Weight and distance must be greater than zero.",
+                StatusCodes.Status400BadRequest
+            );
+        }
+
         var pricingConfig = await GetPricingConfigAsync();
 
         // Find the applicable weight tier
@@ -77,7 +92,11 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             .FirstOrDefault(t => t.IsWeightInRange(weightKg));
         if (weightTier == null)
         {
-            throw new AppException("No applicable weight tier found for the given weight.");
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "No applicable weight tier found for the given weight.",
+                StatusCodes.Status400BadRequest
+                );
         }
 
         // Find the applicable distance tier

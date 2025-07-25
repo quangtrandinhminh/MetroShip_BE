@@ -40,7 +40,7 @@
         public const string UNAUTHENTICATED = "Unauthenticated.";
         public const string PASSWORD_NOT_MATCH = "Passwords do not match.";
         public const string PASSWORD_WRONG = "Incorrect password.";
-        public const string EXISTED_USER = "User already exists.";
+        public const string EXISTED_USER = "User name already exists.";
         public const string EXISTED_EMAIL = "Email already exists.";
         public const string EXISTED_PHONE = "Phone number already exists.";
         public const string OTP_INVALID = "OTP is invalid.";

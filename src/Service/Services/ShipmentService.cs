@@ -213,6 +213,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         var pricingTable = await _pricingService.GetPricingTableAsync(null);
+        shipment.PricingConfigId = pricingTable.Id;
         shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
@@ -241,7 +242,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _emailSender.SendMail(sendMailModel);
 
         // send email to recipient if provided
-        if (request.RecipientEmail is not null && request.RecipientEmail != user.Email)
+        if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
         {
             // send email to recipient
             _logger.Information("Send email to recipient with tracking code: {@trackingCode}", shipment.TrackingCode);
@@ -716,7 +717,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         response.StationsInDistanceMeter = maxDistanceInMeters;
-        //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
     }
 

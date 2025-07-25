@@ -56,9 +56,9 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateShipment)]
         public async Task<IActionResult> Create([FromBody] ShipmentRequest request)
         {
-            var shipmentId = await shipmentService.BookShipment(request);
+            var (shipmentId,trackingCode) = await shipmentService.BookShipment(request);
             return Created(nameof(Create), 
-                BaseResponse.OkResponseDto(shipmentId));
+                BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
         }
 
         /*[Authorize(Roles = nameof(UserRoleEnum.Customer))]
