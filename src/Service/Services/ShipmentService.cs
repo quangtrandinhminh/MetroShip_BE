@@ -9,7 +9,6 @@ using MetroShip.Utility.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Linq.Expressions;
-using System.Text.Json;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.BusinessModels;
@@ -22,6 +21,8 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
+using MetroShip.Service.ApiModels.Pricing;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
 
@@ -39,10 +40,12 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IEmailService _emailSender = serviceProvider.GetRequiredService<IEmailService>();
     private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
     private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
-    private bool _isInitializedGraph = false;
+    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+    private readonly IRouteRepository _routeRepository = serviceProvider.GetRequiredService<IRouteRepository>();
+    private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private MetroGraph _metroGraph;
-    private bool _isInitializedPricingTable = false;
-    private PricingTable _pricingTable;
+    private const string CACHE_KEY = nameof(MetroGraph);
+    private const int CACHE_EXPIRY_MINUTES = 30;
 
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
         PaginatedListRequest request
@@ -116,16 +119,52 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         ShipmentValidator.ValidateShipmentRequest(request);
 
         // get departure station, which accepts the shipment
-        var departureStation = await _stationRepository.GetSingleAsync(
-                       x => x.Id == request.DepartureStationId && x.IsActive, false,
-                       x => x.Region);
+        var stations = await _stationRepository.GetAll().
+            Where(x => (x.Id == request.DepartureStationId || x.Id == request.DestinationStationId)
+            && x.IsActive && x.DeletedAt == null)
+            .Include(x => x.Region)
+            .Select(x => new Station
+            {
+                Id = x.Id,
+                StationNameVi = x.StationNameVi,
+                Address = x.Address,
+                Region = new Region
+                {
+                    RegionCode = x.Region.RegionCode
+                }
+            }).ToListAsync(cancellationToken);
+
+        var departureStation = stations?.FirstOrDefault(x => x.Id == request.DepartureStationId);
+        var destinationStation = stations?.FirstOrDefault(x => x.Id == request.DestinationStationId);
+
         if (departureStation == null)
+        {
             throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.DEPARTURE_STATION_NOT_FOUND,
-            StatusCodes.Status404NotFound);
+                ErrorCode.BadRequest,
+                ResponseMessageShipment.DEPARTURE_STATION_NOT_FOUND,
+                StatusCodes.Status400BadRequest);
+        }
+            
+
+        if (destinationStation == null)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessageShipment.DESTINATION_STATION_NOT_FOUND,
+                StatusCodes.Status400BadRequest);
+        }    
 
         // Check if all routes exist
+        var routeIds = request.ShipmentItineraries.Select(x => x.RouteId).Distinct().ToList();
+        var routes = await _routeRepository.IsExistAsync(
+                       x => routeIds.Contains(x.Id) && x.DeletedAt == null);
+        if (!routes)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            "There is a route not found",
+            StatusCodes.Status404NotFound);
+        }
 
         // map shipment request to shipment entity
         var shipment = _mapperlyMapper.MapToShipmentEntity(request);
@@ -173,8 +212,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             index++;
         }
 
-        if (_isInitializedPricingTable == false) await InitializePricingTableAsync();
-        shipment.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
+        var pricingTable = await _pricingService.GetPricingTableAsync(null);
+        shipment.PricingConfigId = pricingTable.Id;
+        shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -187,6 +227,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
         shipment.ScheduledDateTime = systemTime;
+        shipment.DepartureStationName = departureStation.StationNameVi;
+        shipment.DepartureStationAddress = departureStation.Address;
+        shipment.DestinationStationName = destinationStation.StationNameVi;
+        shipment.DestinationStationAddress = destinationStation.Address;
         var sendMailModel = new SendMailModel
         {
             Email = user.Email,
@@ -198,7 +242,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _emailSender.SendMail(sendMailModel);
 
         // send email to recipient if provided
-        if (request.RecipientEmail is not null && request.RecipientEmail != user.Email)
+        if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
         {
             // send email to recipient
             _logger.Information("Send email to recipient with tracking code: {@trackingCode}", shipment.TrackingCode);
@@ -218,29 +262,31 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
     private async Task InitializeGraphAsync()
     {
-        if (_isInitializedGraph)
+        var cacheKey = CACHE_KEY;
+        if (memoryCache.TryGetValue(cacheKey, out MetroGraph? cachedGraph))
+        {
+            _logger.Information("Retrieved metro graph from cache.");
+            _metroGraph = cachedGraph;
             return;
+        }
 
         var (routes, stations, metroLines) =
             await _shipmentItineraryRepository.GetRoutesAndStationsAsync();
 
         // Khởi tạo đồ thị metro
         _metroGraph = new MetroGraph(routes, stations, metroLines);
-        _isInitializedGraph = true;
+        // save into memory cache
+        memoryCache.Set(cacheKey, _metroGraph, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
     }
 
-    private async Task InitializePricingTableAsync()
+    /*private async Task InitializePricingTableAsync()
     {
         if (_isInitializedPricingTable)
             return;
 
-        // Lấy tất cả cấu hình giá từ hệ thống
-        var allConfigs = await _systemConfigRepository
-            .GetAllSystemConfigs(ConfigTypeEnum.PriceStructure);
-        var pricingTableBuilder = new PricingTableBuilder(); 
-        _pricingTable = pricingTableBuilder.BuildPricingTable(allConfigs);
+        _pricingTable = await _pricingService.GetPricingTableAsync(null);
         _isInitializedPricingTable = true;
-    }
+    }*/
 
     // v2
     public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
@@ -380,6 +426,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
+        _logger.Information("Checking shipment date: {@scheduledDateTime}", scheduledDateTime);
         // Get system config values
         var confirmationHour = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.CONFIRMATION_HOUR)));
@@ -612,8 +659,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         List<(string StationId, List<string> Path)> pathResults, TotalPriceCalcRequest request)
     {
         // Get pricing configuration
-        InitializePricingTableAsync().Wait();
-        var priceCalculationService = new PriceCalculationService(_pricingTable);
+        //InitializePricingTableAsync().Wait();
 
         // Get parcel categories
         var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
@@ -638,7 +684,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
             // Calculate pricing for each parcel
             ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, priceCalculationService, categories);
+                pathResponse.Parcels, pathResponse, _pricingService, categories);
 
             // Check est arrival time
             pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
@@ -671,7 +717,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         response.StationsInDistanceMeter = maxDistanceInMeters;
-        //response.PriceStructureDescriptionJSON = JsonSerializer.Serialize(_pricingTable);
         return response;
     }
 

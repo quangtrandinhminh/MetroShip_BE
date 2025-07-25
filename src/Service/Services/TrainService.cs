@@ -184,7 +184,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
             if (!string.IsNullOrEmpty(request.ModelName))
             {
-                expression = expression.And(x => x.ModelName.Contains(request.ModelName));
+                // search string in postgres
+                expression = expression.And(x => 
+                EF.Functions.ILike(x.ModelName, $"%{request.ModelName}%"));
             }
             if (!string.IsNullOrEmpty(request.TimeSlotId))
             {

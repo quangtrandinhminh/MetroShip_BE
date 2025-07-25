@@ -7,6 +7,8 @@ using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
+using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.StaffAssignment;
@@ -34,10 +36,9 @@ public interface IMapperlyMapper
     // shipment
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     ShipmentListResponse MapToShipmentListResponse(Shipment entity);
-    ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentRepository.ShipmentDto entity);
+    ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
-    PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<ShipmentRepository.ShipmentDto> entity);
     /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
@@ -96,4 +97,11 @@ public interface IMapperlyMapper
     // staff assignment
     StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);
     List<StaffAssignmentResponse> MapToStaffAssignmentResponseList(ICollection<StaffAssignment> entity);
+
+    // pricing config
+    PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+
+    // region
+    PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
+    RegionResponse MapToRegionResponse(Region entity);
 }

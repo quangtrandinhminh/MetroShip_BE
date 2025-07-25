@@ -40,7 +40,7 @@
         public const string UNAUTHENTICATED = "Unauthenticated.";
         public const string PASSWORD_NOT_MATCH = "Passwords do not match.";
         public const string PASSWORD_WRONG = "Incorrect password.";
-        public const string EXISTED_USER = "User already exists.";
+        public const string EXISTED_USER = "User name already exists.";
         public const string EXISTED_EMAIL = "Email already exists.";
         public const string EXISTED_PHONE = "Phone number already exists.";
         public const string OTP_INVALID = "OTP is invalid.";
@@ -266,5 +266,32 @@
             "Shipment itineraries not found for the specified train.";
 
         public const string TRAIN_MUST_BE_SAME_LINE = "Train must be on the same line as the route.";
+    }
+
+    public class RegionMessageConstants
+    {
+        public const string REGION_NOT_FOUND = "Region not found.";
+        public const string REGION_EXISTED = "Region already exists.";
+        public const string REGION_UPDATE_SUCCESS = "Region updated successfully.";
+        public const string REGION_DELETE_SUCCESS = "Region deleted successfully.";
+        public const string REGION_CREATE_SUCCESS = "Region created successfully.";
+        public const string REGION_CODE_REQUIRED = "Region code is required.";
+        public const string REGION_NAME_REQUIRED = "Region name is required.";
+        public const string REGION_CODE_INVALID = "Region code is invalid.";
+        public const string REGION_NAME_INVALID = "Region name is invalid.";
+    }
+
+    public class RouteMessageConstants
+    {
+        public const string ROUTE_NOT_FOUND = "Route not found.";
+        public const string ROUTE_EXISTED = "Route already exists.";
+        public const string ROUTE_UPDATE_SUCCESS = "Route updated successfully.";
+        public const string ROUTE_DELETE_SUCCESS = "Route deleted successfully.";
+        public const string ROUTE_CREATE_SUCCESS = "Route created successfully.";
+        public const string ROUTE_CODE_REQUIRED = "Route code is required.";
+        public const string ROUTE_NAME_REQUIRED = "Route name is required.";
+        public const string ROUTE_CODE_INVALID = "Route code is invalid.";
+        public const string ROUTE_NAME_INVALID = "Route name is invalid.";
+        public const string METROLINE_STATION_COUNT_LESS_THAN_2 = "Metro line must have at least 2 stations.";
     }
 }

@@ -42,29 +42,6 @@ namespace MetroShip.Service.Services
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
         private readonly IStaffAssignmentService _staffAssignmentService = serviceProvider.GetRequiredService<IStaffAssignmentService>();
 
-        /*public AuthService(
-            IServiceProvider serviceProvider,
-            IUserRepository userRepository,
-            RoleManager<RoleEntity> roleManager,
-            UserManager<UserEntity> userManager,
-            //IBaseRepository<RefreshToken> refreshTokenRepository,
-            IUnitOfWork unitOfWork,
-            IMapperlyMapper mapperlyMapper,
-            IStaffAssignmentService staffAssignmentService
-            )
-        {
-            _userRepository = userRepository;
-            _mapper = mapperlyMapper;
-            _roleManager = roleManager;
-            _userManager = userManager;
-            _logger = Log.Logger;
-            //_refreshTokenRepository = refreshTokenRepository;
-            _emailService = serviceProvider.GetRequiredService<IEmailService>();
-            _unitOfWork = unitOfWork;
-            AuthValidator = new AuthValidator();
-            _staffAssignmentService = staffAssignmentService;
-        }*/
-
         // get all roles
         public async Task<IList<RoleResponse>> GetAllRoles()
         {
@@ -102,25 +79,29 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Register new user: {@request}", request.UserName);
             AuthValidator.ValidateRegisterRequest(request);
-            // get user by name
-            var validateUser = await _userManager.FindByNameAsync(request.UserName);
-            if (validateUser != null)
+            // check if user is existed in system
+            var validateUser = await _userRepository.IsExistAsync(
+                u => u.UserName.Equals(request.UserName)
+                     || u.NormalizedUserName.Equals(request.UserName.Normalize()));
+            if (validateUser)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                throw new AppException(HttpResponseCodeConstants.EXISTED,
                     ResponseMessageIdentity.EXISTED_USER, StatusCodes.Status400BadRequest);
             }
 
-            var existingUserWithEmail = await _userManager.FindByEmailAsync(request.Email);
-            if (existingUserWithEmail != null)
+            var existingUserWithEmail = await _userRepository.IsExistAsync(
+                x => x.Email == request.Email || x.NormalizedEmail == request.Email.Normalize());
+            if (existingUserWithEmail)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                throw new AppException(HttpResponseCodeConstants.EXISTED,
                     ResponseMessageIdentity.EXISTED_EMAIL, StatusCodes.Status400BadRequest);
             }
 
-            var existingUserWithPhone = await _userManager.Users.FirstOrDefaultAsync(x => x.PhoneNumber == request.PhoneNumber);
+            var existingUserWithPhone = await _userManager.Users.FirstOrDefaultAsync(
+                x => x.PhoneNumber == request.PhoneNumber, cancellationToken);
             if (existingUserWithPhone != null)
             {
-                throw new AppException(HttpResponseCodeConstants.EXISTED, 
+                throw new AppException(HttpResponseCodeConstants.EXISTED,
                     ResponseMessageIdentity.EXISTED_PHONE, StatusCodes.Status400BadRequest);
             }
 

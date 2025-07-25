@@ -1,6 +1,7 @@
 ﻿using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
@@ -13,7 +14,7 @@ public static class ParcelPriceCalculator
     public static void CalculateParcelPricing(
         List<ParcelRequest> parcels,
         BestPathGraphResponse pathResponse,
-        PriceCalculationService priceCalculationService,
+        IPricingService priceCalculationService,
         List<ParcelCategory> categories)
     {
         foreach (var parcel in parcels)
@@ -30,7 +31,7 @@ public static class ParcelPriceCalculator
                 CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);*/
 
             parcel.ShippingFeeVnd = priceCalculationService.
-                CalculateShippingPriceDemo(chargeableWeight, pathResponse.TotalKm);
+                CalculatePriceAsync(chargeableWeight, pathResponse.TotalKm).Result;
             parcel.PriceVnd += parcel.ShippingFeeVnd;
 
             // Calculate insurance if required

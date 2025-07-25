@@ -8,8 +8,8 @@ public class DistanceTier : BaseEntity
     public string PricingConfigId { get; set; }
     public int TierOrder { get; set; }
     public decimal? MaxDistanceKm { get; set; }
-    public decimal BasePriceVnd { get; set; }
-    public decimal BasePriceVndPerKm { get; set; }
+    public decimal? BasePriceVnd { get; set; }
+    public decimal? BasePriceVndPerKm { get; set; }
     public bool IsPricePerKm { get; set; }
     public string? Description { get; set; }
 

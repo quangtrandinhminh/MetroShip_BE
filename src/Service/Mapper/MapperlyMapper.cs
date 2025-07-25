@@ -23,6 +23,8 @@ using MetroShip.Service.ApiModels.Train;
 using MetroShip.Utility.Helpers;
 using MetroShip.Utility.Enums;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.StaffAssignment;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -53,15 +55,12 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
 
-    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(ShipmentDto entity);
+    public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
     // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
-    public partial ShipmentDetailsResponse MapToShipmentListResponse(ShipmentDto entity);
-    public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(
-        PaginatedList<ShipmentDto> entity);
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
@@ -96,10 +95,6 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
     [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
     public partial RouteResponse MapToRouteResponse(Route entity);
-
-    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
-    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
-    public partial RouteResponse MapToRouteResponse(RouteDto entity);
 
     // metroline
     [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]
@@ -143,6 +138,13 @@ public partial class MapperlyMapper : IMapperlyMapper
     // staff assignment
     public partial StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);
     public partial List<StaffAssignmentResponse> MapToStaffAssignmentResponseList(ICollection<StaffAssignment> entity);
+
+    // pricing config
+    public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+
+    // region
+    public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
+    public partial RegionResponse MapToRegionResponse(Region entity);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

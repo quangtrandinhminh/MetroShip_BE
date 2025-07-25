@@ -250,7 +250,7 @@ public class MetroGraph
         foreach (var route in response.Routes)
         {
             //var basePricePerKm = _linesMap[route.LineId].BasePriceVndPerKm;
-            route.SeqOrder = response.Routes.IndexOf(route) + 1;
+            route.LegOrder = response.Routes.IndexOf(route) + 1;
             //route.BasePriceVndPerKg = basePricePerKm;
         }
 
@@ -312,7 +312,7 @@ public class MetroGraph
 
         foreach (var route in response.Routes)
         {
-            route.SeqOrder = response.Routes.IndexOf(route) + 1;
+            route.LegOrder = response.Routes.IndexOf(route) + 1;
             //route.BasePriceVndPerKg = basePricePerKm;
         }
 

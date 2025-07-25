@@ -49,8 +49,9 @@ namespace MetroShip.WebAPI.Controllers
         [Route(WebApiEndpoint.User.CreateUser)]
         public async Task<IActionResult> CreateUser([FromBody] UserCreateRequest request)
         {
-            await _userService.CreateUserAsync(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.CREATE_USER_SUCCESS, null));
+            var userId = await _userService.CreateUserAsync(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.CREATE_USER_SUCCESS, 
+                new { userId = userId }));
         }
 
         [HttpPut]

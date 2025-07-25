@@ -6,5 +6,4 @@ public record MetroLineItineraryResponse
     public string LineNameVi { get; set; }
     public string LineNameEn { get; set; }
     public string ColorHex { get; set; }
-    public decimal BasePriceVndPerKm { get; set; }
 }

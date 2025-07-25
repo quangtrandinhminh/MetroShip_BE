@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
@@ -27,6 +28,8 @@ public partial class MetroLine : BaseEntity
 
     [StringLength(20)]
     public string LineCode { get; set; }
+
+    public int? LineNumber { get; set; }
 
     [StringLength(255)]
     public string? LineType { get; set; }
@@ -51,6 +54,10 @@ public partial class MetroLine : BaseEntity
 
     public string? StationListJSON { get; set; } // JSON string of coordinates
 
+    public List<StationListItem> StationList =>
+        string.IsNullOrEmpty(StationListJSON) ? new List<StationListItem>() :
+        System.Text.Json.JsonSerializer.Deserialize<List<StationListItem>>(StationListJSON);
+
     [StringLength(20)]
     public string ColorHex { get; set; }
 
@@ -72,10 +79,4 @@ public class StationListItem
 {
     public string StationId { get; set; }
     public string StationCode { get; set; }
-    public string StationNameVi { get; set; }
-    public string StationNameEn { get; set; }
-    public double Latitude { get; set; }
-    public double Longitude { get; set; }
-    public bool IsUnderground { get; set; }
-    public bool IsActive { get; set; }
 }

@@ -14,4 +14,9 @@
       <ProjectReference Include="..\Repository\MetroShip.Repository.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="ApiModels\Region\" />
+      <Folder Include="ApiModels\Pricing\" />
+    </ItemGroup>
+
 </Project>

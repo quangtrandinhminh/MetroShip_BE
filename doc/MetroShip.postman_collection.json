@@ -651,7 +651,53 @@
 			"name": "User",
 			"item": [
 				{
-					"name": "Get users",
+					"name": "Get users Admin",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users?role=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get users Staff",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users?role=2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "role",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get users Cus",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -668,6 +714,66 @@
 									"key": "role",
 									"value": "3"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get users All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users?pageNumber=1&pageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get user by id",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/users/2d828901-31a6-4051-83bf-4efa78cbcffa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"2d828901-31a6-4051-83bf-4efa78cbcffa"
 							]
 						}
 					},
@@ -719,46 +825,13 @@
 					"response": []
 				},
 				{
-					"name": "Get user by id",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "{{baseUrl}}/users/2d828901-31a6-4051-83bf-4efa78cbcffa",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"users",
-								"2d828901-31a6-4051-83bf-4efa78cbcffa"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Create User Cus",
+					"name": "Create User Admin",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"userName\": \"quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp1@gmail.com\",\r\n  \"phoneNumber\": \"0123456788\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 3\r\n}",
+							"raw": "{\r\n  \"userName\": \"quangAdmin\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp0@gmail.com\",\r\n  \"phoneNumber\": \"0123456758\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 1\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -810,7 +883,36 @@
 					"response": []
 				},
 				{
-					"name": "Get roles",
+					"name": "Create User Cus",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"userName\": \"quang6113\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp1@gmail.com\",\r\n  \"phoneNumber\": \"0123456788\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/users",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get user roles",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -1931,7 +2033,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1958,7 +2060,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-07-22T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2006,13 +2108,67 @@
 					"response": []
 				},
 				{
-					"name": "Book a shipment",
+					"name": "ĐHYDuoc - BXMTay - TDY location",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n    \"destinationStationId\": \"c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Hoàng\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"recipientNationalId\": \"079203015280\",\r\n    \"scheduledDateTime\": \"2025-07-30T21:30:00Z\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"totalShippingFeeVnd\": 411000.000,\r\n    \"totalCostVnd\": 411000,\r\n    \"insuranceFeeVnd\": 0,\r\n    \"totalKm\": 32.35,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"e165d07a-e71f-45be-b25c-04cc5232a17d\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"499b4a5f-e417-4b91-988a-cce63ebafa38\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"d8f9c5b3-9e8a-4d8f-c5b3-9e8ad8f9c5b3\",\r\n            \"legOrder\": 3\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"shippingFeeVnd\": 75000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 10,\r\n            \"isBulk\": false,\r\n            \"priceVnd\": 75000.000,\r\n            \"valueVnd\": null,\r\n            \"descriptionImageUrl\": \"string\"\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 80,\r\n            \"widthCm\": 60,\r\n            \"heightCm\": 50,\r\n            \"shippingFeeVnd\": 336000.000,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"chargeableWeight\": 48,\r\n            \"isBulk\": true,\r\n            \"priceVnd\": 336000.000,\r\n            \"valueVnd\": null\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n    \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 20,\r\n            \"heightCm\": 30\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 30,\r\n            \"widthCm\": 40,\r\n            \"heightCm\": 50,\r\n            \"valueVnd\": 2000000\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "OperaHouse - BXMTay - TDY location",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a9\",\r\n    \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n    \"scheduledDateTime\": \"2025-07-26T07:30:00\",\r\n    \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n    \"userLatitude\": 10.7569209,\r\n    \"userLongitude\": 106.6761717,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 20,\r\n            \"heightCm\": 30,\r\n            \"descriptionImageUrl\": \"\"\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 5,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"valueVnd\": 2000000,\r\n            \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428247/vvocjj1yzvlkvevnjsuq.png\"\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 60,\r\n            \"widthCm\": 50,\r\n            \"heightCm\": 40,\r\n            \"descriptionImageUrl\": \"\"\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n            \"weightKg\": 50,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"valueVnd\": 1000000,\r\n            \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428324/vgiktjcbdpenbjk0hkap.jpg\"\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Book a shipment - TDY - ĐHYD - BXMT - 2 parcels",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"scheduledDateTime\": \"2025-07-25T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2032,13 +2188,13 @@
 					"response": []
 				},
 				{
-					"name": "Book a shipment - TDY",
+					"name": "Book a shipment - TDY - ĐHYD - BXMT - 4 parcels",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "    {\r\n        \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n        \"destinationStationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\r\n        \"senderName\": \"Tang Du Yen\",\r\n        \"senderPhone\": \"0932754722\",\r\n        \"recipientName\": \"Yellannn\",\r\n        \"recipientPhone\": \"0932754711\",\r\n        \"recipientEmail\": null,\r\n        \"recipientNationalId\": \"\",\r\n        \"scheduledDateTime\": \"2025-07-05T21:30:00.000Z\",\r\n        \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n        \"totalShippingFeeVnd\": 231000,\r\n        \"totalCostVnd\": 231000,\r\n        \"insuranceFeeVnd\": 0,\r\n        \"totalKm\": 20.39,\r\n        \"shipmentItineraries\": [\r\n            {\r\n                \"routeId\": \"3e3fd340-0392-4b0f-ae72-9f06bc4180e7\",\r\n                \"legOrder\": 1\r\n            },\r\n            {\r\n                \"routeId\": \"c392ab22-e058-413a-84dd-410a05ab1d30\",\r\n                \"legOrder\": 2\r\n            }\r\n        ],\r\n        \"parcels\": [\r\n            {\r\n                \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n                \"weightKg\": 11,\r\n                \"lengthCm\": 111,\r\n                \"widthCm\": 11,\r\n                \"heightCm\": 11,\r\n                \"shippingFeeVnd\": 77000,\r\n                \"insuranceFeeVnd\": 0,\r\n                \"chargeableWeight\": 11,\r\n                \"isBulk\": false,\r\n                \"priceVnd\": 231000,\r\n                \"valueVnd\": null\r\n            }\r\n        ]\r\n    }",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"senderName\": \"Tang Du Yen\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"recipientName\": \"Tăng Dư Yến\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"recipientEmail\": \"tangduyen12345@gmail.com\",\r\n  \"scheduledDateTime\": \"2025-07-26T00:30:00.000Z\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"totalCostVnd\": 81713,\r\n  \"totalShippingFeeVnd\": 81713,\r\n  \"totalKm\": 4.42,\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ],\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"heightCm\": 30,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": false,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 20,\r\n      \"priceVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 5,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428247/vvocjj1yzvlkvevnjsuq.png\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 10549,\r\n      \"insuranceFeeVnd\": 40000,\r\n      \"chargeableWeight\": 10,\r\n      \"priceVnd\": 50549,\r\n      \"valueVnd\": 2000000\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 60,\r\n      \"widthCm\": 50,\r\n      \"heightCm\": 40,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 13426,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 24,\r\n      \"priceVnd\": 13426\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n      \"weightKg\": 50,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428324/vgiktjcbdpenbjk0hkap.jpg\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 19659.5,\r\n      \"insuranceFeeVnd\": 10000,\r\n      \"chargeableWeight\": 50,\r\n      \"priceVnd\": 29659.5,\r\n      \"valueVnd\": 1000000\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2994,7 +3150,7 @@
 					"response": []
 				},
 				{
-					"name": "Add metroline - all new active stations",
+					"name": "Add metroline - HCMC -ben thanh - tao dan - 4 new stations",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -3009,42 +3165,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"stations\": [\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{baseUrl}}/metro-lines",
-							"host": [
-								"{{baseUrl}}"
-							],
-							"path": [
-								"metro-lines"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add metroline - inactive stations between",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json-patch+json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"stations\": [\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": false,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": false,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
+							"raw": "{\n  \"lineNameVi\": \"Tuyến 0: Test\",\n  \"lineNameEn\": \"Line 0: Test\",\n  \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n  \"lineNumber\": 0,\n  \"lineCode\": \"\",\n  \"lineType\": \"\",\n  \"lineOwner\": \"\",\n  \"colorHex\": \"\",\n  \"RouteTimeMin\": \"\",\n  \"DwellTimeMin\": \"\",\n  \"stations\": [\n    {\n        \"Id\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\n        \"isActive\": true,\n        \"toNextStationKm\": 5.5\n    },\n    {\n        \"Id\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\n        \"isActive\": true,\n        \"toNextStationKm\": 4.5\n    },\n    {\n      \"stationNameVi\": \"test-station1\",\n      \"stationNameEn\": \"test-station1\",\n      \"address\": \"Test Address 1\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 5.5\n    },\n    {\n      \"stationNameVi\": \"test-station2\",\n      \"stationNameEn\": \"test-station2\",\n      \"address\": \"Test Address 2\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 6.5\n    },\n    {\n      \"stationNameVi\": \"test-station3\",\n      \"stationNameEn\": \"test-station3\",\n      \"address\": \"Test Address 3\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.8673,\n      \"longitude\": 106.6635,\n      \"toNextStationKm\": 3.5\n    },\n    {\n      \"stationNameVi\": \"test-station4\",\n      \"stationNameEn\": \"test-station4\",\n      \"address\": \"Test Address 4\",\n      \"isUnderground\": true,\n      \"isActive\": true,\n      \"regionId\": \"c29464b1-6b74-4cde-9e9c-51bf0ecc522f\",\n      \"latitude\": 10.5928,\n      \"longitude\": 106.7674,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3085,6 +3206,104 @@
 							],
 							"path": [
 								"parcel-category"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Pricing",
+			"item": [
+				{
+					"name": "Get pricing table",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pricing/table",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pricing",
+								"table"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Calculate price",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pricing/calculation?weightKg=10&distanceKm=1500",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pricing",
+								"calculation"
+							],
+							"query": [
+								{
+									"key": "weightKg",
+									"value": "10"
+								},
+								{
+									"key": "distanceKm",
+									"value": "1500"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Region",
+			"item": [
+				{
+					"name": "Get all regions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/regions?PageNumber=1&PageSize=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"regions"
+							],
+							"query": [
+								{
+									"key": "PageNumber",
+									"value": "1"
+								},
+								{
+									"key": "PageSize",
+									"value": "10"
+								}
 							]
 						}
 					},

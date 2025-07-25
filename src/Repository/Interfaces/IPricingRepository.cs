@@ -3,7 +3,7 @@ using MetroShip.Repository.Models;
 
 namespace MetroShip.Repository.Interfaces;
 
-public interface IRegionRepository : IBaseRepository<Region>
+public interface IPricingRepository : IBaseRepository<PricingConfig>
 {
-
+    
 }
