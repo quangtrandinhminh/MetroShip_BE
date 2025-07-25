@@ -159,6 +159,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITrainService, TrainService>();
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
         services.AddScoped<IPricingService, PricingService>();
+        services.AddScoped<IRegionService, RegionService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

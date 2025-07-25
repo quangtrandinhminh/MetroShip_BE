@@ -8,6 +8,7 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.StaffAssignment;
@@ -99,4 +100,8 @@ public interface IMapperlyMapper
 
     // pricing config
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+
+    // region
+    PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
+    RegionResponse MapToRegionResponse(Region entity);
 }
