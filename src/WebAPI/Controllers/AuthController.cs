@@ -19,7 +19,8 @@ namespace MetroShip.WebAPI.Controllers
         private readonly IUserService _userService;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthController(IAuthService authSevices, IUserService userService)
+        public AuthController(IAuthService authSevices,
+            IUserService userService)
         {
             _userService = userService;
             _authService = authSevices;
