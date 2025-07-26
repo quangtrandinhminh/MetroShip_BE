@@ -137,7 +137,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
         }
 
-        //[Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetLocation)]
         public async Task<IActionResult> GetShipmentLocation(string trackingCode)
         {

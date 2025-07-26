@@ -80,15 +80,18 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         return _mapper.MapToParcelCategoryResponse(entity);
     }
 
-    public async Task UpdateAsync(ParcelCategoryUpdateRequest request)
+    public async Task<ParcelCategoryResponse> UpdateAsync(string id, ParcelCategoryUpdateRequest request)
     {
         _logger.Information("Update parcel category {@request}", request);
 
-        var entity = await GetParcelCategoryById(request.Id);
+        var entity = await GetParcelCategoryById(Guid.Parse(id)); // Convert string to Guid
 
         _mapper.MapParcelCategoryUpdateRequestToEntity(request, entity);
         _parcelCategoryRepository.Update(entity);
         await _unitOfWork.SaveChangeAsync();
+
+        // Return the updated entity mapped to a response
+        return _mapper.MapToParcelCategoryResponse(entity);
     }
 
     public async Task DeleteAsync(Guid id)
