@@ -113,9 +113,18 @@ public static class ServiceCollectionExtensions
         const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
         services.AddCors(options =>
         {
-            options.AddPolicy(myAllowSpecificOrigins, policy =>
+            /*options.AddPolicy(myAllowSpecificOrigins, policy =>
             {
                 policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+            });*/
+
+            options.AddPolicy("SignalR", builder =>
+            {
+                builder
+                    .SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
             });
         });
 
