@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
+    <style>
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; }
+        .log { color: gray; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>SignalR Test</h1>
+    <input type="text" id="tokenInput" placeholder="Enter Access Token" value="">
+    <button id="connectButton">Connect</button>
+
+    <input type="text" id="trainIdInput" placeholder="Enter Train ID" value="2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0">
+    <button id="joinButton">Join Room</button>
+
+    <div id="messages"></div>
+    <script>
+        const token = document.getElementById('tokenInput').value;
+
+        function logMessage(message, type = 'log') {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p class="${type}">${message}</p>`;
+            console.log(message);
+        }
+        
+        // Kết nối đến ChatHub
+        const chatConnection = new signalR.HubConnectionBuilder()
+            .withUrl('https://localhost:7085/trackingHub', {
+                accessTokenFactory: () => token
+            })
+            .configureLogging(signalR.LogLevel.Debug)
+            .build();
+        
+        // Xử lý sự kiện nhận tin nhắn chat
+        chatConnection.on('ReceiveLocationUpdate', (message) => {
+            logMessage(`<strong>Tracking Train :</strong> ${JSON.stringify(message)}`, 'success');
+        });
+        
+        // Khởi động kết nối
+        chatConnection.start()
+            .then(() => logMessage('Connected to TrackingHub', 'success'))
+            .catch(err => logMessage(`Error connecting to TrackingHub: ${err}`, 'error'));
+
+        // Tham gia phòng chat khi nhấn nút
+        document.getElementById('joinButton').addEventListener('click', () => {
+            const trainId = document.getElementById('trainIdInput').value;
+            chatConnection.invoke('JoinTrackingRoom', trainId)
+                .then(() => logMessage(`Joined room for Train ID: ${trainId}`, 'success'))
+                .catch(err => logMessage(`Error joining room: ${err}`, 'error'));
+        });
+        
+    </script>
+</body>
+</html>
