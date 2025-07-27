@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GPS Route Simulator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="controls">
+    <h1 class="route-header">Route Points</h1>
+    
+    <!-- Route Selection Section -->
+    <div class="route-selection-section">
+      <h3>Route Selection</h3>
+      <label>
+        <input type="radio" name="routeMode" value="manual" checked onchange="toggleRouteMode()"> Manual Points
+      </label>
+      <label>
+        <input type="radio" name="routeMode" value="dropdown" onchange="toggleRouteMode()"> Predefined Route
+      </label>
+      
+      <div id="routeDropdownSection" style="display: none;">
+        <label>Select Route:</label>
+        <select id="routeSelect" onchange="updateStationList()">
+          <option value="">-- Select Route --</option>
+        </select>
+        
+        <label>Direction:</label>
+        <select id="directionSelect" onchange="updateStationList()">
+          <option value="0">Forward (0→End)</option>
+          <option value="1">Backward (End→0)</option>
+        </select>
+        
+        <div style="color: red; font-weight: bold; margin: 10px 0; font-size: 0.9em;">
+          📍 Note: The train will only stop at active stations (green)
+        </div>
+        
+        <div id="stationsList"></div>
+      </div>
+    </div>
+    
+    <!-- Manual Points Section -->
+    <div id="manualPointsSection">
+      <h3>Manual Points</h3>
+    
+    <div class="points-section">
+      <div id="pointsList">
+        <div class="point-item" data-index="0">
+          <span style="margin-right: 0.5em;">A:</span>
+          <div class="point-inputs">
+            <input id="latA" value="10.7706387665064" placeholder="Latitude A">
+            <input id="lonA" value="106.69680142490911" placeholder="Longitude A">
+            <input id="kmA" value="0" placeholder="0" readonly style="width: 80px; background-color: #f0f0f0;">
+          </div>
+        </div>
+        
+        <div class="point-item" data-index="1">
+          <span style="margin-right: 0.5em;">B:</span>
+          <div class="point-inputs">
+            <input id="latB" value="10.776476821348197" placeholder="Latitude B">
+            <input id="lonB" value="106.70406315129097" placeholder="Longitude B">
+            <input id="kmB" value="" placeholder="KM (auto)" style="width: 80px;">
+          </div>
+        </div>
+      </div>
+      
+      <button onclick="addPoint()" class="btn-secondary">Add Point</button>
+    </div>
+    </div> <!-- End Manual Points Section -->
+  </div>
+  
+  <div class="settings-panel">
+    <h1>Settings & Control</h1>
+    
+    <label>Max Speed (km/h):</label>
+    <input id="maxSpeed" value="200" placeholder="Maximum speed">
+
+    <label>Acceleration (m/s²):</label>
+    <input id="acc" value="30" placeholder="Acceleration rate">
+
+    <label>Interval (s):</label>
+    <input id="interval" value="1" placeholder="GPS update interval">
+
+    <label>Train ID:</label>
+    <input id="trainId" value="2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0" placeholder="Enter train ID">
+
+    <label>Send location API Endpoint (optional):</label>
+    <input id="apiUrl" value="" placeholder="https://your-api.com/gps-coordinates/trainId">
+
+    <div class="control-buttons">
+      <button onclick="startSimulation()" id="startBtn">Start</button>
+      <button onclick="resetSimulation()" class="btn-danger" id="resetBtn">Reset</button>
+    </div>
+    
+    <div class="control-buttons">
+      <button onclick="exportData()" class="btn-secondary" style="font-size: 0.8em;">💾 Export Route Demo Data</button>
+    </div>
+    
+    <div class="control-buttons">
+      <a href="tracking-location.html" target="_blank" style="text-decoration: none;">
+        <button class="btn-secondary" style="font-size: 0.8em;">📍 View Tracking Location With SignalR</button>
+      </a>
+    </div>
+    
+    <div id="continueSection">
+      <p><strong>Reached destination!</strong></p>
+      <p>Continue to next point?</p>
+      <div class="control-buttons">
+        <button onclick="continueToNext()" class="btn-secondary">Continue</button>
+        <button onclick="stopSimulation()" class="btn-warning">Stop</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="output-section">
+    <h2>Simulation Output</h2>
+    <textarea id="output" readonly placeholder="Simulation results will appear here..."></textarea>
+  </div>
+  
+  <!-- Tải các module JavaScript theo thứ tự -->
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/data-manager.js"></script>
+  <script src="js/ui-manager.js"></script>
+  <script src="js/point-manager.js"></script>
+  <script src="js/simulation-engine.js"></script>
+  <script src="js/simulation-controls.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

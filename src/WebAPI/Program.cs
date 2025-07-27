@@ -73,6 +73,8 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     dbContext.Database.Migrate();
 }
+// Use CORS
+//app.UseCors("_myAllowSpecificOrigins");
 app.UseCors("SignalR");
 // Configure middleware
 app.UseSwaggerDocumentation(appName, "v1");

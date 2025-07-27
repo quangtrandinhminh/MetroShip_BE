@@ -180,27 +180,22 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         _logger.Information("Update user {@request} for user {userId}", request, userId);
         _userValidator.ValidateUserUpdateRequest(request);
         var user = await GetUserById(userId);
-        if (user.UserName is not null && user.UserName != request.UserName)
+        if (!string.IsNullOrEmpty(user.UserName) && !user.UserName.Equals(request.UserName))
         {
-            var validateUser = await _userManager.FindByNameAsync(request.UserName);
-            if (validateUser != null)
+            var validateUser = await _userRepository.IsExistAsync(
+                               u => u.UserName.Equals(request.UserName)
+                                              || u.NormalizedUserName.Equals(request.UserName.ToUpperInvariant()));
+            if (validateUser)
             {
                 throw new AppException(HttpResponseCodeConstants.EXISTED,
                     ResponseMessageIdentity.EXISTED_USER,
                     StatusCodes.Status409Conflict);
             }
-            /*var existingUser = await _userRepository.GetSingleAsync(u => u.UserName == request.UserName);
-            if (existingUser != null)
-            {
-                throw new AppException(
-                HttpResponseCodeConstants.DUPLICATE,
-                ResponseMessageConstantsUser.USER_EXISTED,
-                StatusCodes.Status409Conflict);
-            }*/
         }
 
         _mapper.MapUserRequestToEntity(request, user);
-
+        user.NormalizedUserName = request.UserName.ToUpperInvariant();
+        user.AccountName = request.AccountName.ToUpperInvariant();
         await _userRepository.UpdateAsync(user);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }

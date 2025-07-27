@@ -1,0 +1,11 @@
+2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0
+Tàu 1 Line 1 - Chrome
+
+87eca124-25e8-4994-a07d-8715bfdef44b
+Tàu 2 Line 1 - Edge
+
+Simulator cho tàu 1 chạy Bến Thành -> Suối Tiên - Demo
+API send: https://localhost:7085/api/metro-trains/staff/send-location
+SignalR group theo trainId
+Khi tàu 1 chạy thì clent room tàu 1 thấy
+Client room tàu 2 sẽ không thấy

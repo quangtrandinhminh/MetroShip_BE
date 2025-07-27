@@ -1,0 +1,951 @@
+[
+  {
+    "routeId": "e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+    "routeName": "Line 1: Ben Thanh - Suoi Tien",
+    "regionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+    "stations": [
+      {
+        "Id": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+        "StationCode": "HCMC-L1-01",
+        "StationNameVi": "Bến Thành",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7706,
+        "Longitude": 106.69738
+      },
+      {
+        "Id": "1a2b3c4d-5e6f-7081-92a3-b4c5d6e7f8a9",
+        "StationCode": "HCMC-L1-02",
+        "StationNameVi": "Nhà hát Thành phố",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.77547,
+        "Longitude": 106.70215
+      },
+      {
+        "Id": "2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0",
+        "StationCode": "HCMC-L1-03",
+        "StationNameVi": "Ba Son",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7816,
+        "Longitude": 106.708
+      },
+      {
+        "Id": "3c4d5e6f-7081-92a3-b4c5-d6e7f8a9b0c1",
+        "StationCode": "HCMC-L1-04",
+        "StationNameVi": "Công viên Văn Thánh",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.79613,
+        "Longitude": 106.71554
+      },
+      {
+        "Id": "4d5e6f70-8192-a3b4-c5d6-e7f8a9b0c1d2",
+        "StationCode": "HCMC-L1-05",
+        "StationNameVi": "Tân Cảng",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.79862,
+        "Longitude": 106.7233
+      },
+      {
+        "Id": "5e6f7081-92a3-b4c5-d6e7-f8a9b0c1d2e3",
+        "StationCode": "HCMC-L1-06",
+        "StationNameVi": "Thảo Điền",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.80053,
+        "Longitude": 106.73368
+      },
+      {
+        "Id": "6f708192-a3b4-c5d6-e7f8-a9b0c1d2e3f4",
+        "StationCode": "HCMC-L1-07",
+        "StationNameVi": "An Phú",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.80215,
+        "Longitude": 106.74234
+      },
+      {
+        "Id": "708192a3-b4c5-d6e7-f8a9-b0c1d2e3f4a5",
+        "StationCode": "HCMC-L1-08",
+        "StationNameVi": "Rạch Chiếc",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.80854,
+        "Longitude": 106.75529
+      },
+      {
+        "Id": "8192a3b4-c5d6-e7f8-a9b0-c1d2e3f4a5b6",
+        "StationCode": "HCMC-L1-09",
+        "StationNameVi": "Phước Long",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.82146,
+        "Longitude": 106.7582
+      },
+      {
+        "Id": "92a3b4c5-d6e7-f8a9-b0c1-d2e3f4a5b6c7",
+        "StationCode": "HCMC-L1-10",
+        "StationNameVi": "Bình Thái",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.83266,
+        "Longitude": 106.76389
+      },
+      {
+        "Id": "a3b4c5d6-e7f8-a9b0-c1d2-e3f4a5b6c7d8",
+        "StationCode": "HCMC-L1-11",
+        "StationNameVi": "Thủ Đức",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.84641,
+        "Longitude": 106.77167
+      },
+      {
+        "Id": "b4c5d6e7-f8a9-b0c1-d2e3-f4a5b6c7d8e9",
+        "StationCode": "HCMC-L1-12",
+        "StationNameVi": "Khu Công nghệ Cao",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.85905,
+        "Longitude": 106.78889
+      },
+      {
+        "Id": "c5d6e7f8-a9b0-c1d2-e3f4-a5b6c7d8e9f0",
+        "StationCode": "HCMC-L1-13",
+        "StationNameVi": "Đại học Quốc Gia",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.86634,
+        "Longitude": 106.80126
+      },
+      {
+        "Id": "d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1",
+        "StationCode": "HCMC-L1-14",
+        "StationNameVi": "Bến xe Suối Tiên",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.87952,
+        "Longitude": 106.81411
+      }
+    ]
+  },
+  {
+    "routeId": "2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f",
+    "routeName": "Line 2: Ben Thanh - Tan Binh",
+    "regionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+    "stations": [
+      {
+        "Id": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+        "StationCode": "HCMC-L2-01",
+        "StationNameVi": "Bến Thành",
+        "StationNameEn": "Ben Thanh",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7706,
+        "Longitude": 106.69738
+      },
+      {
+        "Id": "8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a",
+        "StationCode": "HCMC-L2-02",
+        "StationNameVi": "Tao Đàn",
+        "StationNameEn": "Tao Dan",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7725,
+        "Longitude": 106.691111
+      },
+      {
+        "Id": "7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b",
+        "StationCode": "HCMC-L2-03",
+        "StationNameVi": "Dân Chủ",
+        "StationNameEn": "Dan Chu",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.778056,
+        "Longitude": 106.681111
+      },
+      {
+        "Id": "6c8e4f73-1d7a-4b5c-9e8c-4f6a1d7b9e2c",
+        "StationCode": "HCMC-L2-04",
+        "StationNameVi": "Hòa Hưng",
+        "StationNameEn": "Hoa Hung",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.781111,
+        "Longitude": 106.675
+      },
+      {
+        "Id": "5d9f7e64-2c8b-4a6d-8f9d-7e5c2c8a6f3d",
+        "StationCode": "HCMC-L2-05",
+        "StationNameVi": "Lê Thị Riêng",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.786111,
+        "Longitude": 106.665556
+      },
+      {
+        "Id": "4e8a6f55-3d9c-4b7e-9a8e-6f4d3d9b7a4e",
+        "StationCode": "HCMC-L2-06",
+        "StationNameVi": "Phạm Văn Hai",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.789167,
+        "Longitude": 106.66
+      },
+      {
+        "Id": "3f9b5e46-4c8d-4a6f-8b9f-5e3c4c8a6b5f",
+        "StationCode": "HCMC-L2-07",
+        "StationNameVi": "Bảy Hiền",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.792778,
+        "Longitude": 106.653333
+      },
+      {
+        "Id": "2a7c4d37-5b9e-4c8a-9c7a-4d2b5b9c8a7a",
+        "StationCode": "HCMC-L2-08",
+        "StationNameVi": "Nguyễn Hồng Đào",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.799444,
+        "Longitude": 106.640556
+      },
+      {
+        "Id": "1b8d3c28-6a7f-4d9b-8d6b-3c1a6a7d9b8b",
+        "StationCode": "HCMC-L2-09",
+        "StationNameVi": "Bà Quẹo",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.805444,
+        "Longitude": 106.635278
+      },
+      {
+        "Id": "9c6e2b19-7d8a-4e6c-7e9c-2b9d7d8e6c2c",
+        "StationCode": "HCMC-L2-10",
+        "StationNameVi": "Phạm Văn Bạch",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.813028,
+        "Longitude": 106.632944
+      },
+      {
+        "Id": "8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d",
+        "StationCode": "HCMC-L2-11",
+        "StationNameVi": "Tân Bình",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.821111,
+        "Longitude": 106.630556
+      }
+    ]
+  },
+  {
+    "routeId": "8a7f3c45-9e2b-4d8a-b6f1-5c3e9a7f3c45",
+    "routeName": "Line 3A: Ben Thanh – Tan Kien",
+    "regionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+    "stations": [
+      {
+        "Id": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+        "StationCode": "HCMC-L3A-01",
+        "StationNameVi": "Bến Thành",
+        "StationNameEn": "Ben Thanh",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7706,
+        "Longitude": 106.69738
+      },
+      {
+        "Id": "b5f8e2a1-4c7d-4b5f-8e2a-1c7d4b5f8e2a",
+        "StationCode": "HCMC-L3A-02",
+        "StationNameVi": "Chợ Thái Bình",
+        "StationNameEn": "Cho Thai Binh",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.766313,
+        "Longitude": 106.688331
+      },
+      {
+        "Id": "c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b",
+        "StationCode": "HCMC-L3A-03",
+        "StationNameVi": "Cộng Hòa",
+        "StationNameEn": "Cong Hoa",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.773347,
+        "Longitude": 106.684341
+      },
+      {
+        "Id": "d7b8a4c3-6e9f-4d7b-8a4c-3e9f6d7b8a4c",
+        "StationCode": "HCMC-L3A-04",
+        "StationNameVi": "Công viên Hòa Bình",
+        "StationNameEn": "Hoa Binh Park",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.760773,
+        "Longitude": 106.671044
+      },
+      {
+        "Id": "e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d",
+        "StationCode": "HCMC-L3A-05",
+        "StationNameVi": "Đại Học Y Dược",
+        "StationNameEn": "Medical University",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.757131,
+        "Longitude": 106.660143
+      },
+      {
+        "Id": "f9d8c6e5-8a9b-4f9d-8c6e-5a9b8f9d8c6e",
+        "StationCode": "HCMC-L3A-06",
+        "StationNameVi": "Thuận Kiều Plaza",
+        "StationNameEn": "Thuan Kieu Plaza",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.752358,
+        "Longitude": 106.657754
+      },
+      {
+        "Id": "a8e7d9f6-9b8c-4a8e-7d9f-6b8c9a8e7d9f",
+        "StationCode": "HCMC-L3A-07",
+        "StationNameVi": "Bến Xe Chợ Lớn",
+        "StationNameEn": "Cho Lon Bus Station",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.750836,
+        "Longitude": 106.651711
+      },
+      {
+        "Id": "b9f6e8a7-8c9d-4b9f-6e8a-7c9d8b9f6e8a",
+        "StationCode": "HCMC-L3A-08",
+        "StationNameVi": "Cây Gõ",
+        "StationNameEn": "Cay Go",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.749533,
+        "Longitude": 106.643321
+      },
+      {
+        "Id": "c8a7f9b8-9d8e-4c8a-7f9b-8d8e9c8a7f9b",
+        "StationCode": "HCMC-L3A-09",
+        "StationNameVi": "Phú Lâm",
+        "StationNameEn": "Phu Lam",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.747192,
+        "Longitude": 106.634628
+      },
+      {
+        "Id": "d9b8a8c9-8e9f-4d9b-8a8c-9e9f8d9b8a8c",
+        "StationCode": "HCMC-L3A-10",
+        "StationNameVi": "Công Viên Phú Lâm",
+        "StationNameEn": "Phu Lam Park",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.742813,
+        "Longitude": 106.626354
+      },
+      {
+        "Id": "e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d",
+        "StationCode": "HCMC-L3A-11",
+        "StationNameVi": "Bến Xe Miền Tây",
+        "StationNameEn": "Mien Tay Bus Terminal",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.740156,
+        "Longitude": 106.618012
+      },
+      {
+        "Id": "f9d8c8e9-8a9b-4f9d-8c8e-9a9b8f9d8c8e",
+        "StationCode": "HCMC-L3A-12",
+        "StationNameVi": "Khu Y Tế Kỹ thuật cao",
+        "StationNameEn": "High-Tech Medical Zone",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.735811,
+        "Longitude": 106.606764
+      },
+      {
+        "Id": "a8e9d9f8-9b8c-4a8e-9d9f-8b8c9a8e9d9f",
+        "StationCode": "HCMC-L3A-13",
+        "StationNameVi": "Hồ Học Lãm",
+        "StationNameEn": "Ho Hoc Lam",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.728953,
+        "Longitude": 106.601138
+      },
+      {
+        "Id": "b9f8e8a9-8c9d-4b9f-8e8a-9c9d8b9f8e8a",
+        "StationCode": "HCMC-L3A-14",
+        "StationNameVi": "An Lạc",
+        "StationNameEn": "An Lac",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.720165,
+        "Longitude": 106.594191
+      },
+      {
+        "Id": "c8a9f9b8-9d8e-4c8a-9f9b-8d8e9c8a9f9b",
+        "StationCode": "HCMC-L3A-15",
+        "StationNameVi": "Hưng Nhơn",
+        "StationNameEn": "Hung Nhon",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.713606,
+        "Longitude": 106.583344
+      },
+      {
+        "Id": "0455c97c-2013-4631-afc6-a6be62315481",
+        "StationCode": "HCMC-L3A-16",
+        "StationNameVi": "Bàu Gốc",
+        "StationNameEn": "Bau Goc",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.704123,
+        "Longitude": 106.567998
+      },
+      {
+        "Id": "c5873750-eed1-48f9-aa62-75ed00acde87",
+        "StationCode": "HCMC-L3A-17",
+        "StationNameVi": "Nguyễn Cửu Phú",
+        "StationNameEn": "Nguyen Cuu Phu",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.698375,
+        "Longitude": 106.556482
+      },
+      {
+        "Id": "d0a40d5f-1e84-459e-bfeb-3f2105db3e0b",
+        "StationCode": "HCMC-L3A-18",
+        "StationNameVi": "Tân Kiên",
+        "StationNameEn": "Tan Kien",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.686521,
+        "Longitude": 106.535847
+      }
+    ]
+  },
+  {
+    "routeId": "a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8",
+    "routeName": "Line 3B: Cộng Hòa - Hiệp Bình Phước",
+    "regionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+    "stations": [
+      {
+        "Id": "c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b",
+        "StationCode": "HCMC-L3B-01",
+        "StationNameVi": "Cộng Hòa",
+        "StationNameEn": "Cong Hoa",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.773347,
+        "Longitude": 106.684341
+      },
+      {
+        "Id": "b2e5f8d9-7c3a-4b2e-f8d9-7c3ab2e5f8d9",
+        "StationCode": "HCMC-L3B-02",
+        "StationNameVi": "Từ Dũ",
+        "StationNameEn": "Tu Du",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.77196,
+        "Longitude": 106.688849
+      },
+      {
+        "Id": "8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a",
+        "StationCode": "HCMC-L3B-03",
+        "StationNameVi": "Tao Đàn",
+        "StationNameEn": "Tao Dan",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7725,
+        "Longitude": 106.691111
+      },
+      {
+        "Id": "c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8",
+        "StationCode": "HCMC-L3B-04",
+        "StationNameVi": "Hồ Con Rùa",
+        "StationNameEn": "Ho Con Rua",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.781617,
+        "Longitude": 106.699042
+      },
+      {
+        "Id": "d4a7b8f7-9e5c-4d4a-b8f7-9e5cd4a7b8f7",
+        "StationCode": "HCMC-L3B-05",
+        "StationNameVi": "Hoa Lư",
+        "StationNameEn": "Hoa Lu",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.787728,
+        "Longitude": 106.703273
+      },
+      {
+        "Id": "e5b8c9a6-8f6d-4e5b-c9a6-8f6de5b8c9a6",
+        "StationCode": "HCMC-L3B-06",
+        "StationNameVi": "Thị Nghè",
+        "StationNameEn": "Thi Nghe",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.791535,
+        "Longitude": 106.708819
+      },
+      {
+        "Id": "f6c9d8b5-9a7e-4f6c-d8b5-9a7ef6c9d8b5",
+        "StationCode": "HCMC-L3B-07",
+        "StationNameVi": "Hàng Xanh",
+        "StationNameEn": "Hang Xanh",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.797241,
+        "Longitude": 106.712165
+      },
+      {
+        "Id": "a7d8e9c4-8b6f-4a7d-e9c4-8b6fa7d8e9c4",
+        "StationCode": "HCMC-L3B-08",
+        "StationNameVi": "Bến Xe Miền Đông",
+        "StationNameEn": "Mien Dong Bus Terminal",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.810565,
+        "Longitude": 106.712134
+      },
+      {
+        "Id": "b8e9f7d3-9c8a-4b8e-f7d3-9c8ab8e9f7d3",
+        "StationCode": "HCMC-L3B-09",
+        "StationNameVi": "Bình Triệu",
+        "StationNameEn": "Binh Trieu",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.823188,
+        "Longitude": 106.716817
+      },
+      {
+        "Id": "c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2",
+        "StationCode": "HCMC-L3B-10",
+        "StationNameVi": "Hiệp Bình Phước",
+        "StationNameEn": "Hiep Binh Phuoc",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.841231,
+        "Longitude": 106.714488
+      }
+    ]
+  },
+  {
+    "routeId": "a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8",
+    "routeName": "Line 4: Thanh Xuan – Ben Tau Hiep Phuoc",
+    "regionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+    "stations": [
+      {
+        "Id": "a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7",
+        "StationCode": "HCMC-L4-01",
+        "StationNameVi": "Thạnh Xuân",
+        "StationNameEn": "Thanh Xuan",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8673,
+        "Longitude": 106.6635
+      },
+      {
+        "Id": "b4f8a5d6-6c9e-4b4f-a5d6-6c9eb4f8a5d6",
+        "StationCode": "HCMC-L4-02",
+        "StationNameVi": "Giao Khẩu",
+        "StationNameEn": "Giao Khau",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8612,
+        "Longitude": 106.6701
+      },
+      {
+        "Id": "c5a9b6e7-7d8f-4c5a-b6e7-7d8fc5a9b6e7",
+        "StationCode": "HCMC-L4-03",
+        "StationNameVi": "Ngã 4 Ga",
+        "StationNameEn": "Nga 4 Ga",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8549,
+        "Longitude": 106.6728
+      },
+      {
+        "Id": "d6b8c7f8-8e9a-4d6b-c7f8-8e9ad6b8c7f8",
+        "StationCode": "HCMC-L4-04",
+        "StationNameVi": "An Lộc",
+        "StationNameEn": "An Loc",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8491,
+        "Longitude": 106.6759
+      },
+      {
+        "Id": "e7c9d8a9-9f8b-4e7c-d8a9-9f8be7c9d8a9",
+        "StationCode": "HCMC-L4-05",
+        "StationNameVi": "An Nhơn",
+        "StationNameEn": "An Nhon",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8385,
+        "Longitude": 106.6784
+      },
+      {
+        "Id": "f8d8e9b8-8a9c-4f8d-e9b8-8a9cf8d8e9b8",
+        "StationCode": "HCMC-L4-06",
+        "StationNameVi": "Lam Sơn",
+        "StationNameEn": "Lam Son",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8324,
+        "Longitude": 106.6811
+      },
+      {
+        "Id": "a9e7f8c7-9b8d-4a9e-f8c7-9b8da9e7f8c7",
+        "StationCode": "HCMC-L4-07",
+        "StationNameVi": "Ngã 6 Gò Vấp",
+        "StationNameEn": "Nga 6 Go Vap",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8225,
+        "Longitude": 106.6783
+      },
+      {
+        "Id": "b8f6a9d6-8c9e-4b8f-a9d6-8c9eb8f6a9d6",
+        "StationCode": "HCMC-L4-08",
+        "StationNameVi": "Bệnh Viện 175",
+        "StationNameEn": "Hospital 175",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8159,
+        "Longitude": 106.6829
+      },
+      {
+        "Id": "c9a7b8e5-9d8f-4c9a-b8e5-9d8fc9a7b8e5",
+        "StationCode": "HCMC-L4-09",
+        "StationNameVi": "Công Viên Gia Định",
+        "StationNameEn": "Gia Dinh Park",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.8106,
+        "Longitude": 106.6853
+      },
+      {
+        "Id": "d8b6c9f4-8e9a-4d8b-c9f4-8e9ad8b6c9f4",
+        "StationCode": "HCMC-L4-10",
+        "StationNameVi": "Ngã 4 Phú Nhuận",
+        "StationNameEn": "Nga 4 Phu Nhuan",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7989,
+        "Longitude": 106.6841
+      },
+      {
+        "Id": "e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3",
+        "StationCode": "HCMC-L4-11",
+        "StationNameVi": "Cầu Kiệu",
+        "StationNameEn": "Cau Kieu",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7915,
+        "Longitude": 106.6893
+      },
+      {
+        "Id": "f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2",
+        "StationCode": "HCMC-L4-12",
+        "StationNameVi": "Công Viên Lê Văn Tám",
+        "StationNameEn": "Le Van Tam Park",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7871,
+        "Longitude": 106.6934
+      },
+      {
+        "Id": "c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8",
+        "StationCode": "HCMC-L4-13",
+        "StationNameVi": "Hồ Con Rùa",
+        "StationNameEn": "Ho Con Rua",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.781617,
+        "Longitude": 106.699042
+      },
+      {
+        "Id": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+        "StationCode": "HCMC-L4-14",
+        "StationNameVi": "Bến Thành",
+        "StationNameEn": "Ben Thanh",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7706,
+        "Longitude": 106.69738
+      },
+      {
+        "Id": "a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1",
+        "StationCode": "HCMC-L4-15",
+        "StationNameVi": "Hoàng Diệu",
+        "StationNameEn": "Hoang Dieu",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7621,
+        "Longitude": 106.7028
+      },
+      {
+        "Id": "b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2",
+        "StationCode": "HCMC-L4-16",
+        "StationNameVi": "Tôn Đản",
+        "StationNameEn": "Ton Dan",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7563,
+        "Longitude": 106.7081
+      },
+      {
+        "Id": "c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3",
+        "StationCode": "HCMC-L4-17",
+        "StationNameVi": "Nguyễn Thị Thập",
+        "StationNameEn": "Nguyen Thi Thap",
+        "IsUnderground": true,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7441,
+        "Longitude": 106.7132
+      },
+      {
+        "Id": "572e6743-c3de-4374-a70f-52ae566c64b2",
+        "StationCode": "HCMC-L4-18",
+        "StationNameVi": "Nguyễn Văn Linh",
+        "StationNameEn": "Nguyen Van Linh",
+        "IsUnderground": true,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7328,
+        "Longitude": 106.7195
+      },
+      {
+        "Id": "e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5",
+        "StationCode": "HCMC-L4-19",
+        "StationNameVi": "Phước Kiểng",
+        "StationNameEn": "Phuoc Kieng",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7215,
+        "Longitude": 106.7098
+      },
+      {
+        "Id": "f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4",
+        "StationCode": "HCMC-L4-20",
+        "StationNameVi": "Vĩnh Phước",
+        "StationNameEn": "Vinh Phuoc",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.7136,
+        "Longitude": 106.7053
+      },
+      {
+        "Id": "a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3",
+        "StationCode": "HCMC-L4-21",
+        "StationNameVi": "Phạm Hữu Lầu",
+        "StationNameEn": "Pham Huu Lau",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6989,
+        "Longitude": 106.7112
+      },
+      {
+        "Id": "b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6",
+        "StationCode": "HCMC-L4-22",
+        "StationNameVi": "Kho B",
+        "StationNameEn": "Kho B",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6891,
+        "Longitude": 106.7164
+      },
+      {
+        "Id": "c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5",
+        "StationCode": "HCMC-L4-23",
+        "StationNameVi": "Long Kiểng",
+        "StationNameEn": "Long Kieng",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6807,
+        "Longitude": 106.7211
+      },
+      {
+        "Id": "d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4",
+        "StationCode": "HCMC-L4-24",
+        "StationNameVi": "Bà Chiêm",
+        "StationNameEn": "Ba Chiem",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6701,
+        "Longitude": 106.7265
+      },
+      {
+        "Id": "e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3",
+        "StationCode": "HCMC-L4-25",
+        "StationNameVi": "Long Thới",
+        "StationNameEn": "Long Thoi",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6625,
+        "Longitude": 106.7303
+      },
+      {
+        "Id": "f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2",
+        "StationCode": "HCMC-L4-26",
+        "StationNameVi": "Rạch Dơi",
+        "StationNameEn": "Rach Doi",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6509,
+        "Longitude": 106.7368
+      },
+      {
+        "Id": "a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1",
+        "StationCode": "HCMC-L4-27",
+        "StationNameVi": "Hiệp Phước",
+        "StationNameEn": "Hiep Phuoc",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6398,
+        "Longitude": 106.7421
+      },
+      {
+        "Id": "b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8",
+        "StationCode": "HCMC-L4-28",
+        "StationNameVi": "Công Viên Thể Thao",
+        "StationNameEn": "Sports Park",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6281,
+        "Longitude": 106.7479
+      },
+      {
+        "Id": "c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7",
+        "StationCode": "HCMC-L4-29",
+        "StationNameVi": "Bệnh Viện Quốc Tế",
+        "StationNameEn": "International Hospital",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6199,
+        "Longitude": 106.7523
+      },
+      {
+        "Id": "d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6",
+        "StationCode": "HCMC-L4-30",
+        "StationNameVi": "Thị Trấn Hiệp Phước",
+        "StationNameEn": "Hiep Phuoc Town",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6117,
+        "Longitude": 106.7568
+      },
+      {
+        "Id": "e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5",
+        "StationCode": "HCMC-L4-31",
+        "StationNameVi": "Công Viên Cây Xanh",
+        "StationNameEn": "Green Park",
+        "IsUnderground": false,
+        "IsActive": false,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.6035,
+        "Longitude": 106.7612
+      },
+      {
+        "Id": "f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4",
+        "StationCode": "HCMC-L4-32",
+        "StationNameVi": "Bến Tàu Hiệp Phước",
+        "StationNameEn": "Ben Tau Hiep Phuoc",
+        "IsUnderground": false,
+        "IsActive": true,
+        "RegionId": "c29464b1-6b74-4cde-9e9c-51bf0ecc522f",
+        "Latitude": 10.5928,
+        "Longitude": 106.7674
+      }
+    ]
+  }
+]
