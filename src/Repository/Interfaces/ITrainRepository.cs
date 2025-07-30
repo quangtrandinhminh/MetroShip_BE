@@ -2,6 +2,7 @@
 using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using System.Linq.Expressions;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Repository.Interfaces;
 
@@ -11,4 +12,6 @@ public interface ITrainRepository : IBaseRepository<MetroTrain>
     Task SaveTrainLocationAsync(string trainId, double lat, double lng, string stationId);
     Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId);
     Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode);
+    Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateTimeOffset date,
+        string timeSlotId, DirectionEnum direction);
 }

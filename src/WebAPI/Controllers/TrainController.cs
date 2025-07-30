@@ -99,6 +99,9 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetPositionByTrainId(string trainId)
         {
             var result = await _trainService.GetTrainPositionAsync(trainId);
+
+            // Gắn thêm dòng này là sẽ real-time không cần fetch mỗi 5s, chỉ cần connect với hub, khi nào hub trigged thì gọi api này
+            //await _hub.Clients.Group(trainId).SendAsync("ReceiveLocationUpdate", result);
             return Ok(result);
         }
 

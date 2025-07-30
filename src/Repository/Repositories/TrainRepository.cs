@@ -3,6 +3,7 @@ using MetroShip.Repository.Base;
 using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
@@ -52,6 +53,27 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             .Include(t => t.ShipmentItineraries)
                 .ThenInclude(si => si.Route)
                     .ThenInclude(r => r.ToStation)
+            .FirstOrDefaultAsync(t => t.Id == trainId);
+    }
+
+    public async Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateTimeOffset date, 
+        string timeSlotId, DirectionEnum direction)
+    {
+        return await _context.MetroTrains.AsSplitQuery()
+            .Include(t => t.ShipmentItineraries
+                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                && si.Route.Direction == direction && !si.IsCompleted))
+                .ThenInclude(si => si.Route)
+                    .ThenInclude(r => r.FromStation)
+            .Include(t => t.ShipmentItineraries
+                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                && si.Route.Direction == direction && !si.IsCompleted))
+                .ThenInclude(si => si.Route)
+                    .ThenInclude(r => r.ToStation)
+            .Include(t => t.ShipmentItineraries
+                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                             && si.Route.Direction == direction && !si.IsCompleted))
+            .ThenInclude(si => si.TimeSlot)
             .FirstOrDefaultAsync(t => t.Id == trainId);
     }
 

@@ -395,29 +395,72 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             return cachedPosition!;
         }
 
-        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId);
+        // narrow query lại trong 1 ca, ngày, hướng cụ thể
+        // thêm request body cụ thể là date,timeslot, direction nào
+        // lúc include shipment itineraries thì phải include route, where shipment itineraries có date, timeslot, route.direction như vậy
+        // có thể thêm where i => !i.IsCompleted ở đây luôn
+        //var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId).ConfigureAwait(false);
+
+        // lấy từ request
+        // hôm nay +07:00
+        var date = CoreHelper.SystemTimeNow.Date;
+        // convert còn mỗi date +00:00
+        var dateOffset = new DateTimeOffset(2025, 07, 31, 0, 0, 0, TimeSpan.Zero);
+        // ca sáng
+        var timeSlotId = "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"; // lấy từ request
+        // hướng đi
+        var direction = DirectionEnum.Forward; // lấy từ request
+        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId, dateOffset, timeSlotId, direction)
+            .ConfigureAwait(false);
         if (train == null)
             throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
-        var leg = train.ShipmentItineraries?
+        // khúc này lấy order by legOrder xong lấy first
+        /*var leg = train.ShipmentItineraries?
             .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null)
             .OrderBy(i => i.LegOrder)
-            .FirstOrDefault(i => !i.IsCompleted);
+            .FirstOrDefault(i => !i.IsCompleted);*/
+
+        var leg = train.ShipmentItineraries
+            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null)
+            .OrderBy(i => i.LegOrder)
+            .FirstOrDefault();
 
         if (leg == null)
-            throw new AppException(ErrorCode.NotFound, "Active itinerary not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, "Train was not dispatched for any itineraries", StatusCodes.Status404NotFound);
 
         var from = leg.Route.FromStation!;
         var to = leg.Route.ToStation!;
-        var startTime = leg.Date ?? DateTimeOffset.UtcNow;
 
-        var elapsed = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
-        var distanceKm = GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value);
-        var speedKmh = train.TopSpeedKmH ?? 40;
+        // Để chuẩn, startTime nên được gửi từ request mỗi khi tàu dừng lại và bắt đầu đi tiếp
+        var startTime = leg.Date ?? DateTimeOffset.UtcNow;
+        var now = new DateTimeOffset(2025, 07, 31, 0, 45, 0, TimeSpan.Zero);
+
+
+        // tính toán đúng khi 2 datetimeoffset cùng timeSpan 
+        //var elapsed = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
+        var elapsed = (now - startTime).TotalSeconds;
+        //var distanceKm = GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value);
+        // Chiều dài thực của routeStation
+        var distanceKm = (double) leg.Route.LengthKm;
+        //var speedKmh = train.TopSpeedKmH ?? 40;
+        // chạy cho lẹ
+        var speedKmh = 2000;
         var eta = (distanceKm / speedKmh) * 3600;
 
         var progress = Math.Clamp(elapsed / eta, 0, 1);
         var (lat, lng) = GeoUtils.Interpolate(from.Latitude.Value, from.Longitude.Value, to.Latitude.Value, to.Longitude.Value, progress);
+
+        // Nếu progress = 1 thì có thể là đã đến trạm, update trạng thái itinerary
+        if (progress >= 1
+            || GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value) < 0.1 
+            // khoảng cách nhỏ hơn 100m thì coi như đã đến trạm, progress chuẩn có thể bỏ haversine
+            )
+        {
+            leg.IsCompleted = true;
+            _shipmentItineraryRepository.Update(leg);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
 
         var result = new TrainPositionResult
         {
