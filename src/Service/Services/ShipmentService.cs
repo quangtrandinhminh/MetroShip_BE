@@ -667,34 +667,38 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Add any other supported fields here
     };
 
-    private async Task<HashSet<string>> GetNearUserStations(TotalPriceCalcRequest request)
+    private async Task<List<string>> GetNearUserStations(TotalPriceCalcRequest request)
     {
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
         var maxStationCount = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
 
-        var stationIds = new HashSet<string> { request.DepartureStationId };
+        var result = new List<string> { request.DepartureStationId };
 
         if (request is { UserLongitude: not null, UserLatitude: not null })
         {
-            stationIds.UnionWith(
-                await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, 
-                maxDistanceInMeters, maxStationCount));
+            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
 
-            // Ensure at least 2 stations are available
-            while (stationIds.Count < 2 && maxDistanceInMeters < maxDistanceInMeters*2)
+            // Remove departure station if present (to avoid duplication)
+            nearStations.Remove(request.DepartureStationId);
+
+            // Ensure at least 2 stations are available (including departure)
+            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
             {
-                maxDistanceInMeters += 2000; // Extend distance by 1000 meters
-                stationIds.UnionWith(
-                    await _stationRepository.GetAllStationIdNearUser(
-                            request.UserLatitude.Value, request.UserLongitude.Value, 
-                            maxDistanceInMeters, maxStationCount));
+                // Extend distance by 1000 meters
+                maxDistanceInMeters += 2000;
+                nearStations = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+                nearStations.Remove(request.DepartureStationId);
             }
+
+            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+            result.AddRange(nearStations.Take(maxStationCount));
         }
 
-        return stationIds;
+        return result;
     }
 
     private async Task<List<(string StationId, List<string> Path)>> FindOptimalPaths(
@@ -788,7 +792,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         response.Shortest = bestPathResponses.Count > 1
             ? bestPathResponses
-                .OrderBy(r => r.Response.TotalKm)
+                .OrderBy(r => r.Response.TotalCostVnd)
                 .FirstOrDefault()?.Response
             : null;
 
