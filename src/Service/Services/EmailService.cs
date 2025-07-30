@@ -211,9 +211,9 @@ namespace MetroShip.Service.Services
             sb.AppendLine($"<tr><td><strong>Người nhận:</strong></td><td>{shipment.RecipientName}</td></tr>");
             sb.AppendLine($"<tr><td><strong>SĐT người nhận:</strong></td><td>{shipment.RecipientPhone}</td></tr>");
             sb.AppendLine($"<tr><td><strong>Trạm gửi: </strong></td><td>Ga {shipment.DepartureStationName}</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm gửi:</strong></td><td>Ga {shipment.DepartureStationAddress}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm gửi:</strong></td><td>{shipment.DepartureStationAddress}</td></tr>");
             sb.AppendLine($"<tr><td><strong>Trạm nhận: Ga </strong></td><td>Ga {shipment.DestinationStationName}</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm nhận:</strong></td><td>Ga {shipment.DestinationStationAddress}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm nhận:</strong></td><td>{shipment.DestinationStationAddress}</td></tr>");
 
             if (shipment.ScheduledDateTime.HasValue)
             {
