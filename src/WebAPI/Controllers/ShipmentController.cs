@@ -62,15 +62,6 @@ namespace MetroShip.WebAPI.Controllers
                 BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
         }
 
-        /*[Authorize(Roles = nameof(UserRoleEnum.Customer))]
-        [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetShipmentItinerary)]
-        public async Task<ActionResult<List<ItineraryResponse>>> GetPath(
-            [FromBody]  BestPathRequest request)
-        {
-            var result = await shipmentService.FindPathAsync(request);
-            return Ok(BaseResponse.OkResponseDto(result));
-        }*/
-
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
@@ -99,19 +90,6 @@ namespace MetroShip.WebAPI.Controllers
             var result = await shipmentService.GetItineraryAndTotalPrice(request);
             return Ok(BaseResponse.OkResponseDto(result));
         }
-
-        /*[HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentsByLineAndDate)]
-        public async Task<IActionResult> GetShipmentByLineAndDate(
-            [FromRoute] string lineCode,
-            [FromRoute] DateTimeOffset date,
-                [FromQuery] PaginatedListRequest request,
-                string? regionCode,
-                ShiftEnum? shift
-            )
-        {
-            var response = await shipmentService.GetShipmentByLineAndDate(request, lineCode, date, regionCode, shift);
-            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
-        }*/
 
         /*[HttpGet(WebApiEndpoint.ShipmentEndpoint.GetAvailableTimeSlots)]
         public async Task<IActionResult> GetAvailableTimeSlots([FromQuery] ShipmentAvailableTimeSlotsRequest request)
@@ -160,6 +138,14 @@ namespace MetroShip.WebAPI.Controllers
         {
             var result = await shipmentService.AssignTrainToShipmentAsync(trackingCode, trainId);
             return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CancelShipment)]
+        public async Task<IActionResult> CancelShipment([FromBody] ShipmentRejectRequest request)
+        {
+            await shipmentService.CancelShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.CANCELLED_SUCCESS, null));
         }
     }
 }

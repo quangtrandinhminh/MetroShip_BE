@@ -155,6 +155,7 @@
         public const string SHIFT_INVALID = "Shift is invalid.";
         public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment must be in 'AwaitingDropoff' status to confirm. " +
             "Please check the shipment status before confirming.";
+        public const string SHIPMENT_CANNOT_CANCEL = "Shipment must be in 'AwaitingDropoff' or 'AwaitingPayment' status to cancel.";
         public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
             "Please schedule the itinerary before confirming the shipment.";
         public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
@@ -169,6 +170,7 @@
         public const string PICKED_UP_SUCCESS = "Shipment picked up successfully.";
         public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
         public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
+        public const string CANCELLED_SUCCESS = "Shipment canceled successfully.";
     }
 
     public class ResponseMessageItinerary

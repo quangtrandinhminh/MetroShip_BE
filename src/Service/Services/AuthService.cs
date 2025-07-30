@@ -311,7 +311,8 @@ namespace MetroShip.Service.Services
             _logger.Information("Reset password: {@dto}", dto);
             var account = await GetUserByUserName(dto.UserName);
 
-            if (account == null) throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
+            if (account == null) 
+                throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
 
             if (account.OTP != dto.OTP)
             {

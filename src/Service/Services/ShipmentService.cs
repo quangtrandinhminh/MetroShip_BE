@@ -424,6 +424,84 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
     }
 
+    public async Task CancelShipment(ShipmentRejectRequest request)
+    {
+        _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            x => x.Id == request.ShipmentId, false,
+            x => x.Parcels, x => x.ShipmentItineraries);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        // Check if the shipment is AwaitingPayment or AwaitingDropOff
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff
+            || shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment
+            )
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessageShipment.SHIPMENT_CANNOT_CANCEL,
+                StatusCodes.Status400BadRequest);
+        }
+
+        shipment.RejectedBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        shipment.RejectionReason = request.Reason;
+        shipment.CancelledAt = CoreHelper.SystemTimeNow;
+
+        // Check if the shipment can be cancelled before a certain time
+        var allowedCancelBefore = _systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
+        if ((shipment.ScheduledDateTime - shipment.CancelledAt) >
+            TimeSpan.FromHours(int.Parse(allowedCancelBefore)))
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
+
+            var refundPercent = _systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.REFUND_PERCENT));
+            // create transaction for refund
+            var transaction = new Transaction
+            {
+                ShipmentId = shipment.Id,
+                PaymentAmount = shipment.TotalCostVnd *
+                                decimal.Parse(refundPercent),
+                TransactionType = TransactionTypeEnum.Refund,
+                PaymentStatus = PaymentStatusEnum.Pending
+            };
+
+            // Add transaction to shipment
+            shipment.Transactions.Add(transaction);
+        }
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+        
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send cancellation email to sender
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been cancelled. " +
+                          $"Reason: {request.Reason}",
+            };
+            _emailSender.SendMail(sendMailModel);
+        }
+    }
+
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
         _logger.Information("Checking shipment date: {@scheduledDateTime}", scheduledDateTime);

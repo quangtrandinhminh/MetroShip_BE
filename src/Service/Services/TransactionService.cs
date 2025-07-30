@@ -221,16 +221,46 @@ public class TransactionService : ITransactionService
         return _mapper.MapToTransactionPaginatedList(paginatedTransactions);
     }
 
-    /*private async Task HandleShipmentParcelTransaction(
-               Shipment shipment)
+    // tìm transaction loại refund theo shipmentId, cộng amount vào ví ảo của user
+    public async Task RefundTransactionAsync(string shipmentId, decimal amount)
     {
-        foreach (var parcel in shipment.Parcels)
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Processing refund for shipment: {shipmentId} by customer: {staffId}", 
+            shipmentId, staffId);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Id == shipmentId || x.TrackingCode == shipmentId,
+                                  includeProperties: x => x.Transactions
+                                         );
+
+        if (shipment == null)
         {
-            if (parcel.ParcelStatus == ParcelStatusEnum.AwaitingPayment)
-            {
-                parcel.ParcelStatus = ParcelStatusEnum.AwaitingDropOff;
-                _parcelRepository.Update(parcel);
-            }
+            throw new AppException(ErrorCode.BadRequest,
+                               "Shipment not found",
+                                              StatusCodes.Status404NotFound);
         }
-    }*/
+
+        // Check if the shipment has a transaction of type Refund
+        var refundTransaction = shipment.Transactions.FirstOrDefault(
+                       t => t.TransactionType == TransactionTypeEnum.Refund && t.PaymentStatus == PaymentStatusEnum.Pending);
+
+        if (refundTransaction == null)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+                               "No pending refund transaction found for this shipment",
+                                              StatusCodes.Status400BadRequest);
+        }
+
+        // Update the refund transaction
+        refundTransaction.PaymentStatus = PaymentStatusEnum.Paid;
+        refundTransaction.PaymentAmount += amount;
+        refundTransaction.PaidById = staffId;
+
+        // Update the user's virtual wallet balance
+        // Assuming you have a method to update the user's wallet balance
+        //await _parcelRepository.UpdateUserWalletBalanceAsync(staffId, amount);
+
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
 }
