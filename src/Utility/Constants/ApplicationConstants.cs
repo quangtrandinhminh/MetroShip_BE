@@ -254,7 +254,7 @@
         public const string DATE_REQUIRED = "Date is required.";
         public const string LINE_ID_INVALID = "Line ID is invalid.";
         public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
-        public const string DATE_INVALID = "Date is invalid.";
+        public const string DATE_INVALID = "Date is invalid. Format: yyyy-mm-dd";
         public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
         public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
         public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";

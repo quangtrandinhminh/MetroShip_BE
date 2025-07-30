@@ -13,5 +13,5 @@ public sealed record LineSlotDateFilterRequest : PaginatedListRequest
     public string TimeSlotId { get; set; }
 
     [FromRoute]
-    public DateTimeOffset Date { get; set; }
+    public DateOnly Date { get; set; }
 }

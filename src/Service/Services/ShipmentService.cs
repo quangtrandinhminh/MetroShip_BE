@@ -185,7 +185,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
         shipment.ScheduledShift = timeSlot.Shift;
         firstItinerary.TimeSlotId = shipment.TimeSlotId;
-        firstItinerary.Date = shipment.ScheduledDateTime.Value;
+        firstItinerary.Date = new DateOnly(request.ScheduledDateTime.Year,
+                       request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
 
         // generate shipment tracking code
         var systemTime = request.ScheduledDateTime.UtcToSystemTime();
@@ -769,7 +770,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 pathResponse.Parcels, pathResponse, _pricingService, categories);
 
             // Check est arrival time
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
+            var date = new DateOnly(request.ScheduledDateTime.Year,
+                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
 
             return new
             {
@@ -802,7 +805,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return response;
     }
 
-    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateTimeOffset date)
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
         _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
 
@@ -916,7 +919,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
     private record CalculatedItinerary
     {
-        public DateTimeOffset? Date { get; init; } = null;
+        public DateOnly? Date { get; init; } = null;
         public string TimeSlotId { get; init; } = string.Empty;
         public string ShipmentId { get; init; } = string.Empty;
         public decimal? TotalWeightKg { get; init; } = null;
@@ -989,7 +992,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
 
         // Calculate date range for bulk fetch
-        var startDate = shipment.ScheduledDateTime.Value;
+        var startDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var endDate = startDate.AddDays(4 * maxAttempts); // 4 shifts per day
 
         // Get all lines involved in this shipment
@@ -1008,7 +1014,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .Include(x => x.TimeSlot)
             .Select(x => new CalculatedItinerary
             {
-                Date = x.Date.Value.Date,
+                Date = x.Date.Value,
                 TimeSlotId = x.TimeSlotId,
                 ShipmentId = x.ShipmentId,
                 TotalWeightKg = x.Shipment.TotalWeightKg,
@@ -1021,7 +1027,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Group by (RouteId, Date, Shift) for fast lookup
         return allRelevantItineraries
-            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value.Date, x.Shift.Value))
+            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value, x.Shift.Value))
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
@@ -1037,7 +1043,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         int maxAttempts)
     {
         // Initialize with shipment's scheduled date and shift
-        var currentDate = shipment.ScheduledDateTime.Value;
+        var currentDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var currentSlot = timeSlots.FirstOrDefault(ts => ts.Shift == shipment.ScheduledShift);
 
         if (currentSlot == null)
@@ -1081,8 +1090,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Find available slot with capacity check using pre-fetched data
-    private async Task<(DateTimeOffset, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
-        DateTimeOffset startDate,
+    private async Task<(DateOnly, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
+        DateOnly startDate,
         MetroTimeSlot startSlot,
         ShipmentItinerary itinerary,
         Shipment shipment,
@@ -1148,13 +1157,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Get next slot
-    private (DateTimeOffset, MetroTimeSlot) GetNextSlot(
-        DateTimeOffset date,
+    private (DateOnly, MetroTimeSlot) GetNextSlot(
+        DateOnly date,
         MetroTimeSlot currentSlot,
         List<MetroTimeSlot> timeSlots)
     {
         // Normalize date to start of the day, default to UTC+0
-        date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
+        //date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var nextShift = currentSlot.Shift switch
         {
             ShiftEnum.Morning => ShiftEnum.Afternoon,
@@ -1179,7 +1188,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return (nextDate, nextSlot);
     }
 
-    public record CapacityKey(string RouteId, DateTimeOffset Date, ShiftEnum Shift);
+    public record CapacityKey(string RouteId, DateOnly Date, ShiftEnum Shift);
 
     public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
     {
@@ -1250,7 +1259,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStation?.Id,
             DestinationStationName = destinationStation?.StationNameVi,
             ShipmentStatus = shipment.ShipmentStatus.ToString(),
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1351,7 +1360,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStationId,
             DestinationStationName = destinationStationName,
             ShipmentStatus = shipmentStatus,
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1379,7 +1388,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             RouteId = it.RouteId,
             TrainId = it.TrainId,
             TrainCode = it.Train?.TrainCode,
-            Date = it.Date,
+            //Date = it.Date,
             TimeSlotId = it.TimeSlotId,
             IsCompleted = it.IsCompleted
         }).ToList();
