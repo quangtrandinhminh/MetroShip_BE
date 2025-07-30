@@ -23,6 +23,7 @@ public interface IShipmentService
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
     Task CancelShipment(ShipmentRejectRequest request);
+    Task FeedbackShipment(ShipmentFeedbackRequest request);
     Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
     Task<UpdateShipmentStatusResponse> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId);
     Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId);

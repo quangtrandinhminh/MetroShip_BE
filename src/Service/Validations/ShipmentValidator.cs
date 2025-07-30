@@ -46,6 +46,12 @@ public static class ShipmentValidator
         var _shipmentFilterRequestValidator = new ShipmentFilterRequestValidator();
         _shipmentFilterRequestValidator.ValidateApiModel(request);
     }
+
+    public static void ValidateShipmentFeedbackRequest(ShipmentFeedbackRequest request)
+    {
+        var _shipmentFeedbackRequestValidator = new ShipmentFeedbackRequestValidator();
+        _shipmentFeedbackRequestValidator.ValidateApiModel(request);
+    }
 }
 
 public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
@@ -376,5 +382,26 @@ public class ShipmentFilterRequestValidator : AbstractValidator<ShipmentFilterRe
         if (!status.HasValue) return true;
 
         return Enum.IsDefined(typeof(ShipmentStatusEnum), status.Value);
+    }
+}
+
+// shipment feedback validation
+public class ShipmentFeedbackRequestValidator : AbstractValidator<ShipmentFeedbackRequest>
+{
+    public ShipmentFeedbackRequestValidator()
+    {
+        RuleFor(x => x.ShipmentId)
+            .NotEmpty()
+            .WithMessage(ResponseMessageShipment.SHIPMENT_ID_REQUIRED)
+            .Must(id => Guid.TryParse(id, out _))
+            .WithMessage(ResponseMessageShipment.SHIPMENT_ID_INVALID);
+
+        RuleFor(x => x.Feedback)
+            .MaximumLength(500)
+            .WithMessage(ResponseMessageShipment.FEEDBACK_TEXT_TOO_LONG);
+
+        RuleFor(x => x.Rating)
+            .InclusiveBetween(1, 5)
+            .WithMessage(ResponseMessageShipment.RATING_INVALID);
     }
 }

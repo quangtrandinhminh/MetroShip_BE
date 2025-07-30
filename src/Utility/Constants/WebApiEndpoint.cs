@@ -73,6 +73,7 @@
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
             public const string GetShipmentById = BaseEndpoint + "/{id}";
             public const string CancelShipment = BaseEndpoint + "/cancel/{shipmentId}";
+            public const string FeedbackShipment = BaseEndpoint + "/feedback";
         }
 
         public static class TransactionEndpoint

@@ -502,6 +502,41 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
     }
 
+    public async Task FeedbackShipment(ShipmentFeedbackRequest request)
+    {
+        _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
+        ShipmentValidator.ValidateShipmentFeedbackRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Id == request.ShipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is delivered
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Delivered)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_DELIVERED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update feedback
+        shipment.Feedback = request.Feedback;
+        shipment.Rating = (byte) request.Rating;
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
         _logger.Information("Checking shipment date: {@scheduledDateTime}", scheduledDateTime);
@@ -1384,5 +1419,4 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             IsCompleted = it.IsCompleted
         }).ToList();
     }
-
 }

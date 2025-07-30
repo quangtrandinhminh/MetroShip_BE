@@ -115,6 +115,15 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
         }
 
+        // feedback
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.FeedbackShipment)]
+        public async Task<IActionResult> FeedbackShipment([FromBody] ShipmentFeedbackRequest request)
+        {
+            await shipmentService.FeedbackShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.FEEDBACK_SUCCESS, null));
+        }
+
         //[Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetLocation)]
         public async Task<IActionResult> GetShipmentLocation(string trackingCode)
