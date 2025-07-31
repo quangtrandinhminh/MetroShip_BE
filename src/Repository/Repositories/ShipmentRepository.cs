@@ -399,7 +399,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 .Include(i => i.Shipment)
                 .Where(i =>
                     i.Date.HasValue &&
-                    i.Date.Value.Date == currentDate &&
+                    i.Date.Value.Equals(currentDate) &&
                     i.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff)
                 .ToListAsync();
 
