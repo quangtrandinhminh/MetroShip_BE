@@ -10,6 +10,6 @@ public sealed record ItineraryResponse
     public RouteResponse Route { get; set; } = null;
     public string? TrainId { get; set; } = null;
     public string? TimeSlotId { get; set; } = null;
-    public DateTimeOffset? Date { get; set; } = null;
+    public DateOnly? Date { get; set; } = null;
     public bool IsCompleted { get; set; }
 }
