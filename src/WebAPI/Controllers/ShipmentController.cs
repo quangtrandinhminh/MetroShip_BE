@@ -154,7 +154,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.AssignTrainToShipment)]
         public async Task<IActionResult> AssignTrainToShipment(string trackingCode, string trainId)
         {

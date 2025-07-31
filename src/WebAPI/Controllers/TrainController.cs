@@ -90,11 +90,11 @@ namespace MetroShip.WebAPI.Controllers
         [HttpGet("{trackingCode}/position")]
         public async Task<IActionResult> GetPositionByTrackingCode(string trackingCode)
         {
-            var result = await _trainService.GetPositionByTrackingCodeAsync(trackingCode);
+            var result = await _trainService.GetTrainPositionByTrackingCodeAsync(trackingCode);
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpGet("/api/train/{trainId}/position")]
         public async Task<IActionResult> GetPositionByTrainId(string trainId)
         {
@@ -102,19 +102,12 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost("/api/train/{trainId}/status")]
         public async Task<IActionResult> UpdateTrainStatus(string trainId)
         {
-            var result = await _trainService.UpdateTrainStatusAsync(trainId);
-            if (result)
-            {
-                return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
-            }
-            else
-            {
-                return BadRequest(BaseResponse.BadRequestResponseDto("Failed to update train status", null));
-            }
+            await _trainService.StartOrContinueSimulationAsync(trainId);
+            return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
         }
     }
 }

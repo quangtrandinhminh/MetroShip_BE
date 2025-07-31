@@ -20,7 +20,7 @@ public interface ITrainService
     Task<string> AddShipmentItinerariesForTrain(AddTrainToItinerariesRequest request);
 
     Task<TrainPositionResult> GetTrainPositionAsync(string trainId);
-    Task<TrainPositionResult> GetPositionByTrackingCodeAsync(string trackingCode);
-    Task<bool> UpdateTrainStatusAsync(string trainId);
+    Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode);
+    Task StartOrContinueSimulationAsync(string trainId);
 
 }
