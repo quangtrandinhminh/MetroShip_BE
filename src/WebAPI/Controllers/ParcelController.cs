@@ -1,11 +1,14 @@
-﻿using MetroShip.Service.ApiModels;
+﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Validations;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -55,6 +58,15 @@ namespace MetroShip.WebAPI.Controllers
         {
             var qrCode = TrackingCodeGenerator.GenerateQRCode(parcelTrackingCode);
             return Ok(qrCode);
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.GetChargeableWeight)]
+        public async Task<IActionResult> GetChargeableWeight([FromBody] ChargeableWeightRequest request)
+        {
+            ShipmentValidator.ValidateChargeableWeightRequest(request);
+            var chargeableWeight = CalculateHelper.CalculateChargeableWeight(
+                request.LengthCm, request.WidthCm, request.HeightCm, request.WeightKg);
+            return Ok(BaseResponse.OkResponseDto(chargeableWeight, null));
         }
 
         /*[HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]

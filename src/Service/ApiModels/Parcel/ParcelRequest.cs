@@ -5,13 +5,9 @@ using MetroShip.Utility.Helpers;
 
 namespace MetroShip.Service.ApiModels.Parcel;
 
-public record ParcelRequest
+public record ParcelRequest : ChargeableWeightRequest
 {
     public string ParcelCategoryId { get; set; }
-    public decimal WeightKg { get; set; }
-    public decimal LengthCm { get; set; }
-    public decimal WidthCm { get; set; }
-    public decimal HeightCm { get; set; }
     public bool IsInsuranceIncluded { get; set; } = false;
     public decimal? ShippingFeeVnd { get; set; } = 0;
     public decimal? InsuranceFeeVnd { get; set; } = 0;
@@ -20,4 +16,12 @@ public record ParcelRequest
     public decimal? PriceVnd { get; set; } = 0;
     public decimal? ValueVnd { get; set; } = null;
     public string? DescriptionImageUrl { get; set; } = null;
+}
+
+public record ChargeableWeightRequest
+{
+    public decimal WeightKg { get; set; }
+    public decimal LengthCm { get; set; }
+    public decimal WidthCm { get; set; }
+    public decimal HeightCm { get; set; }
 }

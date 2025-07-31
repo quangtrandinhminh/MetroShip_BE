@@ -47,6 +47,7 @@
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
             public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
+            public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
         }
 
         public static class ShipmentEndpoint

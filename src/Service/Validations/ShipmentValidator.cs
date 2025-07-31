@@ -190,7 +190,6 @@ public class ParcelRequestValidator : AbstractValidator<ParcelRequest>
             .Must(x => Guid.TryParse(x, out _))
             .WithMessage(ResponseMessageParcel.PARCEL_CATEGORY_ID_INVALID);
 
-
         RuleFor(x => x.WidthCm)
             .NotNull()
             .WithMessage(ResponseMessageParcel.WIDTH_REQUIRED)
@@ -403,5 +402,36 @@ public class ShipmentFeedbackRequestValidator : AbstractValidator<ShipmentFeedba
         RuleFor(x => x.Rating)
             .InclusiveBetween(1, 5)
             .WithMessage(ResponseMessageShipment.RATING_INVALID);
+    }
+}
+
+// ChargeableWeightRequest
+public class ChargeableWeightRequestValidator : AbstractValidator<ChargeableWeightRequest>
+{
+    public ChargeableWeightRequestValidator()
+    {
+        RuleFor(x => x.WidthCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.WIDTH_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.WIDTH_INVALID);
+
+        RuleFor(x => x.HeightCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.HEIGHT_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.HEIGHT_INVALID);
+
+        RuleFor(x => x.LengthCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.LENGTH_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.LENGTH_INVALID);
+
+        RuleFor(x => x.WeightKg)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.WEIGHT_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.WEIGHT_INVALID);
     }
 }
