@@ -52,6 +52,12 @@ public static class ShipmentValidator
         var _shipmentFeedbackRequestValidator = new ShipmentFeedbackRequestValidator();
         _shipmentFeedbackRequestValidator.ValidateApiModel(request);
     }
+
+    public static void ValidateChargeableWeightRequest(ChargeableWeightRequest request)
+    {
+        var _chargeableWeightRequestValidator = new ChargeableWeightRequestValidator();
+        _chargeableWeightRequestValidator.ValidateApiModel(request);
+    }
 }
 
 public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
