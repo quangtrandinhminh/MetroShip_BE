@@ -80,6 +80,6 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public IList<ItineraryResponse> ShipmentItineraries { get; set; } = new List<ItineraryResponse>();
     public IList<ParcelResponse> Parcels { get; set; } = new List<ParcelResponse>();
     //public IList<TransactionResponse>? Transactions { get; set; } = new List<TransactionResponse>();
-
-    public virtual IList<ShipmentMediaResponse> ShipmentMedias { get; set; } = new List<ShipmentMediaResponse>();
+    public IList<ShipmentMediaResponse> ShipmentMedias { get; set; } = new List<ShipmentMediaResponse>();
+    public ItineraryGraphResponse ItineraryGraph { get; set; }
 }

@@ -83,6 +83,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         var shipmentResponse = _mapperlyMapper.MapToShipmentDetailsResponse(shipment);
+        InitializeGraphAsync().Wait();
+        shipmentResponse.ItineraryGraph = _metroGraph.CreateItineraryGraphResponses(
+            shipmentResponse.ShipmentItineraries.Select(x => x.RouteId).ToList(),
+            _mapperlyMapper);
         return shipmentResponse;
     }
 

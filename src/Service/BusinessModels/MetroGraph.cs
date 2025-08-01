@@ -193,11 +193,11 @@ public class MetroGraph
     /// <summary>
     /// Tạo một MetroGraph mới chỉ chứa các ga và tuyến đường trong path
     /// </summary>
-    /// <param name="path">Đường đi dưới dạng danh sách ID ga</param>
+    /// <param name="stationListPath">Đường đi dưới dạng danh sách ID ga</param>
     /// <returns>MetroGraph mới chứa các ga và tuyến đường trong path</returns>
-    public BestPathGraphResponse CreateResponseFromPath(List<string> path, IMapperlyMapper _mapper)
+    public BestPathGraphResponse CreateResponseFromPath(List<string> stationListPath, IMapperlyMapper _mapper)
     {
-        if (!path.Any())
+        if (!stationListPath.Any())
             return null;
 
         // Tạo cấu trúc dữ liệu mới
@@ -207,7 +207,7 @@ public class MetroGraph
         var newLinesMap = new Dictionary<string, MetroLine>();
 
         // Thêm các ga trên đường đi vào map mới
-        foreach (var stationId in path)
+        foreach (var stationId in stationListPath)
         {
             if (_stationsMap.TryGetValue(stationId, out var station))
             {
@@ -216,10 +216,10 @@ public class MetroGraph
         }
 
         // Thêm các tuyến đường trên đường đi
-        for (int i = 0; i < path.Count - 1; i++)
+        for (int i = 0; i < stationListPath.Count - 1; i++)
         {
-            var fromId = path[i];
-            var toId = path[i + 1];
+            var fromId = stationListPath[i];
+            var toId = stationListPath[i + 1];
 
             // Thêm vào adjacency list mới
             if (!newAdjacencyList.ContainsKey(fromId))
@@ -257,7 +257,7 @@ public class MetroGraph
         return response;
     }
 
-    public BestPathGraphResponse CreateResponseFromPath(
+    /*public BestPathGraphResponse CreateResponseFromPath(
         List<string> path, IMapperlyMapper _mapper, DateTimeOffset schduleDate)
     {
         if (path == null || path.Count < 2)
@@ -314,6 +314,88 @@ public class MetroGraph
         {
             route.LegOrder = response.Routes.IndexOf(route) + 1;
             //route.BasePriceVndPerKg = basePricePerKm;
+        }
+
+        return response;
+    }*/
+
+    private List<string> GetAllStationIdsFromRouteStation(List<string> routeIds)
+    {
+        var stationIds = new HashSet<string>();
+
+        // get routeStation from _routeStationsMap
+        foreach (var routeId in routeIds)
+        {
+            // get route from _routeStationsMap
+            var route = _routeStationsMap.Values
+                .FirstOrDefault(r => r.Id == routeId);
+
+            if (route != null)
+            {
+                // add from and to station id to stationIds
+                stationIds.Add(route.FromStationId);
+                stationIds.Add(route.ToStationId);
+            }
+        }
+
+        return stationIds.ToList();
+    }
+
+    public ItineraryGraphResponse CreateItineraryGraphResponses(
+               List<string> routeStationList, IMapperlyMapper _mapper)
+    {
+        var stationListPath = GetAllStationIdsFromRouteStation(routeStationList);
+
+        // Tạo cấu trúc dữ liệu mới
+        var newAdjacencyList = new Dictionary<string, List<string>>();
+        var newRoutesMap = new Dictionary<(string from, string to), Route>();
+        var newStationsMap = new Dictionary<string, Station>();
+        var newLinesMap = new Dictionary<string, MetroLine>();
+
+        // Thêm các ga trên đường đi vào map mới
+        foreach (var stationId in stationListPath)
+        {
+            if (_stationsMap.TryGetValue(stationId, out var station))
+            {
+                newStationsMap[stationId] = station;
+            }
+        }
+
+        // Thêm các tuyến đường trên đường đi
+        for (int i = 0; i < stationListPath.Count - 1; i++)
+        {
+            var fromId = stationListPath[i];
+            var toId = stationListPath[i + 1];
+
+            // Thêm vào adjacency list mới
+            if (!newAdjacencyList.ContainsKey(fromId))
+                newAdjacencyList[fromId] = new List<string>();
+
+            newAdjacencyList[fromId].Add(toId);
+
+            // Thêm route vào map mới
+            if (_routeStationsMap.TryGetValue((fromId, toId), out var route))
+            {
+                newRoutesMap[(fromId, toId)] = route;
+
+                // Thêm line vào map mới nếu chưa có
+                if (!newLinesMap.ContainsKey(route.LineId) && _routesMap.TryGetValue(route.LineId, out var line))
+                {
+                    newLinesMap[route.LineId] = line;
+                }
+            }
+        }
+
+        var response = new ItineraryGraphResponse
+        {
+            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteStationResponse(r)).ToList(),
+            Stations = newStationsMap.Values.Select(s => _mapper.MapToStationResponse(s)).ToList(),
+            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineItineraryResponse(l)).ToList()
+        };
+
+        foreach (var route in response.Routes)
+        {
+            route.LegOrder = response.Routes.IndexOf(route) + 1;
         }
 
         return response;
