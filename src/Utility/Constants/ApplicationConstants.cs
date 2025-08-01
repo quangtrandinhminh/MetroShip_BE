@@ -140,6 +140,8 @@
         public const string SHIPMENT_STATUS_INVALID = "Shipment status is invalid.";
         public const string SHIPMENT_STATUS_NOT_FOUND = "Shipment status not found.";
         public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
+        public const string START_RECEIVE_AT_REQUIRED = "Start receive time is required.";
+        public const string START_RECEIVE_AT_INVALID = "Start receive time must be before the scheduledDateTime";
         public const string SHIPMENT_DATE_REQUIRED = "ScheduledDateTime is required.";
         public const string DEPARTURE_STATION_ID_REQUIRED = "Departure station ID is required.";
         public const string DEPARTURE_STATION_ID_INVALID = "Departure station ID is invalid.";

@@ -24,7 +24,6 @@ public sealed record ShipmentRequest
     public string RecipientPhone { get; set; }
 
     public string? RecipientEmail { get; set; }
-
     public DateTimeOffset? StartReceiveAt { get; set; }
     public DateTimeOffset ScheduledDateTime { get; set; }
     public string TimeSlotId { get; set; } 
@@ -32,7 +31,7 @@ public sealed record ShipmentRequest
     public decimal TotalShippingFeeVnd { get; set; }
     public decimal? TotalInsuranceFeeVnd { get; set; } = 0;
     public decimal TotalKm { get; set; }
-    public string? TrackingLink { get; set; } = "https://fe-metro-ship.vercel.app/tracking-order";
+    public string? TrackingLink { get; set; } = "https://fe-metro-ship.vercel.app/tracking";
     public IList<ShipmentItineraryRequest> ShipmentItineraries { get; set; } = new List<ShipmentItineraryRequest>();
     public IList<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();
 }

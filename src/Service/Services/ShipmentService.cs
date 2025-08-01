@@ -189,9 +189,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                        request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
 
         // generate shipment tracking code
-        var systemTime = request.ScheduledDateTime.UtcToSystemTime();
+        var scheduledSystemTime = request.ScheduledDateTime.UtcToSystemTime();
+        var startReceiveAtSystemTime = request.StartReceiveAt?.UtcToSystemTime() ?? null;
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
-            departureStation.Region.RegionCode, systemTime);
+            departureStation.Region.RegionCode, scheduledSystemTime);
 
         // foreach parcel, set shipment id and generate parcel code
         int index = 0;
@@ -227,7 +228,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
-        shipment.ScheduledDateTime = systemTime;
+        shipment.StartReceiveAt = startReceiveAtSystemTime;
+        shipment.ScheduledDateTime = scheduledSystemTime;
         shipment.DepartureStationName = departureStation.StationNameVi;
         shipment.DepartureStationAddress = departureStation.Address;
         shipment.DestinationStationName = destinationStation.StationNameVi;

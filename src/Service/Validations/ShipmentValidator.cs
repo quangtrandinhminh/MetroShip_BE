@@ -64,6 +64,11 @@ public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
 {
     public ShipmentRequestValidator()
     {
+        RuleFor(x => x.StartReceiveAt)
+            .LessThan(x => x.ScheduledDateTime)
+            .WithMessage(ResponseMessageShipment.START_RECEIVE_AT_INVALID)
+            .When(x => x.StartReceiveAt.HasValue);
+
         RuleFor(x => x.ScheduledDateTime)
             .NotEmpty()
             .WithMessage(ResponseMessageShipment.SHIPMENT_DATE_REQUIRED);

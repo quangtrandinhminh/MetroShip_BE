@@ -16,6 +16,7 @@ public record ShipmentListResponse
     public string RecipientName { get; set; }
     public string RecipientPhone { get; set; }
     public decimal TotalCostVnd { get; set; }
+    public DateTimeOffset? StartReceiveAt { get; set; } 
     public DateTimeOffset ScheduledDateTime { get; set; }
     public DateTimeOffset? BookedAt { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }

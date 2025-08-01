@@ -140,6 +140,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
             // Scheduling fields
             TimeSlotId = s.TimeSlotId,
+            StartReceiveAt = s.StartReceiveAt,
             ScheduledDateTime = s.ScheduledDateTime,
             ScheduledShift = s.ScheduledShift,
             PriceStructureDescriptionJSON = s.PriceStructureDescriptionJSON,
@@ -249,8 +250,19 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
                     IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
                 },
-            })
-            .ToList(),
+            }).ToList(),
+
+            ShipmentMedias = s.ShipmentMedias.Select(media => new ShipmentMedia
+            {
+                Id = media.Id,
+                ShipmentId = media.ShipmentId,
+                MediaType = media.MediaType,
+                MediaUrl = media.MediaUrl,
+                CreatedAt = media.CreatedAt,
+                CreatedBy = media.CreatedBy,
+                LastUpdatedAt = media.LastUpdatedAt,
+                LastUpdatedBy = media.LastUpdatedBy,
+            }).ToList(),
             //Transactions = shipment.Transactions.ToList(),
         }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
 
