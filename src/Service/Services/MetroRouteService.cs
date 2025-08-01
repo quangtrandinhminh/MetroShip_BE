@@ -21,38 +21,50 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
 using MetroShip.Utility.Helpers;
+using MetroShip.Service.ApiModels.PaginatedList;
 
 namespace MetroShip.Service.Services
 {
-    public class MetroLineService(IServiceProvider serviceProvider) : IMetroLineService
+    public class MetroRouteService(IServiceProvider serviceProvider) : IMetroRouteService
     {
-        private readonly IMetroLineRepository _metroLineRepository = serviceProvider.GetRequiredService<IMetroLineRepository>();
+        private readonly IMetroRouteRepository _metroRouteRepository = serviceProvider.GetRequiredService<IMetroRouteRepository>();
         private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
         private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
-        private readonly IBaseRepository<Route> _routeRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
+        private readonly IBaseRepository<Route> _routeStationRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
         private readonly IRegionRepository _regionRepository = serviceProvider.GetRequiredService<IRegionRepository>();
 
-        public async Task<List<MetrolineResponse>> GetAllMetroLine()
+        public async Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown()
         {
             _logger.Information("Getting all MetroLines for dropdown.");
-            var metroLines = await _metroLineRepository.GetAll()
-                .Select(line => new MetrolineResponse
+            var metroLines = await _metroRouteRepository.GetAll()
+                .Select(line => new MetroLineItineraryResponse
                 {
                     Id = line.Id,
                     LineNameVi = line.LineNameVi,
-                    LineNameEn = line.LineNameEn
+                    LineNameEn = line.LineNameEn,
+                    ColorHex = line.ColorHex,
                 })
                 .OrderBy(line => line.LineNameVi)
                 .ToListAsync();
             return metroLines;
         }
 
+        public async Task<List<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request)
+        {
+            throw new NotImplementedException("This method is not implemented");
+        }
+
+        public async Task<MetroRouteResponseDetails> GetMetroRouteById(string metroRouteId)
+        {
+            throw new NotImplementedException("This method is not implemented");
+        }
+
         public async Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId)
         {
             _logger.Information("Getting all MetroLines for dropdown by region.");
-            var metroLines = await _metroLineRepository.GetAllWithBasePriceByRegionAsync(regionId);
+            var metroLines = await _metroRouteRepository.GetAllWithBasePriceByRegionAsync(regionId);
             return metroLines
                 .Select(line => new MetrolineGetByRegionResponse
                 {
@@ -67,7 +79,7 @@ namespace MetroShip.Service.Services
 
         // create a new metro line, if the station is exist, update IsMultiline to true,
         // else add new station, then create routes for each pairs of stations
-        public async Task<int> CreateMetroLine(MetroLineCreateRequest request)
+        public async Task<int> CreateMetroRoute(MetroRouteRequest request)
         {
             _logger.Information("Creating new MetroLine: {LineNameVi}", request.LineNameVi);
 
@@ -94,26 +106,26 @@ namespace MetroShip.Service.Services
                             StatusCodes.Status400BadRequest);
                     }
 
-                    var metroLine = _mapper.MapToMetroLineEntity(request);
-                    metroLine.LineCode = string.IsNullOrEmpty(request.LineCode) ?
+                    var metroRoute = _mapper.MapToMetroLineEntity(request);
+                    metroRoute.LineCode = string.IsNullOrEmpty(request.LineCode) ?
                                 MetroCodeGenerator.GenerateMetroLineCode(
                                 region.RegionCode,
                                 request.LineNumber) : request.LineCode;
 
                     // find existing metro line with same code
-                    var existingLine = await _metroLineRepository.GetAll()
-                        .FirstOrDefaultAsync(l => l.LineCode == metroLine.LineCode);
+                    var existingLine = await _metroRouteRepository.GetAll()
+                        .FirstOrDefaultAsync(l => l.LineCode == metroRoute.LineCode);
                     if (existingLine != null)
                     {
                         throw new AppException(
                             ErrorCode.BadRequest,
-                            RouteMessageConstants.ROUTE_EXISTED + $" with RouteCode: {metroLine.LineCode}",
+                            RouteMessageConstants.ROUTE_EXISTED + $" with MetroRouteCode: {metroRoute.LineCode}",
                             StatusCodes.Status400BadRequest);
                     }
 
-                    metroLine.TotalKm = request.Stations.Sum(s => s.ToNextStationKm);
-                    metroLine.TotalStations = request.Stations.Count;
-                    _logger.Information("MetroLine entity mapped: {LineCode}", metroLine.LineCode);
+                    metroRoute.TotalKm = request.Stations.Sum(s => s.ToNextStationKm);
+                    metroRoute.TotalStations = request.Stations.Count;
+                    _logger.Information("MetroRoute entity mapped: {LineCode}", metroRoute.LineCode);
 
                     // Handle existing stations (none in your case since all IDs are null)
                     var existingStationIds = request.Stations
@@ -139,11 +151,11 @@ namespace MetroShip.Service.Services
                             var order = request.Stations.FirstOrDefault(
                                 s => s.Id == station.Id);
 
-                            station.IsMultiLine = true;
                             var stationCodeList = station.StationCodeList;
+                            if (stationCodeList.Any()) station.IsMultiLine = true;
                             stationCodeList.Add(new StationCodeListItem
                             {
-                                RouteId = metroLine.Id,
+                                RouteId = metroRoute.Id,
                                 StationCode = MetroCodeGenerator.GenerateStationCode(
                                     request.Stations.IndexOf(order) + 1,
                                     request.LineNumber,
@@ -185,7 +197,7 @@ namespace MetroShip.Service.Services
                                 {
                                     new StationCodeListItem
                                     {
-                                        RouteId = metroLine.Id,
+                                        RouteId = metroRoute.Id,
                                         StationCode = station.StationCode
                                     }
                                 }
@@ -231,15 +243,15 @@ namespace MetroShip.Service.Services
 
                     _logger.Information("Ordered stations count: {Count}", orderedStations.Count);
 
-                    // serilize station list to JSON
-                    metroLine.StationListJSON = System.Text.Json.JsonSerializer.Serialize(
+                    // serialize station list to JSON
+                    metroRoute.StationListJSON = System.Text.Json.JsonSerializer.Serialize(
                                                orderedStations.Select(s => new StationListItem
                                                {
                                                    StationId = s.Id,
                                                    StationCode = s.StationCode
                                                }).ToList());
                     // Add metro line first
-                    await _metroLineRepository.AddAsync(metroLine);
+                    await _metroRouteRepository.AddAsync(metroRoute);
                     _logger.Information("MetroLine added to context");
 
                     // Add new stations
@@ -293,7 +305,7 @@ namespace MetroShip.Service.Services
                         // Forward route
                         routes.Add(new Route
                         {
-                            LineId = metroLine.Id,
+                            LineId = metroRoute.Id,
                             FromStationId = fromStation.Id,
                             ToStationId = toStation.Id,
                             LengthKm = (decimal)lengthKm,
@@ -302,13 +314,13 @@ namespace MetroShip.Service.Services
                             RouteNameVi = $"{fromStation.StationNameVi} – {toStation.StationNameVi}",
                             RouteNameEn = $"{fromStation.StationNameEn} – {toStation.StationNameEn}",
                             RouteCode = MetroCodeGenerator.GenerateRouteCode(
-                                metroLine.LineCode, fromStation.StationCode, toStation.StationCode),
+                                metroRoute.LineCode, fromStation.StationCode, toStation.StationCode),
                         });
 
                         // Reverse route
                         routes.Add(new Route
                         {
-                            LineId = metroLine.Id,
+                            LineId = metroRoute.Id,
                             FromStationId = toStation.Id,
                             ToStationId = fromStation.Id,
                             LengthKm = (decimal)lengthKm,
@@ -317,7 +329,7 @@ namespace MetroShip.Service.Services
                             RouteNameVi = $"{toStation.StationNameVi} – {fromStation.StationNameVi}",
                             RouteNameEn = $"{toStation.StationNameEn} – {fromStation.StationNameEn}",
                             RouteCode = MetroCodeGenerator.GenerateRouteCode(
-                                metroLine.LineCode, toStation.StationCode, fromStation.StationCode)
+                                metroRoute.LineCode, toStation.StationCode, fromStation.StationCode)
                         });
 
                         legOrder++;
@@ -328,7 +340,7 @@ namespace MetroShip.Service.Services
                     // Add routes
                     if (routes.Any())
                     {
-                        await _routeRepository.AddRangeAsync(routes);
+                        await _routeStationRepository.AddRangeAsync(routes);
                         _logger.Information("Routes added to context");
                     }
 

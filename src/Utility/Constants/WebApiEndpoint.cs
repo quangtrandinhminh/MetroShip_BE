@@ -125,6 +125,7 @@
         public static class MetroLineEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetMetroLines = BaseEndpoint;
             public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
             public const string GetMetroLineById = BaseEndpoint + "/{id}";
             public const string CreateMetroLine = BaseEndpoint;

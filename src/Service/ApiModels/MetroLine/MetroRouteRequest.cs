@@ -2,7 +2,7 @@
 
 namespace MetroShip.Service.ApiModels.MetroLine;
 
-public record MetroLineCreateRequest
+public record MetroRouteRequest
 {
     public string LineNameVi { get; set; } = string.Empty;
     public string LineNameEn { get; set; } = string.Empty;

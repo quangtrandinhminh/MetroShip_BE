@@ -20,23 +20,23 @@ public class MetroGraph
 {
     // Cấu trúc dữ liệu cho đồ thị
     private Dictionary<string, List<string>> _adjacencyList;
-    private Dictionary<(string from, string to), Route> _routesMap;
+    private Dictionary<(string from, string to), Route> _routeStationsMap;
     private Dictionary<string, Station> _stationsMap;
-    private Dictionary<string, MetroLine> _linesMap;
+    private Dictionary<string, MetroLine> _routesMap;
 
     /// <summary>
     /// Khởi tạo một đồ thị metro từ dữ liệu routes, stations và metroLines
     /// </summary>
-    public MetroGraph(List<Route> routes, List<Station> stations, List<MetroLine> metroLines)
+    public MetroGraph(List<Route> routeStations, List<Station> stations, List<MetroLine> metroRoutes)
     {
         // Khởi tạo cấu trúc dữ liệu
         _adjacencyList = new Dictionary<string, List<string>>();
-        _routesMap = new Dictionary<(string from, string to), Route>();
+        _routeStationsMap = new Dictionary<(string from, string to), Route>();
         _stationsMap = stations.ToDictionary(s => s.Id, s => s);
-        _linesMap = metroLines.ToDictionary(l => l.Id, l => l);
+        _routesMap = metroRoutes.ToDictionary(l => l.Id, l => l);
 
         // Xây dựng adjacency list và routes mapping
-        foreach (var route in routes)
+        foreach (var route in routeStations)
         {
             // Thêm ga vào stations map nếu chưa có
             if (!_adjacencyList.ContainsKey(route.FromStationId))
@@ -45,7 +45,7 @@ public class MetroGraph
             }
 
             _adjacencyList[route.FromStationId].Add(route.ToStationId);
-            _routesMap[(route.FromStationId, route.ToStationId)] = route;
+            _routeStationsMap[(route.FromStationId, route.ToStationId)] = route;
         }
     }
 
@@ -228,12 +228,12 @@ public class MetroGraph
             newAdjacencyList[fromId].Add(toId);
 
             // Thêm route vào map mới
-            if (_routesMap.TryGetValue((fromId, toId), out var route))
+            if (_routeStationsMap.TryGetValue((fromId, toId), out var route))
             {
                 newRoutesMap[(fromId, toId)] = route;
 
                 // Thêm line vào map mới nếu chưa có
-                if (!newLinesMap.ContainsKey(route.LineId) && _linesMap.TryGetValue(route.LineId, out var line))
+                if (!newLinesMap.ContainsKey(route.LineId) && _routesMap.TryGetValue(route.LineId, out var line))
                 {
                     newLinesMap[route.LineId] = line;
                 }
@@ -242,9 +242,9 @@ public class MetroGraph
 
         var response = new BestPathGraphResponse
         {
-            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteResponse(r)).ToList(),
+            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteStationResponse(r)).ToList(),
             Stations = newStationsMap.Values.Select(s => _mapper.MapToStationResponse(s)).ToList(),
-            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineResponse(l)).ToList()
+            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineItineraryResponse(l)).ToList()
         };
 
         foreach (var route in response.Routes)
@@ -291,12 +291,12 @@ public class MetroGraph
             newAdjacencyList[fromId].Add(toId);
 
             // Thêm route vào map mới
-            if (_routesMap.TryGetValue((fromId, toId), out var route))
+            if (_routeStationsMap.TryGetValue((fromId, toId), out var route))
             {
                 newRoutesMap[(fromId, toId)] = route;
 
                 // Thêm line vào map mới nếu chưa có
-                if (!newLinesMap.ContainsKey(route.LineId) && _linesMap.TryGetValue(route.LineId, out var line))
+                if (!newLinesMap.ContainsKey(route.LineId) && _routesMap.TryGetValue(route.LineId, out var line))
                 {
                     newLinesMap[route.LineId] = line;
                 }
@@ -305,9 +305,9 @@ public class MetroGraph
 
         var response = new BestPathGraphResponse
         {
-            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteResponse(r)).ToList(),
+            Routes = newRoutesMap.Values.Select(r => _mapper.MapToRouteStationResponse(r)).ToList(),
             Stations = newStationsMap.Values.Select(s => _mapper.MapToStationResponse(s)).ToList(),
-            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineResponse(l)).ToList()
+            MetroLines = newLinesMap.Values.Select(l => _mapper.MapToMetroLineItineraryResponse(l)).ToList()
         };
 
         foreach (var route in response.Routes)
@@ -451,7 +451,7 @@ public class MetroGraph
                         continue;
 
                     // Tính toán chi phí cho tuyến đường này
-                    if (_routesMap.TryGetValue((currentStation, neighbor), out var route))
+                    if (_routeStationsMap.TryGetValue((currentStation, neighbor), out var route))
                     {
                         decimal weight = 0;
                         foreach (var weightExpression in weights)
