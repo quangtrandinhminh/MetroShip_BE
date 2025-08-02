@@ -398,6 +398,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     {
         if (_cache.TryGetValue<TrainPositionResult>(trainId, out var cachedPosition))
         {
+            _logger.Information("Returning cached position for train {TrainId}", trainId);
             return cachedPosition!;
         }
 
@@ -408,10 +409,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         //var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId).ConfigureAwait(false);
 
         // lấy từ request
-        // hôm nay +07:00
-        var date = CoreHelper.SystemTimeNow.Date;
         // today +07:00
-        var dateOffset = DateOnly.FromDateTime(date);
+        var dateOffset = new DateOnly(2025, 07, 31); // lấy từ request, ví dụ: DateOnly.FromDateTime(DateTime.UtcNow)
         // ca sáng
         var timeSlotId = "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"; // lấy từ request
         // hướng đi
@@ -440,8 +439,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // Để chuẩn, startTime nên được gửi từ request mỗi khi tàu dừng lại và bắt đầu đi tiếp
         var startTime = DateTimeOffset.UtcNow; // lấy từ request, nếu không có thì lấy thời gian hiện tại
-        var now = new DateTimeOffset(2025, 07, 31, 0, 45, 0, TimeSpan.Zero);
-
+        var now = startTime.AddSeconds(5); // giả sử tàu đã chạy được 5 giây, lấy từ request hoặc tính toán từ thời gian bắt đầu
 
         // tính toán đúng khi 2 datetimeoffset cùng timeSpan 
         //var elapsed = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
