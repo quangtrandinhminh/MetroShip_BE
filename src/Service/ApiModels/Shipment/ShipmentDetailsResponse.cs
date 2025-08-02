@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels.Parcel;
+﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Utility.Enums;
@@ -8,9 +9,9 @@ namespace MetroShip.Service.ApiModels.Shipment;
 public record ShipmentDetailsResponse : ShipmentListResponse
 {
     // Financial fields
-    public decimal? InsuranceFeeVnd { get; set; }
-    public decimal? SurchargeFeeVnd { get; set; }
-    public decimal ShippingFeeVnd { get; set; }
+    public decimal? TotalInsuranceFeeVnd { get; set; }
+    public decimal? TotalSurchargeFeeVnd { get; set; }
+    public decimal TotalShippingFeeVnd { get; set; }
     public decimal? TotalOverdueSurchargeFee { get; set; }
 
     // Measurement fields
@@ -21,21 +22,24 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     // Scheduling fields
     public string? TimeSlotId { get; set; }
     public ShiftEnum? ScheduledShift { get; set; }
+    public string? PricingConfigId { get; set; }
     public string? PriceStructureDescriptionJSON { get; set; }
+    public DateTimeOffset? PaymentDealine { get; set; }
+    
 
     // Status tracking timestamps
+    public DateTimeOffset? PickedUpAt { get; set; }
+    public DateTimeOffset? RejectedAt { get; set; }
+    public string? RejectionReason { get; set; } // Reason for rejection, if applicable
+    public string? RejectedBy { get; set; } // User who rejected the shipment   
+    public string? ConfirmedBy { get; set; }
+
+    public string? PickedUpBy { get; set; } // User who picked up the shipment
+    public DateTimeOffset? AwaitedDeliveryAt { get; set; }
+    public DateTimeOffset? DeliveredAt { get; set; }
     public DateTimeOffset? SurchargeAppliedAt { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public DateTimeOffset? RefundedAt { get; set; }
-    public DateTimeOffset? RejectedAt { get; set; }
-    public DateTimeOffset? PaymentDeadline { get; set; }
-    public DateTimeOffset? AwaitedDeliveryAt { get; set; }
-
-    // Approval/Rejection fields
-    public string? RejectionReason { get; set; }
-    public string? RejectedBy { get; set; }
-    public string? ConfirmedBy { get; set; }
-    public string? PickedUpBy { get; set; }
 
     // Return fields
     public string? ReturnForShipmentId { get; set; }
@@ -58,15 +62,11 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string? RecipientEmail { get; set; }
     public string? RecipientNationalId { get; set; }
 
-    // Image fields
-    public string? PickedUpImageLink { get; set; }
-    public string? DeliveredImageLink { get; set; }
-    public string? NationalIdImageFrontLink { get; set; }
-    public string? NationalIdImageBackLink { get; set; }
-
     // Feedback fields
     public byte? Rating { get; set; }
     public string? Feedback { get; set; }
+    public string? FeedbackResponse { get; set; }
+    public string? FeedbackResponseBy { get; set; }
 
     // Base Entity fields (if needed in response)
     public DateTimeOffset CreatedAt { get; set; }
@@ -80,4 +80,6 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public IList<ItineraryResponse> ShipmentItineraries { get; set; } = new List<ItineraryResponse>();
     public IList<ParcelResponse> Parcels { get; set; } = new List<ParcelResponse>();
     //public IList<TransactionResponse>? Transactions { get; set; } = new List<TransactionResponse>();
+    public IList<ShipmentMediaResponse> ShipmentMedias { get; set; } = new List<ShipmentMediaResponse>();
+    public ItineraryGraphResponse ItineraryGraph { get; set; }
 }

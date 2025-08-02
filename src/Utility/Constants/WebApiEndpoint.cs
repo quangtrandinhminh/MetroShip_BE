@@ -47,6 +47,7 @@
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
             public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
+            public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
         }
 
         public static class ShipmentEndpoint
@@ -71,6 +72,9 @@
             public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
             public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
+            public const string GetShipmentById = BaseEndpoint + "/{id}";
+            public const string CancelShipment = BaseEndpoint + "/cancel/{shipmentId}";
+            public const string FeedbackShipment = BaseEndpoint + "/feedback";
         }
 
         public static class TransactionEndpoint
@@ -121,6 +125,7 @@
         public static class MetroLineEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetMetroLines = BaseEndpoint;
             public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
             public const string GetMetroLineById = BaseEndpoint + "/{id}";
             public const string CreateMetroLine = BaseEndpoint;

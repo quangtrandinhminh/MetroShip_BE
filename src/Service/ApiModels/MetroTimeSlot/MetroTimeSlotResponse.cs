@@ -16,6 +16,7 @@ namespace MetroShip.Service.ApiModels.MetroTimeSlot
         public TimeOnly CloseTime { get; set; }
         public ShiftEnum Shift { get; set; }
         public bool IsAbnormal { get; set; }
-        public int ScheduleBeforeShiftMinutes { get; set; }=30; // Default to 30 minutes
+        public int ScheduleBeforeShiftMinutes { get; set; }= 30;
+        public int MaxScheduleBeforeShiftMinutes { get; set; } = 120;
     }
 }

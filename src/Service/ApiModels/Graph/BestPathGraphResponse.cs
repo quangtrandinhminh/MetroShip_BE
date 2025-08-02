@@ -20,7 +20,7 @@ public sealed record BestPathGraphResponse
         .Sum(g => g.Sum(x => x.LengthKm * x.BasePriceVndPerKg));*/
     public int TotalParcels => Parcels.Count;
     public int TotalMetroLines => MetroLines.Count;
-    public List<RouteResponse> Routes { get; set; } = new List<RouteResponse>();
+    public List<RouteStationResponse> Routes { get; set; } = new List<RouteStationResponse>();
     public List<StationResponse> Stations { get; set; } = new List<StationResponse>();
     public List<MetroLineItineraryResponse> MetroLines { get; set; } = new List<MetroLineItineraryResponse>();
     public List<ParcelRequest> Parcels { get; set; } = new List<ParcelRequest>();

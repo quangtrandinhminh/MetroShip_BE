@@ -3,7 +3,7 @@ using MetroShip.Service.ApiModels.Station;
 
 namespace MetroShip.Service.ApiModels.Route;
 
-public sealed record RouteResponse
+public sealed record RouteStationResponse
 {
     public string RouteId { get; set; }
     public string RouteName { get; set; }

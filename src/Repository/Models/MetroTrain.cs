@@ -28,6 +28,12 @@ public partial class MetroTrain : BaseEntity
 
     public bool IsActive { get; set; }
 
+    [StringLength(50)]
+    public string? CurrentStationId { get; set; }
+
+    [NotMapped]
+    public string? CurrentStationName { get; set; }
+
     public TrainStatusEnum Status { get; set; }
 
     public int NumberOfCarriages { get; set; }

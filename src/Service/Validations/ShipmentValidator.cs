@@ -46,12 +46,29 @@ public static class ShipmentValidator
         var _shipmentFilterRequestValidator = new ShipmentFilterRequestValidator();
         _shipmentFilterRequestValidator.ValidateApiModel(request);
     }
+
+    public static void ValidateShipmentFeedbackRequest(ShipmentFeedbackRequest request)
+    {
+        var _shipmentFeedbackRequestValidator = new ShipmentFeedbackRequestValidator();
+        _shipmentFeedbackRequestValidator.ValidateApiModel(request);
+    }
+
+    public static void ValidateChargeableWeightRequest(ChargeableWeightRequest request)
+    {
+        var _chargeableWeightRequestValidator = new ChargeableWeightRequestValidator();
+        _chargeableWeightRequestValidator.ValidateApiModel(request);
+    }
 }
 
 public class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
 {
     public ShipmentRequestValidator()
     {
+        RuleFor(x => x.StartReceiveAt)
+            .LessThan(x => x.ScheduledDateTime)
+            .WithMessage(ResponseMessageShipment.START_RECEIVE_AT_INVALID)
+            .When(x => x.StartReceiveAt.HasValue);
+
         RuleFor(x => x.ScheduledDateTime)
             .NotEmpty()
             .WithMessage(ResponseMessageShipment.SHIPMENT_DATE_REQUIRED);
@@ -183,7 +200,6 @@ public class ParcelRequestValidator : AbstractValidator<ParcelRequest>
             .WithMessage(ResponseMessageParcel.PARCEL_CATEGORY_ID_REQUIRED)
             .Must(x => Guid.TryParse(x, out _))
             .WithMessage(ResponseMessageParcel.PARCEL_CATEGORY_ID_INVALID);
-
 
         RuleFor(x => x.WidthCm)
             .NotNull()
@@ -376,5 +392,57 @@ public class ShipmentFilterRequestValidator : AbstractValidator<ShipmentFilterRe
         if (!status.HasValue) return true;
 
         return Enum.IsDefined(typeof(ShipmentStatusEnum), status.Value);
+    }
+}
+
+// shipment feedback validation
+public class ShipmentFeedbackRequestValidator : AbstractValidator<ShipmentFeedbackRequest>
+{
+    public ShipmentFeedbackRequestValidator()
+    {
+        RuleFor(x => x.ShipmentId)
+            .NotEmpty()
+            .WithMessage(ResponseMessageShipment.SHIPMENT_ID_REQUIRED)
+            .Must(id => Guid.TryParse(id, out _))
+            .WithMessage(ResponseMessageShipment.SHIPMENT_ID_INVALID);
+
+        RuleFor(x => x.Feedback)
+            .MaximumLength(500)
+            .WithMessage(ResponseMessageShipment.FEEDBACK_TEXT_TOO_LONG);
+
+        RuleFor(x => x.Rating)
+            .InclusiveBetween(1, 5)
+            .WithMessage(ResponseMessageShipment.RATING_INVALID);
+    }
+}
+
+// ChargeableWeightRequest
+public class ChargeableWeightRequestValidator : AbstractValidator<ChargeableWeightRequest>
+{
+    public ChargeableWeightRequestValidator()
+    {
+        RuleFor(x => x.WidthCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.WIDTH_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.WIDTH_INVALID);
+
+        RuleFor(x => x.HeightCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.HEIGHT_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.HEIGHT_INVALID);
+
+        RuleFor(x => x.LengthCm)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.LENGTH_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.LENGTH_INVALID);
+
+        RuleFor(x => x.WeightKg)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.WEIGHT_REQUIRED)
+            .GreaterThan(0)
+            .WithMessage(ResponseMessageParcel.WEIGHT_INVALID);
     }
 }

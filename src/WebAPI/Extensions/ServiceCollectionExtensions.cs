@@ -167,7 +167,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVnPayService, VnPayService>();
         services.AddScoped<IShipmentService, ShipmentService>();
         services.AddScoped<ITransactionService, TransactionService>();
-        services.AddScoped<IMetroLineService, MetroLineService>();
+        services.AddScoped<IMetroRouteService, MetroRouteService>();
         services.AddScoped<IMetroTimeSlotService, MetroTimeSlotService>();
         services.AddScoped<ITrainService, TrainService>();
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
@@ -180,11 +180,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IParcelCategoryRepository, ParcelCategoryRepository>();
         services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
-        services.AddScoped<IRouteRepository, RouteRepository>();
+        services.AddScoped<IRouteStationRepository, RouteStationRepository>();
         services.AddScoped<IStationRepository, StationRepository>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IShipmentItineraryRepository, ShipmentItineraryRepository>();
-        services.AddScoped<IMetroLineRepository, MetroLineRepository>();
+        services.AddScoped<IMetroRouteRepository, MetroRouteRepository>();
         services.AddScoped<IParcelRepository, ParcelRepository>();
         services.AddScoped<ITrainRepository, TrainRepository>();
         services.AddScoped<IMetroTimeSlotRepository, MetroTimeSlotRepository>();

@@ -21,7 +21,6 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
-using MetroShip.Service.ApiModels.Pricing;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
@@ -41,7 +40,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
     private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
     private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
-    private readonly IRouteRepository _routeRepository = serviceProvider.GetRequiredService<IRouteRepository>();
+    private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
+    private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
@@ -83,6 +83,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         var shipmentResponse = _mapperlyMapper.MapToShipmentDetailsResponse(shipment);
+        InitializeGraphAsync().Wait();
+        shipmentResponse.ItineraryGraph = _metroGraph.CreateItineraryGraphResponses(
+            shipmentResponse.ShipmentItineraries.Select(x => x.RouteId).ToList(),
+            _mapperlyMapper);
         return shipmentResponse;
     }
 
@@ -156,7 +160,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Check if all routes exist
         var routeIds = request.ShipmentItineraries.Select(x => x.RouteId).Distinct().ToList();
-        var routes = await _routeRepository.IsExistAsync(
+        var routes = await _routeStationRepository.IsExistAsync(
                        x => routeIds.Contains(x.Id) && x.DeletedAt == null);
         if (!routes)
         {
@@ -185,12 +189,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
         shipment.ScheduledShift = timeSlot.Shift;
         firstItinerary.TimeSlotId = shipment.TimeSlotId;
-        firstItinerary.Date = shipment.ScheduledDateTime.Value;
+        firstItinerary.Date = new DateOnly(request.ScheduledDateTime.Year,
+                       request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
 
         // generate shipment tracking code
-        var systemTime = request.ScheduledDateTime.UtcToSystemTime();
+        var scheduledSystemTime = request.ScheduledDateTime.UtcToSystemTime();
+        var startReceiveAtSystemTime = request.StartReceiveAt?.UtcToSystemTime() ?? null;
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
-            departureStation.Region.RegionCode, systemTime);
+            departureStation.Region.RegionCode, scheduledSystemTime);
 
         // foreach parcel, set shipment id and generate parcel code
         int index = 0;
@@ -226,7 +232,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
-        shipment.ScheduledDateTime = systemTime;
+        shipment.StartReceiveAt = startReceiveAtSystemTime;
+        shipment.ScheduledDateTime = scheduledSystemTime;
         shipment.DepartureStationName = departureStation.StationNameVi;
         shipment.DepartureStationAddress = departureStation.Address;
         shipment.DestinationStationName = destinationStation.StationNameVi;
@@ -424,6 +431,119 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
     }
 
+    public async Task CancelShipment(ShipmentRejectRequest request)
+    {
+        _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            x => x.Id == request.ShipmentId, false,
+            x => x.Parcels, x => x.ShipmentItineraries);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        // Check if the shipment is AwaitingPayment or AwaitingDropOff
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff
+            || shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment
+            )
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessageShipment.SHIPMENT_CANNOT_CANCEL,
+                StatusCodes.Status400BadRequest);
+        }
+
+        shipment.RejectedBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        shipment.RejectionReason = request.Reason;
+        shipment.CancelledAt = CoreHelper.SystemTimeNow;
+
+        // Check if the shipment can be cancelled before a certain time
+        var allowedCancelBefore = _systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
+        if ((shipment.ScheduledDateTime - shipment.CancelledAt) >
+            TimeSpan.FromHours(int.Parse(allowedCancelBefore)))
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
+
+            var refundPercent = _systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.REFUND_PERCENT));
+            // create transaction for refund
+            var transaction = new Transaction
+            {
+                ShipmentId = shipment.Id,
+                PaymentAmount = shipment.TotalCostVnd *
+                                decimal.Parse(refundPercent),
+                TransactionType = TransactionTypeEnum.Refund,
+                PaymentStatus = PaymentStatusEnum.Pending
+            };
+
+            // Add transaction to shipment
+            shipment.Transactions.Add(transaction);
+        }
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+        
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send cancellation email to sender
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been cancelled. " +
+                          $"Reason: {request.Reason}",
+            };
+            _emailSender.SendMail(sendMailModel);
+        }
+    }
+
+    public async Task FeedbackShipment(ShipmentFeedbackRequest request)
+    {
+        _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
+        ShipmentValidator.ValidateShipmentFeedbackRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Id == request.ShipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is delivered
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Delivered)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_DELIVERED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update feedback
+        shipment.Feedback = request.Feedback;
+        shipment.Rating = (byte) request.Rating;
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
         _logger.Information("Checking shipment date: {@scheduledDateTime}", scheduledDateTime);
@@ -589,34 +709,38 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Add any other supported fields here
     };
 
-    private async Task<HashSet<string>> GetNearUserStations(TotalPriceCalcRequest request)
+    private async Task<List<string>> GetNearUserStations(TotalPriceCalcRequest request)
     {
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
         var maxStationCount = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
 
-        var stationIds = new HashSet<string> { request.DepartureStationId };
+        var result = new List<string> { request.DepartureStationId };
 
         if (request is { UserLongitude: not null, UserLatitude: not null })
         {
-            stationIds.UnionWith(
-                await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, 
-                maxDistanceInMeters, maxStationCount));
+            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
 
-            // Ensure at least 2 stations are available
-            while (stationIds.Count < 2 && maxDistanceInMeters < maxDistanceInMeters*2)
+            // Remove departure station if present (to avoid duplication)
+            nearStations.Remove(request.DepartureStationId);
+
+            // Ensure at least 2 stations are available (including departure)
+            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
             {
-                maxDistanceInMeters += 2000; // Extend distance by 1000 meters
-                stationIds.UnionWith(
-                    await _stationRepository.GetAllStationIdNearUser(
-                            request.UserLatitude.Value, request.UserLongitude.Value, 
-                            maxDistanceInMeters, maxStationCount));
+                // Extend distance by 1000 meters
+                maxDistanceInMeters += 2000;
+                nearStations = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+                nearStations.Remove(request.DepartureStationId);
             }
+
+            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+            result.AddRange(nearStations.Take(maxStationCount));
         }
 
-        return stationIds;
+        return result;
     }
 
     private async Task<List<(string StationId, List<string> Path)>> FindOptimalPaths(
@@ -687,7 +811,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 pathResponse.Parcels, pathResponse, _pricingService, categories);
 
             // Check est arrival time
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
+            var date = new DateOnly(request.ScheduledDateTime.Year,
+                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
 
             return new
             {
@@ -710,7 +836,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         response.Shortest = bestPathResponses.Count > 1
             ? bestPathResponses
-                .OrderBy(r => r.Response.TotalKm)
+                .OrderBy(r => r.Response.TotalCostVnd)
                 .FirstOrDefault()?.Response
             : null;
 
@@ -720,7 +846,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return response;
     }
 
-    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateTimeOffset date)
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
         _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
 
@@ -834,7 +960,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
     private record CalculatedItinerary
     {
-        public DateTimeOffset? Date { get; init; } = null;
+        public DateOnly? Date { get; init; } = null;
         public string TimeSlotId { get; init; } = string.Empty;
         public string ShipmentId { get; init; } = string.Empty;
         public decimal? TotalWeightKg { get; init; } = null;
@@ -907,7 +1033,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
 
         // Calculate date range for bulk fetch
-        var startDate = shipment.ScheduledDateTime.Value;
+        var startDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var endDate = startDate.AddDays(4 * maxAttempts); // 4 shifts per day
 
         // Get all lines involved in this shipment
@@ -926,7 +1055,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .Include(x => x.TimeSlot)
             .Select(x => new CalculatedItinerary
             {
-                Date = x.Date.Value.Date,
+                Date = x.Date.Value,
                 TimeSlotId = x.TimeSlotId,
                 ShipmentId = x.ShipmentId,
                 TotalWeightKg = x.Shipment.TotalWeightKg,
@@ -939,7 +1068,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Group by (RouteId, Date, Shift) for fast lookup
         return allRelevantItineraries
-            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value.Date, x.Shift.Value))
+            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value, x.Shift.Value))
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
@@ -955,7 +1084,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         int maxAttempts)
     {
         // Initialize with shipment's scheduled date and shift
-        var currentDate = shipment.ScheduledDateTime.Value;
+        var currentDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var currentSlot = timeSlots.FirstOrDefault(ts => ts.Shift == shipment.ScheduledShift);
 
         if (currentSlot == null)
@@ -999,8 +1131,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Find available slot with capacity check using pre-fetched data
-    private async Task<(DateTimeOffset, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
-        DateTimeOffset startDate,
+    private async Task<(DateOnly, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
+        DateOnly startDate,
         MetroTimeSlot startSlot,
         ShipmentItinerary itinerary,
         Shipment shipment,
@@ -1066,13 +1198,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Get next slot
-    private (DateTimeOffset, MetroTimeSlot) GetNextSlot(
-        DateTimeOffset date,
+    private (DateOnly, MetroTimeSlot) GetNextSlot(
+        DateOnly date,
         MetroTimeSlot currentSlot,
         List<MetroTimeSlot> timeSlots)
     {
         // Normalize date to start of the day, default to UTC+0
-        date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
+        //date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var nextShift = currentSlot.Shift switch
         {
             ShiftEnum.Morning => ShiftEnum.Afternoon,
@@ -1097,7 +1229,38 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return (nextDate, nextSlot);
     }
 
-    public record CapacityKey(string RouteId, DateTimeOffset Date, ShiftEnum Shift);
+    public record CapacityKey(string RouteId, DateOnly Date, ShiftEnum Shift);
+
+    private bool IsReadyForNextShipmentStatus (string shipmentId, ShipmentStatusEnum nextShipmentStatus)
+    {
+        _logger.Information("Checking if shipment {ShipmentId} is ready for status {NextStatus}",
+                       shipmentId, nextShipmentStatus);
+
+        var parcelCount = _shipmentRepository.GetAll()
+            .Where(x => x.Id == shipmentId && x.DeletedAt == null)
+            .SelectMany(x => x.Parcels)
+            .Count();
+
+        // count parcelTracking have TrackingForShipmentStatus == nextShipmentStatus
+        var parcelTrackingCount = _parcelRepository.GetAll()
+            .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null)
+            .SelectMany(p => p.ParcelTrackings)
+            .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus);
+
+        _logger.Information("Parcel count: {ParcelCount}, Tracking count for status {NextStatus}: {TrackingCount}",
+            parcelCount, nextShipmentStatus, parcelTrackingCount);
+
+        if (parcelCount == parcelTrackingCount)
+        {
+            _logger.Information("Shipment {ShipmentId} is ready for status {NextStatus}",
+                               shipmentId, nextShipmentStatus);
+            return true;
+        }
+
+        _logger.Information("Shipment {ShipmentId} is NOT ready for status {NextStatus}",
+                                      shipmentId, nextShipmentStatus);
+        return false;
+    }
 
     public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
     {
@@ -1168,7 +1331,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStation?.Id,
             DestinationStationName = destinationStation?.StationNameVi,
             ShipmentStatus = shipment.ShipmentStatus.ToString(),
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1269,7 +1432,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStationId,
             DestinationStationName = destinationStationName,
             ShipmentStatus = shipmentStatus,
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1297,10 +1460,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             RouteId = it.RouteId,
             TrainId = it.TrainId,
             TrainCode = it.Train?.TrainCode,
-            Date = it.Date,
+            //Date = it.Date,
             TimeSlotId = it.TimeSlotId,
             IsCompleted = it.IsCompleted
         }).ToList();
     }
-
 }

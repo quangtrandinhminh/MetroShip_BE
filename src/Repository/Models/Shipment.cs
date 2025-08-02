@@ -84,6 +84,7 @@ public partial class Shipment : BaseEntity
 
     [StringLength(50)]
     public string? TimeSlotId { get; set; }
+    public DateTimeOffset? StartReceiveAt { get; set; }
     public DateTimeOffset? ScheduledDateTime { get; set; } 
     public ShiftEnum? ScheduledShift { get; set; }
 
@@ -144,10 +145,18 @@ public partial class Shipment : BaseEntity
     [StringLength(20)]
     public string? RecipientNationalId { get; set; }
 
+    // Feedback fields
     public byte? Rating { get; set; } // Rating given by the customer, if applicable
 
     [StringLength(500)]
     public string? Feedback { get; set; } // Feedback or comments from the customer
+    public DateTimeOffset? CompletedAt { get; set; } // When the shipment is fully completed
+
+    [StringLength(500)]
+    public string? FeedbackResponse { get; set; } // Response to the feedback, if applicable
+
+    [StringLength(50)]
+    public string? FeedbackResponseBy { get; set; } // User who responded to the feedback
 
     [ForeignKey(nameof(SenderId))]
     [InverseProperty(nameof(UserEntity.Shipments))]

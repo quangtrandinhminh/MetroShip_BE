@@ -73,6 +73,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
 
     public partial List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
+
+    public partial List<ShipmentMediaResponse> MapToShipmentMediaResponseList(ICollection<ShipmentMedia> entity);
+
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
@@ -91,15 +94,18 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial ICollection<Station> MapToStationEntityList(ICollection<CreateStationRequest> request);
 
+    [MapProperty(nameof(StationListItem.StationId),nameof(Station.Id))]
+    public partial void MapToStationEntityList(ICollection<StationListItem> requestList, ICollection<Station> entity);
+
     // route
-    [MapProperty(nameof(Route.Id), nameof(RouteResponse.RouteId))]
-    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteResponse.RouteName))]
-    public partial RouteResponse MapToRouteResponse(Route entity);
+    [MapProperty(nameof(Route.Id), nameof(RouteStationResponse.RouteId))]
+    [MapProperty(nameof(Route.RouteNameVi), nameof(RouteStationResponse.RouteName))]
+    public partial RouteStationResponse MapToRouteStationResponse(Route entity);
 
     // metroline
-    [MapProperty(nameof(MetroLine.Id), nameof(MetroLineItineraryResponse.LineId))]
-    public partial MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
-    public partial MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
+    public partial MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
+    public partial MetroLine MapToMetroLineEntity(MetroRouteRequest request);
+    public partial MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);

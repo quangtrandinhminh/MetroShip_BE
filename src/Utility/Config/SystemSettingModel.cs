@@ -122,6 +122,7 @@ namespace MetroShip.Utility.Config
         public string SURCHARGE_PER_DAY_PERCENT { get; set; }
         public string FREE_STORAGE_DAY { get; set; }
         public string SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }
+        public string MAX_SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }
 
         // price structure
         public string DISTANCE_STEP_KM { get; set; }

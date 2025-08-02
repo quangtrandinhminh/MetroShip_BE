@@ -4,7 +4,7 @@ using MetroShip.Repository.Models.Base;
 
 namespace MetroShip.Repository.Interfaces;
 
-public interface IRouteRepository : IBaseRepository<Route>
+public interface IRouteStationRepository : IBaseRepository<Route>
 {
     
 }

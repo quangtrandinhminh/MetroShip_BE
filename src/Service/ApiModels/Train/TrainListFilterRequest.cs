@@ -9,7 +9,7 @@ public sealed record TrainListFilterRequest : PaginatedListRequest
 
     public string? TimeSlotId { get; set; }
 
-    public DateTimeOffset? Date { get; set; }
+    public DateOnly? Date { get; set; }
 
     public string? ModelName { get; set; }
 

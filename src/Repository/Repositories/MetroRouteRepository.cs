@@ -6,11 +6,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Repositories;
 
-public class MetroLineRepository : BaseRepository<MetroLine>, IMetroLineRepository
+public class MetroRouteRepository : BaseRepository<MetroLine>, IMetroRouteRepository
 {
     private readonly AppDbContext _context;
 
-    public MetroLineRepository(AppDbContext context) : base(context)
+    public MetroRouteRepository(AppDbContext context) : base(context)
     {
         _context = context;
     }
