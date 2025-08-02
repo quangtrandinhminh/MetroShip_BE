@@ -302,15 +302,17 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         var jobKey = new JobKey($"send-email-{Guid.NewGuid()}", "email-group");
         var sendMailModelJson = emailData.ToJsonString();
 
+        // Create a job detail with the email data
         var jobDetail = JobBuilder.Create<SendEmailJob>()
             .WithIdentity(jobKey)
             .UsingJobData("emailData", sendMailModelJson)
             .Build();
 
+        // Create a trigger to run the job after 2 second
         var trigger = TriggerBuilder.Create()
             .WithIdentity($"trigger-{jobKey.Name}", "email-group")
-            .StartNow() // Execute immediately
-        .Build();
+            .StartAt(CoreHelper.SystemTimeNow.AddSeconds(2))
+            .Build();
 
         await _scheduler.ScheduleJob(jobDetail, trigger);
 
