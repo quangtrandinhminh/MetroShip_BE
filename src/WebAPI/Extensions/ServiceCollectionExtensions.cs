@@ -12,6 +12,8 @@ using MetroShip.Service.Services;
 using MetroShip.Utility.Config;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
+using MetroShip.Service.Jobs;
+using Quartz;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -142,6 +144,17 @@ public static class ServiceCollectionExtensions
             .AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<AppDbContext>();
 
+        // Add Quartz scheduling
+        services.AddQuartz(q =>
+        {
+            q.UseMicrosoftDependencyInjectionJobFactory();
+            q.UseSimpleTypeLoader();
+            q.UseInMemoryStore(); // or UsePersistentStore for production
+            q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
+        });
+
+        services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
         // Memory cache & rate limiting
         services.AddMemoryCache();
         services.Configure<IpRateLimitOptions>(configuration.GetSection("IpRateLimiting"));
@@ -192,6 +205,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
+
+        // Register Quartz jobs
+        services.AddTransient<SendEmailJob>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

@@ -22,6 +22,9 @@ using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
 using Microsoft.Extensions.Caching.Memory;
+using MetroShip.Service.Jobs;
+using Quartz;
+using Newtonsoft.Json;
 
 namespace MetroShip.Service.Services;
 
@@ -43,6 +46,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly IScheduler _scheduler = serviceProvider.GetRequiredService<IScheduler>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -187,14 +191,16 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
             StatusCodes.Status404NotFound);
         };
+
+        // set scheduled date time and time slot for the first itinerary
         shipment.ScheduledShift = timeSlot.Shift;
         firstItinerary.TimeSlotId = shipment.TimeSlotId;
-        firstItinerary.Date = new DateOnly(request.ScheduledDateTime.Year,
-                       request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
-
-        // generate shipment tracking code
         var scheduledSystemTime = request.ScheduledDateTime.UtcToSystemTime();
         var startReceiveAtSystemTime = request.StartReceiveAt?.UtcToSystemTime() ?? null;
+        firstItinerary.Date = new DateOnly(scheduledSystemTime.Year,
+            scheduledSystemTime.Month, scheduledSystemTime.Day);
+
+        // generate shipment tracking code
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
             departureStation.Region.RegionCode, scheduledSystemTime);
 
@@ -238,7 +244,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.DepartureStationAddress = departureStation.Address;
         shipment.DestinationStationName = destinationStation.StationNameVi;
         shipment.DestinationStationAddress = destinationStation.Address;
-        var sendMailModel = new SendMailModel
+        /*var sendMailModel = new SendMailModel
         {
             Email = user.Email,
             Type = MailTypeEnum.Shipment,
@@ -262,9 +268,53 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 Message = request.TrackingLink
             };
             _emailSender.SendMail(recipientSendMailModel);
+        }*/
+
+        // Schedule email to customer
+        await ScheduleEmailJob(new SendMailModel
+        {
+            Email = user.Email,
+            Type = MailTypeEnum.Shipment,
+            Name = request.SenderName,
+            Data = shipment,
+            Message = request.TrackingLink
+        }, "customer-email");
+
+        // Schedule email to recipient if provided
+        if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
+        {
+            await ScheduleEmailJob(new SendMailModel
+            {
+                Email = request.RecipientEmail,
+                Type = MailTypeEnum.Shipment,
+                Name = request.RecipientName,
+                Data = shipment,
+                Message = request.TrackingLink
+            }, "recipient-email");
         }
 
         return (shipment.Id, shipment.TrackingCode);
+    }
+
+    // Helper method to schedule email jobs
+    private async Task ScheduleEmailJob(SendMailModel emailData, string jobSuffix)
+    {
+        var jobKey = new JobKey($"send-email-{Guid.NewGuid()}", "email-group");
+        var sendMailModelJson = emailData.ToJsonString();
+
+        var jobDetail = JobBuilder.Create<SendEmailJob>()
+            .WithIdentity(jobKey)
+            .UsingJobData("emailData", sendMailModelJson)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"trigger-{jobKey.Name}", "email-group")
+            .StartNow() // Execute immediately
+        .Build();
+
+        await _scheduler.ScheduleJob(jobDetail, trigger);
+
+        _logger.Information("Scheduled email job for: {Email}", emailData.Email);
     }
 
     private async Task InitializeGraphAsync()
