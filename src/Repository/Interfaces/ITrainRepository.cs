@@ -12,6 +12,6 @@ public interface ITrainRepository : IBaseRepository<MetroTrain>
     Task SaveTrainLocationAsync(string trainId, double lat, double lng, string stationId);
     Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId);
     Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode);
-    Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateTimeOffset date,
+    Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateOnly date,
         string timeSlotId, DirectionEnum direction);
 }

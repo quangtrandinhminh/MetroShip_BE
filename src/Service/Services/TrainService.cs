@@ -324,7 +324,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var speedKmh = train.TopSpeedKmH ?? 40;
         var etaSeconds = (distanceKm / speedKmh) * 3600;
 
-        currentLeg.Date = DateTimeOffset.UtcNow;
+        currentLeg.Date = DateOnly.FromDateTime(DateTime.UtcNow);
         train.Status = TrainStatusEnum.Departed;
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
@@ -410,8 +410,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // lấy từ request
         // hôm nay +07:00
         var date = CoreHelper.SystemTimeNow.Date;
-        // convert còn mỗi date +00:00
-        var dateOffset = new DateTimeOffset(2025, 07, 31, 0, 0, 0, TimeSpan.Zero);
+        // today +07:00
+        var dateOffset = DateOnly.FromDateTime(date);
         // ca sáng
         var timeSlotId = "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"; // lấy từ request
         // hướng đi
@@ -439,7 +439,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var to = leg.Route.ToStation!;
 
         // Để chuẩn, startTime nên được gửi từ request mỗi khi tàu dừng lại và bắt đầu đi tiếp
-        var startTime = leg.Date ?? DateTimeOffset.UtcNow;
+        var startTime = DateTimeOffset.UtcNow; // lấy từ request, nếu không có thì lấy thời gian hiện tại
         var now = new DateTimeOffset(2025, 07, 31, 0, 45, 0, TimeSpan.Zero);
 
 

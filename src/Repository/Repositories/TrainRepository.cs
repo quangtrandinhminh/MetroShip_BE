@@ -56,22 +56,22 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             .FirstOrDefaultAsync(t => t.Id == trainId);
     }
 
-    public async Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateTimeOffset date, 
+    public async Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateOnly date, 
         string timeSlotId, DirectionEnum direction)
     {
         return await _context.MetroTrains.AsSplitQuery()
             .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
                 && si.Route.Direction == direction && !si.IsCompleted))
                 .ThenInclude(si => si.Route)
                     .ThenInclude(r => r.FromStation)
             .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
                 && si.Route.Direction == direction && !si.IsCompleted))
                 .ThenInclude(si => si.Route)
                     .ThenInclude(r => r.ToStation)
             .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date >= date && si.TimeSlotId == timeSlotId
+                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
                              && si.Route.Direction == direction && !si.IsCompleted))
             .ThenInclude(si => si.TimeSlot)
             .FirstOrDefaultAsync(t => t.Id == trainId);
