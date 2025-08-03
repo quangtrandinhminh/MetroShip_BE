@@ -297,43 +297,44 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task StartOrContinueSimulationAsync(string trainId, DirectionEnum direction)
     {
-
-
-        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction);
-        if (train == null)
-            throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
+            ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
         var routes = train.Line?.Routes?
-        .Where(r => r.FromStation != null && r.ToStation != null)
-        .OrderBy(r => r.SeqOrder)
-        .ToList();
+            .Where(r => r.FromStation != null && r.ToStation != null && r.Direction == direction)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
 
         if (routes == null || routes.Count == 0)
-            throw new AppException(ErrorCode.NotFound, "No route data found for this train line", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, "No routes found for train", StatusCodes.Status404NotFound);
 
-        var currentLeg = train.ShipmentItineraries
-         .Where(si => si.Route != null && routes.Any(r => r.Id == si.Route.Id))
-         .OrderBy(si => si.LegOrder)
-         .FirstOrDefault(si => !si.IsCompleted);
-        if (currentLeg == null)
+        var segmentKey = $"{trainId}-SegmentIndex";
+        var currentIndex = _cache.TryGetValue(segmentKey, out int existingIndex) ? existingIndex : -1;
+
+        var nextIndex = currentIndex + 1;
+        if (nextIndex >= routes.Count)
         {
             train.Status = TrainStatusEnum.Completed;
             train.CurrentStationId = routes.Last().ToStationId;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
+            _cache.Remove(segmentKey);
             return;
         }
 
-        // Gán lại thời gian bắt đầu mới
-        currentLeg.Date = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+        // Cập nhật cache và trạng thái
+        _cache.Set(segmentKey, nextIndex, TimeSpan.FromHours(1));
+
         train.Status = TrainStatusEnum.Departed;
-        train.CurrentStationId = null; // vì đang chạy
+        train.CurrentStationId = null;
+
         _trainRepository.Update(train);
-        _shipmentItineraryRepository.Update(currentLeg);
+        await _trainRepository.SaveChangesAsync();
 
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        // Cache start time cho tracking leg
+        _cache.Set($"{trainId}-StartTime", DateTimeOffset.UtcNow, TimeSpan.FromHours(1));
 
-        _logger.Information("🚆 Simulation resumed for Train {TrainId} at Leg {LegOrder}", trainId, currentLeg.LegOrder);
+        _logger.Information("🚆 Train {TrainId} started at leg index {Index}", trainId, nextIndex);
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
@@ -386,43 +387,41 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     // for getting train position based on trainId
     public async Task<TrainPositionResult> GetTrainPositionAsync(string trainId)
     {
-        // Nếu đã cache kết quả gần đây → trả luôn
         if (_cache.TryGetValue<TrainPositionResult>(trainId, out var cachedPosition))
-        {
-            _logger.Information("Returning cached position for train {TrainId}", trainId);
             return cachedPosition!;
-        }
 
-        var dateOffset = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
-        var timeSlotId = TimeSlotHelper.GetCurrentTimeSlotId().ToString();
         var direction = DirectionEnum.Forward;
 
-        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId, dateOffset, timeSlotId, direction)
+        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
             ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
-        var leg = train.ShipmentItineraries
-            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null && !i.IsCompleted)
-            .OrderBy(i => i.LegOrder)
-            .FirstOrDefault()
-            ?? throw new AppException(ErrorCode.NotFound, "Train has no active leg to calculate position", StatusCodes.Status404NotFound);
+        var routes = train.Line?.Routes?
+            .Where(r => r.FromStation != null && r.ToStation != null && r.Direction == direction)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
 
-        var from = leg.Route.FromStation!;
-        var to = leg.Route.ToStation!;
+        if (routes == null || routes.Count == 0)
+            throw new AppException(ErrorCode.NotFound, "No route data found", StatusCodes.Status404NotFound);
 
-        // Lấy startTime từ cache (key theo trainId + "StartTime")
+        var segmentKey = $"{trainId}-SegmentIndex";
+        if (!_cache.TryGetValue(segmentKey, out int currentIndex))
+            throw new AppException(ErrorCode.BadRequest, "Train segment not initialized. Call StartOrContinueSimulationAsync.", StatusCodes.Status400BadRequest);
+
+        if (currentIndex >= routes.Count)
+            throw new AppException(ErrorCode.BadRequest, "Train has completed all segments.", StatusCodes.Status400BadRequest);
+
+        var currentRoute = routes[currentIndex];
+        var from = currentRoute.FromStation!;
+        var to = currentRoute.ToStation!;
+
         var startTimeKey = $"{trainId}-StartTime";
         if (!_cache.TryGetValue(startTimeKey, out DateTimeOffset startTime))
-        {
-            // Nếu chưa có thì gán mới tại thời điểm gọi lần đầu
-            startTime = DateTimeOffset.UtcNow;
-            _cache.Set(startTimeKey, startTime, TimeSpan.FromMinutes(60));
-        }
+            throw new AppException(ErrorCode.BadRequest, "Start time not initialized. Call simulation start first.", StatusCodes.Status400BadRequest);
 
         var now = DateTimeOffset.UtcNow;
         var elapsed = (now - startTime).TotalSeconds;
-
-        var distanceKm = (double)leg.Route.LengthKm;
-        var speedKmh = 2000; // Tạm thời dùng fixed tốc độ
+        var distanceKm = (double)currentRoute.LengthKm;
+        var speedKmh = 100;
         var eta = (distanceKm / speedKmh) * 3600;
         var progress = Math.Clamp(elapsed / eta, 0, 1);
 
@@ -431,32 +430,26 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
-        // Cập nhật trạng thái theo % tiến trình
         if (progress >= 1 || GeoUtils.Haversine(lat, lng, to.Latitude!.Value, to.Longitude!.Value) < 0.05)
         {
-            leg.IsCompleted = true;
-            train.Status = TrainStatusEnum.ArrivedAtStation;
-            train.CurrentStationId = to.Id;
+            train.Status = currentIndex + 1 >= routes.Count
+                ? TrainStatusEnum.Completed
+                : TrainStatusEnum.ArrivedAtStation;
 
-            _shipmentItineraryRepository.Update(leg);
+            train.CurrentStationId = to.Id;
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-            // Gỡ khỏi cache để leg tiếp theo lấy startTime mới
+            // Chờ gọi lại StartOrContinueSimulationAsync để sang leg tiếp theo
             _cache.Remove(startTimeKey);
         }
         else
         {
-            if (progress < 0.1)
-                train.Status = TrainStatusEnum.Departed;
-            else
-                train.Status = TrainStatusEnum.InTransit;
-
+            train.Status = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
         }
 
-        // Chỉ vẽ tuyến giữa 2 trạm của leg hiện tại (chia thành các bước nhỏ)
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
