@@ -124,6 +124,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             DestinationStationId = s.DestinationStationId,
             ReturnForShipmentId = s.ReturnForShipmentId,
             CurrentStationId = s.CurrentStationId,
+            CurrentTrainId = s.CurrentTrainId,
             ShipmentStatus = s.ShipmentStatus,
 
             // Financial fields

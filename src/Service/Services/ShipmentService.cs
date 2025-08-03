@@ -22,9 +22,7 @@ using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
 using Microsoft.Extensions.Caching.Memory;
-using MetroShip.Service.Jobs;
 using Quartz;
-using Newtonsoft.Json;
 
 namespace MetroShip.Service.Services;
 
@@ -46,7 +44,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
-    private readonly IScheduler _scheduler = serviceProvider.GetRequiredService<IScheduler>();
+    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -235,7 +233,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         await CheckAvailableTimeSlotsAsync(shipment.Id, 3);
 
         // send email to customer
-        _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
+        _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
         shipment.StartReceiveAt = startReceiveAtSystemTime;
@@ -244,79 +242,31 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.DepartureStationAddress = departureStation.Address;
         shipment.DestinationStationName = destinationStation.StationNameVi;
         shipment.DestinationStationAddress = destinationStation.Address;
-        /*var sendMailModel = new SendMailModel
-        {
-            Email = user.Email,
-            Type = MailTypeEnum.Shipment,
-            Name = request.SenderName,
-            Data = shipment,
-            Message = request.TrackingLink
-        };
-        _emailSender.SendMail(sendMailModel);
-
-        // send email to recipient if provided
-        if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
-        {
-            // send email to recipient
-            _logger.Information("Send email to recipient with tracking code: {@trackingCode}", shipment.TrackingCode);
-            var recipientSendMailModel = new SendMailModel
-            {
-                Email = request.RecipientEmail,
-                Type = MailTypeEnum.Shipment,
-                Name = request.RecipientName,
-                Data = shipment,
-                Message = request.TrackingLink
-            };
-            _emailSender.SendMail(recipientSendMailModel);
-        }*/
 
         // Schedule email to customer
-        await ScheduleEmailJob(new SendMailModel
+        await _emailSender.ScheduleEmailJob(new SendMailModel
         {
             Email = user.Email,
             Type = MailTypeEnum.Shipment,
             Name = request.SenderName,
             Data = shipment,
             Message = request.TrackingLink
-        }, "customer-email");
+        });
 
         // Schedule email to recipient if provided
         if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
         {
-            await ScheduleEmailJob(new SendMailModel
+            await _emailSender.ScheduleEmailJob(new SendMailModel
             {
                 Email = request.RecipientEmail,
                 Type = MailTypeEnum.Shipment,
                 Name = request.RecipientName,
                 Data = shipment,
                 Message = request.TrackingLink
-            }, "recipient-email");
+            });
         }
 
         return (shipment.Id, shipment.TrackingCode);
-    }
-
-    // Helper method to schedule email jobs
-    private async Task ScheduleEmailJob(SendMailModel emailData, string jobSuffix)
-    {
-        var jobKey = new JobKey($"send-email-{Guid.NewGuid()}", "email-group");
-        var sendMailModelJson = emailData.ToJsonString();
-
-        // Create a job detail with the email data
-        var jobDetail = JobBuilder.Create<SendEmailJob>()
-            .WithIdentity(jobKey)
-            .UsingJobData("emailData", sendMailModelJson)
-            .Build();
-
-        // Create a trigger to run the job after 2 second
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"trigger-{jobKey.Name}", "email-group")
-            .StartAt(CoreHelper.SystemTimeNow.AddSeconds(2))
-            .Build();
-
-        await _scheduler.ScheduleJob(jobDetail, trigger);
-
-        _logger.Information("Scheduled email job for: {Email}", emailData.Email);
     }
 
     private async Task InitializeGraphAsync()
@@ -429,7 +379,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 Type = MailTypeEnum.Notification,
                 Message = $"Your shipment with tracking code {shipment.TrackingCode} has been accepted.",
             };
-            _emailSender.SendMail(sendMailModel);
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
 
@@ -479,7 +430,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 Message = $"Your shipment with tracking code {shipment.TrackingCode} has been rejected. " +
                 $"Reason: {request.Reason}",
             };
-            _emailSender.SendMail(sendMailModel);
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
 
@@ -557,7 +509,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 Message = $"Your shipment with tracking code {shipment.TrackingCode} has been cancelled. " +
                           $"Reason: {request.Reason}",
             };
-            _emailSender.SendMail(sendMailModel);
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
 

@@ -144,16 +144,32 @@ public static class ServiceCollectionExtensions
             .AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<AppDbContext>();
 
-        // Add Quartz scheduling
+        // Add Quartz services
         services.AddQuartz(q =>
         {
+            // Use Microsoft DI container
             q.UseMicrosoftDependencyInjectionJobFactory();
+
+            // Use simple type loader
             q.UseSimpleTypeLoader();
-            q.UseInMemoryStore(); // or UsePersistentStore for production
-            q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
+
+            // Use in-memory store (for development)
+            // For production, consider using persistent store
+            q.UseInMemoryStore();
+
+            // Configure thread pool
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 10; // Adjust based on your needs
+            });
         });
 
-        services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+        // Add Quartz hosted service
+        services.AddQuartzHostedService(q =>
+        {
+            // Wait for jobs to complete on shutdown
+            q.WaitForJobsToComplete = true;
+        });
 
         // Memory cache & rate limiting
         services.AddMemoryCache();
@@ -167,6 +183,10 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterApplicationServices(IServiceCollection services)
     {
+        // Register Quartz jobs
+        services.AddTransient<SendEmailJob>();
+        //services.AddScoped<IScheduler>();
+
         // Register services
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();
@@ -205,9 +225,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
-
-        // Register Quartz jobs
-        services.AddTransient<SendEmailJob>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

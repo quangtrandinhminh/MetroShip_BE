@@ -154,7 +154,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             if (count > 0)
             {
                 // send email to user
-                _logger.Information("Send email to user {@email}", account.Email);
+                _logger.Information("Scheduling to send email to user {@email}", account.Email);
                 var sendMailModel = new SendMailModel
                 {
                     Email = account.Email,
@@ -164,7 +164,8 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                     Password = request.Password,
                     Role = role.ToString()
                 };
-                _emailService.SendMail(sendMailModel);
+                //_emailService.SendMail(sendMailModel);
+                await _emailService.ScheduleEmailJob(sendMailModel);
             }
             return account.Id;
         }

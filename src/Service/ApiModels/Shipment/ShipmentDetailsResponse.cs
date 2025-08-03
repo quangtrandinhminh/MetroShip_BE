@@ -55,6 +55,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string DepartureStationId { get; set; }
     public string DestinationStationId { get; set; }
     public string? CurrentStationId { get; set; }
+    public string? CurrentTrainId { get; set; }
 
     // Customer fields
     public string SenderId { get; set; }

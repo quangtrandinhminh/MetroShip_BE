@@ -14,6 +14,10 @@ using MetroShip.Repository.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
 using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Jobs;
+using Quartz;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace MetroShip.Service.Services
 {
@@ -29,6 +33,8 @@ namespace MetroShip.Service.Services
         private ILogger _logger = Log.Logger;
         private readonly ISystemConfigRepository _systemConfigRepository = 
             serviceProvider.GetRequiredService<ISystemConfigRepository>();
+        private readonly ISchedulerFactory _schedulerFactory =
+            serviceProvider.GetRequiredService<ISchedulerFactory>();
 
         public void SendMail(SendMailModel model)
         {
@@ -53,6 +59,37 @@ namespace MetroShip.Service.Services
                 default:
                     break;
             }
+        }
+
+        public async Task ScheduleEmailJob(SendMailModel emailData)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+            var jobKey = new JobKey($"send-email-{Guid.NewGuid()}", "email-group");
+
+            // Use System.Text.Json with reference handling
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                WriteIndented = false
+            };
+
+            var sendMailModelJson = System.Text.Json.JsonSerializer.Serialize(emailData, options);
+
+            // Create a job detail with the email data
+            var jobDetail = JobBuilder.Create<SendEmailJob>()
+                .WithIdentity(jobKey)
+                .UsingJobData("emailDataJson", sendMailModelJson)
+                .Build();
+
+            // Create a trigger to run the job after 2 second
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"trigger-{jobKey.Name}", "email-group")
+                .StartNow()
+                .Build();
+
+            await scheduler.ScheduleJob(jobDetail, trigger);
+
+            _logger.Information("Scheduled email job for: {Email}", emailData.Email);
         }
 
         private void CreateVerifyMail(SendMailModel model)
