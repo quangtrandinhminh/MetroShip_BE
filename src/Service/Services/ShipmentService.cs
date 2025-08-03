@@ -536,7 +536,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            ResponseMessageShipment.SHIPMENT_NOT_DELIVERED,
+            ResponseMessageShipment.SHIPMENT_NOT_COMPLETED,
             StatusCodes.Status400BadRequest);
         }
 
