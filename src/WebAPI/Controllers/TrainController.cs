@@ -107,9 +107,9 @@ namespace MetroShip.WebAPI.Controllers
 
         //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost("/api/train/{trainId}/status")]
-        public async Task<IActionResult> UpdateTrainStatus(string trainId)
+        public async Task<IActionResult> UpdateTrainStatus(string trainId, [FromQuery] DirectionEnum direction)
         {
-            await _trainService.StartOrContinueSimulationAsync(trainId);
+            await _trainService.StartOrContinueSimulationAsync(trainId,direction);
             return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
         }
     }

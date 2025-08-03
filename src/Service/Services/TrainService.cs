@@ -295,9 +295,13 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         return response;
     }
 
-    public async Task StartOrContinueSimulationAsync(string trainId)
+    public async Task StartOrContinueSimulationAsync(string trainId, DirectionEnum direction)
     {
-        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId);
+        var date = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+        var timeSlotId = TimeSlotHelper.GetCurrentTimeSlotId().ToString();
+        //var direction = DirectionEnum.Forward; // Tùy theo yêu cầu, có thể truyền vào nếu cần
+
+        var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId, date, timeSlotId, direction);
         if (train == null)
             throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
@@ -313,37 +317,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (currentLeg == null)
         {
             train.Status = TrainStatusEnum.Completed;
+            train.CurrentStationId = itineraries.Last().Route.ToStationId;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
             return;
         }
 
-        var from = currentLeg.Route.FromStation!;
-        var to = currentLeg.Route.ToStation!;
-        var distanceKm = GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value);
-        var speedKmh = train.TopSpeedKmH ?? 40;
-        var etaSeconds = (distanceKm / speedKmh) * 3600;
-
-        currentLeg.Date = DateOnly.FromDateTime(DateTime.UtcNow);
+        // Gán lại thời gian bắt đầu mới
+        currentLeg.Date = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
         train.Status = TrainStatusEnum.Departed;
+        train.CurrentStationId = null; // vì đang chạy
         _trainRepository.Update(train);
-        await _trainRepository.SaveChangesAsync();
+        _shipmentItineraryRepository.Update(currentLeg);
 
-        _logger.Information("🚆 Simulation started for Train {TrainId}, ETA: {Eta}s", trainId, etaSeconds);
-    }
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-    private static ShipmentStatusEnum MapTrainToShipmentStatus(TrainStatusEnum trainStatus)
-    {
-        return trainStatus switch
-        {
-            TrainStatusEnum.Completed => ShipmentStatusEnum.Completed,
-            TrainStatusEnum.AwaitingDeparture => ShipmentStatusEnum.WaitingForNextTrain,
-            TrainStatusEnum.Departed => ShipmentStatusEnum.InTransit,
-            TrainStatusEnum.InTransit => ShipmentStatusEnum.InTransit,
-            TrainStatusEnum.ArrivedAtStation => ShipmentStatusEnum.UnloadingAtStation,
-            TrainStatusEnum.ResumingTransit => ShipmentStatusEnum.TransferringToNextTrain,
-            _ => ShipmentStatusEnum.InTransit // fallback
-        };
+        _logger.Information("🚆 Simulation resumed for Train {TrainId} at Leg {LegOrder}", trainId, currentLeg.LegOrder);
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
@@ -402,67 +391,45 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             return cachedPosition!;
         }
 
-        // narrow query lại trong 1 ca, ngày, hướng cụ thể
-        // thêm request body cụ thể là date,timeslot, direction nào
-        // lúc include shipment itineraries thì phải include route, where shipment itineraries có date, timeslot, route.direction như vậy
-        // có thể thêm where i => !i.IsCompleted ở đây luôn
-        //var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId).ConfigureAwait(false);
+        var dateOffset = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7));
+        var timeSlotId = TimeSlotHelper.GetCurrentTimeSlotId().ToString();
+        var direction = DirectionEnum.Forward;
 
-        // lấy từ request
-        // today +07:00
-        var dateOffset = new DateOnly(2025, 07, 31); // lấy từ request, ví dụ: DateOnly.FromDateTime(DateTime.UtcNow)
-        // ca sáng
-        var timeSlotId = "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"; // lấy từ request
-        // hướng đi
-        var direction = DirectionEnum.Forward; // lấy từ request
         var train = await _trainRepository.GetTrainWithItineraryAndStationsAsync(trainId, dateOffset, timeSlotId, direction)
             .ConfigureAwait(false);
+
         if (train == null)
             throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
-        // khúc này lấy order by legOrder xong lấy first
-        /*var leg = train.ShipmentItineraries?
-            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null)
-            .OrderBy(i => i.LegOrder)
-            .FirstOrDefault(i => !i.IsCompleted);*/
-
         var leg = train.ShipmentItineraries
-            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null)
+            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null && !i.IsCompleted)
             .OrderBy(i => i.LegOrder)
             .FirstOrDefault();
 
         if (leg == null)
-            throw new AppException(ErrorCode.NotFound, "Train was not dispatched for any itineraries", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, "Train has no active leg to calculate position", StatusCodes.Status404NotFound);
 
         var from = leg.Route.FromStation!;
         var to = leg.Route.ToStation!;
+        var startTime = DateTimeOffset.UtcNow;
+        var now = startTime.AddSeconds(5); // có thể truyền thực tế từ client
 
-        // Để chuẩn, startTime nên được gửi từ request mỗi khi tàu dừng lại và bắt đầu đi tiếp
-        var startTime = DateTimeOffset.UtcNow; // lấy từ request, nếu không có thì lấy thời gian hiện tại
-        var now = startTime.AddSeconds(5); // giả sử tàu đã chạy được 5 giây, lấy từ request hoặc tính toán từ thời gian bắt đầu
-
-        // tính toán đúng khi 2 datetimeoffset cùng timeSpan 
-        //var elapsed = (DateTimeOffset.UtcNow - startTime).TotalSeconds;
         var elapsed = (now - startTime).TotalSeconds;
-        //var distanceKm = GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value);
-        // Chiều dài thực của routeStation
-        var distanceKm = (double) leg.Route.LengthKm;
-        //var speedKmh = train.TopSpeedKmH ?? 40;
-        // chạy cho lẹ
+        var distanceKm = (double)leg.Route.LengthKm;
         var speedKmh = 2000;
         var eta = (distanceKm / speedKmh) * 3600;
-
         var progress = Math.Clamp(elapsed / eta, 0, 1);
-        var (lat, lng) = GeoUtils.Interpolate(from.Latitude.Value, from.Longitude.Value, to.Latitude.Value, to.Longitude.Value, progress);
 
-        // Nếu progress = 1 thì có thể là đã đến trạm, update trạng thái itinerary
-        if (progress >= 1
-            || GeoUtils.Haversine(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value) < 0.1 
-            // khoảng cách nhỏ hơn 100m thì coi như đã đến trạm, progress chuẩn có thể bỏ haversine
-            )
+        var (lat, lng) = GeoUtils.Interpolate(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value, progress);
+
+        if (progress >= 1 || GeoUtils.Haversine(lat, lng, to.Latitude!.Value, to.Longitude!.Value) < 0.1)
         {
             leg.IsCompleted = true;
+            train.Status = TrainStatusEnum.ArrivedAtStation;
+            train.CurrentStationId = to.Id;
+
             _shipmentItineraryRepository.Update(leg);
+            _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
 
