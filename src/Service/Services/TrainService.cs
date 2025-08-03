@@ -412,7 +412,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var from = leg.Route.FromStation!;
         var to = leg.Route.ToStation!;
         var startTime = DateTimeOffset.UtcNow;
-        var now = startTime.AddSeconds(5); // có thể truyền thực tế từ client
+        var now = startTime.AddSeconds(5); // giả lập đã chạy được 5s
 
         var elapsed = (now - startTime).TotalSeconds;
         var distanceKm = (double)leg.Route.LengthKm;
@@ -420,8 +420,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var eta = (distanceKm / speedKmh) * 3600;
         var progress = Math.Clamp(elapsed / eta, 0, 1);
 
-        var (lat, lng) = GeoUtils.Interpolate(from.Latitude!.Value, from.Longitude!.Value, to.Latitude!.Value, to.Longitude!.Value, progress);
+        var (lat, lng) = GeoUtils.Interpolate(
+            from.Latitude!.Value, from.Longitude!.Value,
+            to.Latitude!.Value, to.Longitude!.Value,
+            progress);
 
+        // ✅ Update trạng thái nếu đã đến
         if (progress >= 1 || GeoUtils.Haversine(lat, lng, to.Latitude!.Value, to.Longitude!.Value) < 0.1)
         {
             leg.IsCompleted = true;
@@ -431,6 +435,36 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _shipmentItineraryRepository.Update(leg);
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
+
+        // ✅ Tạo tuyến path gồm các điểm từ các leg
+        var path = new List<GeoPoint>();
+        var validLegs = train.ShipmentItineraries
+            .Where(i => i.Route?.FromStation != null && i.Route.ToStation != null)
+            .OrderBy(i => i.LegOrder)
+            .ToList();
+
+        foreach (var itinerary in validLegs)
+        {
+            var fromStation = itinerary.Route.FromStation!;
+            var toStation = itinerary.Route.ToStation!;
+
+            path.Add(new GeoPoint
+            {
+                Latitude = fromStation.Latitude!.Value,
+                Longitude = fromStation.Longitude!.Value
+            });
+
+            // Thêm ToStation nếu là leg cuối hoặc khác From của leg tiếp theo
+            if (itinerary == validLegs.Last()
+                || validLegs[validLegs.IndexOf(itinerary) + 1].Route.FromStation?.Id != toStation.Id)
+            {
+                path.Add(new GeoPoint
+                {
+                    Latitude = toStation.Latitude!.Value,
+                    Longitude = toStation.Longitude!.Value
+                });
+            }
         }
 
         var result = new TrainPositionResult
@@ -444,7 +478,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             ProgressPercent = (int)(progress * 100),
             FromStation = from.StationNameVi,
             ToStation = to.StationNameVi,
-            Status = train.Status.ToString()
+            Status = train.Status.ToString(),
+            Path = path // ✅ thêm tuyến đường để FE vẽ line
         };
 
         _cache.Set(trainId, result, TimeSpan.FromSeconds(5));

@@ -18,5 +18,12 @@ namespace MetroShip.Service.ApiModels.Train
         public TimeSpan Elapsed { get; set; }
         public int ProgressPercent { get; set; }
         public string Status { get; set; } = default!;
+
+        public List<GeoPoint> Path { get; set; } = new();
+    }
+    public class GeoPoint
+    {
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 }
