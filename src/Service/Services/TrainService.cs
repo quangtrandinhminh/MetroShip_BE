@@ -490,13 +490,56 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     public async Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode)
     {
         var shipment = await _trainRepository.GetShipmentWithTrainAsync(trackingCode);
+
         if (shipment == null || shipment.ShipmentItineraries == null)
             throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
 
-        var itinerary = shipment.ShipmentItineraries.FirstOrDefault(x => x.TrainId != null);
+        var itinerary = shipment.ShipmentItineraries
+            .FirstOrDefault(i => i.TrainId != null && i.ShipmentId == shipment.Id);
+
         if (itinerary?.TrainId == null)
             throw new AppException(ErrorCode.NotFound, "Train not assigned", StatusCodes.Status404NotFound);
 
-        return await GetTrainPositionAsync(itinerary.TrainId);
+        // ❌ Không tracking nếu shipment chưa ở trạng thái sẵn sàng
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
+            throw new AppException(ErrorCode.BadRequest, "Shipment not ready for tracking", StatusCodes.Status400BadRequest);
+
+        var position = await GetTrainPositionAsync(itinerary.TrainId);
+
+        var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
+        var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
+
+        // ✅ Gán shipment status là trạng thái trả về chính
+        position.Status = mappedShipmentStatus.ToString();
+
+        // ✅ Đính kèm train status thật sự vào AdditionalData
+        position.AdditionalData = new
+        {
+            RawTrainStatus = rawTrainStatus.ToString(),
+            Shipment = new
+            {
+                shipment.Id,
+                shipment.TrackingCode,
+                shipment.SenderName,
+                shipment.DestinationStationId,
+                shipment.ShipmentStatus,
+                shipment.TotalWeightKg,
+                shipment.TotalVolumeM3,
+                shipment.CreatedAt
+            }
+        };
+
+        return position;
+    }
+
+    private ShipmentStatusEnum MapTrainStatusToShipmentStatus(TrainStatusEnum trainStatus)
+    {
+        return trainStatus switch
+        {
+            TrainStatusEnum.Departed => ShipmentStatusEnum.InTransit,
+            TrainStatusEnum.InTransit => ShipmentStatusEnum.InTransit,
+            TrainStatusEnum.ArrivedAtStation => ShipmentStatusEnum.AwaitingDelivery,
+            _ => ShipmentStatusEnum.AwaitingDelivery // Default case
+        };
     }
 }

@@ -20,6 +20,8 @@ namespace MetroShip.Service.ApiModels.Train
         public string Status { get; set; } = default!;
 
         public List<GeoPoint> Path { get; set; } = new();
+
+        public object? AdditionalData { get; set; }
     }
     public class GeoPoint
     {
