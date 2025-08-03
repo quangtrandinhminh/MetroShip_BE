@@ -60,21 +60,15 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
         string timeSlotId, DirectionEnum direction)
     {
         return await _context.MetroTrains.AsSplitQuery()
-            .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
-                && si.Route.Direction == direction && !si.IsCompleted))
-                .ThenInclude(si => si.Route)
-                    .ThenInclude(r => r.FromStation)
-            .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
-                && si.Route.Direction == direction && !si.IsCompleted))
-                .ThenInclude(si => si.Route)
-                    .ThenInclude(r => r.ToStation)
-            .Include(t => t.ShipmentItineraries
-                .Where(si => si.Route != null && si.Date == date && si.TimeSlotId == timeSlotId
-                             && si.Route.Direction == direction && !si.IsCompleted))
+        .Include(t => t.ShipmentItineraries)
+            .ThenInclude(si => si.Route)
+                .ThenInclude(r => r.FromStation)
+        .Include(t => t.ShipmentItineraries)
+            .ThenInclude(si => si.Route)
+                .ThenInclude(r => r.ToStation)
+        .Include(t => t.ShipmentItineraries)
             .ThenInclude(si => si.TimeSlot)
-            .FirstOrDefaultAsync(t => t.Id == trainId);
+        .FirstOrDefaultAsync(t => t.Id == trainId);
     }
 
     public async Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode)
@@ -83,5 +77,21 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             .Include(s => s.ShipmentItineraries)
                 .ThenInclude(i => i.Train)
             .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode);
+    }
+
+    public async Task<MetroTrain?> GetTrainWithRoutesAsync(string trainId, DirectionEnum direction)
+    {
+        return await _context.MetroTrains
+            .Where(t => t.Id == trainId)
+                .Include(t => t.Line)
+                .ThenInclude(line => line.Routes
+                    .Where(route => route.Direction == direction))
+                    .ThenInclude(route => route.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes
+                    .Where(route => route.Direction == direction))
+                    .ThenInclude(route => route.ToStation)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
     }
 }
