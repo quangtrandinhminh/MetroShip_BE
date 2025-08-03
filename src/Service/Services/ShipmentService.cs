@@ -532,7 +532,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Check if the shipment is delivered
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Delivered)
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Completed)
         {
             throw new AppException(
             ErrorCode.BadRequest,

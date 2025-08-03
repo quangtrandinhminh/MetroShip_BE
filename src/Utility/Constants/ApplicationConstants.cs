@@ -173,7 +173,7 @@
         public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
         public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
         public const string CANCELLED_SUCCESS = "Shipment canceled successfully.";
-        public const string SHIPMENT_NOT_DELIVERED = "Shipment has not been delivered yet.";
+        public const string SHIPMENT_NOT_COMPLETED = "Shipment has not been completed yet.";
         public const string FEEDBACK_TEXT_TOO_LONG = "Feedback text cannot exceed 500 characters.";
         public const string RATING_INVALID = "Rating must be between 1 and 5.";
         public const string SHIPMENT_ID_REQUIRED = "Shipment ID is required.";
