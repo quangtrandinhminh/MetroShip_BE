@@ -124,6 +124,14 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.FEEDBACK_SUCCESS, null));
         }
 
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CompleteShipment)]
+        public async Task<IActionResult> CompleteShipment([FromBody] ShipmentPickUpRequest request)
+        {
+            await shipmentService.CompleteShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.COMPLETED_SUCCESS, null));
+        }
+
         //[Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetLocation)]
         public async Task<IActionResult> GetShipmentLocation(string trackingCode)

@@ -179,6 +179,7 @@
         public const string SHIPMENT_ID_REQUIRED = "Shipment ID is required.";
         public const string SHIPMENT_ID_INVALID = "Shipment ID is invalid.";
         public const string FEEDBACK_SUCCESS = "Feedback submitted successfully.";
+        public const string COMPLETED_SUCCESS = "Shipment completed successfully.";
     }
 
     public class ResponseMessageItinerary

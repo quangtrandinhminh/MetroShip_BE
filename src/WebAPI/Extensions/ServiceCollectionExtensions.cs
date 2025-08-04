@@ -183,10 +183,6 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterApplicationServices(IServiceCollection services)
     {
-        // Register Quartz jobs
-        services.AddTransient<SendEmailJob>();
-        //services.AddScoped<IScheduler>();
-
         // Register services
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();

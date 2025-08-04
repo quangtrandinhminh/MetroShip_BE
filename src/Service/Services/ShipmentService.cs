@@ -21,6 +21,7 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
+using MetroShip.Service.Jobs;
 using Microsoft.Extensions.Caching.Memory;
 using Quartz;
 
@@ -45,6 +46,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private readonly IBaseRepository<ShipmentMedia> _shipmentMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentMedia>>();
+    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -226,6 +228,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.PricingConfigId = pricingTable.Id;
         shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
+        await ScheduleUnpaidJob(shipment.Id);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
@@ -248,7 +251,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             Email = user.Email,
             Type = MailTypeEnum.Shipment,
-            Name = request.SenderName,
+            //Name = request.SenderName,
+            Name = user.UserName,
             Data = shipment,
             Message = request.TrackingLink
         });
@@ -288,16 +292,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         memoryCache.Set(cacheKey, _metroGraph, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
     }
 
-    /*private async Task InitializePricingTableAsync()
-    {
-        if (_isInitializedPricingTable)
-            return;
-
-        _pricingTable = await _pricingService.GetPricingTableAsync(null);
-        _isInitializedPricingTable = true;
-    }*/
-
-    // v2
     public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
     {
         _logger.Information("Get itinerary and total price with request: {@request}", request);
@@ -517,6 +511,59 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
     }
 
+    public async Task UpdateShipmentStatusUnpaid(string shipmentId)
+    {
+        _logger.Information("Update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting payment
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must be in AwaitingPayment status to update to Unpaid.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update shipment status to unpaid
+        shipment.ShipmentStatus = ShipmentStatusEnum.Unpaid;
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task ScheduleUnpaidJob(string shipmentId)
+    {
+        _logger.Information("Scheduling job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "Unpaid-for-shipmentId", shipmentId }
+        };
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<UpdateShipmentToUnpaid>()
+            .WithIdentity($"UpdateShipmentToUnpaid-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-UpdateShipmentToUnpaid-{shipmentId}")
+            .StartAt(DateTimeOffset.UtcNow.AddMinutes(15))
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
+    }
+
     public async Task FeedbackShipment(ShipmentFeedbackRequest request)
     {
         _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
@@ -550,6 +597,66 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Save changes to the database
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    // Complete the shipment
+    public async Task CompleteShipment(ShipmentPickUpRequest request)
+    {
+        _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
+        //ShipmentValidator.ValidateShipmentCompleteRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+        x => x.Id == request.ShipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting delivery
+        /*if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_AWAITING_DELIVERY,
+            StatusCodes.Status400BadRequest);
+        }*/
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+        shipment.DeliveredAt = CoreHelper.SystemTimeNow;
+        //shipment.DeliveredBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+
+        foreach (var media in request.PickedUpMedias)
+        {
+            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
+            mediaEntity.ShipmentId = shipment.Id;
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.IdentityVerification;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
+            _shipmentMediaRepository.Add(mediaEntity);
+        }
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send completion email to sender
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been completed.",
+            };
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
+        }
     }
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)

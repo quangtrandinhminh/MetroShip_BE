@@ -4,16 +4,11 @@ using MetroShip.Service.Helpers;
 
 namespace MetroShip.Service.Validations;
 
-public class TransactionValidator
+public static class TransactionValidator
 {
-    private readonly IValidator<TransactionRequest> _transactionRequestValidator;
-    public TransactionValidator()
+    public static void ValidateTransactionRequest(TransactionRequest request)
     {
-        _transactionRequestValidator = new TransactionRequestValidator();
-    }
-
-    public void ValidateTransactionRequest(TransactionRequest request)
-    {
+        var _transactionRequestValidator = new TransactionRequestValidator();
         _transactionRequestValidator.ValidateApiModel(request);
     }
 }

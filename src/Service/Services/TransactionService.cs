@@ -15,51 +15,31 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Quartz;
 using Serilog;
 using System.Linq.Expressions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MetroShip.Service.Services;
 
-public class TransactionService : ITransactionService
+public class TransactionService(IServiceProvider serviceProvider) : ITransactionService
 {
-    private readonly IVnPayService _vnPayService;
-    private readonly IShipmentRepository _shipmentRepository;
-    private readonly IMapperlyMapper _mapper;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger _logger;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IBaseRepository<Parcel> _parcelRepository;
-    private readonly TransactionValidator _transactionValidator;
-
-    private readonly IBaseRepository<Transaction> _transaction;
-
-    public TransactionService(
-        IShipmentRepository shipmentRepository,
-        IMapperlyMapper mapper,
-        IHttpContextAccessor httpContextAccessor,
-        ILogger logger,
-        IUnitOfWork unitOfWork,
-        IVnPayService vnPayService,
-        IBaseRepository<Parcel> parcelRepository,
-        IBaseRepository<Transaction> transactionRepository) 
-    {
-        _vnPayService = vnPayService;
-        _shipmentRepository = shipmentRepository;
-        _mapper = mapper;
-        _httpContextAccessor = httpContextAccessor;
-        _logger = logger;
-        _transactionValidator = new TransactionValidator();
-        _unitOfWork = unitOfWork;
-        _parcelRepository = parcelRepository;
-        _transaction = transactionRepository;
-    }
+    private readonly IVnPayService _vnPayService = serviceProvider.GetRequiredService<IVnPayService>();
+    private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();
+    private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
+    private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+    private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+    private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
+    private readonly IBaseRepository<Transaction> _transaction = serviceProvider.GetRequiredService<IBaseRepository<Transaction>>();
+    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Creating payment link for: {shipment} by {CustomerId}",
             request.ShipmentId, customerId);
-        _transactionValidator.ValidateTransactionRequest(request);
+        TransactionValidator.ValidateTransactionRequest(request);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId || x.TrackingCode == request.ShipmentId,
                        includeProperties: x => x.Transactions
@@ -189,6 +169,9 @@ public class TransactionService : ITransactionService
         transaction.Description = JsonConvert.SerializeObject(vnPaymentResponse);
         transaction.PaymentDate = CoreHelper.SystemTimeNow;
         _shipmentRepository.Update(shipment);
+
+        // Cancel any scheduled job for this shipment
+        await CancelScheduledUnpaidJob(shipment.Id);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         return response;
     }
@@ -262,5 +245,22 @@ public class TransactionService : ITransactionService
 
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    // Cancel ScheduleUnpaidJob
+    public async Task CancelScheduledUnpaidJob(string shipmentId)
+    {
+        _logger.Information("Cancelling scheduled job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
+        var jobKey = new JobKey($"UpdateShipmentToUnpaid-{shipmentId}");
+        var scheduler = await _schedulerFactory.GetScheduler();
+        if (await scheduler.CheckExists(jobKey))
+        {
+            await scheduler.DeleteJob(jobKey);
+            _logger.Information("Cancelled scheduled job for shipment ID: {@shipmentId}", shipmentId);
+        }
+        else
+        {
+            _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
+        }
     }
 }

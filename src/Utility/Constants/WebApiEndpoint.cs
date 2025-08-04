@@ -75,6 +75,7 @@
             public const string GetShipmentById = BaseEndpoint + "/{id}";
             public const string CancelShipment = BaseEndpoint + "/cancel/{shipmentId}";
             public const string FeedbackShipment = BaseEndpoint + "/feedback";
+            public const string CompleteShipment = BaseEndpoint + "/complete";
         }
 
         public static class TransactionEndpoint

@@ -24,6 +24,9 @@ public interface IShipmentService
     Task RejectShipment(ShipmentRejectRequest request);
     Task CancelShipment(ShipmentRejectRequest request);
     Task FeedbackShipment(ShipmentFeedbackRequest request);
+    Task UpdateShipmentStatusUnpaid(string shipmentId);
+
+    Task CompleteShipment(ShipmentPickUpRequest request);
     Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
     Task<UpdateShipmentStatusResponse> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId);
     Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId);
