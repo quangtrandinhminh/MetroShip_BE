@@ -1530,7 +1530,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         if (shipment.ShipmentStatus != ShipmentStatusEnum.Completed)
         {
-            await _shipmentRepository.UpdateShipmentStatusAsync(shipment.Id, ShipmentStatusEnum.AwaitingDelivery);
+            await _shipmentRepository.UpdateShipmentStatusAsync(shipment.Id, ShipmentStatusEnum.LoadOnMetro);
             message = $"🚆 Đã gán tàu thành công và cập nhật trạng thái đơn hàng {trackingCode} thành 'AwaitingDelivery'.";
         }
         //else

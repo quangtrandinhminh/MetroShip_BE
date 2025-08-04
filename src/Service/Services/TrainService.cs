@@ -30,6 +30,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 {
     private readonly ITrainRepository _trainRepository = 
         serviceProvider.GetRequiredService<ITrainRepository>();
+    private readonly IShipmentTrackingRepository _shipmentTrackingRepository =
+        serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
@@ -500,19 +502,53 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (itinerary?.TrainId == null)
             throw new AppException(ErrorCode.NotFound, "Train not assigned", StatusCodes.Status404NotFound);
 
-        // ❌ Không tracking nếu shipment chưa ở trạng thái sẵn sàng
         if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
             throw new AppException(ErrorCode.BadRequest, "Shipment not ready for tracking", StatusCodes.Status400BadRequest);
 
-        var position = await GetTrainPositionAsync(itinerary.TrainId);
+        var trainId = itinerary.TrainId;
+
+        var position = await GetTrainPositionAsync(trainId);
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
         var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
 
-        // ✅ Gán shipment status là trạng thái trả về chính
-        position.Status = mappedShipmentStatus.ToString();
+        // Cập nhật message trong ShipmentItinerary
+        var message = rawTrainStatus switch
+        {
+            TrainStatusEnum.Departed => $"Rời trạm {position.FromStation} lúc {DateTime.UtcNow:HH:mm:ss dd/MM/yyyy}",
+            TrainStatusEnum.InTransit => $"Đang di chuyển từ {position.FromStation} đến {position.ToStation}",
+            TrainStatusEnum.ArrivedAtStation => $"Đã đến trạm {position.ToStation} lúc {DateTime.UtcNow:HH:mm:ss dd/MM/yyyy}",
+            _ => null
+        };
 
-        // ✅ Đính kèm train status thật sự vào AdditionalData
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            itinerary.Message ??= "";
+            if (!itinerary.Message.Contains(message))
+            {
+                itinerary.Message += $"{message}\n";
+                _shipmentItineraryRepository.Update(itinerary);
+            }
+        }
+
+        // Lưu tracking event
+        var tracking = new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = mappedShipmentStatus,
+            Status = rawTrainStatus.ToString(),
+            EventTime = DateTimeOffset.UtcNow,
+            Note = message
+        };
+        await _shipmentTrackingRepository.AddAsync(tracking);
+
+        // Update shipment nếu cần
+        shipment.ShipmentStatus = mappedShipmentStatus;
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Gắn thông tin
+        position.Status = mappedShipmentStatus.ToString();
         position.AdditionalData = new
         {
             RawTrainStatus = rawTrainStatus.ToString(),
@@ -525,7 +561,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 shipment.ShipmentStatus,
                 shipment.TotalWeightKg,
                 shipment.TotalVolumeM3,
-                shipment.CreatedAt
+                shipment.CreatedAt,
+                Messages = itinerary.Message?.Trim()
             }
         };
 
