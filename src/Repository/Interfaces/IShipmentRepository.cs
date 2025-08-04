@@ -24,5 +24,4 @@ public interface IShipmentRepository : IBaseRepository<Shipment>
     Task<ShipmentItinerary?> GetItineraryByShipmentIdAsync(string shipmentId);
     Task UpdateShipmentStatusAsync(string shipmentId, ShipmentStatusEnum status);
     Task AddParcelTrackingAsync(string parcelId, string status, string stationId, string updatedBy);
-    Task<string> GetStationNameByIdAsync(string stationId);
 }

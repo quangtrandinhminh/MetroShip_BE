@@ -780,14 +780,14 @@
 					"response": []
 				},
 				{
-					"name": "Update user",
+					"name": "Update user customer 1",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{adminAccessToken}}",
+									"value": "{{customerAccessToken}}",
 									"type": "string"
 								}
 							]
@@ -805,7 +805,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"id\": \"5ac4f837-f792-48cf-9e92-12b3b947dd97\",\n    \"userName\": \"quangtdm1\",\n    \"fullName\": \"Quang\",\n    \"address\": \"a\",\n    \"avatar\": \"https://via.placeholder.com/150\",\n    \"birthDate\": \"2003-06-11\",\n    \"bankId\": 1,\n    \"accountNo\": \"11111111111111\",\n    \"accountName\": \"customer1\"\n}",
+							"raw": "{\n    \"userName\": \"quangtdm4\",\n    \"fullName\": \"Quang\",\n    \"address\": \"a\",\n    \"avatar\": \"https://via.placeholder.com/150\",\n    \"birthDate\": \"2003-06-11\",\n    \"bankId\": 1,\n    \"accountNo\": \"11111111111111\",\n    \"accountName\": \"a\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2033,7 +2033,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2168,6 +2168,32 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-03T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-03T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Book a shipment - TDY - ĐHYD - BXMT - 2 parcels Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
 							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"scheduledDateTime\": \"2025-07-25T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
@@ -2194,7 +2220,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"senderName\": \"Tang Du Yen\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"recipientName\": \"Tăng Dư Yến\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"recipientEmail\": \"tangduyen12345@gmail.com\",\r\n  \"scheduledDateTime\": \"2025-07-26T00:30:00.000Z\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"totalCostVnd\": 81713,\r\n  \"totalShippingFeeVnd\": 81713,\r\n  \"totalKm\": 4.42,\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ],\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"heightCm\": 30,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": false,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 20,\r\n      \"priceVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 5,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428247/vvocjj1yzvlkvevnjsuq.png\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 10549,\r\n      \"insuranceFeeVnd\": 40000,\r\n      \"chargeableWeight\": 10,\r\n      \"priceVnd\": 50549,\r\n      \"valueVnd\": 2000000\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 60,\r\n      \"widthCm\": 50,\r\n      \"heightCm\": 40,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 13426,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 24,\r\n      \"priceVnd\": 13426\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n      \"weightKg\": 50,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428324/vgiktjcbdpenbjk0hkap.jpg\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 19659.5,\r\n      \"insuranceFeeVnd\": 10000,\r\n      \"chargeableWeight\": 50,\r\n      \"priceVnd\": 29659.5,\r\n      \"valueVnd\": 1000000\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"senderName\": \"Tang Du Yen\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"recipientName\": \"Tăng Dư Yến\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"recipientEmail\": \"tangduyen12345@gmail.com\",\r\n  \"scheduledDateTime\": \"2025-08-04T00:30:00.000Z\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"totalCostVnd\": 81713,\r\n  \"totalShippingFeeVnd\": 81713,\r\n  \"totalKm\": 4.42,\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ],\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"heightCm\": 30,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": false,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 20,\r\n      \"priceVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 5,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428247/vvocjj1yzvlkvevnjsuq.png\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 10549,\r\n      \"insuranceFeeVnd\": 40000,\r\n      \"chargeableWeight\": 10,\r\n      \"priceVnd\": 50549,\r\n      \"valueVnd\": 2000000\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 60,\r\n      \"widthCm\": 50,\r\n      \"heightCm\": 40,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 13426,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"chargeableWeight\": 24,\r\n      \"priceVnd\": 13426\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n      \"weightKg\": 50,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 10,\r\n      \"heightCm\": 10,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753428324/vgiktjcbdpenbjk0hkap.jpg\",\r\n      \"isBulk\": true,\r\n      \"shippingFeeVnd\": 19659.5,\r\n      \"insuranceFeeVnd\": 10000,\r\n      \"chargeableWeight\": 50,\r\n      \"priceVnd\": 29659.5,\r\n      \"valueVnd\": 1000000\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2231,13 +2257,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MS-HCMC-202506280900CS4",
+							"raw": "{{baseUrl}}/shipments/MSHCMC2508032230VBZ1",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MS-HCMC-202506280900CS4"
+								"MSHCMC2508032230VBZ1"
 							]
 						}
 					},
@@ -2712,18 +2738,30 @@
 							{
 								"key": "accept",
 								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
 							}
 						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"parcelCode\": \"MSHCMC2508032230VBZ1-01\",\n  \"confirmedMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
 						"url": {
-							"raw": "{{baseUrl}}/parcels/staff/confirmation/2fbf4172-082c-424e-b720-ac11c7228310",
+							"raw": "{{baseUrl}}/parcels/staff/confirmation",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"parcels",
 								"staff",
-								"confirmation",
-								"2fbf4172-082c-424e-b720-ac11c7228310"
+								"confirmation"
 							]
 						}
 					},
@@ -2755,6 +2793,29 @@
 									"key": "isRejected",
 									"value": "true"
 								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get parcel by parcelCode",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/MSHCMC2508032230VBZ1-01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"MSHCMC2508032230VBZ1-01"
 							]
 						}
 					},
@@ -2980,7 +3041,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains?LineId=e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c&TimeSlotId=a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6&Date=2024-11-11&ModelName=hitachi&IsAvailable=true&PageNumber=1&PageSize=10&Direction=0",
+							"raw": "{{baseUrl}}/metro-trains?LineId=e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2994,31 +3055,38 @@
 								},
 								{
 									"key": "TimeSlotId",
-									"value": "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"
+									"value": "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+									"disabled": true
 								},
 								{
 									"key": "Date",
-									"value": "2024-11-11"
-								},
-								{
-									"key": "ModelName",
-									"value": "hitachi"
-								},
-								{
-									"key": "IsAvailable",
-									"value": "true"
-								},
-								{
-									"key": "PageNumber",
-									"value": "1"
-								},
-								{
-									"key": "PageSize",
-									"value": "10"
+									"value": "2024-11-11",
+									"disabled": true
 								},
 								{
 									"key": "Direction",
-									"value": "0"
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "IsAvailable",
+									"value": "true",
+									"disabled": true
+								},
+								{
+									"key": "PageNumber",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "PageSize",
+									"value": "10",
+									"disabled": true
+								},
+								{
+									"key": "ModelName",
+									"value": "hitachi",
+									"disabled": true
 								}
 							]
 						}
@@ -3036,7 +3104,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains/line/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/slot/a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6/date/2025-06-28T07:00:00Z",
+							"raw": "{{baseUrl}}/metro-trains/line/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/slot/a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6/date/2025-06-28",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -3047,14 +3115,14 @@
 								"slot",
 								"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
 								"date",
-								"2025-06-28T07:00:00Z"
+								"2025-06-28"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "add train to itinerary - line 1 hcm - morning 28/6 - dir 1",
+					"name": "add train to itinerary - line 1 hcm - morning 28/6 - dir 0",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -3069,7 +3137,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"lineId\": \"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"date\": \"2025-06-28T07:00:00Z\",\r\n  \"direction\": 1\r\n}",
+							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"lineId\": \"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"date\": \"2025-07-31\",\r\n  \"direction\": 0\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3084,6 +3152,73 @@
 							"path": [
 								"metro-trains",
 								"itineraries"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send train location",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\n  \"latitude\": 0,\n  \"longitude\": 0,\n  \"timestamp\": \"2025-07-25T19:10:31.850Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/metro-trains/staff/send-location",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"metro-trains",
+								"staff",
+								"send-location"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get train pos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/train/2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0/position",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"train",
+								"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0",
+								"position"
 							]
 						}
 					},
@@ -3339,6 +3474,12 @@
 			"key": "baseUrl",
 			"value": "https://localhost:7085/api",
 			"type": "string"
+		},
+		{
+			"key": "baseUrl",
+			"value": "https://metroship-cosdy.ondigitalocean.app/api",
+			"type": "string",
+			"disabled": true
 		},
 		{
 			"key": "customerAccessToken",

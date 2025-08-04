@@ -37,6 +37,7 @@ public partial class ShipmentItinerary : BaseEntity
     [Column(TypeName = "date")]
     public DateOnly? Date { get; set; }
     public bool IsCompleted { get; set; }
+    public string? Message { get; set; }
 
     [ForeignKey(nameof(ShipmentId))]
     [InverseProperty(nameof(Shipment.ShipmentItineraries))]

@@ -12,6 +12,8 @@ using MetroShip.Service.Services;
 using MetroShip.Utility.Config;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
+using MetroShip.Service.Jobs;
+using Quartz;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -141,6 +143,33 @@ public static class ServiceCollectionExtensions
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<AppDbContext>();
+
+        // Add Quartz services
+        services.AddQuartz(q =>
+        {
+            // Use Microsoft DI container
+            q.UseMicrosoftDependencyInjectionJobFactory();
+
+            // Use simple type loader
+            q.UseSimpleTypeLoader();
+
+            // Use in-memory store (for development)
+            // For production, consider using persistent store
+            q.UseInMemoryStore();
+
+            // Configure thread pool
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 10; // Adjust based on your needs
+            });
+        });
+
+        // Add Quartz hosted service
+        services.AddQuartzHostedService(q =>
+        {
+            // Wait for jobs to complete on shutdown
+            q.WaitForJobsToComplete = true;
+        });
 
         // Memory cache & rate limiting
         services.AddMemoryCache();

@@ -56,6 +56,11 @@ public partial class Shipment : BaseEntity
     [NotMapped]
     public string? CurrentStationAddress { get; set; } // Optional, if not provided
 
+    // If staff load shipment to train, update this field
+    // If staff unload shipment from train, update this field to null
+    [StringLength(50)]
+    public string? CurrentTrainId { get; set; } 
+
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
@@ -114,6 +119,8 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? ReturnPickupAt { get; set; }
     public DateTimeOffset? ReturnDeliveredAt { get; set; }
     public DateTimeOffset? ReturnCancelledAt { get; set; }
+    public string? CompleteBy { get; set; } // User who completed the shipment
+    public DateTimeOffset? CompletedAt { get; set; } // When the shipment is fully completed
 
     // Customer fields
     [Required]
@@ -150,13 +157,15 @@ public partial class Shipment : BaseEntity
 
     [StringLength(500)]
     public string? Feedback { get; set; } // Feedback or comments from the customer
-    public DateTimeOffset? CompletedAt { get; set; } // When the shipment is fully completed
+
+    public DateTimeOffset? FeedbackAt { get; set; } // When the feedback was given
 
     [StringLength(500)]
     public string? FeedbackResponse { get; set; } // Response to the feedback, if applicable
 
     [StringLength(50)]
     public string? FeedbackResponseBy { get; set; } // User who responded to the feedback
+    public DateTimeOffset? FeedbackRespondedAt { get; set; } // When the feedback was responded to
 
     [ForeignKey(nameof(SenderId))]
     [InverseProperty(nameof(UserEntity.Shipments))]
@@ -183,4 +192,7 @@ public partial class Shipment : BaseEntity
     [ForeignKey(nameof(PricingConfigId))]
     [InverseProperty(nameof(PricingConfig.Shipments))]
     public virtual PricingConfig? PricingConfig { get; set; }
+
+    [InverseProperty(nameof(ShipmentTracking.Shipment))]
+    public virtual ICollection<ShipmentTracking> ShipmentTrackings { get; set; } = new List<ShipmentTracking>();
 }
