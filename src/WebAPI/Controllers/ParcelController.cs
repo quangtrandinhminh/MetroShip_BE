@@ -50,7 +50,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
+            return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcelByTrackingCode)]
+        public async Task<IActionResult> GetParcelByParcelCodeAsync([FromRoute] string parcelCode)
+        {
+            var parcel = await _parcelService.GetParcelByParcelCodeAsync(parcelCode);
+            return Ok(BaseResponse.OkResponseDto(parcel));
         }
 
         [HttpGet("qrcode/{parcelTrackingCode}")]
@@ -69,15 +76,15 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(chargeableWeight, null));
         }
 
-        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> ConfirmParcelAsync([FromRoute] Guid parcelId)
+        public async Task<IActionResult> ConfirmParcelAsync([FromBody] ParcelConfirmRequest request)
         {
-            await _parcelService.ConfirmParcelAsync(parcelId);
+            await _parcelService.ConfirmParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully.", null));
         }
 
-        [HttpPost(WebApiEndpoint.ParcelEndpoint.RejectParcel)]
+        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.RejectParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         public async Task<IActionResult> RejectParcelAsync([FromBody] ParcelRejectRequest request)
         {

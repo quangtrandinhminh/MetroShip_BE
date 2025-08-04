@@ -94,6 +94,11 @@ public interface IMapperlyMapper
 
     // media
     ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+    ShipmentMediaResponse MapToShipmentMediaResponse(ShipmentMedia entity);
+    List<ShipmentMediaResponse> MapToShipmentMediaResponseList(ICollection<ShipmentMedia> entity);
+    ParcelMedia MapToParcelMediaEntity(ParcelMediaRequest request);
+    ParcelMediaResponse MapToParcelMediaResponse(ParcelMedia entity);
+    List<ParcelMediaResponse> MapToParcelMediaResponseList(ICollection<ParcelMedia> entity);
 
     // staff assignment
     StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);

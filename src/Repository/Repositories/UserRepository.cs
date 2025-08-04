@@ -139,5 +139,14 @@ namespace MetroShip.Repository.Repositories
         {
             return await _context.Users.AnyAsync(predicate);
         }
+
+        // get username by userId
+        public async Task<string?> GetUserNameByIdAsync(string userId)
+        {
+            return await _context.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.UserName)
+                .FirstOrDefaultAsync();
+        }
     }
 }

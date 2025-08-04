@@ -26,5 +26,6 @@ public class ParcelResponse
     public string? ParcelCategoryId { get; set; }
     public ParcelCategoryResponse? ParcelCategory { get; set; }
     public IList<ParcelTrackingResponse> ParcelTrackings { get; set; } = new List<ParcelTrackingResponse>();
-    
+    public IList<ParcelMediaResponse> ParcelMedias { get; set; } = new List<ParcelMediaResponse>();
+
 }

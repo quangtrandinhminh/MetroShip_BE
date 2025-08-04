@@ -74,8 +74,6 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
 
-    public partial List<ShipmentMediaResponse> MapToShipmentMediaResponseList(ICollection<ShipmentMedia> entity);
-
     // station
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
@@ -140,6 +138,11 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // media
     public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+    public partial ShipmentMediaResponse MapToShipmentMediaResponse(ShipmentMedia entity);
+    public partial List<ShipmentMediaResponse> MapToShipmentMediaResponseList(ICollection<ShipmentMedia> entity);
+    public partial ParcelMedia MapToParcelMediaEntity(ParcelMediaRequest request);
+    public partial ParcelMediaResponse MapToParcelMediaResponse(ParcelMedia entity);
+    public partial List<ParcelMediaResponse> MapToParcelMediaResponseList(ICollection<ParcelMedia> entity);
 
     // staff assignment
     public partial StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);

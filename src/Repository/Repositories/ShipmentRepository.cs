@@ -513,11 +513,4 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         _context.ParcelTrackings.Add(tracking);
         await _context.SaveChangesAsync();
     }
-    public async Task<string> GetStationNameByIdAsync(string stationId)
-    {
-        return await _context.Stations
-            .Where(s => s.Id == stationId)
-            .Select(s => s.StationNameVi)
-            .FirstOrDefaultAsync();
-    }
 }

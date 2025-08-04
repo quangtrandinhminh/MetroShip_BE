@@ -41,11 +41,11 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/parcels";
             public const string GetParcels = BaseEndpoint;
-            public const string GetParcelById = BaseEndpoint + "/{id}";
+            public const string GetParcelByTrackingCode = BaseEndpoint + "/{parcelCode}";
             public const string CreateShipmentItem = BaseEndpoint;
             public const string UpdateShipmentItem = BaseEndpoint;
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
-            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
+            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
             public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
         }

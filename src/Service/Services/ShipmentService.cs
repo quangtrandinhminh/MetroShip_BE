@@ -44,7 +44,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
-    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+    private readonly IBaseRepository<ShipmentMedia> _shipmentMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentMedia>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -323,7 +323,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _logger.Information("Confirm shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId, false,
-                       x => x.Parcels, x => x.ShipmentItineraries);
+                       x => x.Parcels, 
+                       x => x.ShipmentItineraries,
+                       x => x.ShipmentMedias
+                       );
 
         // Check if the shipment exists
         if (shipment == null)
@@ -362,7 +365,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             mediaEntity.ShipmentId = shipment.Id;
             mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
             mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
-            shipment.ShipmentMedias.Add(mediaEntity);
+            _shipmentMediaRepository.Add(mediaEntity);
         }
 
         // Save changes to the database
@@ -1235,37 +1238,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     public record CapacityKey(string RouteId, DateOnly Date, ShiftEnum Shift);
-
-    private bool IsReadyForNextShipmentStatus (string shipmentId, ShipmentStatusEnum nextShipmentStatus)
-    {
-        _logger.Information("Checking if shipment {ShipmentId} is ready for status {NextStatus}",
-                       shipmentId, nextShipmentStatus);
-
-        var parcelCount = _shipmentRepository.GetAll()
-            .Where(x => x.Id == shipmentId && x.DeletedAt == null)
-            .SelectMany(x => x.Parcels)
-            .Count();
-
-        // count parcelTracking have TrackingForShipmentStatus == nextShipmentStatus
-        var parcelTrackingCount = _parcelRepository.GetAll()
-            .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null)
-            .SelectMany(p => p.ParcelTrackings)
-            .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus);
-
-        _logger.Information("Parcel count: {ParcelCount}, Tracking count for status {NextStatus}: {TrackingCount}",
-            parcelCount, nextShipmentStatus, parcelTrackingCount);
-
-        if (parcelCount == parcelTrackingCount)
-        {
-            _logger.Information("Shipment {ShipmentId} is ready for status {NextStatus}",
-                               shipmentId, nextShipmentStatus);
-            return true;
-        }
-
-        _logger.Information("Shipment {ShipmentId} is NOT ready for status {NextStatus}",
-                                      shipmentId, nextShipmentStatus);
-        return false;
-    }
 
     public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
     {

@@ -13,7 +13,8 @@ namespace MetroShip.Service.Interfaces
         CreateParcelResponse CalculateParcelInfo(ParcelRequest request);
         decimal CalculateShippingCost(ParcelRequest request, double distanceKm, decimal pricePerKm);
         Task<PaginatedListResponse<ParcelResponse>> GetAllParcels(PaginatedListRequest request);
-        //Task ConfirmParcelAsync(Guid parcelId);
+        Task<ParcelResponse?> GetParcelByParcelCodeAsync(string parcelCode);
+        Task ConfirmParcelAsync(ParcelConfirmRequest request);
         //Task RejectParcelAsync(ParcelRejectRequest request);
     }
 }

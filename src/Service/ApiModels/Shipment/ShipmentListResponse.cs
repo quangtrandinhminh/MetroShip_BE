@@ -21,7 +21,8 @@ public record ShipmentListResponse
     public DateTimeOffset? BookedAt { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }
     public DateTimeOffset? PaidAt { get; set; }
-    public DateTimeOffset? PickupAt { get; set; }
+    public DateTimeOffset? PickedUpAt { get; set; }
     public DateTimeOffset? DeliveredAt { get; set; }
     public ShipmentStatusEnum ShipmentStatus { get; set; }
+    public string ShipmentStatusName => ShipmentStatus.ToString();
 }
