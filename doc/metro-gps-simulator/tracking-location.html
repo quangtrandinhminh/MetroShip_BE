@@ -4,7 +4,7 @@
     <title>SignalR Test</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <style>
-        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: auto; }
         .log { color: gray; }
         .error { color: red; }
         .success { color: green; }
@@ -24,11 +24,11 @@
 
         function logMessage(message, type = 'log') {
             const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML += `<p class="${type}">${message}</p>`;
+            messagesDiv.innerHTML = `<p class="${type}">${message}</p>` + messagesDiv.innerHTML;
             console.log(message);
         }
         
-        // Kết nối đến ChatHub
+        // Kết nối đến TrackingHub
         const chatConnection = new signalR.HubConnectionBuilder()
             .withUrl('https://localhost:7085/trackingHub', {
                 accessTokenFactory: () => token
@@ -36,7 +36,7 @@
             .configureLogging(signalR.LogLevel.Debug)
             .build();
         
-        // Xử lý sự kiện nhận tin nhắn chat
+        // Xử lý sự kiện nhận location update
         chatConnection.on('ReceiveLocationUpdate', (message) => {
             logMessage(`<strong>Tracking Train :</strong> ${JSON.stringify(message)}`, 'success');
         });
@@ -46,7 +46,7 @@
             .then(() => logMessage('Connected to TrackingHub', 'success'))
             .catch(err => logMessage(`Error connecting to TrackingHub: ${err}`, 'error'));
 
-        // Tham gia phòng chat khi nhấn nút
+        // Tham gia phòng tracking khi nhấn nút
         document.getElementById('joinButton').addEventListener('click', () => {
             const trainId = document.getElementById('trainIdInput').value;
             chatConnection.invoke('JoinTrackingRoom', trainId)

@@ -68,8 +68,8 @@ public class trackingHub : Hub
     // hàm này được gọi bởi invoke signalR từ client (gps của train)
     public async Task SendLocationUpdate(TrackingLocationUpdateDto location)
     {
-        _logger.Information("📍 Nhận tọa độ mới từ TrainId {TrainId}, TrackingCode: {TrackingCode} | ({Lat}, {Lng})",
-            location.TrainId, location.TrackingCode, location.Latitude, location.Longitude);
+        /*_logger.Information("📍 Nhận tọa độ mới từ TrainId {TrainId}, TrackingCode: {TrackingCode} | ({Lat}, {Lng})",
+            location.TrainId, location.TrackingCode, location.Latitude, location.Longitude);*/
 
         // 1. Kiểm tra xem đơn hàng đã giao chưa
         /*bool isDelivered = await _trainService.IsShipmentDeliveredAsync(location.TrackingCode);

@@ -20,7 +20,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
@@ -42,9 +41,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     private readonly IBaseRepository<ShipmentItinerary> _shipmentItineraryRepository =
         serviceProvider.GetRequiredService<IBaseRepository<ShipmentItinerary>>();
     private readonly IMemoryCache _cache =
-        serviceProvider.GetRequiredService<IMemoryCache>();                 
-
-
+        serviceProvider.GetRequiredService<IMemoryCache>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {

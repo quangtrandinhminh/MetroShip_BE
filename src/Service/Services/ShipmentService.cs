@@ -1027,6 +1027,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             expression = expression.And(x => x.DestinationStationId == request.DestinationStationId);
         }
 
+        if (!string.IsNullOrWhiteSpace(request.SenderId))
+        {
+            expression = expression.And(x => x.SenderId == request.SenderId);
+        }
+
         if (!string.IsNullOrWhiteSpace(request.SenderName))
         {
             expression = expression.And(x => x.SenderName.Contains(request.SenderName));
