@@ -10,7 +10,6 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
@@ -91,5 +90,21 @@ namespace MetroShip.WebAPI.Controllers
             await _parcelService.RejectParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel rejection processed successfully.", null));
         }*/
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.LoadParcelOnTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainId)
+        {
+            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainId);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainId} successfully.", null));
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UnloadParcelFromTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainId)
+        {
+            await _parcelService.UnloadParcelFromTrain(parcelCode, trainId);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainId} successfully.", null));
+        }
     }
 }

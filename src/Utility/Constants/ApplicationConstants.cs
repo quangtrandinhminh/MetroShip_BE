@@ -180,6 +180,7 @@
         public const string SHIPMENT_ID_INVALID = "Shipment ID is invalid.";
         public const string FEEDBACK_SUCCESS = "Feedback submitted successfully.";
         public const string COMPLETED_SUCCESS = "Shipment completed successfully.";
+        public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Shipment is not in 'Stored', 'AwaitingDelivery' or 'ApplyingSurcharge' status.";
     }
 
     public class ResponseMessageItinerary

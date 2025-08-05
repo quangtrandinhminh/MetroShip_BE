@@ -27,6 +27,9 @@ public partial class ParcelTracking : BaseEntity
     [StringLength(50)]
     public string? StationId { get; set; }
 
+    [StringLength(50)]
+    public string? TrainId { get; set; }
+
     public DateTimeOffset EventTime { get; set; }
 
     public string? UpdatedBy { get; set; }

@@ -101,7 +101,7 @@ public class PriceCalculationService
     }
 }
 
-public class PricingTableBuilder
+/*public class PricingTableBuilder
 {
     private readonly SystemConfigSetting systemConfigSetting;
 
@@ -207,7 +207,7 @@ public class PricingTableBuilder
         }
         return prices;
     }
-}
+}*/
 
 public class PricingTable
 {

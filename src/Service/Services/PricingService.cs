@@ -130,4 +130,26 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         }
         return weightTier.BasePriceVnd ?? 0;
     }
+
+    /*public async Task<PricingConfig> CreateOrUpdatePricingConfigAsync(PricingConfigRequest request)
+    {
+        if (request == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Pricing configuration request cannot be null.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var pricingConfig = _mapper.MapToPricingConfig(request);
+        await _pricingRepository.AddAsync(pricingConfig);
+        await _unitOfWork.SaveChangeAsync();
+        _cache.Remove(CACHE_KEY); // Clear cache after update
+
+        return pricingConfig;
+    }*/
+
+    // calculate surcharge based on weight and distance
+
 }

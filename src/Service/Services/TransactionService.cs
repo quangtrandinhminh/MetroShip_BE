@@ -19,6 +19,7 @@ using Quartz;
 using Serilog;
 using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
+using MetroShip.Repository.Repositories;
 
 namespace MetroShip.Service.Services;
 
@@ -31,7 +32,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
-    private readonly IBaseRepository<Transaction> _transaction = serviceProvider.GetRequiredService<IBaseRepository<Transaction>>();
+    private readonly ITransactionRepository _transaction = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
@@ -247,7 +248,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    // Cancel ScheduleUnpaidJob
+    // cancel ScheduleUnpaidJob
     public async Task CancelScheduledUnpaidJob(string shipmentId)
     {
         _logger.Information("Cancelling scheduled job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
@@ -263,4 +264,22 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
         }
     }
+
+    // cancel apply surcharge job
+    private async Task CancelApplySurchargeJob(string shipmentId)
+    {
+        _logger.Information("Canceling apply surcharge job for shipment ID: {@shipmentId}", shipmentId);
+        var jobKey = new JobKey($"ApplySurchargeJob-{shipmentId}");
+        if (await _schedulerFactory.GetScheduler().Result.CheckExists(jobKey))
+        {
+            await _schedulerFactory.GetScheduler().Result.DeleteJob(jobKey);
+            _logger.Information("Apply surcharge job canceled for shipment ID: {@shipmentId}", shipmentId);
+        }
+        else
+        {
+            _logger.Warning("No apply surcharge job found for shipment ID: {@shipmentId}", shipmentId);
+        }
+    }
+
+    
 }

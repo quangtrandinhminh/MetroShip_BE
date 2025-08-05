@@ -44,7 +44,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private static readonly List<CreateParcelResponse> _parcelCache = new();
 
-    public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
+    /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
         var isBulk = true;
         decimal volume = request.LengthCm * request.WidthCm * request.HeightCm;
@@ -79,14 +79,14 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         };
         _parcelCache.Add(result);
         return result;
-    }
+    }*/
 
-    public decimal CalculateShippingCost(ParcelRequest request, double distanceKm, decimal pricePerKm)
+    /*public decimal CalculateShippingCost(ParcelRequest request, double distanceKm, decimal pricePerKm)
     {
         var parcelInfo = CalculateParcelInfo(request);
         var cost = parcelInfo.ChargeableWeightKg * (decimal)distanceKm * pricePerKm;
         return Math.Round(cost, 0);
-    }
+    }*/
     
     public async Task<PaginatedListResponse<ParcelResponse>> GetAllParcels(PaginatedListRequest request)
     {
@@ -198,14 +198,182 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             // Update shipment status and timestamps
             shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
-            shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
             shipment.PickedUpAt = CoreHelper.SystemTimeNow;
             _shipmentRepository.Update(shipment);
+
+            shipment.ShipmentTrackings.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                Status = $"Đơn hàng đã được nhân viên nhận tại Ga {stationName}",
+                EventTime = shipment.PickedUpAt.Value,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
+            });
         }    
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
 
-        // Kiểm tra trạng thái của tất cả parcel trong shipment
-        //await HandleShipmentStatusByConfirmation(parcel.ShipmentId);
+    // load parcel into train update parcel for shipment InTransit
+    public async Task LoadParcelOnTrainAsync(string parcelCode, string trainId)
+    {
+        _logger.Information("Loading parcel {ParcelCode} on train {Train}", parcelCode, trainId);
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        if (string.IsNullOrEmpty(stationId))
+            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+
+        var parcel = await _parcelRepository.GetAll()
+            .Where(p => p.DeletedAt == null && p.ParcelCode == parcelCode)
+            .Include(p => p.Shipment)
+            .Include(p => p.ParcelTrackings)
+            .FirstOrDefaultAsync();
+
+        if (parcel == null)
+            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+
+        // Only allow update for parcels in PickedUp or WaitingForNextTrain status
+        var shipment = parcel.Shipment;
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.PickedUp
+            && shipment.ShipmentStatus != ShipmentStatusEnum.WaitingForNextTrain
+            )
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "Shipment must be in 'PickedUp' or 'WaitingForNextTrain' status",
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Update parcel status to InTransit
+        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        var parcelTracking = new ParcelTracking
+        {
+            ParcelId = parcel.Id,
+            Status = $"Kiện hàng đã lên tàu tại Ga {stationName}",
+            CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+            TrackingForShipmentStatus = ShipmentStatusEnum.InTransit,
+            StationId = stationId,
+            TrainId = trainId,
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = staffId,
+        };
+        _parcelTrackingRepository.Add(parcelTracking);
+
+        // Check if the shipment is ready for the next status: all parcels confirmed for pickup
+        if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.PickedUp))
+        {
+            // Update shipment status and timestamps
+            shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
+            _shipmentRepository.Update(shipment);
+
+            shipment.ShipmentTrackings.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                Status = $"Đơn hàng đã lên tàu tại Ga {stationName}",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = staffId,
+            });
+        }
+
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    // unload parcel from train and update parcel for shipment WaitForNextTrain Or Stored
+    public async Task UnloadParcelFromTrain(string parcelCode, string trainId)
+    {
+        _logger.Information("Unloading parcel {ParcelCode} from train {Train}", parcelCode, trainId);
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        if (string.IsNullOrEmpty(stationId))
+            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+
+        var parcel = await _parcelRepository.GetAll()
+            .Where(p => p.DeletedAt == null && p.ParcelCode == parcelCode)
+            .Include(p => p.Shipment)
+            .Include(p => p.ParcelTrackings)
+            .FirstOrDefaultAsync();
+
+        if (parcel == null)
+            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+
+        // Only allow update for parcels in shipment status InTransit
+        var shipment = parcel.Shipment;
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.InTransit)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "Shipment must be in 'InTransit' status",
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Update parcel status to InTransit
+        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        if (!stationId.Equals(shipment.DestinationStationId))
+        {
+            var parcelTracking = new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                Status = $"Kiện hàng đã xuống tàu tại Ga {stationName}. Chờ trung chuyển",
+                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                TrackingForShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain,
+                StationId = stationId,
+                TrainId = trainId,
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = staffId,
+            };
+            _parcelTrackingRepository.Add(parcelTracking);
+
+            // Check if the shipment is ready for the next status: all parcels confirmed for pickup
+            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.PickedUp))
+            {
+                // Update shipment status and timestamps
+                shipment.ShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain;
+                _shipmentRepository.Update(shipment);
+
+                shipment.ShipmentTrackings.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Đơn hàng đã xuống tàu tại Ga {stationName}. Chờ trung chuyển",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = staffId,
+                });
+            }
+        }
+        else
+        {
+            // Can update to AwaitingDelivery if wanna a shorter flow
+            var parcelTracking = new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                Status = $"Kiện hàng đã xuống tàu tại trạm đích: Ga {stationName}. Chờ giao hàng",
+                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Stored,
+                StationId = stationId,
+                TrainId = trainId,
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = staffId,
+            };
+            _parcelTrackingRepository.Add(parcelTracking);
+
+            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.Stored))
+            {
+                // Update shipment status and timestamps
+                shipment.ShipmentStatus = ShipmentStatusEnum.Stored;
+                _shipmentRepository.Update(shipment);
+
+                shipment.ShipmentTrackings.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Đơn hàng đã đã xuống tàu tại trạm đích: Ga {stationName}. Chờ giao hàng",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = staffId,
+                });
+            }
+        }
+
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     /*public async Task RejectParcelAsync(ParcelRejectRequest request)

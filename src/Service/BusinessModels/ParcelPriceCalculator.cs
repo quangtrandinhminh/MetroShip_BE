@@ -75,6 +75,28 @@ public static class ParcelPriceCalculator
         return category.InsuranceFeeVnd;
     }
 
+    public static void CalculateOverdueSurcharge(
+               List<Parcel> parcels,
+                      DateTimeOffset fromDateTime,
+                      decimal basePriceVnd
+                      )
+    {
+        foreach (var parcel in parcels)
+        {
+            // Calculate overdue surcharge based on the number of overdue days
+            var overdueDays = (CoreHelper.SystemTimeNow - fromDateTime).Days;
+            if (overdueDays > 0)
+            {
+                // Assuming a flat rate for overdue surcharge calculation
+                parcel.OverdueSurchangeFeeVnd = basePriceVnd * overdueDays;
+            }
+            else
+            {
+                parcel.OverdueSurchangeFeeVnd = 0;
+            }
+        }
+    }
+
     // old from shipment service
     /*private void CalculateParcelPricing(
         List<ParcelRequest> parcels,

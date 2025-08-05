@@ -39,6 +39,7 @@ public enum ShipmentStatusEnum
 
     // Unhappy case
     Delayed,              // parcels delayed at any stage
+    Stored,
 }
 
 /// <summary>

@@ -48,6 +48,8 @@
             public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
             public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
+            public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainId}";
+            public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainId}";
         }
 
         public static class ShipmentEndpoint
@@ -73,7 +75,7 @@
             public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
             public const string GetShipmentById = BaseEndpoint + "/{id}";
-            public const string CancelShipment = BaseEndpoint + "/cancel/{shipmentId}";
+            public const string CancelShipment = BaseEndpoint + "/cancel";
             public const string FeedbackShipment = BaseEndpoint + "/feedback";
             public const string CompleteShipment = BaseEndpoint + "/complete";
         }

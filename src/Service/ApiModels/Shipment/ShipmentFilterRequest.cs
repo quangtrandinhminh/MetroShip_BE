@@ -22,4 +22,5 @@ public sealed record ShipmentFilterRequest
     public string? TimeSlotId { get; init; }
     public string? LineId { get; init; }
     public string? ItineraryIncludeStationId { get; init; }
+    public bool? IsAwaitingNextTrain { get; init; }
 }
