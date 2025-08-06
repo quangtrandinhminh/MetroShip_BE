@@ -299,6 +299,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task StartOrContinueSimulationAsync(string trainId, DirectionEnum direction)
     {
+        // Lấy thông tin tàu cùng toàn bộ tuyến
         var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
             ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
@@ -313,19 +314,56 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var segmentKey = $"{trainId}-SegmentIndex";
         var currentIndex = _cache.TryGetValue(segmentKey, out int existingIndex) ? existingIndex : -1;
 
+        // ❌ Không cho phép chạy nếu tàu đang chạy
+        if (train.Status == TrainStatusEnum.InTransit || train.Status == TrainStatusEnum.Departed)
+            throw new AppException(ErrorCode.BadRequest, "Train is already running", StatusCodes.Status400BadRequest);
+
+        // ✅ Nếu tàu đang ở trạng thái ArrivedAtStation → cập nhật lại vị trí (toStation của leg trước đó)
+        if (train.Status == TrainStatusEnum.ArrivedAtStation && existingIndex >= 0 && existingIndex < routes.Count)
+        {
+            var previousRoute = routes[existingIndex];
+            train.CurrentStationId = previousRoute.ToStationId;
+            train.Latitude = previousRoute.ToStation?.Latitude;
+            train.Longitude = previousRoute.ToStation?.Longitude;
+
+            _trainRepository.Update(train);
+            await _trainRepository.SaveChangesAsync();
+        }
+
+        // ✅ Nếu tàu đã completed → chỉ cho phép bắt đầu lại nếu đang ở cuối line (toStation)
+        if (train.Status == TrainStatusEnum.Completed)
+        {
+            var lastStationId = routes.Last().ToStationId;
+            if (train.CurrentStationId != lastStationId)
+                throw new AppException(ErrorCode.BadRequest, "Train must be at final station to restart", StatusCodes.Status400BadRequest);
+
+            currentIndex = -1; // reset to allow nextIndex = 0
+        }
+
         var nextIndex = currentIndex + 1;
+
+        // Nếu hết tuyến → kết thúc
         if (nextIndex >= routes.Count)
         {
             train.Status = TrainStatusEnum.Completed;
             train.CurrentStationId = routes.Last().ToStationId;
+            train.Latitude = routes.Last().ToStation?.Latitude;
+            train.Longitude = routes.Last().ToStation?.Longitude;
+
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
+
             _cache.Remove(segmentKey);
+            _cache.Remove($"{trainId}-StartTime");
+
+            _logger.Information("🚆 Train {TrainId} has completed its journey.", trainId);
             return;
         }
 
-        // Cập nhật cache và trạng thái
+        // ✅ Bắt đầu leg tiếp theo
+        var nextRoute = routes[nextIndex];
         _cache.Set(segmentKey, nextIndex, TimeSpan.FromHours(1));
+        _cache.Set($"{trainId}-StartTime", DateTimeOffset.UtcNow, TimeSpan.FromHours(1));
 
         train.Status = TrainStatusEnum.Departed;
         train.CurrentStationId = null;
@@ -333,10 +371,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // Cache start time cho tracking leg
-        _cache.Set($"{trainId}-StartTime", DateTimeOffset.UtcNow, TimeSpan.FromHours(1));
-
-        _logger.Information("🚆 Train {TrainId} started at leg index {Index}", trainId, nextIndex);
+        _logger.Information("🚆 Train {TrainId} started leg {Leg} from {From} to {To}",
+            trainId, nextIndex + 1, nextRoute.FromStation.StationNameVi, nextRoute.ToStation.StationNameVi);
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
@@ -485,7 +521,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             Path = path
         };
 
-        _cache.Set(trainId, result, TimeSpan.FromSeconds(5));
+        _cache.Set(trainId, result, TimeSpan.FromSeconds(1));
         return result;
     }
 
