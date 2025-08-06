@@ -70,7 +70,7 @@
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
             public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
-            public const string UnloadingAtStation = BaseEndpoint + "/staff/update-unloadin"; 
+            public const string UnloadingAtStation = BaseEndpoint + "/staff/update-unloading"; 
             public const string StorageInWarehouse = BaseEndpoint + "/staff/update-storage";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
             public const string GetShipmentById = BaseEndpoint + "/{id}";

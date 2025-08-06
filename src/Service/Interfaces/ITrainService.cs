@@ -22,6 +22,6 @@ public interface ITrainService
 
     Task<TrainPositionResult> GetTrainPositionAsync(string trainId);
     Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode);
-    Task StartOrContinueSimulationAsync(string trainId, DirectionEnum direction);
+    Task StartOrContinueSimulationAsync(string trainId);
     Task ConfirmTrainArrivedAsync(string trainId, string stationId);
 }
