@@ -468,9 +468,18 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
-        // ❌ Không cập nhật status tàu nữa
-        // Chỉ cập nhật vị trí (lat, lng) nếu cần
+        // ✅ Chỉ cập nhật giữa Departed và InTransit, không đánh dấu complete hay arrived
+        train.Status = progress < 0.1
+            ? TrainStatusEnum.Departed
+            : TrainStatusEnum.InTransit;
 
+        train.Latitude = lat;
+        train.Longitude = lng;
+
+        _trainRepository.Update(train);
+        await _trainRepository.SaveChangesAsync();
+
+        // ✅ Tạo path animation (current leg only)
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
@@ -489,7 +498,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // ✅ Trả full tuyến đường (route path)
+        // ✅ Tạo toàn bộ tuyến đường route (routePath)
         var routePath = routes.Select(r => new
         {
             FromStation = new
@@ -508,6 +517,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             r.Direction
         }).ToList();
 
+        // ✅ Trả kết quả vị trí tàu
         var result = new TrainPositionResult
         {
             TrainId = trainId,
@@ -530,6 +540,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _cache.Set(trainId, result, TimeSpan.FromSeconds(1));
         return result;
     }
+
     public async Task ConfirmTrainArrivedAsync(string trainId, string stationId)
     {
         // Lấy toàn bộ thông tin tuyến (bao gồm tất cả direction)
@@ -580,6 +591,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
+
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
     {
         var forwardRoutes = train.Line!.Routes!.Where(r => r.Direction == DirectionEnum.Forward).ToList();
