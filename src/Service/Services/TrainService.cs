@@ -476,11 +476,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (_cache.TryGetValue<TrainPositionResult>(trainId, out var cachedPosition))
             return cachedPosition!;
 
-        // ✅ Lấy direction từ cache (giống simulation)
+        // ✅ Lấy direction từ cache
         var directionKey = $"{trainId}-Direction";
         if (!_cache.TryGetValue(directionKey, out DirectionEnum direction))
             throw new AppException(ErrorCode.BadRequest, "Train direction not initialized. Call StartOrContinueSimulationAsync first.", StatusCodes.Status400BadRequest);
 
+        // ✅ Lấy thông tin tàu và các tuyến theo direction
         var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
             ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
@@ -496,7 +497,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (!_cache.TryGetValue(segmentKey, out int currentIndex))
             throw new AppException(ErrorCode.BadRequest, "Train segment not initialized. Call StartOrContinueSimulationAsync.", StatusCodes.Status400BadRequest);
 
-        // ✅ Check index valid
         if (currentIndex < 0 || currentIndex >= routes.Count)
             throw new AppException(ErrorCode.BadRequest, "Train segment index out of range.", StatusCodes.Status400BadRequest);
 
@@ -520,6 +520,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
+        // ✅ Cập nhật trạng thái và vị trí
         train.Status = progress < 0.1
             ? TrainStatusEnum.Departed
             : TrainStatusEnum.InTransit;
@@ -530,7 +531,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // Tạo path animation
+        // ✅ Path animation
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
@@ -549,7 +550,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // Tạo toàn bộ tuyến đường
+        // ✅ Tuyến đường toàn bộ
         var routePath = routes.Select(r => new
         {
             FromStation = new
@@ -568,7 +569,44 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             r.Direction
         }).ToList();
 
-        // Trả kết quả
+        // ✅ Lấy shipment đang nằm trên tàu (status == LoadOnToMetro)
+        var allShipments = await _trainRepository.GetShipmentsByTrainAsync(trainId);
+        var loadedShipments = allShipments
+            .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
+            .ToList();
+
+        var shipmentSummaries = loadedShipments.Select(s => new
+        {
+            ShipmentId = s.Id,
+            TrackingCode = s.TrackingCode,
+            DestinationStation = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown",
+            DestinationStationId = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault()?.Route?.ToStationId,
+            CurrentStatus = s.ShipmentStatus.ToString()
+        }).ToList();
+
+        var parcelSummaries = loadedShipments
+        .SelectMany(s => s.Parcels.Select(p => new
+        {
+            ParcelId = p.Id,
+            ParcelCode = p.ParcelCode,
+            Description = p.Description,
+            Weight = p.WeightKg,
+            Volume = p.VolumeCm3,
+            ShipmentId = p.ShipmentId,
+            DestinationStationId = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault()?.Route?.ToStationId ?? "Unknown",
+            DestinationStation = s.ShipmentItineraries
+                .OrderBy(i => i.LegOrder)
+                .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown"
+        }))
+        .ToList();
+
+        // ✅ Kết quả vị trí tàu
         var result = new TrainPositionResult
         {
             TrainId = trainId,
@@ -584,7 +622,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             Path = path,
             AdditionalData = new
             {
-                RoutePath = routePath
+                RoutePath = routePath,
+                Shipments = shipmentSummaries,
+                Parcels = parcelSummaries 
             }
         };
 
