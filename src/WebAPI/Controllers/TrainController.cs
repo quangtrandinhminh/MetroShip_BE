@@ -112,5 +112,12 @@ namespace MetroShip.WebAPI.Controllers
             await _trainService.StartOrContinueSimulationAsync(trainId,direction);
             return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
         }
+
+        [HttpPost("/api/train/{trainId}/confirm-arrival")]
+        public async Task<IActionResult> ConfirmTrainArrived(string trainId, [FromQuery] string stationId)
+        {
+            await _trainService.ConfirmTrainArrivedAsync(trainId, stationId);
+            return Ok(BaseResponse.OkResponseDto("Train arrival confirmed successfully", null));
+        }
     }
 }

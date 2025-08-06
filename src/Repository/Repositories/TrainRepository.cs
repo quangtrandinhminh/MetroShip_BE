@@ -94,4 +94,17 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             .AsSplitQuery()
             .FirstOrDefaultAsync();
     }
+    public async Task<MetroTrain?> GetTrainWithAllRoutesAsync(string trainId)
+    {
+        return await _context.MetroTrains
+            .Where(t => t.Id == trainId)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes)
+                    .ThenInclude(route => route.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes)
+                    .ThenInclude(route => route.ToStation)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
+    }
 }

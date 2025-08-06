@@ -15,4 +15,5 @@ public interface ITrainRepository : IBaseRepository<MetroTrain>
     Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateOnly date,
         string timeSlotId, DirectionEnum direction);
     Task<MetroTrain?> GetTrainWithRoutesAsync(string trainId, DirectionEnum direction);
+    Task<MetroTrain?> GetTrainWithAllRoutesAsync(string trainId);
 }

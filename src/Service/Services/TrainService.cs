@@ -468,25 +468,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
-        if (progress >= 1 || GeoUtils.Haversine(lat, lng, to.Latitude!.Value, to.Longitude!.Value) < 0.05)
-        {
-            train.Status = currentIndex + 1 >= routes.Count
-                ? TrainStatusEnum.Completed
-                : TrainStatusEnum.ArrivedAtStation;
-
-            train.CurrentStationId = to.Id;
-            _trainRepository.Update(train);
-            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-
-            // Chờ gọi lại StartOrContinueSimulationAsync để sang leg tiếp theo
-            _cache.Remove(startTimeKey);
-        }
-        else
-        {
-            train.Status = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
-            _trainRepository.Update(train);
-            await _trainRepository.SaveChangesAsync();
-        }
+        // ❌ Không cập nhật status tàu nữa
+        // Chỉ cập nhật vị trí (lat, lng) nếu cần
 
         var path = new List<GeoPoint>();
         const int steps = 10;
@@ -506,6 +489,25 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
+        // ✅ Trả full tuyến đường (route path)
+        var routePath = routes.Select(r => new
+        {
+            FromStation = new
+            {
+                r.FromStation.StationNameVi,
+                r.FromStation.Latitude,
+                r.FromStation.Longitude
+            },
+            ToStation = new
+            {
+                r.ToStation.StationNameVi,
+                r.ToStation.Latitude,
+                r.ToStation.Longitude
+            },
+            r.SeqOrder,
+            r.Direction
+        }).ToList();
+
         var result = new TrainPositionResult
         {
             TrainId = trainId,
@@ -518,13 +520,83 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             FromStation = from.StationNameVi,
             ToStation = to.StationNameVi,
             Status = train.Status.ToString(),
-            Path = path
+            Path = path,
+            AdditionalData = new
+            {
+                RoutePath = routePath
+            }
         };
 
         _cache.Set(trainId, result, TimeSpan.FromSeconds(1));
         return result;
     }
+    public async Task ConfirmTrainArrivedAsync(string trainId, string stationId)
+    {
+        // Lấy toàn bộ thông tin tuyến (bao gồm tất cả direction)
+        var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
+            ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
+        if (train.Line == null || train.Line.Routes == null || !train.Line.Routes.Any())
+            throw new AppException(ErrorCode.NotFound, "No route information found for this train's line", StatusCodes.Status404NotFound);
+
+        // Kiểm tra trạm có thuộc tuyến không
+        var allStationIds = train.Line.Routes
+            .SelectMany(r => new[] { r.FromStationId, r.ToStationId })
+            .Where(id => id != null)
+            .Distinct()
+            .ToList();
+
+        if (!allStationIds.Contains(stationId))
+            throw new AppException(ErrorCode.BadRequest, "Station does not belong to this train's line", StatusCodes.Status400BadRequest);
+
+        // Lấy tất cả các tuyến theo direction hiện tại của tàu
+        var currentDirection = InferTrainDirectionFromCurrentStation(train, stationId);
+
+        var directionRoutes = train.Line.Routes
+            .Where(r => r.Direction == currentDirection)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (directionRoutes.Count == 0)
+            throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
+
+        // Lấy toStationId cuối cùng
+        var lastStationId = directionRoutes.Last().ToStationId;
+
+        // So sánh để xác định trạng thái
+        if (stationId == lastStationId)
+        {
+            train.Status = TrainStatusEnum.Completed;
+            _logger.Information("✅ Train {TrainId} completed its journey at station {StationId}", trainId, stationId);
+        }
+        else
+        {
+            train.Status = TrainStatusEnum.ArrivedAtStation;
+            _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
+        }
+
+        train.CurrentStationId = stationId;
+
+        _trainRepository.Update(train);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+    private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
+    {
+        var forwardRoutes = train.Line!.Routes!.Where(r => r.Direction == DirectionEnum.Forward).ToList();
+        var backwardRoutes = train.Line.Routes.Where(r => r.Direction == DirectionEnum.Backward).ToList();
+
+        var isForward = forwardRoutes.Any(r => r.ToStationId == stationId || r.FromStationId == stationId);
+        var isBackward = backwardRoutes.Any(r => r.ToStationId == stationId || r.FromStationId == stationId);
+
+        if (isForward && !isBackward)
+            return DirectionEnum.Forward;
+
+        if (isBackward && !isForward)
+            return DirectionEnum.Backward;
+
+        // Ưu tiên Forward nếu không xác định được rõ ràng
+        return DirectionEnum.Forward;
+    }
     public async Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode)
     {
         var shipment = await _trainRepository.GetShipmentWithTrainAsync(trackingCode);
