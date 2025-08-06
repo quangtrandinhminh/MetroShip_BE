@@ -48,8 +48,9 @@
             public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
             public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
-            public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainId}";
-            public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainId}";
+            public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainCode}";
+            public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainCode}";
+            public const string UpdateParcelStatusToAwaitingDelivery = BaseEndpoint + "/staff/awaiting-delivery/{parcelCode}";
         }
 
         public static class ShipmentEndpoint

@@ -16,7 +16,8 @@ namespace MetroShip.Service.Interfaces
         Task<ParcelResponse?> GetParcelByParcelCodeAsync(string parcelCode);
         Task ConfirmParcelAsync(ParcelConfirmRequest request);
         //Task RejectParcelAsync(ParcelRejectRequest request);
-        Task LoadParcelOnTrainAsync(string parcelCode, string trainId);
-        Task UnloadParcelFromTrain(string parcelCode, string trainId);
+        Task LoadParcelOnTrainAsync(string parcelCode, string trainCode);
+        Task UnloadParcelFromTrain(string parcelCode, string trainCode);
+        Task UpdateParcelForAwaitingDeliveryAsync(string parcelCode);
     }
 }

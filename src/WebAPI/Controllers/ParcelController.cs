@@ -93,18 +93,27 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPost(WebApiEndpoint.ParcelEndpoint.LoadParcelOnTrain)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainId)
+        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainCode)
         {
-            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainId);
-            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainId} successfully.", null));
+            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainCode} successfully.", null));
         }
 
         [HttpPost(WebApiEndpoint.ParcelEndpoint.UnloadParcelFromTrain)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainId)
+        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainCode)
         {
-            await _parcelService.UnloadParcelFromTrain(parcelCode, trainId);
-            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainId} successfully.", null));
+            await _parcelService.UnloadParcelFromTrain(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainCode} successfully.", null));
+        }
+
+        // update to awaiting delivery
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UpdateParcelStatusToAwaitingDelivery)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UpdateParcelStatusToAwaitingDeliveryAsync([FromRoute] string parcelCode)
+        {
+            await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
         }
     }
 }

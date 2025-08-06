@@ -65,21 +65,27 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         {
             Id = s.Id,
             TrackingCode = s.TrackingCode,
-            DepartureStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .FirstOrDefault().Route.FromStation.StationNameVi,
+            DestinationStationName = _context.Stations
+                .Where(station => station.Id == s.DestinationStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            DestinationStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi,
+            DepartureStationName = _context.Stations
+                .Where(station => station.Id == s.DepartureStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            CurrentStationName = s.ShipmentItineraries
+            CurrentStationName = _context.Stations
+                .Where(station => station.Id == s.CurrentStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault() /*??
+            s.ShipmentItineraries
                                      .Where(i => i.IsCompleted)
                                      .OrderBy(i => i.LegOrder)
                                      .LastOrDefault().Route.ToStation.StationNameVi ??
                                  s.ShipmentItineraries
                                      .OrderBy(i => i.LegOrder)
-                                     .FirstOrDefault().Route.FromStation.StationNameVi,
+                                     .FirstOrDefault().Route.FromStation.StationNameVi*/,
 
             SenderName = s.SenderName,
             SenderPhone = s.SenderPhone,
@@ -188,21 +194,27 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             FeedbackResponseBy = s.FeedbackResponseBy,
 
             // Station tracking
-            DepartureStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .FirstOrDefault().Route.FromStation.StationNameVi,
+            DestinationStationName = _context.Stations
+                .Where(station => station.Id == s.DestinationStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            DestinationStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi,
+            DepartureStationName = _context.Stations
+                .Where(station => station.Id == s.DepartureStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            CurrentStationName = s.ShipmentItineraries
+            CurrentStationName = _context.Stations
+                .Where(station => station.Id == s.CurrentStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault() /*??
+            s.ShipmentItineraries
                                      .Where(i => i.IsCompleted)
                                      .OrderBy(i => i.LegOrder)
                                      .LastOrDefault().Route.ToStation.StationNameVi ??
                                  s.ShipmentItineraries
                                      .OrderBy(i => i.LegOrder)
-                                     .FirstOrDefault().Route.FromStation.StationNameVi,
+                                     .FirstOrDefault().Route.FromStation.StationNameVi*/,
 
             ShipmentItineraries = s.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
@@ -251,7 +263,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
                     IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
                 },
-            }).ToList(),
+            }).OrderBy(p => p.ParcelCode).ToList(),
 
             ShipmentMedias = s.ShipmentMedias.Select(media => new ShipmentMedia
             {
@@ -273,7 +285,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 UpdatedBy = tracking.UpdatedBy,
                 EventTime = tracking.EventTime,
                 Note = tracking.Note,
-            }).ToList(),
+            }).OrderByDescending(st => st.EventTime).ToList(),
             //Transactions = shipment.Transactions.ToList(),
         }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
 

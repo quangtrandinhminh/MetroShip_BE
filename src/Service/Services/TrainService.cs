@@ -259,7 +259,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                   si.TrainId == null && // Only consider itineraries not yet assigned to a train
                   (si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff ||
                     si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment ||
-                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit )
+                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.PickedUp)
                   )
             .ToListAsync();
 
