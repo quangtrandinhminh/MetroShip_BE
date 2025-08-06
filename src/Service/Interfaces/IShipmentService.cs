@@ -28,6 +28,6 @@ public interface IShipmentService
 
     Task CompleteShipment(ShipmentPickUpRequest request);
     Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
-    Task<UpdateShipmentStatusResponse> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId);
+    Task<UpdateShipmentStatusResponse> UpdateShipmentStatusAsync(UpdateShipmentStatusRequest request, ShipmentStatusEnum targetStatus, string staffId);
     Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId);
 }
