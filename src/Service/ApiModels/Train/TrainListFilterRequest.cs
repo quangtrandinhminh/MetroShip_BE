@@ -5,11 +5,13 @@ namespace MetroShip.Service.ApiModels.Train;
 
 public sealed record TrainListFilterRequest : PaginatedListRequest
 {
+    public string? StationId { get; set; }
+
     public string? LineId { get; set; }
 
     public string? TimeSlotId { get; set; }
 
-    public DateTimeOffset? Date { get; set; }
+    public DateOnly? Date { get; set; }
 
     public string? ModelName { get; set; }
 

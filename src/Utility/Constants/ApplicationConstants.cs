@@ -140,6 +140,8 @@
         public const string SHIPMENT_STATUS_INVALID = "Shipment status is invalid.";
         public const string SHIPMENT_STATUS_NOT_FOUND = "Shipment status not found.";
         public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
+        public const string START_RECEIVE_AT_REQUIRED = "Start receive time is required.";
+        public const string START_RECEIVE_AT_INVALID = "Start receive time must be before the scheduledDateTime";
         public const string SHIPMENT_DATE_REQUIRED = "ScheduledDateTime is required.";
         public const string DEPARTURE_STATION_ID_REQUIRED = "Departure station ID is required.";
         public const string DEPARTURE_STATION_ID_INVALID = "Departure station ID is invalid.";
@@ -155,6 +157,7 @@
         public const string SHIFT_INVALID = "Shift is invalid.";
         public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment must be in 'AwaitingDropoff' status to confirm. " +
             "Please check the shipment status before confirming.";
+        public const string SHIPMENT_CANNOT_CANCEL = "Shipment must be in 'AwaitingDropoff' or 'AwaitingPayment' status to cancel.";
         public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
             "Please schedule the itinerary before confirming the shipment.";
         public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
@@ -169,6 +172,15 @@
         public const string PICKED_UP_SUCCESS = "Shipment picked up successfully.";
         public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
         public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
+        public const string CANCELLED_SUCCESS = "Shipment canceled successfully.";
+        public const string SHIPMENT_NOT_COMPLETED = "Shipment has not been completed yet.";
+        public const string FEEDBACK_TEXT_TOO_LONG = "Feedback text cannot exceed 500 characters.";
+        public const string RATING_INVALID = "Rating must be between 1 and 5.";
+        public const string SHIPMENT_ID_REQUIRED = "Shipment ID is required.";
+        public const string SHIPMENT_ID_INVALID = "Shipment ID is invalid.";
+        public const string FEEDBACK_SUCCESS = "Feedback submitted successfully.";
+        public const string COMPLETED_SUCCESS = "Shipment completed successfully.";
+        public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Shipment is not in 'Stored', 'AwaitingDelivery' or 'ApplyingSurcharge' status.";
     }
 
     public class ResponseMessageItinerary
@@ -252,7 +264,7 @@
         public const string DATE_REQUIRED = "Date is required.";
         public const string LINE_ID_INVALID = "Line ID is invalid.";
         public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
-        public const string DATE_INVALID = "Date is invalid.";
+        public const string DATE_INVALID = "Date is invalid. Format: yyyy-mm-dd";
         public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
         public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
         public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";

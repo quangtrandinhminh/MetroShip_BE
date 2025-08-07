@@ -19,9 +19,16 @@ public interface IShipmentService
     //Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(ShipmentAvailableTimeSlotsRequest request);
 
     //Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(string shipmentId, int maxAttempt);
-
+    Task UpdateShipmentStatusNoDropOff(string shipmentId);
+    Task ScheduleUpdateNoDropOffJob(string shipmentId, DateTimeOffset scheduledDateTime);
+    Task CancelUpdateNoDropOffJob(string shipmentId);
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
+    Task CancelShipment(ShipmentRejectRequest request);
+    Task FeedbackShipment(ShipmentFeedbackRequest request);
+    Task UpdateShipmentStatusUnpaid(string shipmentId);
+    Task ApplySurchargeForShipment(string shipmentId);
+    Task CompleteShipment(ShipmentPickUpRequest request);
     Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
     Task<UpdateShipmentStatusResponse> UpdateShipmentStatusByStationAsync(UpdateShipmentStatusRequest request, string staffId);
     Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId);

@@ -31,5 +31,12 @@ namespace MetroShip.WebAPI.Controllers
             var result = await _transactionService.GetAllAsync(status, request);
             return Ok(BaseResponse.OkResponseDto(result, _transactionEnumResponse));
         }
+
+        [HttpGet(WebApiEndpoint.TransactionEndpoint.GetTransactionType)]
+        public ActionResult<IList<EnumResponse>> GetTransactionType()
+        {
+            var transactionTypes = EnumHelper.GetEnumList<TransactionTypeEnum>();
+            return Ok(BaseResponse.OkResponseDto(transactionTypes));
+        }
     }
 }

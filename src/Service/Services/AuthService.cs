@@ -121,6 +121,7 @@ namespace MetroShip.Service.Services
 
                 if (count > 0)
                 {
+                    _logger.Information("Scheduling to send email to user {@email}", account.Email);
                     var mailRequest = new SendMailModel()
                     {
                         Name = account.NormalizedUserName,
@@ -128,7 +129,8 @@ namespace MetroShip.Service.Services
                         Token = account.OTP,
                         Type = MailTypeEnum.Verify
                     };
-                    _emailService.SendMail(mailRequest);
+                    //_emailService.SendMail(mailRequest);
+                    _emailService.ScheduleEmailJob(mailRequest);
                 }
             }
             catch (Exception e)
@@ -296,7 +298,8 @@ namespace MetroShip.Service.Services
                 Token = account.OTP,
                 Type = MailTypeEnum.ResetPassword
             };
-            _emailService.SendMail(mailRequest);
+            //_emailService.SendMail(mailRequest);
+            _emailService.ScheduleEmailJob(mailRequest);
         }
 
         /// <summary>
@@ -311,7 +314,8 @@ namespace MetroShip.Service.Services
             _logger.Information("Reset password: {@dto}", dto);
             var account = await GetUserByUserName(dto.UserName);
 
-            if (account == null) throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
+            if (account == null) 
+                throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
 
             if (account.OTP != dto.OTP)
             {
@@ -363,7 +367,8 @@ namespace MetroShip.Service.Services
                 Token = account.OTP,
                 Type = MailTypeEnum.Verify
             };
-            _emailService.SendMail(mailRequest);
+            //_emailService.SendMail(mailRequest);
+            _emailService.ScheduleEmailJob(mailRequest);
         }
 
         private async Task<string> GenerateJwtToken(UserEntity loggedUser, IList<string> roles, int hour)

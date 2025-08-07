@@ -56,6 +56,11 @@ public partial class Shipment : BaseEntity
     [NotMapped]
     public string? CurrentStationAddress { get; set; } // Optional, if not provided
 
+    // If staff load shipment to train, update this field
+    // If staff unload shipment from train, update this field to null
+    [StringLength(50)]
+    public string? CurrentTrainId { get; set; } 
+
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
@@ -79,11 +84,12 @@ public partial class Shipment : BaseEntity
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? TotalWeightKg { get; set; } = 0;
 
-    [Column(TypeName = "decimal(10, 2)")]
+    [Column(TypeName = "decimal(10, 6)")]
     public decimal? TotalVolumeM3 { get; set; } = 0;
 
     [StringLength(50)]
     public string? TimeSlotId { get; set; }
+    public DateTimeOffset? StartReceiveAt { get; set; }
     public DateTimeOffset? ScheduledDateTime { get; set; } 
     public ShiftEnum? ScheduledShift { get; set; }
 
@@ -93,14 +99,9 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? BookedAt { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }
     public DateTimeOffset? RejectedAt { get; set; }
-    public string? RejectionReason { get; set; } // Reason for rejection, if applicable
-    public string? RejectedBy { get; set; } // User who rejected the shipment   
-    public string? ConfirmedBy { get; set; }
-
     public DateTimeOffset? PaymentDealine { get; set; } // Deadline for payment, if applicable
     public DateTimeOffset? PaidAt { get; set; }
     public DateTimeOffset? PickedUpAt { get; set; }
-    public string? PickedUpBy { get; set; } // User who picked up the shipment
     public DateTimeOffset? AwaitedDeliveryAt { get; set; }
     public DateTimeOffset? DeliveredAt { get; set; }
     public DateTimeOffset? SurchargeAppliedAt { get; set; }
@@ -108,11 +109,19 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? RefundedAt { get; set; }
     public DateTimeOffset? ReturnRequestedAt { get; set; }
     public DateTimeOffset? ReturnConfirmedAt { get; set; }
-    public string? ReturnReason { get; set; } // Reason for return, if applicable
-    public string? ReturnConfirmedBy { get; set; }
     public DateTimeOffset? ReturnPickupAt { get; set; }
     public DateTimeOffset? ReturnDeliveredAt { get; set; }
     public DateTimeOffset? ReturnCancelledAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; } // When the shipment is fully completed
+    public string? RejectionReason { get; set; } // Reason for rejection, if applicable
+
+    public string? RejectedBy { get; set; } // User who rejected the shipment   
+    public string? ConfirmedBy { get; set; }
+    public string? PickedUpBy { get; set; } // User who picked up the shipment
+    public string? ReturnReason { get; set; } // Reason for return, if applicable
+    public string? ReturnConfirmedBy { get; set; }
+    public string? CompleteBy { get; set; } // User who completed the shipment
+    
 
     // Customer fields
     [Required]
@@ -144,10 +153,19 @@ public partial class Shipment : BaseEntity
     [StringLength(20)]
     public string? RecipientNationalId { get; set; }
 
+    // Feedback fields
     public byte? Rating { get; set; } // Rating given by the customer, if applicable
 
     [StringLength(500)]
     public string? Feedback { get; set; } // Feedback or comments from the customer
+    public DateTimeOffset? FeedbackAt { get; set; } // When the feedback was given
+
+    [StringLength(500)]
+    public string? FeedbackResponse { get; set; } // Response to the feedback, if applicable
+
+    [StringLength(50)]
+    public string? FeedbackResponseBy { get; set; } // User who responded to the feedback
+    public DateTimeOffset? FeedbackRespondedAt { get; set; } // When the feedback was responded to
 
     [ForeignKey(nameof(SenderId))]
     [InverseProperty(nameof(UserEntity.Shipments))]
@@ -174,4 +192,7 @@ public partial class Shipment : BaseEntity
     [ForeignKey(nameof(PricingConfigId))]
     [InverseProperty(nameof(PricingConfig.Shipments))]
     public virtual PricingConfig? PricingConfig { get; set; }
+
+    [InverseProperty(nameof(ShipmentTracking.Shipment))]
+    public virtual ICollection<ShipmentTracking> ShipmentTrackings { get; set; } = new List<ShipmentTracking>();
 }

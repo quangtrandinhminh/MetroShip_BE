@@ -14,6 +14,10 @@ using MetroShip.Repository.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using QRCoder;
 using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Jobs;
+using Quartz;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace MetroShip.Service.Services
 {
@@ -29,6 +33,8 @@ namespace MetroShip.Service.Services
         private ILogger _logger = Log.Logger;
         private readonly ISystemConfigRepository _systemConfigRepository = 
             serviceProvider.GetRequiredService<ISystemConfigRepository>();
+        private readonly ISchedulerFactory _schedulerFactory =
+            serviceProvider.GetRequiredService<ISchedulerFactory>();
 
         public void SendMail(SendMailModel model)
         {
@@ -53,6 +59,37 @@ namespace MetroShip.Service.Services
                 default:
                     break;
             }
+        }
+
+        public async Task ScheduleEmailJob(SendMailModel emailData)
+        {
+            var scheduler = await _schedulerFactory.GetScheduler();
+            var jobKey = new JobKey($"send-email-{Guid.NewGuid()}", "email-group");
+
+            // Use System.Text.Json with reference handling
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                WriteIndented = false
+            };
+
+            var sendMailModelJson = System.Text.Json.JsonSerializer.Serialize(emailData, options);
+
+            // Create a job detail with the email data
+            var jobDetail = JobBuilder.Create<SendEmailJob>()
+                .WithIdentity(jobKey)
+                .UsingJobData("emailDataJson", sendMailModelJson)
+                .Build();
+
+            // Create a trigger to run the job after 2 second
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"trigger-{jobKey.Name}", "email-group")
+                .StartNow()
+                .Build();
+
+            await scheduler.ScheduleJob(jobDetail, trigger);
+
+            _logger.Information("Scheduled email job for: {Email}", emailData.Email);
         }
 
         private void CreateVerifyMail(SendMailModel model)
@@ -211,22 +248,25 @@ namespace MetroShip.Service.Services
             sb.AppendLine($"<tr><td><strong>Người nhận:</strong></td><td>{shipment.RecipientName}</td></tr>");
             sb.AppendLine($"<tr><td><strong>SĐT người nhận:</strong></td><td>{shipment.RecipientPhone}</td></tr>");
             sb.AppendLine($"<tr><td><strong>Trạm gửi: </strong></td><td>Ga {shipment.DepartureStationName}</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm gửi:</strong></td><td>Ga {shipment.DepartureStationAddress}</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Trạm nhận: Ga </strong></td><td>Ga {shipment.DestinationStationName}</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm nhận:</strong></td><td>Ga {shipment.DestinationStationAddress}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm gửi:</strong></td><td>{shipment.DepartureStationAddress}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Trạm nhận: </strong></td><td>Ga {shipment.DestinationStationName}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Địa chỉ trạm nhận:</strong></td><td>{shipment.DestinationStationAddress}</td></tr>");
 
+            if (shipment.StartReceiveAt.HasValue)
+            {
+                sb.AppendLine($"<tr><td><strong>Giờ bắt đầu nhận hàng tại trạm gửi:</strong></td><td>{shipment.StartReceiveAt.Value:dd/MM/yyyy HH:mm}</td></tr>");
+            }
             if (shipment.ScheduledDateTime.HasValue)
             {
                 sb.AppendLine($"<tr><td><strong>Hạn chót gửi hàng tại trạm gửi:</strong></td><td>{shipment.ScheduledDateTime.Value:dd/MM/yyyy HH:mm}</td></tr>");
             }
 
             sb.AppendLine($"<tr><td><strong>Tổng phí vận chuyển:</strong></td><td>{shipment.TotalShippingFeeVnd:N0} VNĐ</td></tr>");
-            sb.AppendLine($"<tr><td><strong>Tổng khoảng cách:</strong></td><td>{shipment.TotalKm:N2} km</td></tr>");
-
-            if (shipment.TotalInsuranceFeeVnd.HasValue && shipment.TotalInsuranceFeeVnd > 0)
+            if (shipment.TotalInsuranceFeeVnd.HasValue && shipment.TotalInsuranceFeeVnd.Value > 0)
             {
-                sb.AppendLine($"<tr><td><strong>Phí bảo hiểm:</strong></td><td>{shipment.TotalInsuranceFeeVnd:N0} VNĐ</td></tr>");
+                sb.AppendLine($"<tr><td><strong>Tổng phí bảo hiểm:</strong></td><td>{shipment.TotalInsuranceFeeVnd:N0} VNĐ</td></tr>");
             }
+            sb.AppendLine($"<tr><td><strong>Tổng khoảng cách:</strong></td><td>{shipment.TotalKm:N2} km</td></tr>");
 
             sb.AppendLine($"<tr><td><strong>Tổng cước:</strong></td><td>{shipment.TotalCostVnd:N0} VNĐ</td></tr>");
             sb.AppendLine($"</table>");

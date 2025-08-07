@@ -9,6 +9,7 @@ using MetroShip.Utility.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using System.Linq.Expressions;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.BusinessModels;
@@ -21,8 +22,9 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using MetroShip.Service.ApiModels.Graph;
-using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.Jobs;
 using Microsoft.Extensions.Caching.Memory;
+using Quartz;
 
 namespace MetroShip.Service.Services;
 
@@ -41,8 +43,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
     private readonly IBaseRepository<MetroTimeSlot> _metroTimeSlotRepository = serviceProvider.GetRequiredService<IBaseRepository<MetroTimeSlot>>();
     private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
-    private readonly IRouteRepository _routeRepository = serviceProvider.GetRequiredService<IRouteRepository>();
+    private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
+    private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly IBaseRepository<ShipmentMedia> _shipmentMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentMedia>>();
+    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+    private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
+    private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
+    private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -59,10 +67,21 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         Expression<Func<Shipment, object>>? orderByExpression = BuildShipmentOrderByExpression(orderByRequest,
             out bool? IsDesc);
 
-        var shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
-            request.PageNumber, request.PageSize,
-            filterExpression, orderByExpression, IsDesc
+        PaginatedList<Shipment> shipments;
+        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        {
+            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
+                               request.PageNumber, request.PageSize, filterRequest.ItineraryIncludeStationId,
+                                              filterExpression, orderByExpression, IsDesc);
+        }
+        else
+        {
+            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+                request.PageNumber, request.PageSize,
+                filterExpression, orderByExpression, IsDesc
             );
+        }
 
         var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
 
@@ -83,6 +102,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         var shipmentResponse = _mapperlyMapper.MapToShipmentDetailsResponse(shipment);
+        InitializeGraphAsync().Wait();
+        shipmentResponse.ItineraryGraph = _metroGraph.CreateItineraryGraphResponses(
+            shipmentResponse.ShipmentItineraries.Select(x => x.RouteId).ToList(),
+            _mapperlyMapper);
         return shipmentResponse;
     }
 
@@ -109,6 +132,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return shipmentListResponse;
     }
 
+    // from customer, no need tracking parcel
     public async Task<(string, string)> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
@@ -156,7 +180,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Check if all routes exist
         var routeIds = request.ShipmentItineraries.Select(x => x.RouteId).Distinct().ToList();
-        var routes = await _routeRepository.IsExistAsync(
+        var routes = await _routeStationRepository.IsExistAsync(
                        x => routeIds.Contains(x.Id) && x.DeletedAt == null);
         if (!routes)
         {
@@ -183,14 +207,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
             StatusCodes.Status404NotFound);
         };
+
+        // set scheduled date time and time slot for the first itinerary
         shipment.ScheduledShift = timeSlot.Shift;
         firstItinerary.TimeSlotId = shipment.TimeSlotId;
-        firstItinerary.Date = shipment.ScheduledDateTime.Value;
+        var scheduledSystemTime = request.ScheduledDateTime.UtcToSystemTime();
+        var startReceiveAtSystemTime = request.StartReceiveAt?.UtcToSystemTime() ?? null;
+        firstItinerary.Date = new DateOnly(scheduledSystemTime.Year,
+            scheduledSystemTime.Month, scheduledSystemTime.Day);
 
         // generate shipment tracking code
-        var systemTime = request.ScheduledDateTime.UtcToSystemTime();
         shipment.TrackingCode = TrackingCodeGenerator.GenerateShipmentTrackingCode(
-            departureStation.Region.RegionCode, systemTime);
+            departureStation.Region.RegionCode, scheduledSystemTime);
 
         // foreach parcel, set shipment id and generate parcel code
         int index = 0;
@@ -216,45 +244,57 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.PricingConfigId = pricingTable.Id;
         shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
+        await ScheduleUnpaidJob(shipment.Id, shipment.PaymentDealine.Value);
+
+        shipment.ShipmentTrackings.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.AwaitingPayment,
+            Status = $"Đơn hàng đã được đặt với mã vận đơn {shipment.TrackingCode}",
+            EventTime = shipment.BookedAt.Value,
+            UpdatedBy = customerId
+        });
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Check if all itineraries have been scheduled
+        /*var maxAttempt = _systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS));*/
         await CheckAvailableTimeSlotsAsync(shipment.Id, 3);
 
         // send email to customer
-        _logger.Information("Send email to customer with tracking code: {@trackingCode}", 
+        _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}", 
             shipment.TrackingCode);
         var user = await _userRepository.GetUserByIdAsync(customerId);
-        shipment.ScheduledDateTime = systemTime;
+        shipment.StartReceiveAt = startReceiveAtSystemTime;
+        shipment.ScheduledDateTime = scheduledSystemTime;
         shipment.DepartureStationName = departureStation.StationNameVi;
         shipment.DepartureStationAddress = departureStation.Address;
         shipment.DestinationStationName = destinationStation.StationNameVi;
         shipment.DestinationStationAddress = destinationStation.Address;
-        var sendMailModel = new SendMailModel
+
+        // Schedule email to customer
+        await _emailSender.ScheduleEmailJob(new SendMailModel
         {
             Email = user.Email,
             Type = MailTypeEnum.Shipment,
-            Name = request.SenderName,
+            //Name = request.SenderName,
+            Name = user.UserName,
             Data = shipment,
             Message = request.TrackingLink
-        };
-        _emailSender.SendMail(sendMailModel);
+        });
 
-        // send email to recipient if provided
+        // Schedule email to recipient if provided
         if (!string.IsNullOrEmpty(request.RecipientEmail) && request.RecipientEmail != user.Email)
         {
-            // send email to recipient
-            _logger.Information("Send email to recipient with tracking code: {@trackingCode}", shipment.TrackingCode);
-            var recipientSendMailModel = new SendMailModel
+            await _emailSender.ScheduleEmailJob(new SendMailModel
             {
                 Email = request.RecipientEmail,
                 Type = MailTypeEnum.Shipment,
                 Name = request.RecipientName,
                 Data = shipment,
                 Message = request.TrackingLink
-            };
-            _emailSender.SendMail(recipientSendMailModel);
+            });
         }
 
         return (shipment.Id, shipment.TrackingCode);
@@ -279,16 +319,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         memoryCache.Set(cacheKey, _metroGraph, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
     }
 
-    /*private async Task InitializePricingTableAsync()
-    {
-        if (_isInitializedPricingTable)
-            return;
-
-        _pricingTable = await _pricingService.GetPricingTableAsync(null);
-        _isInitializedPricingTable = true;
-    }*/
-
-    // v2
     public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
     {
         _logger.Information("Get itinerary and total price with request: {@request}", request);
@@ -309,12 +339,64 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return BuildTotalPriceResponse(bestPathResponses, stationIds.ToList());
     }
 
+    public async Task UpdateShipmentStatusNoDropOff (string shipmentId)
+    {
+        _logger.Information("Update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting drop-off
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must be in AwaitingDropOff status to update to NoDropOff.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update shipment status to NoDropOff
+        shipment.ShipmentStatus = ShipmentStatusEnum.NoDropOff;
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.NoDropOff,
+            Status = $"Đã tới giờ cắt hàng nhưng Kiện hàng trong đơn chưa được nhận",
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = "System",
+        });
+        _parcelTrackingRepository.AddRange(
+            shipment.Parcels.Select(parcel => new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.NoDropOff,
+                TrackingForShipmentStatus = ShipmentStatusEnum.NoDropOff,
+                Status = $"Kiện hàng trong đơn chưa được nhận",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = "System"
+            })
+        );
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
     public async Task PickUpShipment (ShipmentPickUpRequest request)
     {
         _logger.Information("Confirm shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId, false,
-                       x => x.Parcels, x => x.ShipmentItineraries);
+                       x => x.Parcels, 
+                       x => x.ShipmentItineraries,
+                       x => x.ShipmentMedias
+                       );
 
         // Check if the shipment exists
         if (shipment == null)
@@ -345,15 +427,38 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
-        shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        //shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
         shipment.PickedUpAt = CoreHelper.SystemTimeNow;
+        shipment.CurrentStationId = shipment.DepartureStationId;
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.PickedUp,
+            Status = $"Đơn hàng đã được nhận tại Ga {stationName}",
+            EventTime = shipment.PickedUpAt.Value,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+        });
+        _parcelTrackingRepository.AddRange(
+                       shipment.Parcels.Select(parcel => new ParcelTracking
+                       {
+                           ParcelId = parcel.Id,
+                           CurrentShipmentStatus = ShipmentStatusEnum.PickedUp,
+                           TrackingForShipmentStatus = ShipmentStatusEnum.PickedUp,
+                           Status = $"Kiện hàng đã được nhận tại Ga {stationName}",
+                           EventTime = shipment.PickedUpAt.Value,
+                           UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+                       })
+        );    
+        await CancelUpdateNoDropOffJob(shipment.Id);
+
         foreach (var media in request.PickedUpMedias)
         {
             var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
             mediaEntity.ShipmentId = shipment.Id;
             mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
             mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
-            shipment.ShipmentMedias.Add(mediaEntity);
+            _shipmentMediaRepository.Add(mediaEntity);
         }
 
         // Save changes to the database
@@ -370,16 +475,16 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 Type = MailTypeEnum.Notification,
                 Message = $"Your shipment with tracking code {shipment.TrackingCode} has been accepted.",
             };
-            _emailSender.SendMail(sendMailModel);
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
-
     public async Task RejectShipment(ShipmentRejectRequest request)
     {
         _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
                 x => x.Id == request.ShipmentId, false,
-                x => x.Parcels, x => x.ShipmentItineraries);
+                x => x.Parcels);
 
         // Check if the shipment exists
         if (shipment == null)
@@ -400,10 +505,34 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Update shipment status and timestamps
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
         shipment.ShipmentStatus = ShipmentStatusEnum.Rejected;
-        shipment.RejectedBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
-        shipment.RejectionReason = request.Reason;
+        //shipment.RejectedBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        //shipment.RejectionReason = request.Reason;
         shipment.RejectedAt = CoreHelper.SystemTimeNow;
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Rejected,
+            Status = $"Đơn hàng đã bị từ chối tại Ga {stationName}",
+            EventTime = shipment.RejectedAt.Value,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
+            Note = request.Reason
+        });
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            _parcelTrackingRepository.Add(new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Rejected,
+                Status = $"Kiện hàng đã bị từ chối tại Ga {stationName}",
+                EventTime = shipment.RejectedAt.Value,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
+                Note = request.Reason
+            });
+        }
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -417,21 +546,445 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been rejected. " +
-                $"Reason: {request.Reason}",
+                Message = $"Đơn hàng với mã vận đơn {shipment.TrackingCode} của bạn đã bị Từ chối" +
+                $"Lý do: {request.Reason}",
             };
-            _emailSender.SendMail(sendMailModel);
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
         }
+    }
+
+    // from customer, no need tracking parcel
+    public async Task CancelShipment(ShipmentRejectRequest request)
+    {
+        _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            x => x.Id == request.ShipmentId, false,
+            x => x.Parcels, x => x.ShipmentItineraries);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        // Check if the shipment is AwaitingPayment or AwaitingDropOff
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff
+            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment
+            )
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessageShipment.SHIPMENT_CANNOT_CANCEL,
+                StatusCodes.Status400BadRequest);
+        }
+
+        var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        //shipment.RejectionReason = request.Reason;
+        shipment.CancelledAt = CoreHelper.SystemTimeNow;
+
+        // Check if the shipment can be cancelled before a certain time
+        var allowedCancelBefore = _systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));
+        if (shipment.ShipmentStatus is ShipmentStatusEnum.AwaitingDropOff 
+            && shipment.CancelledAt > deadlineForRefund)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
+
+            var refundPercent = _systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.REFUND_PERCENT));
+            // create transaction for refund
+            var transaction = new Transaction
+            {
+                ShipmentId = shipment.Id,
+                PaymentAmount = shipment.TotalCostVnd *
+                                decimal.Parse(refundPercent),
+                TransactionType = TransactionTypeEnum.Refund,
+                PaymentStatus = PaymentStatusEnum.Pending
+            };
+
+            // Add transaction to shipment
+            _transactionRepository.Add(transaction);
+            _logger.Information("Created refund transaction for shipment ID: {@shipmentId}", shipment.Id);
+        }
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
+            Status = $"Đơn hàng đã bị người gửi hủy",
+            EventTime = shipment.CancelledAt.Value,
+            UpdatedBy = customerId,
+            Note = request.Reason
+        });
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send cancellation email to sender
+        /*var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been cancelled. " +
+                          $"Reason: {request.Reason}",
+            };
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
+        }*/
+    }
+
+    public async Task UpdateShipmentStatusUnpaid(string shipmentId)
+    {
+        _logger.Information("Update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting payment
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must be in AwaitingPayment status to update to Unpaid.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update shipment status to unpaid
+        shipment.ShipmentStatus = ShipmentStatusEnum.Unpaid;
+        shipment.PaymentDealine = null; // Clear payment deadline
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Unpaid,
+            Status = $"Đơn hàng đã quá hạn thanh toán",
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+        });
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task FeedbackShipment(ShipmentFeedbackRequest request)
+    {
+        _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
+        ShipmentValidator.ValidateShipmentFeedbackRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Id == request.ShipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is delivered
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Completed)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_COMPLETED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update feedback
+        shipment.Feedback = request.Feedback;
+        shipment.Rating = (byte) request.Rating;
+        shipment.FeedbackAt = CoreHelper.SystemTimeNow;
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task CompleteShipment(ShipmentPickUpRequest request)
+    {
+        _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
+        //ShipmentValidator.ValidateShipmentCompleteRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+        x => x.Id == request.ShipmentId, false, x => x.Parcels);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting delivery
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Stored
+            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery
+            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
+            )
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_AWAITING_DELIVERY,
+            StatusCodes.Status400BadRequest);
+        }
+
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            var transaction = await _transactionRepository.GetSingleAsync(
+                x => x.ShipmentId == shipment.Id && x.TransactionType == TransactionTypeEnum.Surcharge
+                                && x.PaymentStatus == PaymentStatusEnum.Pending);
+            if (transaction != null)
+            {
+                // If there is a pending surcharge transaction, we cannot complete the shipment
+                throw new AppException(
+                ErrorCode.BadRequest,
+                "Cannot complete shipment while surcharge is pending.",
+                StatusCodes.Status400BadRequest);
+            }
+        }
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+        shipment.CompletedAt = CoreHelper.SystemTimeNow;
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Completed,
+            Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
+            EventTime = shipment.CompletedAt.Value,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+        });
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            _parcelTrackingRepository.Add(new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                StationId = shipment.DestinationStationId,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Completed,
+                Status = $"Kiện hàng đã được giao thành công tại Ga {stationName}",
+                EventTime = shipment.CompletedAt.Value,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+        }
+
+        foreach (var media in request.PickedUpMedias)
+        {
+            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
+            mediaEntity.ShipmentId = shipment.Id;
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.IdentityVerification;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
+            _shipmentMediaRepository.Add(mediaEntity);
+        }
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send completion email to sender
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã hoàn thành",
+            };
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
+        }
+    }
+
+    public async Task ApplySurchargeForShipment(string shipmentId)
+    {
+        _logger.Information("Applying surcharge for shipment ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            x => x.Id == shipmentId,
+            false,
+            x => x.Parcels
+        );
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting payment
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery ||
+            shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must be in AwaitingDelivery or ApplyingSurcharge status to apply surcharge.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Apply surcharge logic here
+        var applyAt = shipment.SurchargeAppliedAt ?? CoreHelper.SystemTimeNow;
+        ParcelPriceCalculator.CalculateOverdueSurcharge(shipment.Parcels.ToList(), applyAt, 2000);
+        shipment.TotalOverdueSurchargeFee = shipment.Parcels.Sum(p => p.OverdueSurchangeFeeVnd);
+
+        // Update the shipment status and save changes
+        if (shipment.SurchargeAppliedAt == null)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge,
+                Status = $"Đơn hàng bắt đầu áp dụng phụ phí lưu kho quá hạn",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+
+            // Optionally send notification email about the surcharge
+            var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+            if (user != null)
+            {
+                var sendMailModel = new SendMailModel
+                {
+                    Email = user.Email,
+                    Type = MailTypeEnum.Notification,
+                    Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã bắt đầu tính phụ phí lưu kho." +
+                    $"Vui lòng liên lạc người nhận nhanh chóng nhận hàng để tránh phát sinh thêm chi phí nhận hàng."
+                };
+                await _emailSender.ScheduleEmailJob(sendMailModel);
+            }
+        }
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task ScheduleUpdateNoDropOffJob(string shipmentId, DateTimeOffset scheduledDateTime)
+    {
+        _logger.Information("Scheduling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "NoDropOff-for-shipmentId", shipmentId }
+        };
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<UpdateShipmentToNoDropOff>()
+            .WithIdentity($"UpdateShipmentToNoDropOff-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-UpdateShipmentToNoDropOff-{shipmentId}")
+            .StartAt(scheduledDateTime.AddMinutes(5))
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
+    }
+
+    public async Task CancelUpdateNoDropOffJob(string shipmentId)
+    {
+        _logger.Information("Cancelling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
+        var jobKey = new JobKey($"UpdateShipmentToNoDropOff-{shipmentId}");
+        var scheduler = await _schedulerFactory.GetScheduler();
+        if (await scheduler.CheckExists(jobKey))
+        {
+            await scheduler.DeleteJob(jobKey);
+            _logger.Information("Cancelled job for shipment ID: {@shipmentId}", shipmentId);
+        }
+        else
+        {
+            _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
+        }
+    }
+
+    private async Task ScheduleUnpaidJob(string shipmentId, DateTimeOffset paymentDeadline)
+    {
+        _logger.Information("Scheduling job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "Unpaid-for-shipmentId", shipmentId }
+        };
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<UpdateShipmentToUnpaid>()
+            .WithIdentity($"UpdateShipmentToUnpaid-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-UpdateShipmentToUnpaid-{shipmentId}")
+            .StartAt(paymentDeadline)
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
+    }
+
+    // Schedule by Update Out for delivery method
+    private async Task ScheduleApplySurchargeJob(string shipmentId)
+    {
+        _logger.Information("Scheduling job to apply surcharge for shipment ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "ApplySurcharge-for-shipmentId", shipmentId }
+        };
+
+        var runAfterHours = int.Parse(
+                       _systemConfigRepository.GetSystemConfigValueByKey(
+                                          nameof(SystemConfigSetting.Instance.SURCHARGE_AFTER_DELIVERED_HOUR)));
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<ApplySurchargeJob>()
+            .WithIdentity($"ApplySurchargeJob-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-ApplySurchargeJob-{shipmentId}")
+            .StartAt(DateTimeOffset.UtcNow.AddHours(runAfterHours))
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            // Repeat every 24 hours
+            .WithSimpleSchedule(x => x
+                .WithIntervalInHours(24)
+                .RepeatForever())
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
     }
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)
     {
         _logger.Information("Checking shipment date: {@scheduledDateTime}", scheduledDateTime);
         // Get system config values
-        var confirmationHour = int.Parse(_systemConfigRepository
+        /*var confirmationHour = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.CONFIRMATION_HOUR)));
         var paymentRequestHour = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.PAYMENT_REQUEST_HOUR)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.PAYMENT_REQUEST_HOUR)));*/
         var maxScheduleDay = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_SCHEDULE_SHIPMENT_DAY)));
         //var minBookDate = CoreHelper.SystemTimeNow.AddHours(confirmationHour + paymentRequestHour);
@@ -472,6 +1025,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         if (!string.IsNullOrWhiteSpace(request.DestinationStationId))
         {
             expression = expression.And(x => x.DestinationStationId == request.DestinationStationId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.SenderId))
+        {
+            expression = expression.And(x => x.SenderId == request.SenderId);
         }
 
         if (!string.IsNullOrWhiteSpace(request.SenderName))
@@ -589,34 +1147,38 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Add any other supported fields here
     };
 
-    private async Task<HashSet<string>> GetNearUserStations(TotalPriceCalcRequest request)
+    private async Task<List<string>> GetNearUserStations(TotalPriceCalcRequest request)
     {
         var maxDistanceInMeters = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
         var maxStationCount = int.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER)));
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
 
-        var stationIds = new HashSet<string> { request.DepartureStationId };
+        var result = new List<string> { request.DepartureStationId };
 
         if (request is { UserLongitude: not null, UserLatitude: not null })
         {
-            stationIds.UnionWith(
-                await _stationRepository.GetAllStationIdNearUser(
-                request.UserLatitude.Value, request.UserLongitude.Value, 
-                maxDistanceInMeters, maxStationCount));
+            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
 
-            // Ensure at least 2 stations are available
-            while (stationIds.Count < 2 && maxDistanceInMeters < maxDistanceInMeters*2)
+            // Remove departure station if present (to avoid duplication)
+            nearStations.Remove(request.DepartureStationId);
+
+            // Ensure at least 2 stations are available (including departure)
+            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
             {
-                maxDistanceInMeters += 2000; // Extend distance by 1000 meters
-                stationIds.UnionWith(
-                    await _stationRepository.GetAllStationIdNearUser(
-                            request.UserLatitude.Value, request.UserLongitude.Value, 
-                            maxDistanceInMeters, maxStationCount));
+                // Extend distance by 1000 meters
+                maxDistanceInMeters += 2000;
+                nearStations = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+                nearStations.Remove(request.DepartureStationId);
             }
+
+            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+            result.AddRange(nearStations.Take(maxStationCount));
         }
 
-        return stationIds;
+        return result;
     }
 
     private async Task<List<(string StationId, List<string> Path)>> FindOptimalPaths(
@@ -687,7 +1249,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 pathResponse.Parcels, pathResponse, _pricingService, categories);
 
             // Check est arrival time
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, request.ScheduledDateTime).Result;
+            var date = new DateOnly(request.ScheduledDateTime.Year,
+                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
 
             return new
             {
@@ -710,7 +1274,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         response.Shortest = bestPathResponses.Count > 1
             ? bestPathResponses
-                .OrderBy(r => r.Response.TotalKm)
+                .OrderBy(r => r.Response.TotalCostVnd)
                 .FirstOrDefault()?.Response
             : null;
 
@@ -720,7 +1284,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return response;
     }
 
-    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateTimeOffset date)
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
         _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
 
@@ -834,7 +1398,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
     private record CalculatedItinerary
     {
-        public DateTimeOffset? Date { get; init; } = null;
+        public DateOnly? Date { get; init; } = null;
         public string TimeSlotId { get; init; } = string.Empty;
         public string ShipmentId { get; init; } = string.Empty;
         public decimal? TotalWeightKg { get; init; } = null;
@@ -907,7 +1471,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
 
         // Calculate date range for bulk fetch
-        var startDate = shipment.ScheduledDateTime.Value;
+        var startDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var endDate = startDate.AddDays(4 * maxAttempts); // 4 shifts per day
 
         // Get all lines involved in this shipment
@@ -926,7 +1493,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .Include(x => x.TimeSlot)
             .Select(x => new CalculatedItinerary
             {
-                Date = x.Date.Value.Date,
+                Date = x.Date.Value,
                 TimeSlotId = x.TimeSlotId,
                 ShipmentId = x.ShipmentId,
                 TotalWeightKg = x.Shipment.TotalWeightKg,
@@ -939,7 +1506,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Group by (RouteId, Date, Shift) for fast lookup
         return allRelevantItineraries
-            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value.Date, x.Shift.Value))
+            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value, x.Shift.Value))
             .ToDictionary(g => g.Key, g => g.ToList());
     }
 
@@ -955,7 +1522,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         int maxAttempts)
     {
         // Initialize with shipment's scheduled date and shift
-        var currentDate = shipment.ScheduledDateTime.Value;
+        var currentDate = new DateOnly(
+                shipment.ScheduledDateTime.Value.Year,
+                shipment.ScheduledDateTime.Value.Month,
+                shipment.ScheduledDateTime.Value.Day);
         var currentSlot = timeSlots.FirstOrDefault(ts => ts.Shift == shipment.ScheduledShift);
 
         if (currentSlot == null)
@@ -999,8 +1569,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Find available slot with capacity check using pre-fetched data
-    private async Task<(DateTimeOffset, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
-        DateTimeOffset startDate,
+    private async Task<(DateOnly, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
+        DateOnly startDate,
         MetroTimeSlot startSlot,
         ShipmentItinerary itinerary,
         Shipment shipment,
@@ -1016,7 +1586,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         while (attempts < maxAttempts)
         {
-            var capacityKey = new CapacityKey(itinerary.Route.LineId, currentDate, currentSlot.Shift);
+            var capacityKey = new CapacityKey(itinerary.RouteId, currentDate, currentSlot.Shift);
 
             // Get existing capacity for this line/date/shift
             var existingItineraries = capacityData
@@ -1066,13 +1636,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     }
 
     /// Get next slot
-    private (DateTimeOffset, MetroTimeSlot) GetNextSlot(
-        DateTimeOffset date,
+    private (DateOnly, MetroTimeSlot) GetNextSlot(
+        DateOnly date,
         MetroTimeSlot currentSlot,
         List<MetroTimeSlot> timeSlots)
     {
         // Normalize date to start of the day, default to UTC+0
-        date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
+        //date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
         var nextShift = currentSlot.Shift switch
         {
             ShiftEnum.Morning => ShiftEnum.Afternoon,
@@ -1097,7 +1667,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return (nextDate, nextSlot);
     }
 
-    public record CapacityKey(string RouteId, DateTimeOffset Date, ShiftEnum Shift);
+    public record CapacityKey(string RouteId, DateOnly Date, ShiftEnum Shift);
 
     public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
     {
@@ -1168,7 +1738,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStation?.Id,
             DestinationStationName = destinationStation?.StationNameVi,
             ShipmentStatus = shipment.ShipmentStatus.ToString(),
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1208,14 +1778,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 itinerary.IsCompleted = true;
             }
 
-            message = $"🎯 Đơn hàng đã được giao thành công tại trạm **{destinationStationName}**.";
+            message = $"🎯 Đơn hàng đã được giao thành công tại Ga **{destinationStationName}**.";
             shipmentStatus = ShipmentStatusEnum.Completed.ToString();
 
             foreach (var parcel in shipment.Parcels)
             {
                 await _shipmentRepository.AddParcelTrackingAsync(
                     parcel.Id,
-                    $"Đã giao hàng tại trạm {destinationStationName}",
+                    $"Đã giao hàng tại Ga {destinationStationName}",
                     currentStationId,
                     staffId);
             }
@@ -1223,7 +1793,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         else
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
-            message = $"✅ Đơn hàng đã đi qua trạm **{currentStationName}**, chưa đến trạm đích.";
+            message = $"Đơn hàng đã đi qua Ga {currentStationName}, chưa đến trạm đích.";
             shipmentStatus = ShipmentStatusEnum.InTransit.ToString();
 
             foreach (var parcel in shipment.Parcels)
@@ -1269,7 +1839,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             DestinationStationId = destinationStationId,
             DestinationStationName = destinationStationName,
             ShipmentStatus = shipmentStatus,
-            EstimatedArrivalTime = finalLeg?.Date,
+            //EstimatedArrivalTime = finalLeg?.Date,
             ParcelTrackingHistory = parcelTrackingDtos
         };
     }
@@ -1297,10 +1867,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             RouteId = it.RouteId,
             TrainId = it.TrainId,
             TrainCode = it.Train?.TrainCode,
-            Date = it.Date,
+            //Date = it.Date,
             TimeSlotId = it.TimeSlotId,
             IsCompleted = it.IsCompleted
         }).ToList();
     }
-
 }

@@ -20,7 +20,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
@@ -42,16 +41,14 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     private readonly IBaseRepository<ShipmentItinerary> _shipmentItineraryRepository =
         serviceProvider.GetRequiredService<IBaseRepository<ShipmentItinerary>>();
     private readonly IMemoryCache _cache =
-        serviceProvider.GetRequiredService<IMemoryCache>();                 
-
-
+        serviceProvider.GetRequiredService<IMemoryCache>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
         _logger.Information("Get all trains by line, slot, date with request: {@request}", request);
         _trainValidator.ValidateLineSlotDateFilterRequest(request);
 
-        var targetDate = request.Date.Date;
+        var targetDate = request.Date;
 
         // Query with combined Any() to improve SQL translation and performance
         var metroTrains = await _trainRepository.GetAllWithCondition(
@@ -60,7 +57,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                  t.ShipmentItineraries.Any(si =>
                      si.TimeSlotId == request.TimeSlotId &&
                      si.Date.HasValue &&
-                     si.Date.Value.Date == targetDate
+                     si.Date.Value == targetDate
                      ),
             t => t.ShipmentItineraries
                  )
@@ -85,6 +82,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             request.PageNumber,
             request.PageSize,
             BuildShipmentFilterExpression(request),
+            t => t.TrainCode, true,
             includeProperties: t => t.ShipmentItineraries);
 
         return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
@@ -136,6 +134,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         Expression<Func<MetroTrain, bool>> expression = x => x.DeletedAt == null;
 
+        // Available: Train's capacity is not fully utilized
         // 1. If IsAvailable is provided, require all fields
         if (request.IsAvailable.HasValue)
         {
@@ -151,7 +150,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 );
             }
 
-            var targetDate = CoreHelper.UtcToSystemTime(request.Date.Value).Date;
+            var targetDate = request.Date.Value;
 
             if (request.IsAvailable.Value)
             {
@@ -159,7 +158,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 expression = expression.And(x => !x.ShipmentItineraries.Any(si =>
                     si.TimeSlotId == request.TimeSlotId &&
                     si.Date.HasValue &&
-                    si.Date.Value.Date == targetDate &&
+                    si.Date.Value == targetDate &&
                     si.Route.Direction == request.Direction &&
                     si.Route.LineId == request.LineId
                 ));
@@ -170,7 +169,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 expression = expression.And(x => x.ShipmentItineraries.Any(si =>
                     si.TimeSlotId == request.TimeSlotId &&
                     si.Date.HasValue &&
-                    si.Date.Value.Date == targetDate &&
+                    si.Date.Value.Equals(targetDate) &&
                     si.Route.Direction == request.Direction &&
                     si.Route.LineId == request.LineId
                 ));
@@ -194,14 +193,20 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
             if (request.Date.HasValue)
             {
-                var targetDate = CoreHelper.UtcToSystemTime(request.Date.Value).Date;
+                var targetDate = request.Date.Value;
                 expression = expression.And(x => x.ShipmentItineraries.Any(
-                    si => si.Date.HasValue && si.Date.Value.Date == targetDate));
+                    si => si.Date.HasValue && si.Date.Value.Equals(targetDate)));
             }
             if (request.Direction.HasValue)
             {
                 expression = expression.And(x => x.ShipmentItineraries.Any(
                     si => si.Route.Direction == request.Direction));
+            }
+            if (!string.IsNullOrEmpty(request.StationId))
+            {
+                expression = expression.And(x => x.Line.Routes.Any(
+                    r => r.FromStationId == request.StationId ||
+                    r.ToStationId == request.StationId));
             }
         }
 
@@ -222,22 +227,23 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 StatusCodes.Status400BadRequest);
         }
 
-        if (train.LineId != request.LineId)
+        /*if (train.LineId != request.LineId)
         {
             throw new AppException(ErrorCode.NotFound,
             ResponseMessageTrain.TRAIN_MUST_BE_SAME_LINE,
             StatusCodes.Status400BadRequest);
-        }
+        }*/
 
         // Prevent double-assignment of train to same slot/date
-        var targetDate = request.Date.Date;
+        var targetDate = request.Date;
         var alreadyAssigned = await _trainRepository.GetAllWithCondition(
             t => t.Id == request.TrainId &&
                  t.ShipmentItineraries.Any(si =>
                      si.TimeSlotId == request.TimeSlotId &&
                      si.Date.HasValue &&
-                     si.Date.Value.Date == targetDate &&
-                        si.Route.Direction == request.Direction
+                     si.Date.Value.Equals(targetDate) &&
+                        si.Route.Direction == request.Direction &&
+                        si.Route.LineId == train.LineId
                      ))
             .AnyAsync();
 
@@ -253,15 +259,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // Fetch all shipment itineraries for the line, slot, date, direction, and train id null
         var shipmentItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
-            si => si.Route.LineId == request.LineId &&
+            si => si.Route.LineId == train.LineId &&
                   si.TimeSlotId == request.TimeSlotId &&
                   si.Date.HasValue &&
-                  si.Date.Value.Date == targetDate &&
+                  si.Date.Value.Equals(targetDate) &&
                   si.Route.Direction == request.Direction &&
                   si.TrainId == null && // Only consider itineraries not yet assigned to a train
                   (si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff ||
                     si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment ||
-                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit )
+                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.PickedUp)
                   )
             .ToListAsync();
 
@@ -273,6 +279,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // Assign train to each itinerary
+        int itineraryCount = shipmentItineraries.Count;
+        int shipmentCount = shipmentItineraries
+            .Select(si => si.ShipmentId)
+            .Distinct()
+            .Count();
         foreach (var itinerary in shipmentItineraries)
         {
             itinerary.TrainId = request.TrainId;
@@ -281,7 +292,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // Persist changes
         var count = await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        var response = $"Successfully added {count} shipment itineraries for train {train.Id}";
+        var response = $"Successfully added {count} changes with {itineraryCount} shipment itineraries from {shipmentCount} shipments for train {train.Id}";
         _logger.Information(response,
             count, request.TrainId);
 
@@ -310,7 +321,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (from.Latitude == null || from.Longitude == null || to.Latitude == null || to.Longitude == null)
             throw new AppException(ErrorCode.BadRequest, "Station coordinates are incomplete", StatusCodes.Status400BadRequest);
 
-        var startTime = currentLeg.Date ?? DateTimeOffset.UtcNow;
+        var startTime = DateTimeOffset.UtcNow;
         var now = DateTimeOffset.UtcNow;
         var elapsedSeconds = (now - startTime).TotalSeconds;
 
@@ -477,7 +488,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (from.Latitude == null || from.Longitude == null || to.Latitude == null || to.Longitude == null)
             throw new AppException(ErrorCode.BadRequest, "Station coordinates are incomplete", StatusCodes.Status400BadRequest);
 
-        var startTime = itinerary.Date ?? DateTimeOffset.UtcNow;
+        var startTime = DateTimeOffset.UtcNow;
         var now = DateTimeOffset.UtcNow;
         var elapsedSeconds = (now - startTime).TotalSeconds;
 

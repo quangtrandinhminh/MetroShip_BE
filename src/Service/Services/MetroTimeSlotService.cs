@@ -31,13 +31,15 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Getting all MetroTimeSlots for dropdown.");
 
-            var shiftConfig = int.Parse(_systemConfigRepository
+            var minShiftConfig = int.Parse(_systemConfigRepository
                 .GetSystemConfigValueByKey(nameof(_systemConfigSetting.SCHEDULE_BEFORE_SHIFT_MINUTES)));
+            /*var maxShiftConfig = int.Parse(_systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_SCHEDULE_BEFORE_SHIFT_MINUTES)));*/
             var timeSlots = await _metroTimeSlotRepository.GetAll()
                 .Where(s => s.DeletedAt == null)
                 .OrderBy(s => s.OpenTime)
-                .Select(slot => _mapper.MapToMetroTimeSlotResponse(slot) 
-                /*new MetroTimeSlotResponse
+                .Select(slot => //_mapper.MapToMetroTimeSlotResponse(slot) 
+                new MetroTimeSlotResponse
                 {
                     Id = slot.Id,
                     DayOfWeek = slot.DayOfWeek,
@@ -46,8 +48,9 @@ namespace MetroShip.Service.Services
                     CloseTime = slot.CloseTime,
                     Shift = slot.Shift,
                     IsAbnormal = slot.IsAbnormal,
-                    ScheduleBeforeShiftMinutes = shiftConfig
-                }*/
+                    ScheduleBeforeShiftMinutes = minShiftConfig,
+                    //MaxScheduleBeforeShiftMinutes = maxShiftConfig
+                }
                 ).ToListAsync();
             return timeSlots;
         }

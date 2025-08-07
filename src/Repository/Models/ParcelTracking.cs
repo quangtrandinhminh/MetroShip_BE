@@ -20,10 +20,15 @@ public partial class ParcelTracking : BaseEntity
     [StringLength(255)]
     public string Status { get; set; }
 
+    public ShipmentStatusEnum? CurrentShipmentStatus { get; set; }
+
     public ShipmentStatusEnum TrackingForShipmentStatus { get; set; }
 
     [StringLength(50)]
     public string? StationId { get; set; }
+
+    [StringLength(50)]
+    public string? TrainId { get; set; }
 
     public DateTimeOffset EventTime { get; set; }
 

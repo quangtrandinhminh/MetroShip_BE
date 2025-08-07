@@ -34,11 +34,12 @@ public enum ShipmentStatusEnum
     Returned,           // parcels returned to origin station
 
     // Completion
-    AwaitingFeedback,     // delivered, waiting for rating
+    Delivered,     // delivered, waiting for rating
     Completed,             // feedback received, shipment closed
 
     // Unhappy case
     Delayed,              // parcels delayed at any stage
+    Stored,
 }
 
 /// <summary>

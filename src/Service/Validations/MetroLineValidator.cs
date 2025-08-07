@@ -8,7 +8,7 @@ namespace MetroShip.Service.Validations;
 
 public static class MetroLineValidator
 {
-    public static void ValidateMetroLineCreateRequest (this MetroLineCreateRequest request)
+    public static void ValidateMetroLineCreateRequest (this MetroRouteRequest request)
     {
         var validator = new MetroLineCreateValidator();
         validator.ValidateApiModel(request);
@@ -21,7 +21,7 @@ public static class MetroLineValidator
     }
 }
 
-public class MetroLineCreateValidator : AbstractValidator<MetroLineCreateRequest>
+public class MetroLineCreateValidator : AbstractValidator<MetroRouteRequest>
 {
     public MetroLineCreateValidator()
     {

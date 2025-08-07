@@ -40,7 +40,7 @@ public class LineSlotDateFilterRequestValidator : AbstractValidator<LineSlotDate
 
         RuleFor(x => x.Date)
             .NotEmpty().WithMessage(ResponseMessageTrain.DATE_REQUIRED)
-            .Must(date => DateTimeOffset.TryParse(date.ToString(), out _) && date > DateTimeOffset.MinValue)
+            .Must(date => DateOnly.TryParse(date.ToString(), out _) && date > DateOnly.MinValue)
             .WithMessage(ResponseMessageTrain.DATE_INVALID);
     }
 }
@@ -58,8 +58,8 @@ public class TrainListFilterRequestValidator : AbstractValidator<TrainListFilter
             .WithMessage(ResponseMessageTrain.TIME_SLOT_ID_INVALID);
 
         RuleFor(x => x.Date)
-            .Must(date => !date.HasValue || (DateTimeOffset.TryParse(date.ToString(), out _) 
-            && date > DateTimeOffset.MinValue))
+            .Must(date => !date.HasValue || (DateOnly.TryParse(date.ToString(), out _) 
+            && date > DateOnly.MinValue))
             .WithMessage(ResponseMessageTrain.DATE_INVALID);
 
         RuleFor(x => x.ModelName)
@@ -80,9 +80,9 @@ public class ValidateAddTrainToItinerariesRequest : AbstractValidator<AddTrainTo
             .NotEmpty().WithMessage(ResponseMessageTrain.TRAIN_ID_REQUIRED)
             .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageTrain.TRAIN_ID_INVALID);
 
-        RuleFor(x => x.LineId)
+        /*RuleFor(x => x.LineId)
             .NotEmpty().WithMessage(ResponseMessageTrain.LINE_ID_REQUIRED)
-            .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageTrain.LINE_ID_INVALID);
+            .Must(x => Guid.TryParse(x, out _)).WithMessage(ResponseMessageTrain.LINE_ID_INVALID);*/
 
         RuleFor(x => x.TimeSlotId)
             .NotEmpty().WithMessage(ResponseMessageTrain.TIME_SLOT_ID_REQUIRED)
@@ -90,7 +90,8 @@ public class ValidateAddTrainToItinerariesRequest : AbstractValidator<AddTrainTo
 
         RuleFor(x => x.Date)
             .NotEmpty().WithMessage(ResponseMessageTrain.DATE_REQUIRED)
-            .Must(date => DateTimeOffset.TryParse(date.ToString(), out _) && date > DateTimeOffset.MinValue)
+            // valid date only
+            .Must(date => DateOnly.TryParse(date.ToString(), out _) && date > DateOnly.MinValue)
             .WithMessage(ResponseMessageTrain.DATE_INVALID);
     }
 }

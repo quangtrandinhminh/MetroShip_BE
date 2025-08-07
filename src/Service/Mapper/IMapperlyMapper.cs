@@ -51,9 +51,10 @@ public interface IMapperlyMapper
     Station MapToStationEntity(CreateStationRequest request);
     ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
     void MapToExistingStation(UpdateStationRequest request, Station entity);
+    void MapToStationEntityList(ICollection<StationListItem> requestList, ICollection<Station> entity);
 
     // route
-    RouteResponse MapToRouteResponse(Route entity);
+    RouteStationResponse MapToRouteStationResponse(Route entity);
 
     IList<string?> MapRoleToRoleName(IList<RoleEntity> entity);
 
@@ -72,9 +73,9 @@ public interface IMapperlyMapper
     void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
 
     // metroline
-    MetroLineItineraryResponse MapToMetroLineResponse(MetroLine entity);
-    MetroLine MapToMetroLineEntity(MetroLineCreateRequest request);
-
+    MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
+    MetroLine MapToMetroLineEntity(MetroRouteRequest request);
+    MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
 
@@ -93,6 +94,11 @@ public interface IMapperlyMapper
 
     // media
     ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
+    ShipmentMediaResponse MapToShipmentMediaResponse(ShipmentMedia entity);
+    List<ShipmentMediaResponse> MapToShipmentMediaResponseList(ICollection<ShipmentMedia> entity);
+    ParcelMedia MapToParcelMediaEntity(ParcelMediaRequest request);
+    ParcelMediaResponse MapToParcelMediaResponse(ParcelMedia entity);
+    List<ParcelMediaResponse> MapToParcelMediaResponseList(ICollection<ParcelMedia> entity);
 
     // staff assignment
     StaffAssignmentResponse MapToStaffAssignmentResponse(StaffAssignment entity);

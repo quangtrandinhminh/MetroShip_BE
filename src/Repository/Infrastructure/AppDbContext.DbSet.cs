@@ -32,6 +32,8 @@ public sealed partial class AppDbContext
 
     public DbSet<Shipment> Shipments { get; set; }
 
+    public DbSet<ShipmentTracking> ShipmentTracking { get; set; }
+
     public DbSet<ShipmentMedia> ShipmentImages { get; set; }
 
     public DbSet<Transaction> Transactions { get; set; }

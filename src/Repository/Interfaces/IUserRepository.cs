@@ -23,5 +23,7 @@ namespace MetroShip.Repository.Interfaces
         Task AddUserToRoleAsync(string userId, List<string> lisRoleId, CancellationToken cancellationToken = default);
 
         Task<bool> IsExistAsync(Expression<Func<UserEntity, bool>> predicate);
+
+        Task<string?> GetUserNameByIdAsync(string userId);
     }
 }

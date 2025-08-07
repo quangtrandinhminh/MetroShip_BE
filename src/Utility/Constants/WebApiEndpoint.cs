@@ -41,12 +41,16 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/parcels";
             public const string GetParcels = BaseEndpoint;
-            public const string GetParcelById = BaseEndpoint + "/{id}";
+            public const string GetParcelByTrackingCode = BaseEndpoint + "/{parcelCode}";
             public const string CreateShipmentItem = BaseEndpoint;
             public const string UpdateShipmentItem = BaseEndpoint;
             public const string DeleteShipmentItem = BaseEndpoint + "/{id}";
-            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation/{parcelId}";
+            public const string ConfirmParcel = BaseEndpoint + "/staff/confirmation";
             public const string RejectParcel = BaseEndpoint + "/staff/rejection/{parcelId}";
+            public const string GetChargeableWeight = BaseEndpoint + "/chargeable-weight";
+            public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainCode}";
+            public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainCode}";
+            public const string UpdateParcelStatusToAwaitingDelivery = BaseEndpoint + "/staff/awaiting-delivery/{parcelCode}";
         }
 
         public static class ShipmentEndpoint
@@ -71,6 +75,10 @@
             public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
             public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
+            public const string GetShipmentById = BaseEndpoint + "/{id}";
+            public const string CancelShipment = BaseEndpoint + "/cancel";
+            public const string FeedbackShipment = BaseEndpoint + "/feedback";
+            public const string CompleteShipment = BaseEndpoint + "/complete";
         }
 
         public static class TransactionEndpoint
@@ -82,6 +90,7 @@
             public const string UpdateTransaction = BaseEndpoint + "/{id}";
             public const string DeleteTransaction = BaseEndpoint + "/{id}";
             public const string GetTransactionsByShipmentId = BaseEndpoint + "/shipment/{shipmentId}";
+            public const string GetTransactionType = BaseEndpoint + "/types";
         }
 
         public static class Notification
@@ -118,9 +127,10 @@
             public const string UpdateStation = BaseEndpoint;
             public const string DeleteStation = BaseEndpoint + "/{id}";
         }
-        public static class MetroLineEndpoint
+        public static class MetroRouteEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/metro-lines";
+            public const string GetMetroLines = BaseEndpoint;
             public const string GetMetroLinesDropdownList = BaseEndpoint + "/dropdown";
             public const string GetMetroLineById = BaseEndpoint + "/{id}";
             public const string CreateMetroLine = BaseEndpoint;

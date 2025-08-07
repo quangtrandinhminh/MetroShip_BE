@@ -14,8 +14,7 @@ public static class MiddlewareExtensions
         // Use rate limiting middleware
         app.UseIpRateLimiting();
 
-        // Use CORS
-        app.UseCors("_myAllowSpecificOrigins");
+        
 
         // HTTPS redirection
         app.UseHttpsRedirection();

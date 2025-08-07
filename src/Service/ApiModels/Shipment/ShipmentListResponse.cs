@@ -6,11 +6,6 @@ namespace MetroShip.Service.ApiModels.Shipment;
 
 public record ShipmentListResponse
 {
-    public ShipmentListResponse()
-    {
-        CurrentStationName = this.DepartureStationName;
-    }
-
     public string Id { get; set; }
     public string TrackingCode { get; set; }
     public string DepartureStationName { get; set; }
@@ -21,11 +16,10 @@ public record ShipmentListResponse
     public string RecipientName { get; set; }
     public string RecipientPhone { get; set; }
     public decimal TotalCostVnd { get; set; }
+    public byte? Rating { get; set; }
+    public string? Feedback { get; set; }
+    public DateTimeOffset? StartReceiveAt { get; set; } 
     public DateTimeOffset ScheduledDateTime { get; set; }
-    public DateTimeOffset? BookedAt { get; set; }
-    public DateTimeOffset? ApprovedAt { get; set; }
-    public DateTimeOffset? PaidAt { get; set; }
-    public DateTimeOffset? PickupAt { get; set; }
-    public DateTimeOffset? DeliveredAt { get; set; }
     public ShipmentStatusEnum ShipmentStatus { get; set; }
+    public string ShipmentStatusName => ShipmentStatus.ToString();
 }

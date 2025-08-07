@@ -1,13 +1,15 @@
-﻿using MetroShip.Service.ApiModels;
+﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Validations;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
@@ -47,7 +49,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
+            return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcelByTrackingCode)]
+        public async Task<IActionResult> GetParcelByParcelCodeAsync([FromRoute] string parcelCode)
+        {
+            var parcel = await _parcelService.GetParcelByParcelCodeAsync(parcelCode);
+            return Ok(BaseResponse.OkResponseDto(parcel));
         }
 
         [HttpGet("qrcode/{parcelTrackingCode}")]
@@ -57,20 +66,54 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(qrCode);
         }
 
-        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> ConfirmParcelAsync([FromRoute] Guid parcelId)
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.GetChargeableWeight)]
+        public async Task<IActionResult> GetChargeableWeight([FromBody] ChargeableWeightRequest request)
         {
-            await _parcelService.ConfirmParcelAsync(parcelId);
+            ShipmentValidator.ValidateChargeableWeightRequest(request);
+            var chargeableWeight = CalculateHelper.CalculateChargeableWeight(
+                request.LengthCm, request.WidthCm, request.HeightCm, request.WeightKg);
+            return Ok(BaseResponse.OkResponseDto(chargeableWeight, null));
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.ConfirmParcel)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> ConfirmParcelAsync([FromBody] ParcelConfirmRequest request)
+        {
+            await _parcelService.ConfirmParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel confirmation processed successfully.", null));
         }
 
-        [HttpPost(WebApiEndpoint.ParcelEndpoint.RejectParcel)]
+        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.RejectParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         public async Task<IActionResult> RejectParcelAsync([FromBody] ParcelRejectRequest request)
         {
             await _parcelService.RejectParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel rejection processed successfully.", null));
         }*/
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.LoadParcelOnTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainCode)
+        {
+            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainCode} successfully.", null));
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UnloadParcelFromTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainCode)
+        {
+            await _parcelService.UnloadParcelFromTrain(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainCode} successfully.", null));
+        }
+
+        // update to awaiting delivery
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UpdateParcelStatusToAwaitingDelivery)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UpdateParcelStatusToAwaitingDeliveryAsync([FromRoute] string parcelCode)
+        {
+            await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
+        }
     }
 }

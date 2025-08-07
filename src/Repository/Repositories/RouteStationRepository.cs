@@ -11,10 +11,10 @@ using System.Linq.Expressions;
 
 namespace MetroShip.Repository.Repositories;
 
-public class RouteRepository : BaseRepository<Route>, IRouteRepository
+public class RouteStationRepository : BaseRepository<Route>, IRouteStationRepository
 {
     private readonly AppDbContext _context;
-    public RouteRepository(AppDbContext context) : base(context)
+    public RouteStationRepository(AppDbContext context) : base(context)
     {
         _context = context;
     }

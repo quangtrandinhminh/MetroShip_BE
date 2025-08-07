@@ -8,7 +8,7 @@ using ILogger = Serilog.ILogger;
 
 namespace MetroShip.WebAPI.Hubs;
 
-[Authorize]
+//[Authorize]
 public class trackingHub : Hub
 {
     public static readonly Dictionary<int, string> _userConnectionMap = new();
@@ -21,7 +21,7 @@ public class trackingHub : Hub
         _trainService = serviceProvider.GetRequiredService<ITrainService>();
     }
 
-    public override async Task OnConnectedAsync()
+    /*public override async Task OnConnectedAsync()
     {
         var user = Context.User;
         var userId = JwtClaimUltils.GetUserId(user);
@@ -49,7 +49,7 @@ public class trackingHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
-    }
+    }*/
 
     public async Task JoinTrackingRoom(string trackingCode)
     {
@@ -65,13 +65,14 @@ public class trackingHub : Hub
             Context.ConnectionId, trackingCode);
     }
 
+    // hàm này được gọi bởi invoke signalR từ client (gps của train)
     public async Task SendLocationUpdate(TrackingLocationUpdateDto location)
     {
-        _logger.Information("📍 Nhận tọa độ mới từ TrainId {TrainId}, TrackingCode: {TrackingCode} | ({Lat}, {Lng})",
-            location.TrainId, location.TrackingCode, location.Latitude, location.Longitude);
+        /*_logger.Information("📍 Nhận tọa độ mới từ TrainId {TrainId}, TrackingCode: {TrackingCode} | ({Lat}, {Lng})",
+            location.TrainId, location.TrackingCode, location.Latitude, location.Longitude);*/
 
         // 1. Kiểm tra xem đơn hàng đã giao chưa
-        bool isDelivered = await _trainService.IsShipmentDeliveredAsync(location.TrackingCode);
+        /*bool isDelivered = await _trainService.IsShipmentDeliveredAsync(location.TrackingCode);
         if (isDelivered)
         {
             _logger.Warning("🚫 Shipment {TrackingCode} đã giao hàng. Ngắt kết nối room SignalR.", location.TrackingCode);
@@ -83,10 +84,10 @@ public class trackingHub : Hub
             });
 
             return;
-        }
+        }*/
 
         // 2. Gửi thông tin tọa độ đến tất cả client đang theo dõi shipment này
-        await Clients.Group(location.TrackingCode).SendAsync("ReceiveLocationUpdate", location);
+        await Clients.Group(location.TrainId).SendAsync("ReceiveLocationUpdate", location);
     }
 
     public async Task ConfirmLocationReceived(string trackingCode)

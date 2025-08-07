@@ -12,6 +12,8 @@ using MetroShip.Service.Services;
 using MetroShip.Utility.Config;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
+using MetroShip.Service.Jobs;
+using Quartz;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -113,9 +115,18 @@ public static class ServiceCollectionExtensions
         const string myAllowSpecificOrigins = "_myAllowSpecificOrigins";
         services.AddCors(options =>
         {
-            options.AddPolicy(myAllowSpecificOrigins, policy =>
+            /*options.AddPolicy(myAllowSpecificOrigins, policy =>
             {
                 policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+            });*/
+
+            options.AddPolicy("SignalR", builder =>
+            {
+                builder
+                    .SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
             });
         });
 
@@ -132,6 +143,33 @@ public static class ServiceCollectionExtensions
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<AppDbContext>();
+
+        // Add Quartz services
+        services.AddQuartz(q =>
+        {
+            // Use Microsoft DI container
+            q.UseMicrosoftDependencyInjectionJobFactory();
+
+            // Use simple type loader
+            q.UseSimpleTypeLoader();
+
+            // Use in-memory store (for development)
+            // For production, consider using persistent store
+            q.UseInMemoryStore();
+
+            // Configure thread pool
+            q.UseDefaultThreadPool(tp =>
+            {
+                tp.MaxConcurrency = 10; // Adjust based on your needs
+            });
+        });
+
+        // Add Quartz hosted service
+        services.AddQuartzHostedService(q =>
+        {
+            // Wait for jobs to complete on shutdown
+            q.WaitForJobsToComplete = true;
+        });
 
         // Memory cache & rate limiting
         services.AddMemoryCache();
@@ -158,7 +196,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IVnPayService, VnPayService>();
         services.AddScoped<IShipmentService, ShipmentService>();
         services.AddScoped<ITransactionService, TransactionService>();
-        services.AddScoped<IMetroLineService, MetroLineService>();
+        services.AddScoped<IMetroRouteService, MetroRouteService>();
         services.AddScoped<IMetroTimeSlotService, MetroTimeSlotService>();
         services.AddScoped<ITrainService, TrainService>();
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
@@ -171,11 +209,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IParcelCategoryRepository, ParcelCategoryRepository>();
         services.AddScoped<ISystemConfigRepository, SystemConfigRepository>();
-        services.AddScoped<IRouteRepository, RouteRepository>();
+        services.AddScoped<IRouteStationRepository, RouteStationRepository>();
         services.AddScoped<IStationRepository, StationRepository>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IShipmentItineraryRepository, ShipmentItineraryRepository>();
-        services.AddScoped<IMetroLineRepository, MetroLineRepository>();
+        services.AddScoped<IMetroRouteRepository, MetroRouteRepository>();
         services.AddScoped<IParcelRepository, ParcelRepository>();
         services.AddScoped<ITrainRepository, TrainRepository>();
         services.AddScoped<IMetroTimeSlotRepository, MetroTimeSlotRepository>();

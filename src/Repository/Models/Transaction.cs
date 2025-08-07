@@ -15,6 +15,8 @@ public partial class Transaction : BaseEntity
     [StringLength(50)]
     public string? PaidById { get; set; }
 
+    public string? PaymentUrl { get; set; }
+
     [StringLength(50)]
     public PaymentMethodEnum PaymentMethod { get; set; }
 
