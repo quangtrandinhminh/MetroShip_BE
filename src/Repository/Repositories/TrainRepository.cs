@@ -109,14 +109,12 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
     }
     public async Task<IList<Shipment>> GetLoadedShipmentsByTrainAsync(string trainId)
     {
-        return await _context.ShipmentItineraries
-            .Where(si => si.TrainId == trainId && si.Shipment.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
-            .Include(si => si.Shipment)
-                .ThenInclude(s => s.Parcels)
-            .Include(si => si.Route)
-                .ThenInclude(r => r.ToStation)
-            .Select(si => si.Shipment)
-            .Distinct()
+        return await _context.Shipments
+            .Include(s => s.Parcels)
+            .Include(s => s.ShipmentItineraries)
+                .ThenInclude(i => i.Route)
+                    .ThenInclude(r => r.ToStation)
+            .Where(s => s.ShipmentItineraries.Any(it => it.TrainId == trainId))
             .ToListAsync();
     }
 }

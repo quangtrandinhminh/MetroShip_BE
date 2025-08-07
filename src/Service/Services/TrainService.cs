@@ -525,7 +525,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // ✅ Current leg path (animation path)
+        // ✅ Current leg animation path
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
@@ -539,9 +539,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             path.Add(new GeoPoint { Latitude = stepLat, Longitude = stepLng });
         }
 
-        // ✅ Build FullPath with Status = true/false
+        // ✅ Build full route with completed status
         var fullPath = new List<object>();
-
         for (int i = 0; i < routes.Count; i++)
         {
             var r = routes[i];
@@ -572,45 +571,58 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // ✅ Shipments
-        var allShipments = await _trainRepository.GetShipmentsByTrainAsync(trainId);
-        var loadedShipments = allShipments
+        // ✅ Get and deduplicate shipments
+        var allShipmentsRaw = await _trainRepository.GetLoadedShipmentsByTrainAsync(trainId);
+
+        // ✅ Deduplicate shipment by Id
+        var allShipments = allShipmentsRaw
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
+            .GroupBy(s => s.Id)
+            .Select(g => g.First())
             .ToList();
 
-        var shipmentSummaries = loadedShipments.Select(s => new
+        // ✅ Shipment summaries
+        var shipmentSummaries = allShipments.Select(s =>
         {
-            ShipmentId = s.Id,
-            TrackingCode = s.TrackingCode,
-            DestinationStation = s.ShipmentItineraries
+            var lastLeg = s.ShipmentItineraries?
+                .Where(i => i.ShipmentId == s.Id && i.Route?.ToStation != null)
                 .OrderBy(i => i.LegOrder)
-                .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown",
-            DestinationStationId = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault()?.Route?.ToStationId,
-            CurrentStatus = s.ShipmentStatus.ToString()
+                .LastOrDefault();
+
+            return new
+            {
+                ShipmentId = s.Id,
+                TrackingCode = s.TrackingCode,
+                DestinationStation = lastLeg?.Route?.ToStation?.StationNameVi ?? "Unknown",
+                DestinationStationId = lastLeg?.Route?.ToStationId,
+                CurrentStatus = s.ShipmentStatus.ToString()
+            };
         }).ToList();
 
-        // ✅ Parcels
-        var parcelSummaries = loadedShipments
-            .SelectMany(s => s.Parcels.Select(p => new
+        // ✅ Parcel summaries
+        var parcelSummaries = allShipments
+            .Where(s => s.Parcels != null && s.Parcels.Count > 0)
+            .SelectMany(s =>
             {
-                ParcelId = p.Id,
-                ParcelCode = p.ParcelCode,
-                Description = p.Description,
-                Weight = p.WeightKg,
-                Volume = p.VolumeCm3,
-                ShipmentId = p.ShipmentId,
-                DestinationStationId = s.ShipmentItineraries
+                var lastLeg = s.ShipmentItineraries?
+                    .Where(i => i.ShipmentId == s.Id && i.Route?.ToStation != null)
                     .OrderBy(i => i.LegOrder)
-                    .LastOrDefault()?.Route?.ToStationId ?? "Unknown",
-                DestinationStation = s.ShipmentItineraries
-                    .OrderBy(i => i.LegOrder)
-                    .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown"
-            }))
-            .ToList();
+                    .LastOrDefault();
 
-        // ✅ Final Result
+                return s.Parcels!.Select(p => new
+                {
+                    ParcelId = p.Id,
+                    ParcelCode = p.ParcelCode,
+                    Description = p.Description,
+                    Weight = p.WeightKg,
+                    Volume = p.VolumeCm3,
+                    ShipmentId = p.ShipmentId,
+                    DestinationStationId = lastLeg?.Route?.ToStationId ?? "Unknown",
+                    DestinationStation = lastLeg?.Route?.ToStation?.StationNameVi ?? "Unknown"
+                });
+            })
+            .ToList();
+        // ✅ Final result
         var result = new TrainPositionResult
         {
             TrainId = trainId,
