@@ -363,6 +363,11 @@ public class ShipmentFilterRequestValidator : AbstractValidator<ShipmentFilterRe
             .WithMessage(ResponseMessageShipment.DESTINATION_STATION_ID_INVALID)
             .When(x => !string.IsNullOrWhiteSpace(x.DestinationStationId));
 
+        RuleFor(x => x.SenderId)
+            .Must(x => string.IsNullOrWhiteSpace(x) || Guid.TryParse(x, out _))
+            .WithMessage("Sender ID must be a valid GUID.")
+            .When(x => !string.IsNullOrWhiteSpace(x.SenderId));
+
         RuleFor(x => x.SenderName)
             .MaximumLength(100)
             .WithMessage("Sender name cannot exceed 100 characters")

@@ -57,8 +57,6 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
-    // protected partial ShippingInformation MapToShippingInformation(Shipment entity);
-    // protected partial ShipmentTrackingResponse MapToShipmentItinerary(Shipment entity);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature

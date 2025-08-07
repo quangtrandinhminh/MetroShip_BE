@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250805112404_init_082025_1823")]
+    partial class init_082025_1823
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1277,7 +1280,7 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<decimal?>("TotalVolumeM3")
-                        .HasColumnType("decimal(10, 6)");
+                        .HasColumnType("decimal(10, 2)");
 
                     b.Property<decimal?>("TotalWeightKg")
                         .HasColumnType("decimal(10, 2)");
@@ -1807,9 +1810,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<string>("PaymentTrackingId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
-
-                    b.Property<string>("PaymentUrl")
-                        .HasColumnType("text");
 
                     b.Property<string>("ShipmentId")
                         .HasMaxLength(50)

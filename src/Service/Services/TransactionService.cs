@@ -19,6 +19,7 @@ using Quartz;
 using Serilog;
 using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
+using MetroShip.Repository.Repositories;
 
 namespace MetroShip.Service.Services;
 
@@ -31,14 +32,15 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
-    private readonly IBaseRepository<Transaction> _transaction = serviceProvider.GetRequiredService<IBaseRepository<Transaction>>();
+    private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
+    private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
-        var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
-        _logger.Information("Creating payment link for: {shipment} by {CustomerId}",
-            request.ShipmentId, customerId);
+        var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Creating payment link for: {shipment} by user {User}",
+            request.ShipmentId, userId);
         TransactionValidator.ValidateTransactionRequest(request);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId || x.TrackingCode == request.ShipmentId,
@@ -53,33 +55,38 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
         
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus is not (ShipmentStatusEnum.AwaitingPayment 
-            /*or ShipmentStatusEnum.PartiallyConfirmed*/))
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment &&
+            shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingRefund &&
+            shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment is not in a valid state for payment",
+                "Shipment status must be AwaitingPayment, AwaitingRefund, or ApplyingSurcharge to create a payment link.",
                 StatusCodes.Status400BadRequest);
         }
 
-        if (shipment.Transactions.FirstOrDefault(
-            t => t.TransactionType == TransactionTypeEnum.ShipmentCost
-        && t.PaymentStatus == PaymentStatusEnum.Pending) is null)
+        var transactionExists = await _transactionRepository.GetSingleAsync(
+                       x => (x.ShipmentId == shipment.Id || x.Shipment.TrackingCode == shipment.TrackingCode)
+                                  && x.TransactionType == request.TransactionType.Value
+                                             && x.PaymentStatus == PaymentStatusEnum.Pending);
+        if (transactionExists != null)
         {
-            var transaction = _mapper.MapToTransactionEntity(request);
-            transaction.PaidById = customerId;
-            transaction.PaymentMethod = PaymentMethodEnum.VnPay;
-            transaction.PaymentStatus = PaymentStatusEnum.Pending;
-            transaction.PaymentAmount = shipment.TotalCostVnd;
-            transaction.TransactionType = TransactionTypeEnum.ShipmentCost;
-            transaction.Description = request.ToJsonString();
-            shipment.Transactions.Add(transaction);
-            _shipmentRepository.Update(shipment);
-            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            return transactionExists.PaymentUrl ?? string.Empty;
         }
 
+        var transaction = _mapper.MapToTransactionEntity(request);
+        transaction.PaidById = userId;
+        transaction.PaymentMethod = PaymentMethodEnum.VnPay;
+        transaction.PaymentStatus = PaymentStatusEnum.Pending;
+        transaction.PaymentAmount = shipment.TotalCostVnd;
+        transaction.TransactionType = request.TransactionType.Value;
+        transaction.Description = request.ToJsonString();
+        
         var paymentUrl = await _vnPayService.CreatePaymentUrl(
             shipment.TrackingCode, shipment.TotalCostVnd);
+        transaction.PaymentUrl = paymentUrl;
+        _transactionRepository.Add(transaction);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         return paymentUrl;
     }
 
@@ -97,7 +104,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                        x => x.Id == vnPaymentResponse.OrderId 
                        || x.TrackingCode == vnPaymentResponse.OrderId, 
                        false,
-                       x => x.Transactions, x => x.Parcels
+                       x => x.Transactions
                        );
 
         if (shipment == null)
@@ -109,10 +116,9 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
 
         // Get only the transaction that is pending for shipment cost
-        var transaction = shipment.Transactions
-            .FirstOrDefault(x => x.TransactionType == TransactionTypeEnum.ShipmentCost
-            && x.PaymentStatus == PaymentStatusEnum.Pending
-            );
+        var transaction = await _transactionRepository.GetSingleAsync(
+                       x => (x.ShipmentId == shipment.Id || x.Shipment.TrackingCode == shipment.TrackingCode)
+                                                       && x.PaymentStatus == PaymentStatusEnum.Pending);
         if (transaction == null)
         {
             throw new AppException(
@@ -137,8 +143,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         if (vnPaymentResponse.VnPayResponseCode == "00")
         {
             _logger.Information("Payment successful for shipment: {shipmentId}", shipment.Id);
-            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
-            shipment.PaidAt = CoreHelper.SystemTimeNow;
+            await HandlePaymentForShipment(shipment, transaction.PaidById);
 
             transaction.PaymentStatus = PaymentStatusEnum.Paid;
             //await HandleShipmentParcelTransaction(shipment);
@@ -166,12 +171,10 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             System.Globalization.DateTimeStyles.AssumeUniversal
         ).ToUniversalTime();
         transaction.PaymentCurrency = "VND";
-        transaction.Description = JsonConvert.SerializeObject(vnPaymentResponse);
+        transaction.Description = vnPaymentResponse.ToJsonString();
         transaction.PaymentDate = CoreHelper.SystemTimeNow;
         _shipmentRepository.Update(shipment);
 
-        // Cancel any scheduled job for this shipment
-        await CancelScheduledUnpaidJob(shipment.Id);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         return response;
     }
@@ -194,7 +197,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             predicate = predicate.And(t => t.PaidById == customerId);
         }
 
-        var paginatedTransactions = await _transaction.GetAllPaginatedQueryable(
+        var paginatedTransactions = await _transactionRepository.GetAllPaginatedQueryable(
             pageNumber: request.PageNumber,
             pageSize: request.PageSize,
             predicate: predicate,
@@ -247,7 +250,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    // Cancel ScheduleUnpaidJob
+    // cancel ScheduleUnpaidJob
     public async Task CancelScheduledUnpaidJob(string shipmentId)
     {
         _logger.Information("Cancelling scheduled job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
@@ -262,5 +265,72 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         {
             _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
         }
+    }
+
+    // cancel apply surcharge job
+    private async Task CancelApplySurchargeJob(string shipmentId)
+    {
+        _logger.Information("Canceling apply surcharge job for shipment ID: {@shipmentId}", shipmentId);
+        var jobKey = new JobKey($"ApplySurchargeJob-{shipmentId}");
+        if (await _schedulerFactory.GetScheduler().Result.CheckExists(jobKey))
+        {
+            await _schedulerFactory.GetScheduler().Result.DeleteJob(jobKey);
+            _logger.Information("Apply surcharge job canceled for shipment ID: {@shipmentId}", shipmentId);
+        }
+        else
+        {
+            _logger.Warning("No apply surcharge job found for shipment ID: {@shipmentId}", shipmentId);
+        }
+    }
+
+    private async Task HandlePaymentForShipment(Shipment shipment, string userId)
+    {
+        _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
+
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+            shipment.PaidAt = CoreHelper.SystemTimeNow;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.AwaitingDropOff,
+                Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = userId,
+            });
+
+            await CancelScheduledUnpaidJob(shipment.Id);
+        }
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingRefund)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.Refunded;
+            shipment.RefundedAt = CoreHelper.SystemTimeNow;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.Refunded,
+                Status = $"Nhân viên đã hoàn tiền cho đơn hàng {shipment.TrackingCode}",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = userId,
+            });
+
+            await CancelApplySurchargeJob(shipment.Id);
+        }
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDelivery;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.AwaitingDelivery,
+                Status = $"Người nhận đã thanh toán phụ phí cho đơn hàng {shipment.TrackingCode}",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = userId,
+            });
+            await CancelApplySurchargeJob(shipment.Id);
+        }
+
+        _shipmentRepository.Update(shipment);
     }
 }

@@ -11,6 +11,7 @@ public sealed record ShipmentFilterRequest
     public string? DepartureStationId { get; init; }
     public string? DestinationStationId { get; init; }
 
+    public string? SenderId { get; init; }
     public string? SenderName { get; init; }
     public string? SenderPhone { get; init; }
 
@@ -22,4 +23,5 @@ public sealed record ShipmentFilterRequest
     public string? TimeSlotId { get; init; }
     public string? LineId { get; init; }
     public string? ItineraryIncludeStationId { get; init; }
+    public bool? IsAwaitingNextTrain { get; init; }
 }

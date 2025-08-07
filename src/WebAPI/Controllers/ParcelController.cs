@@ -10,7 +10,6 @@ using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
@@ -91,5 +90,30 @@ namespace MetroShip.WebAPI.Controllers
             await _parcelService.RejectParcelAsync(request);
             return Ok(BaseResponse.OkResponseDto("Parcel rejection processed successfully.", null));
         }*/
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.LoadParcelOnTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainCode)
+        {
+            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainCode} successfully.", null));
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UnloadParcelFromTrain)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainCode)
+        {
+            await _parcelService.UnloadParcelFromTrain(parcelCode, trainCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainCode} successfully.", null));
+        }
+
+        // update to awaiting delivery
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.UpdateParcelStatusToAwaitingDelivery)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> UpdateParcelStatusToAwaitingDeliveryAsync([FromRoute] string parcelCode)
+        {
+            await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
+        }
     }
 }

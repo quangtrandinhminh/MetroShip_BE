@@ -111,6 +111,7 @@ namespace MetroShip.Utility.Config
         public string MAX_COUNT_STATION_NEAR_USER { get; set; }
         public string MAX_CAPACITY_PER_LINE_KG { get; set; }
         public string MAX_CAPACITY_PER_LINE_M3 { get; set; }
+        public string MAX_NUMBER_OF_SHIFT_ATTEMPTS { get; set; }
 
         // main policy
         public string CONFIRMATION_HOUR { get; set; }
@@ -125,7 +126,7 @@ namespace MetroShip.Utility.Config
         public string MAX_SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }
 
         // price structure
-        public string DISTANCE_STEP_KM { get; set; }
+        /*public string DISTANCE_STEP_KM { get; set; }
         public string PRICE_STEP_PERCENT_PER_DISTANCE_TIER { get; set; }
         public string DISTANCE_TIER_QUANTITY { get; set; }
         public string WEIGHT_TIER_1_MAX_KG { get; set; }
@@ -136,6 +137,6 @@ namespace MetroShip.Utility.Config
         public string PRICE_TIER_3_VND_PER_KG { get; set; }
         public string WEIGHT_TIER_4_MAX_KG { get; set; }
         public string PRICE_TIER_4_VND_PER_KG { get; set; }
-        public string PRICE_TIER_5_VND_PER_KG { get; set; }
+        public string PRICE_TIER_5_VND_PER_KG { get; set; }*/
     }
 }

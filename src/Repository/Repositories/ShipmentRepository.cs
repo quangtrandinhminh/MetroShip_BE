@@ -10,7 +10,7 @@ using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using MetroShip.Utility.Enums;
-using System.Runtime.CompilerServices;
+using MetroShip.Utility.Helpers;
 
 
 namespace MetroShip.Repository.Repositories;
@@ -23,27 +23,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         _context = context;
     }
-
-    // get quantity of shipments by BookAt date and trackingCode contain regionCode
-    public int GetQuantityByBookedAtAndRegion(DateTimeOffset bookAtDate, string regionCode)
-    {
-        var quantity = _context.Shipments
-            .Count(x => x.BookedAt != null && x.BookedAt.Value.Date == bookAtDate.Date && x.TrackingCode.Contains(regionCode));
-
-        return quantity;
-    }
-
-    /*public class ShipmentDto : Shipment
-    {
-        public string DepartureStationName { get; set; }
-        public string DestinationStationName { get; set; }
-        public string? CurrentStationName { get; set; } 
-    }*/
-
-    /*public class RouteDto : Route
-    {
-        public string LineName { get; set; }
-    }*/
 
     public async Task<PaginatedList<Shipment>>
         GetPaginatedListForListResponseAsync(
@@ -73,21 +52,27 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         {
             Id = s.Id,
             TrackingCode = s.TrackingCode,
-            DepartureStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .FirstOrDefault().Route.FromStation.StationNameVi,
+            DestinationStationName = _context.Stations
+                .Where(station => station.Id == s.DestinationStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            DestinationStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi,
+            DepartureStationName = _context.Stations
+                .Where(station => station.Id == s.DepartureStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            CurrentStationName = s.ShipmentItineraries
+            CurrentStationName = _context.Stations
+                .Where(station => station.Id == s.CurrentStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault() /*??
+            s.ShipmentItineraries
                                      .Where(i => i.IsCompleted)
                                      .OrderBy(i => i.LegOrder)
                                      .LastOrDefault().Route.ToStation.StationNameVi ??
                                  s.ShipmentItineraries
                                      .OrderBy(i => i.LegOrder)
-                                     .FirstOrDefault().Route.FromStation.StationNameVi,
+                                     .FirstOrDefault().Route.FromStation.StationNameVi*/,
 
             SenderName = s.SenderName,
             SenderPhone = s.SenderPhone,
@@ -95,12 +80,15 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             RecipientPhone = s.RecipientPhone,
 
             ShipmentStatus = s.ShipmentStatus,
-            BookedAt = s.BookedAt.Value,
+            //BookedAt = s.BookedAt.Value,
             TotalCostVnd = s.TotalCostVnd,
             ScheduledDateTime = s.ScheduledDateTime,
             TotalVolumeM3 = s.TotalVolumeM3,
             TotalWeightKg = s.TotalWeightKg,
             TotalKm = s.TotalKm,
+
+            Rating = s.Rating,
+            Feedback = s.Feedback,
         });
 
         // Use your existing paging helper on the projection
@@ -187,22 +175,33 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             // Feedback fields
             Rating = s.Rating,
             Feedback = s.Feedback,
+            FeedbackAt = s.FeedbackAt,
+            FeedbackRespondedAt = s.FeedbackRespondedAt,
+            FeedbackResponse = s.FeedbackResponse,
+            FeedbackResponseBy = s.FeedbackResponseBy,
 
-            DepartureStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .FirstOrDefault().Route.FromStation.StationNameVi,
+            // Station tracking
+            DestinationStationName = _context.Stations
+                .Where(station => station.Id == s.DestinationStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            DestinationStationName = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault().Route.ToStation.StationNameVi,
+            DepartureStationName = _context.Stations
+                .Where(station => station.Id == s.DepartureStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault(),
 
-            CurrentStationName = s.ShipmentItineraries
+            CurrentStationName = _context.Stations
+                .Where(station => station.Id == s.CurrentStationId)
+                .Select(station => station.StationNameVi)
+                .FirstOrDefault() /*??
+            s.ShipmentItineraries
                                      .Where(i => i.IsCompleted)
                                      .OrderBy(i => i.LegOrder)
                                      .LastOrDefault().Route.ToStation.StationNameVi ??
                                  s.ShipmentItineraries
                                      .OrderBy(i => i.LegOrder)
-                                     .FirstOrDefault().Route.FromStation.StationNameVi,
+                                     .FirstOrDefault().Route.FromStation.StationNameVi*/,
 
             ShipmentItineraries = s.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
@@ -251,7 +250,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
                     IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
                 },
-            }).ToList(),
+            }).OrderBy(p => p.ParcelCode).ToList(),
 
             ShipmentMedias = s.ShipmentMedias.Select(media => new ShipmentMedia
             {
@@ -264,6 +263,16 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 LastUpdatedAt = media.LastUpdatedAt,
                 LastUpdatedBy = media.LastUpdatedBy,
             }).ToList(),
+
+            ShipmentTrackings = s.ShipmentTrackings.Select(tracking => new ShipmentTracking
+            {
+                Id = tracking.Id,
+                ShipmentId = tracking.ShipmentId,
+                Status = tracking.Status,
+                UpdatedBy = tracking.UpdatedBy,
+                EventTime = tracking.EventTime,
+                Note = tracking.Note,
+            }).OrderByDescending(st => st.EventTime).ToList(),
             //Transactions = shipment.Transactions.ToList(),
         }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
 
@@ -338,13 +347,13 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         return await PaginatedList<ShipmentDto>.CreateAsync(shipmentDtos, pageNumber, pageSize);
     }*/
 
-    public class CheckAvailableTimeSlotsRequest
+    /*public class CheckAvailableTimeSlotsRequest
     {
         public string ShipmentId { get; set; }
         public int? MaxAttempts { get; set; } = 3; // số ca thử dời tối đa
-    }
+    }*/
 
-    public class AvailableTimeSlotDto
+    /*public class AvailableTimeSlotDto
     {
         public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset Date { get; set; }
@@ -362,9 +371,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         public ShiftEnum Shift { get; set; }
         public bool IsAbnormal { get; set; }
         public int ScheduleBeforeShiftMinutes { get; set; }=30; // Thời gian đặt trước ca (phút)
-    }
+    }*/
 
-    public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
+    /*public async Task<List<AvailableTimeSlotDto>> FindAvailableTimeSlotsAsync(CheckAvailableTimeSlotsRequest request)
     {
         var result = new List<AvailableTimeSlotDto>();
         const decimal maxWeight = 20000m;
@@ -475,16 +484,16 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         }
 
         return result;
-    }
+    }*/
 
-    public async Task<ShipmentItinerary?> GetItineraryByShipmentIdAsync(string shipmentId)
+    /*public async Task<ShipmentItinerary?> GetItineraryByShipmentIdAsync(string shipmentId)
     {
         return await _context.ShipmentItineraries
             .Include(si => si.Route)
                 .ThenInclude(r => r.ToStation)
             .Include(si => si.Train)
             .FirstOrDefaultAsync(si => si.ShipmentId == shipmentId);
-    }
+    }*/
 
     public async Task UpdateShipmentStatusAsync(string shipmentId, ShipmentStatusEnum status)
     {
@@ -512,5 +521,125 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         };
         _context.ParcelTrackings.Add(tracking);
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> CheckIfThisStationCanWaitNextTrain (string stationId, string shipmentId)
+    {
+        var shipment = await _context.Shipments
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .FirstOrDefaultAsync(s => s.Id == shipmentId);
+
+        // Kiểm tra xem shipment có tồn tại không
+        if (shipment == null)
+        {
+            Log.Error($"Shipment with ID {shipmentId} not found.");
+            return false;
+        }
+
+        shipment.ShipmentItineraries.OrderBy(i => i.LegOrder);
+
+        // Get itinerary của shipment mà route.toStationId chứa stationId
+        var itinerary = shipment.ShipmentItineraries
+            .FirstOrDefault(i => i.Route.ToStationId == stationId);
+
+        // Nếu có station, kiểm tra xem itinerary có phải the last of shipment.ShipmentItineraries
+        // có return false
+        // không thì kiểm tra xem itinerary kế tiếp route.lineId có giống với itinerary.Route.LineId không
+        // có return false
+        // nếu không thì return true
+        if (itinerary == null)
+        {
+            Log.Error($"No itinerary found for shipment {shipmentId} at station {stationId}.");
+            return false;
+        }
+
+        var lastItineraryId = shipment.ShipmentItineraries
+            .OrderBy(i => i.LegOrder)
+            .Select(i => i.Id)
+            .LastOrDefault();
+
+        if (itinerary.Id == lastItineraryId)
+        {
+            Log.Information($"Shipment {shipmentId} has reached the last itinerary at station {stationId}.");
+            return false; // Đã đến ga cuối, không thể chờ chuyến tiếp theo
+        }
+
+        // Lấy itinerary kế tiếp
+        var nextItinerary = shipment.ShipmentItineraries
+            .OrderBy(i => i.LegOrder)
+            .SkipWhile(i => i != itinerary)
+            .Skip(1)
+            .FirstOrDefault();
+
+        // Kiểm tra xem lineId của itinerary kế tiếp có giống với lineId của itinerary hiện tại không
+        if (nextItinerary.Route.LineId == itinerary.Route.LineId)
+        {
+            Log.Information($"Shipment {shipmentId} can't wait for the next train at station {stationId}: Same line!");
+            return false; // Cùng tuyến, không thể chờ chuyến tiếp theo
+        }
+
+        Log.Information($"Shipment {shipmentId} can wait for the next train at station {stationId}.");
+        return true; // Có thể chờ chuyến tiếp theo
+    }
+
+    public async Task<PaginatedList<Shipment>> GetShipmentsCanWaitNextTrainAtStation(
+        int pageNumber, int pageSize, string stationId,
+        Expression<Func<Shipment, bool>> predicate = null,
+        Expression<Func<Shipment, object>> orderBy = null,
+        bool? isDesc = false)
+    {
+        // First, get shipment IDs that can wait for next train at this station
+        var statusList = new List<ShipmentStatusEnum>
+        {
+            ShipmentStatusEnum.AwaitingDropOff,
+            ShipmentStatusEnum.PickedUp,
+            ShipmentStatusEnum.WaitingForNextTrain,
+            ShipmentStatusEnum.InTransit
+        };
+
+        var shipmentIdsCanWait = _context.Shipments
+            .Include(s => s.ShipmentItineraries)
+            .ThenInclude(i => i.Route)
+            .Where(s => statusList.Contains(s.ShipmentStatus) &&
+            s.ShipmentItineraries.Any(i => i.Route.ToStationId == stationId))
+            .AsEnumerable() // Switch to client-side evaluation for complex logic
+            .Where(s =>
+            {
+                var orderedItineraries = s.ShipmentItineraries.OrderBy(i => i.LegOrder).ToList();
+                var currentItinerary = orderedItineraries.FirstOrDefault(i => i.Route.ToStationId == stationId);
+
+                if (currentItinerary == null) return false;
+
+                var currentIndex = orderedItineraries.FindIndex(i => i.Id == currentItinerary.Id);
+                if (currentIndex == -1 || currentIndex == orderedItineraries.Count - 1) return false; // Last itinerary
+
+                var nextItinerary = orderedItineraries[currentIndex + 1];
+                return nextItinerary.Route.LineId != currentItinerary.Route.LineId; // Different lines
+            })
+            .Select(s => s.Id)
+            .ToList();
+
+        predicate = predicate.And(s => shipmentIdsCanWait.Contains(s.Id));
+
+        return await GetPaginatedListForListResponseAsync(
+            pageNumber, pageSize,predicate,orderBy,isDesc);
+    }
+
+    // calculate total kg and total volume of all shipments by lineId and date, and slot
+    public async Task<(decimal TotalWeightKg, decimal TotalVolumeM3)> CalculateTotalWeightAndVolumeAsync(
+               string lineId, DateOnly date, string timeSlotId)
+    {
+        var shipments = await _context.Shipments
+            .Where(s => s.ShipmentItineraries.Any(
+                i => i.Route.LineId == lineId &&
+                i.Date.HasValue && i.Date.Value == date &&
+                i.TimeSlotId == timeSlotId))
+            .ToListAsync();
+
+        var totalWeight = shipments.Sum(s => s.TotalWeightKg) ?? 0;
+        var totalVolume = shipments.Sum(s => s.TotalVolumeM3) ?? 0;
+
+        return (totalWeight, totalVolume);
     }
 }

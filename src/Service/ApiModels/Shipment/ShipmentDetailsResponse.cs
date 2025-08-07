@@ -28,15 +28,17 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     
 
     // Status tracking timestamps
-    public DateTimeOffset? PickedUpAt { get; set; }
-    public DateTimeOffset? RejectedAt { get; set; }
     public string? RejectionReason { get; set; } // Reason for rejection, if applicable
     public string? RejectedBy { get; set; } // User who rejected the shipment   
     public string? ConfirmedBy { get; set; }
-
     public string? PickedUpBy { get; set; } // User who picked up the shipment
-    public DateTimeOffset? AwaitedDeliveryAt { get; set; }
+    public DateTimeOffset? BookedAt { get; set; }
+    public DateTimeOffset? PickedUpAt { get; set; }
+    public DateTimeOffset? RejectedAt { get; set; }
+    public DateTimeOffset? ApprovedAt { get; set; }
+    public DateTimeOffset? PaidAt { get; set; }
     public DateTimeOffset? DeliveredAt { get; set; }
+    public DateTimeOffset? AwaitedDeliveryAt { get; set; }
     public DateTimeOffset? SurchargeAppliedAt { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public DateTimeOffset? RefundedAt { get; set; }
@@ -64,8 +66,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string? RecipientNationalId { get; set; }
 
     // Feedback fields
-    public byte? Rating { get; set; }
-    public string? Feedback { get; set; }
+    public DateTimeOffset? FeedbackAt { get; set; }
     public string? FeedbackResponse { get; set; }
     public string? FeedbackResponseBy { get; set; }
 
@@ -82,5 +83,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public IList<ParcelResponse> Parcels { get; set; } = new List<ParcelResponse>();
     //public IList<TransactionResponse>? Transactions { get; set; } = new List<TransactionResponse>();
     public IList<ShipmentMediaResponse> ShipmentMedias { get; set; } = new List<ShipmentMediaResponse>();
+
+    public IList<ShipmentTrackingResponse> ShipmentTrackings { get; set; } = new List<ShipmentTrackingResponse>();
     public ItineraryGraphResponse ItineraryGraph { get; set; }
 }

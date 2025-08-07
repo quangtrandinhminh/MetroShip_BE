@@ -23,6 +23,7 @@ using Serilog;
 using MetroShip.Utility.Helpers;
 using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
+using RestSharp.Extensions;
 
 namespace MetroShip.Service.Services;
 
@@ -44,10 +45,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly IBaseRepository<ShipmentItinerary> _shipmentItineraryRepository =
         serviceProvider.GetRequiredService<IBaseRepository<ShipmentItinerary>>();
+    private readonly IMetroTimeSlotRepository _timeSlotRepository =
+        serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IMemoryCache _cache =
-        serviceProvider.GetRequiredService<IMemoryCache>();                 
-
-
+        serviceProvider.GetRequiredService<IMemoryCache>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -73,7 +74,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var response = _mapper.MapToTrainCurrentCapacityResponse(metroTrains);
 
         // Calculate current capacity for each train
-        await CalculateCurrentCapacity(metroTrains, response);
+        await CalculateCurrentCapacity(metroTrains, response, request);
         return response;
     }
 
@@ -88,6 +89,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             request.PageNumber,
             request.PageSize,
             BuildShipmentFilterExpression(request),
+            t => t.TrainCode, true,
             includeProperties: t => t.ShipmentItineraries);
 
         return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
@@ -139,6 +141,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         Expression<Func<MetroTrain, bool>> expression = x => x.DeletedAt == null;
 
+        // Available: Train's capacity is not fully utilized
         // 1. If IsAvailable is provided, require all fields
         if (request.IsAvailable.HasValue)
         {
@@ -206,6 +209,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 expression = expression.And(x => x.ShipmentItineraries.Any(
                     si => si.Route.Direction == request.Direction));
             }
+            if (!string.IsNullOrEmpty(request.StationId))
+            {
+                expression = expression.And(x => x.Line.Routes.Any(
+                    r => r.FromStationId == request.StationId ||
+                    r.ToStationId == request.StationId));
+            }
         }
 
         return expression;
@@ -224,13 +233,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 ResponseMessageTrain.TRAIN_NOT_FOUND,
                 StatusCodes.Status400BadRequest);
         }
-
-        /*if (train.LineId != request.LineId)
-        {
-            throw new AppException(ErrorCode.NotFound,
-            ResponseMessageTrain.TRAIN_MUST_BE_SAME_LINE,
-            StatusCodes.Status400BadRequest);
-        }*/
 
         // Prevent double-assignment of train to same slot/date
         var targetDate = request.Date;
@@ -253,7 +255,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // ensure direction of previous shift itineraries not same as request direction
-        // coming soon ...
+        //await ValidateDirectionRule(request.TrainId, request.TimeSlotId, request.Date, request.Direction);
 
         // Fetch all shipment itineraries for the line, slot, date, direction, and train id null
         var shipmentItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
@@ -265,7 +267,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                   si.TrainId == null && // Only consider itineraries not yet assigned to a train
                   (si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDropOff ||
                     si.Shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment ||
-                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit )
+                    si.Shipment.ShipmentStatus == ShipmentStatusEnum.PickedUp)
                   )
             .ToListAsync();
 
@@ -453,20 +455,48 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
     }
 
-    private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
+    private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response,
+        LineSlotDateFilterRequest request)
     {
         _logger.Information("Calculating current capacity for trains");
 
-        // Get all unique shipment IDs from the trains
+        var shipmentValidStatus = new[]
+        {
+        ShipmentStatusEnum.AwaitingDropOff,
+        ShipmentStatusEnum.AwaitingPayment,
+        ShipmentStatusEnum.PickedUp
+    };
+
+        // Get all unique shipment IDs from the trains with proper null checks
         var shipmentIds = metroTrains
-            .SelectMany(t => t.ShipmentItineraries)
+            .SelectMany(t => t.ShipmentItineraries ?? new List<ShipmentItinerary>()) // Handle null ShipmentItineraries
+            .Where(si =>
+                si != null && // Check if ShipmentItinerary is not null
+                si.Shipment != null && // Check if Shipment is not null
+                si.TimeSlotId == request.TimeSlotId &&
+                si.Date.HasValue &&
+                si.Date.Value.Equals(request.Date) &&
+                shipmentValidStatus.Contains(si.Shipment.ShipmentStatus)
+            )
             .Select(si => si.ShipmentId)
             .Distinct()
             .ToList();
 
+        // If no shipments found, return all trains with zero capacity
+        if (!shipmentIds.Any())
+        {
+            _logger.Information("No shipments found for the given criteria, setting current capacity to zero for all trains");
+            foreach (var train in response)
+            {
+                train.CurrentWeightKg = 0;
+                train.CurrentVolumeM3 = 0;
+            }
+            return;
+        }
+
         // Fetch shipment data in one query
         var shipmentData = await _shipmentRepository.GetAllWithCondition(
-                       s => shipmentIds.Contains(s.Id))
+            s => shipmentIds.Contains(s.Id))
             .Select(s => new
             {
                 s.Id,
@@ -476,8 +506,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             .ToListAsync();
 
         // Create a lookup dictionary for better performance
-        var shipmentLookup = shipmentData.ToDictionary(
-            s => s.Id);
+        var shipmentLookup = shipmentData.ToDictionary(s => s.Id);
 
         // Calculate current weight and volume for each train
         foreach (var train in response)
@@ -487,6 +516,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (trainEntity?.ShipmentItineraries != null)
             {
                 var trainShipmentIds = trainEntity.ShipmentItineraries
+                    .Where(si => si != null && si.Shipment != null) // Add null checks here too
+                    .Where(si =>
+                        si.TimeSlotId == request.TimeSlotId &&
+                        si.Date.HasValue &&
+                        si.Date.Value.Equals(request.Date) &&
+                        shipmentValidStatus.Contains(si.Shipment.ShipmentStatus))
                     .Select(si => si.ShipmentId)
                     .Where(shipmentLookup.ContainsKey)
                     .ToList();
@@ -496,6 +531,18 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     train.CurrentWeightKg = trainShipmentIds.Sum(id => shipmentLookup[id].TotalWeightKg ?? 0);
                     train.CurrentVolumeM3 = trainShipmentIds.Sum(id => shipmentLookup[id].TotalVolumeM3 ?? 0);
                 }
+                else
+                {
+                    // Explicitly set to zero if no valid shipments found
+                    train.CurrentWeightKg = 0;
+                    train.CurrentVolumeM3 = 0;
+                }
+            }
+            else
+            {
+                // Explicitly set to zero if no itineraries found
+                train.CurrentWeightKg = 0;
+                train.CurrentVolumeM3 = 0;
             }
         }
     }

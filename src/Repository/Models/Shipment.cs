@@ -84,7 +84,7 @@ public partial class Shipment : BaseEntity
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? TotalWeightKg { get; set; } = 0;
 
-    [Column(TypeName = "decimal(10, 2)")]
+    [Column(TypeName = "decimal(10, 6)")]
     public decimal? TotalVolumeM3 { get; set; } = 0;
 
     [StringLength(50)]
