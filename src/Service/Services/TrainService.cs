@@ -848,16 +848,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
 
-        // ✅ Vẽ toàn bộ path shipment
+        // ✅ Gộp ShipmentItineraries + Polyline thành 1 array
+        const int steps = 10;
         var fullPath = shipment.ShipmentItineraries
-            .OrderBy(i => i.LegOrder)
-            .Where(i => i.Route?.FromStation != null && i.Route?.ToStation != null)
-            .SelectMany(i =>
+            .OrderBy(x => x.LegOrder)
+            .Where(x => x.Route?.FromStation != null && x.Route?.ToStation != null)
+            .Select(x =>
             {
-                const int steps = 10;
-                var from = i.Route.FromStation!;
-                var to = i.Route.ToStation!;
-                return Enumerable.Range(0, steps + 1)
+                var from = x.Route!.FromStation!;
+                var to = x.Route.ToStation!;
+
+                var polyline = Enumerable.Range(0, steps + 1)
                     .Select(s =>
                     {
                         var p = s / (double)steps;
@@ -866,11 +867,30 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                             to.Latitude!.Value, to.Longitude!.Value,
                             p);
                         return new GeoPoint { Latitude = lat, Longitude = lng };
-                    });
-            })
-            .ToList();
+                    }).ToList();
 
-        // ✅ Trả kết quả đã đồng bộ
+                return new
+                {
+                    x.LegOrder,
+                    From = new
+                    {
+                        Name = from.StationNameVi,
+                        Latitude = from.Latitude,
+                        Longitude = from.Longitude
+                    },
+                    To = new
+                    {
+                        Name = to.StationNameVi,
+                        Latitude = to.Latitude,
+                        Longitude = to.Longitude
+                    },
+                    x.IsCompleted,
+                    x.Message,
+                    Polyline = polyline
+                };
+            }).ToList();
+
+        // ✅ Trả kết quả cuối cùng
         position.Status = mappedShipmentStatus.ToString();
         position.AdditionalData = new
         {
@@ -885,29 +905,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 shipment.TotalWeightKg,
                 shipment.TotalVolumeM3,
                 shipment.CreatedAt,
-
-                ShipmentItineraries = shipment.ShipmentItineraries
-                    .OrderBy(x => x.LegOrder)
-                    .Select(x => new
-                    {
-                        x.LegOrder,
-                        From = new
-                        {
-                            Name = x.Route.FromStation.StationNameVi,
-                            Latitude = x.Route.FromStation.Latitude,
-                            Longitude = x.Route.FromStation.Longitude
-                        },
-                        To = new
-                        {
-                            Name = x.Route.ToStation.StationNameVi,
-                            Latitude = x.Route.ToStation.Latitude,
-                            Longitude = x.Route.ToStation.Longitude
-                        },
-                        x.IsCompleted,
-                        x.Message
-                    })
-                    .ToList(),
-
                 FullPath = fullPath
             }
         };
