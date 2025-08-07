@@ -202,6 +202,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
         services.AddScoped<IPricingService, PricingService>();
         services.AddScoped<IRegionService, RegionService>();
+        services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

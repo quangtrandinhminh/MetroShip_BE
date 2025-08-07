@@ -650,87 +650,124 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task ConfirmTrainArrivedAsync(string trainId, string stationId)
     {
-        var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
-            ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
-
-        if (train.Line?.Routes == null || !train.Line.Routes.Any())
-            throw new AppException(ErrorCode.NotFound, "No route information found for this train's line", StatusCodes.Status404NotFound);
-
-        var segmentKey = $"{trainId}-SegmentIndex";
-        var directionKey = $"{trainId}-Direction";
-
-        // Lấy direction an toàn nhất có thể
-        DirectionEnum direction;
-
-        if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
+        try
         {
-            direction = cachedDirection;
-        }
-        else if (_cache.TryGetValue(segmentKey, out int cachedIndex) && cachedIndex >= 0)
-        {
-            var routeFromIndex = train.Line.Routes.FirstOrDefault(r => r.SeqOrder == cachedIndex);
-            direction = routeFromIndex?.Direction
-                ?? throw new AppException(ErrorCode.BadRequest, "Cannot determine direction from segment index", StatusCodes.Status400BadRequest);
+            var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
+                ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
+            if (train.Line?.Routes == null || !train.Line.Routes.Any())
+                throw new AppException(ErrorCode.NotFound, "No route information found for this train's line", StatusCodes.Status404NotFound);
+
+            var segmentKey = $"{trainId}-SegmentIndex";
+            var directionKey = $"{trainId}-Direction";
+
+            // ✅ Lấy direction an toàn
+            DirectionEnum direction;
+            if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
+            {
+                direction = cachedDirection;
+            }
+            else if (_cache.TryGetValue(segmentKey, out int cachedIndex) && cachedIndex >= 0)
+            {
+                var routeFromIndex = train.Line.Routes.FirstOrDefault(r => r.SeqOrder == cachedIndex);
+                direction = routeFromIndex?.Direction
+                    ?? throw new AppException(ErrorCode.BadRequest, "Cannot determine direction from segment index", StatusCodes.Status400BadRequest);
+
+                _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+            }
+            else
+            {
+                direction = InferTrainDirectionFromCurrentStation(train, stationId);
+                _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+            }
+
+            // ✅ Lọc route theo direction
+            var routes = train.Line.Routes
+                .Where(r => r.Direction == direction)
+                .OrderBy(r => r.SeqOrder)
+                .ToList();
+
+            if (routes.Count == 0)
+                throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
+
+            // ✅ Tìm leg hiện tại (đích là stationId)
+            var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
+            if (currentIndex == -1)
+            {
+                throw new AppException(ErrorCode.BadRequest,
+                    $"Invalid station: {stationId} is not a valid destination station in direction {direction}",
+                    StatusCodes.Status400BadRequest);
+            }
+
+            // ✅ Cập nhật lại vào cache
+            _cache.Set(segmentKey, currentIndex, TimeSpan.FromHours(1));
             _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+
+            var currentLeg = routes[currentIndex];
+
+            // ✅ Nếu trạm cuối → completed
+            if (currentIndex == routes.Count - 1)
+            {
+                train.Status = TrainStatusEnum.Completed;
+
+                _cache.Remove(segmentKey);
+                _cache.Remove($"{trainId}-StartTime");
+
+                _logger.Information("✅ Train {TrainId} has completed its journey at station {StationId}", trainId, stationId);
+            }
+            else
+            {
+                train.Status = TrainStatusEnum.ArrivedAtStation;
+                _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
+            }
+
+            // ✅ Cập nhật vị trí hiện tại của tàu
+            train.CurrentStationId = stationId;
+            train.Latitude = currentLeg.ToStation?.Latitude;
+            train.Longitude = currentLeg.ToStation?.Longitude;
+
+            _trainRepository.Update(train);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+            // ✅ Cập nhật các shipment itineraries liên quan
+            var itinerariesToComplete = await _shipmentItineraryRepository
+                .GetAllWithInclude(i => i.TrainId == trainId &&
+                             i.Route != null &&
+                             i.Route.ToStationId == stationId &&
+                             !i.IsCompleted)
+                .ToListAsync();
+
+            foreach (var itinerary in itinerariesToComplete)
+            {
+                if (itinerary.Route?.ToStation == null)
+                {
+                    _logger.Warning("⚠️ Shipment itinerary {ItineraryId} has null Route or ToStation, skipping...", itinerary.Id);
+                    continue;
+                }
+
+                itinerary.IsCompleted = true;
+
+                var stationName = itinerary.Route.ToStation.StationNameVi ?? "Unknown";
+                var messageLine = $"[Arrived at {stationName} - {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}]";
+
+                itinerary.Message = string.IsNullOrWhiteSpace(itinerary.Message)
+                    ? messageLine
+                    : $"{itinerary.Message}\n{messageLine}";
+
+                _shipmentItineraryRepository.Update(itinerary);
+            }
+
+            if (itinerariesToComplete.Count > 0)
+            {
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+                _logger.Information("✅ Marked {Count} shipment itineraries as completed at station {StationId}", itinerariesToComplete.Count, stationId);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // fallback cuối cùng
-            direction = InferTrainDirectionFromCurrentStation(train, stationId);
-            _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+            _logger.Error(ex, "❌ Error confirming train arrival: TrainId={TrainId}, StationId={StationId}", trainId, stationId);
+            throw;
         }
-
-        // Lấy routes theo direction
-        var routes = train.Line.Routes
-            .Where(r => r.Direction == direction)
-            .OrderBy(r => r.SeqOrder)
-            .ToList();
-
-        if (routes.Count == 0)
-            throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
-
-        // Tìm leg khớp với stationId (ToStationId)
-        var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
-
-        if (currentIndex == -1)
-        {
-            throw new AppException(ErrorCode.BadRequest,
-                $"Invalid station: {stationId} is not a valid destination station in direction {direction}",
-                StatusCodes.Status400BadRequest);
-        }
-
-        // ✅ Cập nhật lại segment index vào cache
-        _cache.Set(segmentKey, currentIndex, TimeSpan.FromHours(1));
-        _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
-
-        var currentLeg = routes[currentIndex];
-
-        // ✅ Nếu là trạm cuối tuyến → hoàn thành chuyến đi
-        if (currentIndex == routes.Count - 1)
-        {
-            train.Status = TrainStatusEnum.Completed;
-
-            // ✅ Remove tracking keys
-            _cache.Remove(segmentKey);
-            _cache.Remove($"{trainId}-StartTime");
-
-            _logger.Information("✅ Train {TrainId} has completed its journey at station {StationId}", trainId, stationId);
-        }
-        else
-        {
-            train.Status = TrainStatusEnum.ArrivedAtStation;
-
-            _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
-        }
-
-        // ✅ Cập nhật vị trí hiện tại của tàu
-        train.CurrentStationId = stationId;
-        train.Latitude = currentLeg.ToStation?.Latitude;
-        train.Longitude = currentLeg.ToStation?.Longitude;
-
-        _trainRepository.Update(train);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)

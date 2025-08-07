@@ -1484,11 +1484,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ParcelTrackingHistory = trackingDtos
         };
     }
+
     private bool IsValidStatusTransition(ShipmentStatusEnum current, ShipmentStatusEnum target)
     {
         return (current == ShipmentStatusEnum.Completed && target == ShipmentStatusEnum.UnloadingAtStation)
             || (current == ShipmentStatusEnum.UnloadingAtStation && target == ShipmentStatusEnum.StorageInWarehouse);
     }
+
     public async Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId)
     {
         var updatedItineraries = await _shipmentItineraryRepository.AssignTrainIdToEmptyLegsAsync(trackingCode, trainId);
