@@ -659,37 +659,55 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var segmentKey = $"{trainId}-SegmentIndex";
         var directionKey = $"{trainId}-Direction";
 
-        var currentIndex = _cache.TryGetValue(segmentKey, out int existingIndex) ? existingIndex : -1;
+        // Lấy direction an toàn nhất có thể
+        DirectionEnum direction;
 
-        // ✅ Dùng stationId truyền vào để infer hướng (an toàn hơn)
-        var currentDirection = _cache.TryGetValue(directionKey, out DirectionEnum cachedDirection)
-            ? cachedDirection
-            : InferTrainDirectionFromCurrentStation(train, stationId); // <== changed here
+        if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
+        {
+            direction = cachedDirection;
+        }
+        else if (_cache.TryGetValue(segmentKey, out int cachedIndex) && cachedIndex >= 0)
+        {
+            var routeFromIndex = train.Line.Routes.FirstOrDefault(r => r.SeqOrder == cachedIndex);
+            direction = routeFromIndex?.Direction
+                ?? throw new AppException(ErrorCode.BadRequest, "Cannot determine direction from segment index", StatusCodes.Status400BadRequest);
 
+            _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+        }
+        else
+        {
+            // fallback cuối cùng
+            direction = InferTrainDirectionFromCurrentStation(train, stationId);
+            _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+        }
+
+        // Lấy routes theo direction
         var routes = train.Line.Routes
-            .Where(r => r.Direction == currentDirection)
+            .Where(r => r.Direction == direction)
             .OrderBy(r => r.SeqOrder)
             .ToList();
 
         if (routes.Count == 0)
             throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
 
-        if (currentIndex < 0 || currentIndex >= routes.Count)
-            throw new AppException(ErrorCode.BadRequest, "Invalid segment index. Simulation might not be started yet.", StatusCodes.Status400BadRequest);
+        // Tìm leg khớp với stationId (ToStationId)
+        var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
 
-        var currentLeg = routes[currentIndex];
-        var expectedStationId = currentLeg.ToStationId;
-
-        if (stationId != expectedStationId)
+        if (currentIndex == -1)
         {
             throw new AppException(ErrorCode.BadRequest,
-                $"Invalid station: expected {expectedStationId} but got {stationId}",
+                $"Invalid station: {stationId} is not a valid destination station in direction {direction}",
                 StatusCodes.Status400BadRequest);
         }
 
-        // ✅ Nếu là trạm cuối tuyến
-        var isLastLeg = currentIndex == routes.Count - 1;
-        if (isLastLeg)
+        // ✅ Cập nhật lại segment index vào cache
+        _cache.Set(segmentKey, currentIndex, TimeSpan.FromHours(1));
+        _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
+
+        var currentLeg = routes[currentIndex];
+
+        // ✅ Nếu là trạm cuối tuyến → hoàn thành chuyến đi
+        if (currentIndex == routes.Count - 1)
         {
             train.Status = TrainStatusEnum.Completed;
 
@@ -706,7 +724,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
         }
 
-        // ✅ Always update current station & position
+        // ✅ Cập nhật vị trí hiện tại của tàu
         train.CurrentStationId = stationId;
         train.Latitude = currentLeg.ToStation?.Latitude;
         train.Longitude = currentLeg.ToStation?.Longitude;
