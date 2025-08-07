@@ -319,7 +319,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             ? cachedDirection
             : InferTrainDirectionFromCurrentStation(train, train.CurrentStationId ?? throw new AppException(ErrorCode.BadRequest, "Train has no current station", StatusCodes.Status400BadRequest));
 
-        // 🔁 Kiểm tra nếu đang ở đầu của chiều ngược lại thì đổi chiều luôn
+        // 🔁 Đổi chiều nếu train đang ở đầu chiều ngược lại
         var reverseDirection = direction == DirectionEnum.Forward ? DirectionEnum.Backward : DirectionEnum.Forward;
         var reverseRoutes = allRoutes
             .Where(r => r.Direction == reverseDirection)
@@ -339,7 +339,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _logger.Information("🔁 Train {TrainId} auto reversed to direction {Direction}", trainId, direction);
         }
 
-        // ✅ Lấy route theo direction sau khi xác định lại
+        // ✅ Lấy route theo direction
         var routes = allRoutes
             .Where(r => r.Direction == direction)
             .OrderBy(r => r.SeqOrder)
@@ -352,7 +352,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (train.Status == TrainStatusEnum.InTransit || train.Status == TrainStatusEnum.Departed)
             throw new AppException(ErrorCode.BadRequest, "Train is already running", StatusCodes.Status400BadRequest);
 
-        // ✅ Nếu vừa completed → kiểm tra xem có ở cuối tuyến cũ không
+        // ✅ Nếu vừa completed → kiểm tra vị trí cuối tuyến
         if (train.Status == TrainStatusEnum.Completed && currentIndex != -1)
         {
             var lastRoute = routes.Last();
@@ -421,6 +421,36 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             nextRoute.FromStation?.StationNameVi ?? "Unknown",
             nextRoute.ToStation?.StationNameVi ?? "Unknown",
             direction);
+
+        // ✅ Cập nhật ShipmentStatus sang InTransit
+        var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+
+        var shipmentsToUpdate = rawShipments
+            .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
+            .ToList();
+
+        if (shipmentsToUpdate.Count > 0)
+        {
+            foreach (var shipment in shipmentsToUpdate)
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
+
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    Status = ShipmentStatusEnum.InTransit.ToString(),
+                    CurrentShipmentStatus = ShipmentStatusEnum.InTransit,
+                    EventTime = DateTimeOffset.UtcNow,
+                    Note = "Shipment status updated as train departed"
+                });
+
+                _shipmentRepository.Update(shipment);
+            }
+
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+            _logger.Information("📦 Updated {Count} shipments to InTransit as train {TrainId} departed.", shipmentsToUpdate.Count, train.Id);
+        }
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
@@ -525,28 +555,53 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // ✅ Current leg animation path
-        var path = new List<GeoPoint>();
-        const int steps = 10;
-        for (int i = 0; i <= steps; i++)
+        // 🔄 Cập nhật trạng thái shipment nếu cần
+        var allShipmentsRaw = await _trainRepository.GetLoadedShipmentsByTrainAsync(trainId);
+        var allShipments = allShipmentsRaw
+            .GroupBy(s => s.Id)
+            .Select(g => g.First())
+            .ToList();
+
+        foreach (var s in allShipments)
         {
-            var p = i / (double)steps;
-            var (stepLat, stepLng) = GeoUtils.Interpolate(
-                from.Latitude.Value, from.Longitude.Value,
-                to.Latitude.Value, to.Longitude.Value,
-                p
-            );
-            path.Add(new GeoPoint { Latitude = stepLat, Longitude = stepLng });
+            if (s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro && train.Status == TrainStatusEnum.InTransit)
+            {
+                s.ShipmentStatus = ShipmentStatusEnum.InTransit;
+
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = s.Id,
+                    CurrentShipmentStatus = ShipmentStatusEnum.InTransit,
+                    Status = "InTransit",
+                    EventTime = DateTimeOffset.UtcNow,
+                    Note = "Shipment now in transit"
+                });
+
+                _shipmentRepository.Update(s);
+            }
         }
 
-        // ✅ Build full route with completed status
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // 🔄 Current animation path
+        var path = Enumerable.Range(0, 11).Select(i =>
+        {
+            var p = i / 10.0;
+            var (stepLat, stepLng) = GeoUtils.Interpolate(
+                from.Latitude!.Value, from.Longitude!.Value,
+                to.Latitude!.Value, to.Longitude!.Value,
+                p);
+            return new GeoPoint { Latitude = stepLat, Longitude = stepLng };
+        }).ToList();
+
+        // 🔄 Full polyline
+        const int steps = 10;
         var fullPath = new List<object>();
         for (int i = 0; i < routes.Count; i++)
         {
             var r = routes[i];
             var f = r.FromStation!;
             var t = r.ToStation!;
-
             var polyline = Enumerable.Range(0, steps + 1).Select(s =>
             {
                 var p = s / (double)steps;
@@ -571,21 +626,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // ✅ Get and deduplicate shipments
-        var allShipmentsRaw = await _trainRepository.GetLoadedShipmentsByTrainAsync(trainId);
-
-        // ✅ Deduplicate shipment by Id
-        var allShipments = allShipmentsRaw
-            .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
-            .GroupBy(s => s.Id)
-            .Select(g => g.First())
-            .ToList();
-
-        // ✅ Shipment summaries
+        // 📦 Shipments summary
         var shipmentSummaries = allShipments.Select(s =>
         {
             var lastLeg = s.ShipmentItineraries?
-                .Where(i => i.ShipmentId == s.Id && i.Route?.ToStation != null)
+                .Where(i => i.Route?.ToStation != null)
                 .OrderBy(i => i.LegOrder)
                 .LastOrDefault();
 
@@ -599,13 +644,13 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             };
         }).ToList();
 
-        // ✅ Parcel summaries
+        // 📦 Parcel summaries
         var parcelSummaries = allShipments
             .Where(s => s.Parcels != null && s.Parcels.Count > 0)
             .SelectMany(s =>
             {
                 var lastLeg = s.ShipmentItineraries?
-                    .Where(i => i.ShipmentId == s.Id && i.Route?.ToStation != null)
+                    .Where(i => i.Route?.ToStation != null)
                     .OrderBy(i => i.LegOrder)
                     .LastOrDefault();
 
@@ -622,7 +667,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 });
             })
             .ToList();
-        // ✅ Final result
+
+        // ✅ Kết quả cuối cùng
         var result = new TrainPositionResult
         {
             TrainId = trainId,
