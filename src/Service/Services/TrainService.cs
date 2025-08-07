@@ -476,12 +476,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (_cache.TryGetValue<TrainPositionResult>(trainId, out var cachedPosition))
             return cachedPosition!;
 
-        // ✅ Lấy direction từ cache
         var directionKey = $"{trainId}-Direction";
         if (!_cache.TryGetValue(directionKey, out DirectionEnum direction))
             throw new AppException(ErrorCode.BadRequest, "Train direction not initialized. Call StartOrContinueSimulationAsync first.", StatusCodes.Status400BadRequest);
 
-        // ✅ Lấy thông tin tàu và các tuyến theo direction
         var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
             ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
@@ -520,18 +518,14 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
-        // ✅ Cập nhật trạng thái và vị trí
-        train.Status = progress < 0.1
-            ? TrainStatusEnum.Departed
-            : TrainStatusEnum.InTransit;
-
+        train.Status = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
         train.Latitude = lat;
         train.Longitude = lng;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // ✅ Path animation
+        // ✅ Path for current leg
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
@@ -542,15 +536,27 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 to.Latitude.Value, to.Longitude.Value,
                 p
             );
-
-            path.Add(new GeoPoint
-            {
-                Latitude = stepLat,
-                Longitude = stepLng
-            });
+            path.Add(new GeoPoint { Latitude = stepLat, Longitude = stepLng });
         }
 
-        // ✅ Tuyến đường toàn bộ
+        // ✅ Full animated path of all routes in current direction
+        var fullPath = routes.SelectMany(r =>
+        {
+            var f = r.FromStation!;
+            var t = r.ToStation!;
+            return Enumerable.Range(0, steps + 1).Select(s =>
+            {
+                var p = s / (double)steps;
+                var (latStep, lngStep) = GeoUtils.Interpolate(
+                    f.Latitude!.Value, f.Longitude!.Value,
+                    t.Latitude!.Value, t.Longitude!.Value,
+                    p
+                );
+                return new GeoPoint { Latitude = latStep, Longitude = lngStep };
+            });
+        }).ToList();
+
+        // ✅ Route path data
         var routePath = routes.Select(r => new
         {
             FromStation = new
@@ -569,7 +575,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             r.Direction
         }).ToList();
 
-        // ✅ Lấy shipment đang nằm trên tàu (status == LoadOnToMetro)
+        // ✅ Shipments & Parcels
         var allShipments = await _trainRepository.GetShipmentsByTrainAsync(trainId);
         var loadedShipments = allShipments
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
@@ -589,24 +595,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }).ToList();
 
         var parcelSummaries = loadedShipments
-        .SelectMany(s => s.Parcels.Select(p => new
-        {
-            ParcelId = p.Id,
-            ParcelCode = p.ParcelCode,
-            Description = p.Description,
-            Weight = p.WeightKg,
-            Volume = p.VolumeCm3,
-            ShipmentId = p.ShipmentId,
-            DestinationStationId = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault()?.Route?.ToStationId ?? "Unknown",
-            DestinationStation = s.ShipmentItineraries
-                .OrderBy(i => i.LegOrder)
-                .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown"
-        }))
-        .ToList();
+            .SelectMany(s => s.Parcels.Select(p => new
+            {
+                ParcelId = p.Id,
+                ParcelCode = p.ParcelCode,
+                Description = p.Description,
+                Weight = p.WeightKg,
+                Volume = p.VolumeCm3,
+                ShipmentId = p.ShipmentId,
+                DestinationStationId = s.ShipmentItineraries
+                    .OrderBy(i => i.LegOrder)
+                    .LastOrDefault()?.Route?.ToStationId ?? "Unknown",
+                DestinationStation = s.ShipmentItineraries
+                    .OrderBy(i => i.LegOrder)
+                    .LastOrDefault()?.Route?.ToStation?.StationNameVi ?? "Unknown"
+            }))
+            .ToList();
 
-        // ✅ Kết quả vị trí tàu
+        // ✅ Final result
         var result = new TrainPositionResult
         {
             TrainId = trainId,
@@ -623,8 +629,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             AdditionalData = new
             {
                 RoutePath = routePath,
+                FullPath = fullPath,
                 Shipments = shipmentSummaries,
-                Parcels = parcelSummaries 
+                Parcels = parcelSummaries
             }
         };
 
