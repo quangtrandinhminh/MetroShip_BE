@@ -525,7 +525,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // ✅ Path for current leg
+        // ✅ Current leg path (animation path)
         var path = new List<GeoPoint>();
         const int steps = 10;
         for (int i = 0; i <= steps; i++)
@@ -539,12 +539,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             path.Add(new GeoPoint { Latitude = stepLat, Longitude = stepLng });
         }
 
-        // ✅ Full animated path of all routes in current direction
-        var fullPath = routes.SelectMany(r =>
+        // ✅ Build FullPath with Status = true/false
+        var fullPath = new List<object>();
+
+        for (int i = 0; i < routes.Count; i++)
         {
+            var r = routes[i];
             var f = r.FromStation!;
             var t = r.ToStation!;
-            return Enumerable.Range(0, steps + 1).Select(s =>
+
+            var polyline = Enumerable.Range(0, steps + 1).Select(s =>
             {
                 var p = s / (double)steps;
                 var (latStep, lngStep) = GeoUtils.Interpolate(
@@ -553,29 +557,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     p
                 );
                 return new GeoPoint { Latitude = latStep, Longitude = lngStep };
+            }).ToList();
+
+            var isCompleted = i < currentIndex;
+
+            fullPath.Add(new
+            {
+                FromStation = f.StationNameVi,
+                ToStation = t.StationNameVi,
+                SeqOrder = r.SeqOrder,
+                Direction = r.Direction,
+                Status = isCompleted,
+                Polyline = polyline
             });
-        }).ToList();
+        }
 
-        // ✅ Route path data
-        var routePath = routes.Select(r => new
-        {
-            FromStation = new
-            {
-                r.FromStation.StationNameVi,
-                r.FromStation.Latitude,
-                r.FromStation.Longitude
-            },
-            ToStation = new
-            {
-                r.ToStation.StationNameVi,
-                r.ToStation.Latitude,
-                r.ToStation.Longitude
-            },
-            r.SeqOrder,
-            r.Direction
-        }).ToList();
-
-        // ✅ Shipments & Parcels
+        // ✅ Shipments
         var allShipments = await _trainRepository.GetShipmentsByTrainAsync(trainId);
         var loadedShipments = allShipments
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
@@ -594,6 +591,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             CurrentStatus = s.ShipmentStatus.ToString()
         }).ToList();
 
+        // ✅ Parcels
         var parcelSummaries = loadedShipments
             .SelectMany(s => s.Parcels.Select(p => new
             {
@@ -612,7 +610,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }))
             .ToList();
 
-        // ✅ Final result
+        // ✅ Final Result
         var result = new TrainPositionResult
         {
             TrainId = trainId,
@@ -628,7 +626,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             Path = path,
             AdditionalData = new
             {
-                RoutePath = routePath,
                 FullPath = fullPath,
                 Shipments = shipmentSummaries,
                 Parcels = parcelSummaries
