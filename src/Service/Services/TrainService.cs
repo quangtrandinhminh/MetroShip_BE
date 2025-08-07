@@ -699,23 +699,30 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
     {
-        var forwardStart = train.Line!.Routes!
+        var forwardRoutes = train.Line!.Routes!
             .Where(r => r.Direction == DirectionEnum.Forward)
             .OrderBy(r => r.SeqOrder)
-            .FirstOrDefault()?.FromStationId;
+            .ToList();
 
-        var backwardStart = train.Line!.Routes!
+        var backwardRoutes = train.Line!.Routes!
             .Where(r => r.Direction == DirectionEnum.Backward)
             .OrderBy(r => r.SeqOrder)
-            .FirstOrDefault()?.FromStationId;
+            .ToList();
 
-        if (stationId == forwardStart)
+        var isForwardMatch = forwardRoutes.Any(r =>
+            r.FromStationId == stationId || r.ToStationId == stationId);
+
+        var isBackwardMatch = backwardRoutes.Any(r =>
+            r.FromStationId == stationId || r.ToStationId == stationId);
+
+        // Ưu tiên forward nếu nằm trong cả 2 chiều
+        if (isForwardMatch)
             return DirectionEnum.Forward;
 
-        if (stationId == backwardStart)
+        if (isBackwardMatch)
             return DirectionEnum.Backward;
 
-        throw new AppException(ErrorCode.BadRequest, "Cannot determine direction from current station", StatusCodes.Status400BadRequest);
+        throw new AppException(ErrorCode.BadRequest, $"Cannot determine direction from station {stationId}", StatusCodes.Status400BadRequest);
     }
 
     private bool IsSameCoordinate(double? lat1, double? lng1, double? lat2, double? lng2, double threshold = 0.0001)
