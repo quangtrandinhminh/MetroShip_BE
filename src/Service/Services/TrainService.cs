@@ -656,12 +656,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
             if (train.Line?.Routes == null || !train.Line.Routes.Any())
-                throw new AppException(ErrorCode.NotFound, "No route information found for this train's line", StatusCodes.Status404NotFound);
+                throw new AppException(ErrorCode.NotFound, "No route information found", StatusCodes.Status404NotFound);
 
             var segmentKey = $"{trainId}-SegmentIndex";
             var directionKey = $"{trainId}-Direction";
 
-            // ✅ Lấy direction an toàn
+            // ✅ Determine direction
             DirectionEnum direction;
             if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
             {
@@ -681,7 +681,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
             }
 
-            // ✅ Lọc route theo direction
+            // ✅ Get all routes for direction
             var routes = train.Line.Routes
                 .Where(r => r.Direction == direction)
                 .OrderBy(r => r.SeqOrder)
@@ -690,7 +690,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (routes.Count == 0)
                 throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
 
-            // ✅ Tìm leg hiện tại (đích là stationId)
+            // ✅ Find current route
             var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
             if (currentIndex == -1)
             {
@@ -699,21 +699,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     StatusCodes.Status400BadRequest);
             }
 
-            // ✅ Cập nhật lại vào cache
-            _cache.Set(segmentKey, currentIndex, TimeSpan.FromHours(1));
-            _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
-
             var currentLeg = routes[currentIndex];
 
-            // ✅ Nếu trạm cuối → completed
+            // ✅ Update train status and position
             if (currentIndex == routes.Count - 1)
             {
                 train.Status = TrainStatusEnum.Completed;
-
                 _cache.Remove(segmentKey);
                 _cache.Remove($"{trainId}-StartTime");
 
-                _logger.Information("✅ Train {TrainId} has completed its journey at station {StationId}", trainId, stationId);
+                _logger.Information("✅ Train {TrainId} completed journey at station {StationId}", trainId, stationId);
             }
             else
             {
@@ -721,7 +716,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
             }
 
-            // ✅ Cập nhật vị trí hiện tại của tàu
             train.CurrentStationId = stationId;
             train.Latitude = currentLeg.ToStation?.Latitude;
             train.Longitude = currentLeg.ToStation?.Longitude;
@@ -729,25 +723,32 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-            // ✅ Cập nhật các shipment itineraries liên quan
-            var itinerariesToComplete = await _shipmentItineraryRepository
-                .GetAllWithInclude(i => i.TrainId == trainId &&
-                             i.Route != null &&
-                             i.Route.ToStationId == stationId &&
-                             !i.IsCompleted)
+            // ✅ Get matching shipment itineraries
+            var allCandidates = await _shipmentItineraryRepository
+                .GetAllWithCondition(x => x.TrainId == trainId && !x.IsCompleted && x.RouteId != null)
                 .ToListAsync();
+
+            // ✅ Join with route to check ToStationId
+            var matchedItineraries = allCandidates
+                .Where(i =>
+                    train.Line.Routes.Any(r =>
+                        r.Id == i.RouteId &&
+                        r.ToStationId == stationId))
+                .ToList();
+
+            // ✅ Group by ShipmentId and select leg with lowest LegOrder
+            var itinerariesToComplete = matchedItineraries
+                .GroupBy(i => i.ShipmentId)
+                .Select(g => g.OrderBy(i => i.LegOrder).First())
+                .ToList();
 
             foreach (var itinerary in itinerariesToComplete)
             {
-                if (itinerary.Route?.ToStation == null)
-                {
-                    _logger.Warning("⚠️ Shipment itinerary {ItineraryId} has null Route or ToStation, skipping...", itinerary.Id);
-                    continue;
-                }
+                var route = train.Line.Routes.FirstOrDefault(r => r.Id == itinerary.RouteId);
+                var stationName = route?.ToStation?.StationNameVi ?? "Unknown";
 
                 itinerary.IsCompleted = true;
 
-                var stationName = itinerary.Route.ToStation.StationNameVi ?? "Unknown";
                 var messageLine = $"[Arrived at {stationName} - {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}]";
 
                 itinerary.Message = string.IsNullOrWhiteSpace(itinerary.Message)
@@ -760,7 +761,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (itinerariesToComplete.Count > 0)
             {
                 await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-                _logger.Information("✅ Marked {Count} shipment itineraries as completed at station {StationId}", itinerariesToComplete.Count, stationId);
+                _logger.Information("✅ Updated {Count} shipment itineraries at station {StationId}", itinerariesToComplete.Count, stationId);
             }
         }
         catch (Exception ex)
