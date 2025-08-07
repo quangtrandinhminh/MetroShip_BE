@@ -21,6 +21,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Microsoft.Extensions.Caching.Memory;
+using RestSharp.Extensions;
 
 namespace MetroShip.Service.Services;
 
@@ -40,6 +41,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly IBaseRepository<ShipmentItinerary> _shipmentItineraryRepository =
         serviceProvider.GetRequiredService<IBaseRepository<ShipmentItinerary>>();
+    private readonly IMetroTimeSlotRepository _timeSlotRepository =
+        serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IMemoryCache _cache =
         serviceProvider.GetRequiredService<IMemoryCache>();
 
@@ -67,7 +70,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var response = _mapper.MapToTrainCurrentCapacityResponse(metroTrains);
 
         // Calculate current capacity for each train
-        await CalculateCurrentCapacity(metroTrains, response);
+        await CalculateCurrentCapacity(metroTrains, response, request);
         return response;
     }
 
@@ -227,13 +230,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 StatusCodes.Status400BadRequest);
         }
 
-        /*if (train.LineId != request.LineId)
-        {
-            throw new AppException(ErrorCode.NotFound,
-            ResponseMessageTrain.TRAIN_MUST_BE_SAME_LINE,
-            StatusCodes.Status400BadRequest);
-        }*/
-
         // Prevent double-assignment of train to same slot/date
         var targetDate = request.Date;
         var alreadyAssigned = await _trainRepository.GetAllWithCondition(
@@ -255,7 +251,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // ensure direction of previous shift itineraries not same as request direction
-        // coming soon ...
+        //await ValidateDirectionRule(request.TrainId, request.TimeSlotId, request.Date, request.Direction);
 
         // Fetch all shipment itineraries for the line, slot, date, direction, and train id null
         var shipmentItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
@@ -297,6 +293,83 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             count, request.TrainId);
 
         return response;
+    }
+
+    private async Task ValidateDirectionRule(string trainId, string timeSlotId, DateOnly date, DirectionEnum requestDirection)
+    {
+        // Get the current timeslot to determine shift
+        var currentTimeSlot = await _timeSlotRepository.GetByIdAsync(timeSlotId);
+        if (currentTimeSlot == null)
+        {
+            throw new AppException(ErrorCode.NotFound, "TimeSlot not found", StatusCodes.Status400BadRequest);
+        }
+
+        // Check if this is morning shift and validate against previous night
+        if (currentTimeSlot.Shift == ShiftEnum.Morning)
+        {
+            var previousDate = date.AddDays(-1);
+
+            // Find night timeslot from previous day
+            var nightTimeSlot = await _timeSlotRepository.GetAllWithCondition(
+                ts => ts.Shift == ShiftEnum.Night).FirstOrDefaultAsync();
+
+            if (nightTimeSlot != null)
+            {
+                // Check if train ran same direction in previous night
+                var previousNightItinerary = await _shipmentItineraryRepository.GetAllWithCondition(
+                    si => si.TrainId.Equals(trainId) &&
+                          si.TimeSlotId == nightTimeSlot.Id &&
+                          si.Date.HasValue &&
+                          si.Date.Value.Equals(previousDate) &&
+                          si.Route.Direction == requestDirection)
+                    .FirstOrDefaultAsync();
+
+                if (previousNightItinerary != null)
+                {
+                    throw new AppException(ErrorCode.BadRequest,
+                        $"Train cannot run same direction ({requestDirection}) in Morning after running same direction in previous Night",
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+        }
+
+        // For other shifts, check against immediate previous shift
+        else
+        {
+            var previousShift = GetPreviousShift(currentTimeSlot.Shift);
+            var previousTimeSlot = await _timeSlotRepository.GetAllWithCondition(
+                ts => ts.Shift == previousShift).FirstOrDefaultAsync();
+
+            if (previousTimeSlot != null)
+            {
+                var previousItinerary = await _shipmentItineraryRepository.GetAllWithCondition(
+                    si => si.TrainId.Equals(trainId) &&
+                          si.TimeSlotId == previousTimeSlot.Id &&
+                          si.Date.HasValue &&
+                          si.Date.Value.Equals(date) &&
+                          si.Route.Direction == requestDirection)
+                    .FirstOrDefaultAsync();
+
+                if (previousItinerary != null)
+                {
+                    throw new AppException(ErrorCode.BadRequest,
+                        $"Train cannot run same direction ({requestDirection}) in consecutive shifts",
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+        }
+    }
+
+    private ShiftEnum GetPreviousShift(ShiftEnum currentShift)
+    {
+        return currentShift switch
+        {
+            ShiftEnum.Morning => ShiftEnum.Night,
+            ShiftEnum.Afternoon => ShiftEnum.Morning,
+            ShiftEnum.Evening => ShiftEnum.Afternoon,
+            ShiftEnum.Night => ShiftEnum.Evening,
+            _ => ShiftEnum.Morning
+        };
     }
 
     public async Task<bool> UpdateTrainStatusAsync(string trainId)
@@ -410,20 +483,48 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
     }
 
-    private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response)
+    private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response,
+        LineSlotDateFilterRequest request)
     {
         _logger.Information("Calculating current capacity for trains");
 
-        // Get all unique shipment IDs from the trains
+        var shipmentValidStatus = new[]
+        {
+        ShipmentStatusEnum.AwaitingDropOff,
+        ShipmentStatusEnum.AwaitingPayment,
+        ShipmentStatusEnum.PickedUp
+    };
+
+        // Get all unique shipment IDs from the trains with proper null checks
         var shipmentIds = metroTrains
-            .SelectMany(t => t.ShipmentItineraries)
+            .SelectMany(t => t.ShipmentItineraries ?? new List<ShipmentItinerary>()) // Handle null ShipmentItineraries
+            .Where(si =>
+                si != null && // Check if ShipmentItinerary is not null
+                si.Shipment != null && // Check if Shipment is not null
+                si.TimeSlotId == request.TimeSlotId &&
+                si.Date.HasValue &&
+                si.Date.Value.Equals(request.Date) &&
+                shipmentValidStatus.Contains(si.Shipment.ShipmentStatus)
+            )
             .Select(si => si.ShipmentId)
             .Distinct()
             .ToList();
 
+        // If no shipments found, return all trains with zero capacity
+        if (!shipmentIds.Any())
+        {
+            _logger.Information("No shipments found for the given criteria, setting current capacity to zero for all trains");
+            foreach (var train in response)
+            {
+                train.CurrentWeightKg = 0;
+                train.CurrentVolumeM3 = 0;
+            }
+            return;
+        }
+
         // Fetch shipment data in one query
         var shipmentData = await _shipmentRepository.GetAllWithCondition(
-                       s => shipmentIds.Contains(s.Id))
+            s => shipmentIds.Contains(s.Id))
             .Select(s => new
             {
                 s.Id,
@@ -433,8 +534,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             .ToListAsync();
 
         // Create a lookup dictionary for better performance
-        var shipmentLookup = shipmentData.ToDictionary(
-            s => s.Id);
+        var shipmentLookup = shipmentData.ToDictionary(s => s.Id);
 
         // Calculate current weight and volume for each train
         foreach (var train in response)
@@ -444,6 +544,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (trainEntity?.ShipmentItineraries != null)
             {
                 var trainShipmentIds = trainEntity.ShipmentItineraries
+                    .Where(si => si != null && si.Shipment != null) // Add null checks here too
+                    .Where(si =>
+                        si.TimeSlotId == request.TimeSlotId &&
+                        si.Date.HasValue &&
+                        si.Date.Value.Equals(request.Date) &&
+                        shipmentValidStatus.Contains(si.Shipment.ShipmentStatus))
                     .Select(si => si.ShipmentId)
                     .Where(shipmentLookup.ContainsKey)
                     .ToList();
@@ -453,6 +559,18 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     train.CurrentWeightKg = trainShipmentIds.Sum(id => shipmentLookup[id].TotalWeightKg ?? 0);
                     train.CurrentVolumeM3 = trainShipmentIds.Sum(id => shipmentLookup[id].TotalVolumeM3 ?? 0);
                 }
+                else
+                {
+                    // Explicitly set to zero if no valid shipments found
+                    train.CurrentWeightKg = 0;
+                    train.CurrentVolumeM3 = 0;
+                }
+            }
+            else
+            {
+                // Explicitly set to zero if no itineraries found
+                train.CurrentWeightKg = 0;
+                train.CurrentVolumeM3 = 0;
             }
         }
     }
