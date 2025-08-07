@@ -30,12 +30,12 @@ public partial class ShipmentItinerary : BaseEntity
     public string RouteId { get; set; }
 
     [StringLength(50)]
-    public string? TrainId { get; set; }
+    public string? TrainScheduleId { get; set; }
 
-    public string? TimeSlotId { get; set; }
+    //public string? TimeSlotId { get; set; }
 
-    [Column(TypeName = "date")]
-    public DateOnly? Date { get; set; }
+    /*[Column(TypeName = "date")]
+    public DateOnly? Date { get; set; }*/
     public bool IsCompleted { get; set; }
     public string? Message { get; set; }
 
@@ -47,11 +47,11 @@ public partial class ShipmentItinerary : BaseEntity
     [InverseProperty(nameof(Route.ShipmentItineraries))]
     public virtual Route Route { get; set; }
 
-    [ForeignKey(nameof(TrainId))]
-    [InverseProperty(nameof(MetroTrain.ShipmentItineraries))]
-    public virtual MetroTrain? Train { get; set; }
+    [ForeignKey(nameof(TrainScheduleId))]
+    [InverseProperty(nameof(TrainSchedule.ShipmentItineraries))]
+    public virtual TrainSchedule? TrainSchedule { get; set; }
 
-    [ForeignKey(nameof(TimeSlotId))]
+    /*[ForeignKey(nameof(TimeSlotId))]
     [InverseProperty(nameof(MetroTimeSlot.ShipmentItineraries))]
-    public virtual MetroTimeSlot? TimeSlot { get; set; }
+    public virtual MetroTimeSlot? TimeSlot { get; set; }*/
 }

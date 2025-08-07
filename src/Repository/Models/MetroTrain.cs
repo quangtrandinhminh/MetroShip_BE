@@ -65,6 +65,25 @@ public partial class MetroTrain : BaseEntity
     [InverseProperty(nameof(MetroLine.Trains))]
     public virtual MetroLine Line { get; set; }
 
-    [InverseProperty(nameof(ShipmentItinerary.Train))]
-    public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new HashSet<ShipmentItinerary>();
+    /*[InverseProperty(nameof(ShipmentItinerary.Train))]
+    public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new HashSet<ShipmentItinerary>();*/
+
+    [InverseProperty(nameof(TrainSchedule.Train))]
+    public virtual ICollection<TrainSchedule> TrainSchedules { get; set; } = new List<TrainSchedule>();
+
+    public bool IsTrainCodeEven()
+    {
+        if (string.IsNullOrEmpty(TrainCode))
+            return false;
+
+        // regionCode-linecode-Tnumber
+        var parts = TrainCode.Split('-');
+        if (parts.Length < 3)
+            return false;
+        if (int.TryParse(parts[2], out int trainNumber))
+        {
+            return trainNumber % 2 == 0;
+        }
+        return false;
+    }
 }
