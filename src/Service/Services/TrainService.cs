@@ -299,6 +299,83 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         return response;
     }
 
+    private async Task ValidateDirectionRule(string trainId, string timeSlotId, DateOnly date, DirectionEnum requestDirection)
+    {
+        // Get the current timeslot to determine shift
+        var currentTimeSlot = await _timeSlotRepository.GetByIdAsync(timeSlotId);
+        if (currentTimeSlot == null)
+        {
+            throw new AppException(ErrorCode.NotFound, "TimeSlot not found", StatusCodes.Status400BadRequest);
+        }
+
+        // Check if this is morning shift and validate against previous night
+        if (currentTimeSlot.Shift == ShiftEnum.Morning)
+        {
+            var previousDate = date.AddDays(-1);
+
+            // Find night timeslot from previous day
+            var nightTimeSlot = await _timeSlotRepository.GetAllWithCondition(
+                ts => ts.Shift == ShiftEnum.Night).FirstOrDefaultAsync();
+
+            if (nightTimeSlot != null)
+            {
+                // Check if train ran same direction in previous night
+                var previousNightItinerary = await _shipmentItineraryRepository.GetAllWithCondition(
+                    si => si.TrainId.Equals(trainId) &&
+                          si.TimeSlotId == nightTimeSlot.Id &&
+                          si.Date.HasValue &&
+                          si.Date.Value.Equals(previousDate) &&
+                          si.Route.Direction == requestDirection)
+                    .FirstOrDefaultAsync();
+
+                if (previousNightItinerary != null)
+                {
+                    throw new AppException(ErrorCode.BadRequest,
+                        $"Train cannot run same direction ({requestDirection}) in Morning after running same direction in previous Night",
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+        }
+
+        // For other shifts, check against immediate previous shift
+        else
+        {
+            var previousShift = GetPreviousShift(currentTimeSlot.Shift);
+            var previousTimeSlot = await _timeSlotRepository.GetAllWithCondition(
+                ts => ts.Shift == previousShift).FirstOrDefaultAsync();
+
+            if (previousTimeSlot != null)
+            {
+                var previousItinerary = await _shipmentItineraryRepository.GetAllWithCondition(
+                    si => si.TrainId.Equals(trainId) &&
+                          si.TimeSlotId == previousTimeSlot.Id &&
+                          si.Date.HasValue &&
+                          si.Date.Value.Equals(date) &&
+                          si.Route.Direction == requestDirection)
+                    .FirstOrDefaultAsync();
+
+                if (previousItinerary != null)
+                {
+                    throw new AppException(ErrorCode.BadRequest,
+                        $"Train cannot run same direction ({requestDirection}) in consecutive shifts",
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+        }
+    }
+
+    private ShiftEnum GetPreviousShift(ShiftEnum currentShift)
+    {
+        return currentShift switch
+        {
+            ShiftEnum.Morning => ShiftEnum.Night,
+            ShiftEnum.Afternoon => ShiftEnum.Morning,
+            ShiftEnum.Evening => ShiftEnum.Afternoon,
+            ShiftEnum.Night => ShiftEnum.Evening,
+            _ => ShiftEnum.Morning
+        };
+    }
+
     public async Task StartOrContinueSimulationAsync(string trainId)
     {
         var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
