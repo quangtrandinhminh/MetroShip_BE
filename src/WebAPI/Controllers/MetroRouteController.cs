@@ -17,14 +17,14 @@ namespace MetroShip.WebAPI.Controllers
             _metroRouteService = metroRouteService;
         }
 
-        [HttpGet(WebApiEndpoint.MetroLineEndpoint.GetMetroLinesDropdownList)]
-        public async Task<IActionResult> GetAllMetroRoutesDropdownAsync()
+        [HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLinesDropdownList)]
+        public async Task<IActionResult> GetAllMetroRoutesDropdownAsync([FromQuery] string? stationId)
         {
-            var response = await _metroRouteService.GetAllMetroRouteDropdown();
+            var response = await _metroRouteService.GetAllMetroRouteDropdown(stationId);
             return Ok(BaseResponse.OkResponseDto(response));
         }
 
-        [HttpPost(WebApiEndpoint.MetroLineEndpoint.CreateMetroLine)]
+        [HttpPost(WebApiEndpoint.MetroRouteEndpoint.CreateMetroLine)]
         public async Task<IActionResult> CreateMetroRouteAsync([FromBody] MetroRouteRequest request)
         {
             var response = await _metroRouteService.CreateMetroRoute(request);
@@ -34,7 +34,7 @@ namespace MetroShip.WebAPI.Controllers
         /*[HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLines)]
         public async Task<IActionResult> GetAllMetroRoutesAsync()
         {
-            var response = await _metroLineService.GetAllMetroRoutes();
+            var response = await _metroRouteService.GetAllMetroRoutes();
             return Ok(BaseResponse.OkResponseDto(response));
         }*/
 

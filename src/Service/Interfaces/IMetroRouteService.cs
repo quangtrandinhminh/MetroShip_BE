@@ -12,7 +12,7 @@ namespace MetroShip.Service.Interfaces
     public interface IMetroRouteService
     {
         Task<List<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request);
-        Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown();
+        Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown(string? stationId);
         Task<MetroRouteResponseDetails> GetMetroRouteById(string metroRouteId);
         Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId);
         Task<int> CreateMetroRoute(MetroRouteRequest request);

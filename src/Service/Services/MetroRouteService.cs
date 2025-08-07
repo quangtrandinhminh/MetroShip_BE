@@ -22,6 +22,7 @@ using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Http;
 using MetroShip.Utility.Helpers;
 using MetroShip.Service.ApiModels.PaginatedList;
+using System.Linq.Expressions;
 
 namespace MetroShip.Service.Services
 {
@@ -35,10 +36,19 @@ namespace MetroShip.Service.Services
         private readonly IBaseRepository<Route> _routeStationRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
         private readonly IRegionRepository _regionRepository = serviceProvider.GetRequiredService<IRegionRepository>();
 
-        public async Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown()
+        public async Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown(string? stationId)
         {
             _logger.Information("Getting all MetroLines for dropdown.");
+            Expression<Func<MetroLine, bool>> predicate = line => line.IsActive && line.DeletedAt == null;
+
+            if (!string.IsNullOrEmpty(stationId))
+            {
+                predicate = line => line.IsActive && line.DeletedAt == null
+                    && line.Routes.Any(s => s.FromStationId == stationId || s.ToStationId == stationId);
+            }
+
             var metroLines = await _metroRouteRepository.GetAll()
+                .Where(predicate)
                 .Select(line => new MetroLineItineraryResponse
                 {
                     Id = line.Id,

@@ -82,6 +82,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             request.PageNumber,
             request.PageSize,
             BuildShipmentFilterExpression(request),
+            t => t.TrainCode, true,
             includeProperties: t => t.ShipmentItineraries);
 
         return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
@@ -133,6 +134,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         Expression<Func<MetroTrain, bool>> expression = x => x.DeletedAt == null;
 
+        // Available: Train's capacity is not fully utilized
         // 1. If IsAvailable is provided, require all fields
         if (request.IsAvailable.HasValue)
         {
@@ -199,6 +201,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             {
                 expression = expression.And(x => x.ShipmentItineraries.Any(
                     si => si.Route.Direction == request.Direction));
+            }
+            if (!string.IsNullOrEmpty(request.StationId))
+            {
+                expression = expression.And(x => x.Line.Routes.Any(
+                    r => r.FromStationId == request.StationId ||
+                    r.ToStationId == request.StationId));
             }
         }
 

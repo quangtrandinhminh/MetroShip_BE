@@ -5,6 +5,8 @@ namespace MetroShip.Service.ApiModels.Train;
 
 public sealed record TrainListFilterRequest : PaginatedListRequest
 {
+    public string? StationId { get; set; }
+
     public string? LineId { get; set; }
 
     public string? TimeSlotId { get; set; }

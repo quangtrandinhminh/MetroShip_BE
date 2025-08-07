@@ -10,7 +10,6 @@ using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using MetroShip.Utility.Enums;
-using System.Runtime.CompilerServices;
 using MetroShip.Utility.Helpers;
 
 

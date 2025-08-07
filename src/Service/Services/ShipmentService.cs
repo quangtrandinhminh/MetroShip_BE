@@ -48,7 +48,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IMemoryCache memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private readonly IBaseRepository<ShipmentMedia> _shipmentMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentMedia>>();
     private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
-    private readonly ITransactionService _transactionService = serviceProvider.GetRequiredService<ITransactionService>();
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
@@ -430,6 +429,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
         //shipment.PickedUpBy = JwtClaimUltils.GetUserId(_httpContextAccessor);
         shipment.PickedUpAt = CoreHelper.SystemTimeNow;
+        shipment.CurrentStationId = shipment.DepartureStationId;
         var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
@@ -1586,7 +1586,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         while (attempts < maxAttempts)
         {
-            var capacityKey = new CapacityKey(itinerary.Route.LineId, currentDate, currentSlot.Shift);
+            var capacityKey = new CapacityKey(itinerary.RouteId, currentDate, currentSlot.Shift);
 
             // Get existing capacity for this line/date/shift
             var existingItineraries = capacityData

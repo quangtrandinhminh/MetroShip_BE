@@ -7,6 +7,7 @@ namespace MetroShip.Service.ApiModels.Transaction;
 public record TransactionRequest
 {
     public string ShipmentId { get; set; }
+    public TransactionTypeEnum? TransactionType { get; init; } = TransactionTypeEnum.ShipmentCost;
     public string? ReturnUrl { get; init; } = string.Empty;
     public string? CancelUrl { get; init; } = string.Empty;
 }
