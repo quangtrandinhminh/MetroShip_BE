@@ -24,18 +24,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         _context = context;
     }
 
-    /*public class ShipmentDto : Shipment
-    {
-        public string DepartureStationName { get; set; }
-        public string DestinationStationName { get; set; }
-        public string? CurrentStationName { get; set; } 
-    }*/
-
-    /*public class RouteDto : Route
-    {
-        public string LineName { get; set; }
-    }*/
-
     public async Task<PaginatedList<Shipment>>
         GetPaginatedListForListResponseAsync(
             int pageNumber,
@@ -636,5 +624,22 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return await GetPaginatedListForListResponseAsync(
             pageNumber, pageSize,predicate,orderBy,isDesc);
+    }
+
+    // calculate total kg and total volume of all shipments by lineId and date, and slot
+    public async Task<(decimal TotalWeightKg, decimal TotalVolumeM3)> CalculateTotalWeightAndVolumeAsync(
+               string lineId, DateOnly date, string timeSlotId)
+    {
+        var shipments = await _context.Shipments
+            .Where(s => s.ShipmentItineraries.Any(
+                i => i.Route.LineId == lineId &&
+                i.Date.HasValue && i.Date.Value == date &&
+                i.TimeSlotId == timeSlotId))
+            .ToListAsync();
+
+        var totalWeight = shipments.Sum(s => s.TotalWeightKg) ?? 0;
+        var totalVolume = shipments.Sum(s => s.TotalVolumeM3) ?? 0;
+
+        return (totalWeight, totalVolume);
     }
 }

@@ -202,6 +202,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentService, StaffAssignmentService>();
         services.AddScoped<IPricingService, PricingService>();
         services.AddScoped<IRegionService, RegionService>();
+        services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -213,6 +214,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStationRepository, StationRepository>();
         services.AddScoped<IShipmentRepository, ShipmentRepository>();
         services.AddScoped<IShipmentItineraryRepository, ShipmentItineraryRepository>();
+        services.AddScoped<IShipmentTrackingRepository, ShipmentTrackingRepository>();
         services.AddScoped<IMetroRouteRepository, MetroRouteRepository>();
         services.AddScoped<IParcelRepository, ParcelRepository>();
         services.AddScoped<ITrainRepository, TrainRepository>();

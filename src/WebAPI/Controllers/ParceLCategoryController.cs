@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -28,7 +29,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost(WebApiEndpoint.ParcelCategory.CreateCategory)]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         public async Task<IActionResult> Create([FromBody] ParcelCategoryCreateRequest request)
         {
             var result = await _parcelCategoryService.CreateAsync(request);
@@ -36,15 +37,15 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPut(WebApiEndpoint.ParcelCategory.UpdateCategory)]
-        [Authorize(Roles = "Admin,Staff")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] ParcelCategoryUpdateRequest request)
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
+        public async Task<IActionResult> Update(string id, [FromBody] ParcelCategoryUpdateRequest request)
         {
-            if (id != request.Id)
+            if (id != id)
             {
                 return BadRequest(BaseResponse.NotFoundResponseDto("Invalid ID in request body."));
             }
 
-            await _parcelCategoryService.UpdateAsync(request);
+            await _parcelCategoryService.UpdateAsync(id,request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsParcelCategory.UPDATE_SUCCESS));
         }
 

@@ -17,7 +17,7 @@ namespace MetroShip.Service.Interfaces
 
         Task<ParcelCategoryResponse> CreateAsync(ParcelCategoryCreateRequest request);
 
-        Task UpdateAsync(ParcelCategoryUpdateRequest request);
+        Task<ParcelCategoryResponse> UpdateAsync(string id, ParcelCategoryUpdateRequest request);
 
         Task DeleteAsync(Guid id);
     }

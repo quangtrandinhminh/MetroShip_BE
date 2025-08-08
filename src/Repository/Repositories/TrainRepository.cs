@@ -3,6 +3,7 @@ using MetroShip.Repository.Base;
 using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 
@@ -55,11 +56,67 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
             .FirstOrDefaultAsync(t => t.Id == trainId);
     }
 
+    public async Task<MetroTrain?> GetTrainWithItineraryAndStationsAsync(string trainId, DateOnly date, 
+        string timeSlotId, DirectionEnum direction)
+    {
+        return await _context.MetroTrains.AsSplitQuery()
+        .Include(t => t.ShipmentItineraries)
+            .ThenInclude(si => si.Route)
+                .ThenInclude(r => r.FromStation)
+        .Include(t => t.ShipmentItineraries)
+            .ThenInclude(si => si.Route)
+                .ThenInclude(r => r.ToStation)
+        .Include(t => t.ShipmentItineraries)
+            .ThenInclude(si => si.TimeSlot)
+        .FirstOrDefaultAsync(t => t.Id == trainId);
+    }
+
     public async Task<Shipment?> GetShipmentWithTrainAsync(string trackingCode)
     {
         return await _context.Shipments
             .Include(s => s.ShipmentItineraries)
                 .ThenInclude(i => i.Train)
             .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode);
+    }
+
+    public async Task<MetroTrain?> GetTrainWithRoutesAsync(string trainId, DirectionEnum direction)
+    {
+        return await _context.MetroTrains
+            .Where(t => t.Id == trainId)
+                .Include(t => t.Line)
+                .ThenInclude(line => line.Routes
+                    .Where(route => route.Direction == direction))
+                    .ThenInclude(route => route.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes
+                    .Where(route => route.Direction == direction))
+                    .ThenInclude(route => route.ToStation)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
+    }
+    public async Task<MetroTrain?> GetTrainWithAllRoutesAsync(string trainId)
+    {
+        return await _context.MetroTrains
+            .Where(t => t.Id == trainId)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes)
+                    .ThenInclude(route => route.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(line => line.Routes)
+                    .ThenInclude(route => route.ToStation)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
+    }
+    public async Task<IList<Shipment>> GetLoadedShipmentsByTrainAsync(string trainId)
+    {
+        return await _context.Shipments
+            .Include(s => s.ShipmentItineraries)
+                .ThenInclude(i => i.Route)
+                    .ThenInclude(r => r.ToStation)
+            .Include(s => s.Parcels)
+             .Where(s => s.ShipmentItineraries.Any(si => si.TrainId == trainId) &&
+                    (s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro ||
+                     s.ShipmentStatus == ShipmentStatusEnum.InTransit))
+            .ToListAsync();
     }
 }

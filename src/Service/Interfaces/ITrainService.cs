@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Train;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Service.Interfaces;
 
@@ -20,7 +21,7 @@ public interface ITrainService
     Task<string> AddShipmentItinerariesForTrain(AddTrainToItinerariesRequest request);
 
     Task<TrainPositionResult> GetTrainPositionAsync(string trainId);
-    Task<TrainPositionResult> GetPositionByTrackingCodeAsync(string trackingCode);
-    Task<bool> UpdateTrainStatusAsync(string trainId);
-
+    Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode);
+    Task StartOrContinueSimulationAsync(string trainId);
+    Task ConfirmTrainArrivedAsync(string trainId, string stationId);
 }
