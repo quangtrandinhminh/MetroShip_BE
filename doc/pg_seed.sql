@@ -2333,6 +2333,93 @@ VALUES
      NULL, NULL, NULL, NOW(), NOW(), NULL)
 ;
 
+-- L1-T01, L2-T01, L3A-T01, L4-T01 : Ben Thanh
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0'
+AND public."MetroTrains"."Id" IN (
+    '2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0',
+    'f8f195af-4db7-4786-a1a7-acf8812b4e71',
+    'f0e189a5-e649-47f6-aa77-7ba543208f42',
+    '97ac027f-c0ba-4bb5-a70f-79aeb4f9caef'
+);
+
+-- L1-T02: Suoi Tien Terminal
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = 'd6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1'
+AND public."MetroTrains"."Id" IN (
+'87eca124-25e8-4994-a07d-8715bfdef44b'
+);
+
+-- L2-T02: Tan Binh
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = '8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d'
+  AND public."MetroTrains"."Id" IN (
+    '8d466e7b-df3e-421b-9080-9f13ae4fc0cc'
+    );
+
+-- L3A-T02: Tan Kien
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = 'd0a40d5f-1e84-459e-bfeb-3f2105db3e0b'
+  AND public."MetroTrains"."Id" IN (
+    '76c5f4b0-1b32-4284-b9a6-7a0deeccba64'
+    );
+
+-- L3B-T01: Cong Hoa
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = 'c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b'
+  AND public."MetroTrains"."Id" IN (
+    '7d26d6af-fe31-4564-8930-0f3d8d28b526'
+    );
+
+-- L3B-T02: Hiep Binh Phuoc
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = 'c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2'
+  AND public."MetroTrains"."Id" IN (
+    '66243ad8-7a3d-40b9-986e-a6d258ba6e97'
+    );
+
+-- L4-T02: Ben Tau Hiep Phuoc
+UPDATE public."MetroTrains"
+SET
+    "Latitude" = s."Latitude",
+    "Longitude" = s."Longitude",
+    "CurrentStationId" = s."Id"
+FROM public."Stations" s
+WHERE s."Id" = 'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4'
+  AND public."MetroTrains"."Id" IN (
+    '89145ee1-6a8a-4df6-a485-acb2853a83ac'
+    );
+
 -- ───────────────────────────────────────────────────────────────
 -- Pricing Config Seed Data
 INSERT INTO public."PricingConfig"
