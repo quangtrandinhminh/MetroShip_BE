@@ -707,7 +707,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             var segmentKey = $"{trainId}-SegmentIndex";
             var directionKey = $"{trainId}-Direction";
 
-            // ✅ Determine direction
             DirectionEnum direction;
             if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
             {
@@ -727,7 +726,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
             }
 
-            // ✅ Get all routes for direction
             var routes = train.Line.Routes
                 .Where(r => r.Direction == direction)
                 .OrderBy(r => r.SeqOrder)
@@ -736,7 +734,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (routes.Count == 0)
                 throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
 
-            // ✅ Find current route
             var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
             if (currentIndex == -1)
             {
@@ -747,7 +744,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
             var currentLeg = routes[currentIndex];
 
-            // ✅ Update train status and position
             if (currentIndex == routes.Count - 1)
             {
                 train.Status = TrainStatusEnum.Completed;
@@ -769,17 +765,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-            // ✅ Get matching shipment itineraries
             var allCandidates = await _shipmentItineraryRepository
                 .GetAllWithCondition(x => x.TrainId == trainId && !x.IsCompleted && x.RouteId != null)
                 .ToListAsync();
 
-            // ✅ Join with route to check ToStationId
             var matchedItineraries = allCandidates
-                .Where(i =>
-                    train.Line.Routes.Any(r =>
-                        r.Id == i.RouteId &&
-                        r.ToStationId == stationId))
+                .Where(i => 
+                train.Line.Routes.Any(r =>
+                r.Id == i.RouteId && 
+                r.ToStationId == stationId))
                 .ToList();
 
             // ✅ Group by ShipmentId and select leg with lowest LegOrder
@@ -796,12 +790,34 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 itinerary.IsCompleted = true;
 
                 var messageLine = $"[Arrived at {stationName} - {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}]";
-
                 itinerary.Message = string.IsNullOrWhiteSpace(itinerary.Message)
                     ? messageLine
                     : $"{itinerary.Message}\n{messageLine}";
 
                 _shipmentItineraryRepository.Update(itinerary);
+
+                // ✅ Nếu tất cả legs của shipment đã hoàn tất → mark shipment completed
+                var shipment = await _shipmentRepository.GetByIdAsync(itinerary.ShipmentId);
+                if (shipment != null)
+                {
+                    if (await _shipmentItineraryRepository
+                        .GetAllWithCondition(x => x.ShipmentId == shipment.Id && !x.IsCompleted)
+                        .AnyAsync() == false)
+                    {
+                        shipment.ShipmentStatus = ShipmentStatusEnum.Delivered;
+
+                        _shipmentTrackingRepository.Add(new ShipmentTracking
+                        {
+                            ShipmentId = shipment.Id,
+                            CurrentShipmentStatus = ShipmentStatusEnum.Delivered,
+                            Status = "Delivered",
+                            EventTime = DateTimeOffset.UtcNow,
+                            Note = "All legs completed. Shipment delivered."
+                        });
+
+                        _shipmentRepository.Update(shipment);
+                    }
+                }
             }
 
             if (itinerariesToComplete.Count > 0)
@@ -935,13 +951,13 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // ✅ Nếu tất cả leg hoàn tất → shipment hoàn tất
         if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
         {
-            shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+            shipment.ShipmentStatus = ShipmentStatusEnum.Delivered;
 
             _shipmentTrackingRepository.Add(new ShipmentTracking
             {
                 ShipmentId = shipment.Id,
-                CurrentShipmentStatus = ShipmentStatusEnum.Completed,
-                Status = "Completed",
+                CurrentShipmentStatus = ShipmentStatusEnum.Delivered,
+                Status = "Delivered",
                 EventTime = DateTimeOffset.UtcNow,
                 Note = "All legs completed. Shipment delivered."
             });
