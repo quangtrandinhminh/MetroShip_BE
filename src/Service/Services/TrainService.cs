@@ -855,6 +855,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             var segmentKey = $"{trainId}-SegmentIndex";
             var directionKey = $"{trainId}-Direction";
 
+            // ===== 1. Lấy direction =====
             DirectionEnum direction;
             if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
             {
@@ -874,6 +875,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
             }
 
+            // ===== 2. Lấy routes theo direction =====
             var routes = train.Line.Routes
                 .Where(r => r.Direction == direction)
                 .OrderBy(r => r.SeqOrder)
@@ -882,17 +884,40 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (routes.Count == 0)
                 throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
 
-            var currentIndex = routes.FindIndex(r => r.ToStationId == stationId);
-            if (currentIndex == -1)
+            // ===== 3. Lấy segmentIndex hiện tại =====
+            int segmentIndex;
+            if (_cache.TryGetValue(segmentKey, out int cachedSegmentIndex))
             {
-                throw new AppException(ErrorCode.BadRequest,
-                    $"Invalid station: {stationId} is not a valid destination station in direction {direction}",
+                segmentIndex = cachedSegmentIndex;
+            }
+            else if (!string.IsNullOrEmpty(train.CurrentStationId))
+            {
+                segmentIndex = routes.FindIndex(r => r.FromStationId == train.CurrentStationId);
+            }
+            else
+            {
+                segmentIndex = 0;
+            }
+
+            // ===== 4. Expected next station =====
+            if (segmentIndex < 0 || segmentIndex >= routes.Count)
+                throw new AppException(ErrorCode.BadRequest, "Train segment index out of range.", StatusCodes.Status400BadRequest);
+
+            var expectedStationId = routes[segmentIndex].ToStationId;
+
+            // ===== 5. Kiểm tra chống nhảy trạm =====
+            if (!string.Equals(expectedStationId, stationId, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    $"Unexpected station. Expected: {expectedStationId}, Received: {stationId}",
                     StatusCodes.Status400BadRequest);
             }
 
-            var currentLeg = routes[currentIndex];
+            // ===== 6. Update train =====
+            var currentLeg = routes[segmentIndex];
 
-            if (currentIndex == routes.Count - 1)
+            if (segmentIndex == routes.Count - 1)
             {
                 train.Status = TrainStatusEnum.Completed;
                 _cache.Remove(segmentKey);
@@ -904,6 +929,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             {
                 train.Status = TrainStatusEnum.ArrivedAtStation;
                 _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
+
+                _cache.Set(segmentKey, segmentIndex + 1, TimeSpan.FromHours(1));
+                _cache.Set($"{trainId}-StartTime", DateTimeOffset.UtcNow, TimeSpan.FromHours(1));
             }
 
             train.CurrentStationId = stationId;
@@ -913,15 +941,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
+            // ===== 7. Update Shipment Itineraries =====
             var allCandidates = await _shipmentItineraryRepository
                 .GetAllWithCondition(x => x.TrainId == trainId && !x.IsCompleted && x.RouteId != null)
                 .ToListAsync();
 
             var matchedItineraries = allCandidates
-                .Where(i => 
-                train.Line.Routes.Any(r =>
-                r.Id == i.RouteId && 
-                r.ToStationId == stationId))
+                .Where(i =>
+                    train.Line.Routes.Any(r =>
+                        r.Id == i.RouteId &&
+                        r.ToStationId == stationId))
                 .ToList();
 
             // ✅ Group by ShipmentId and select leg with lowest LegOrder
