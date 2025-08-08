@@ -703,7 +703,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (!_cache.TryGetValue(startTimeKey, out DateTimeOffset startTime))
             throw new AppException(ErrorCode.BadRequest, "Start time not initialized. Call simulation start first.", StatusCodes.Status400BadRequest);
 
-        // --- Tính toán progress nhưng KHÔNG ghi DB ---
+        // --- Tính toán progress ---
         var now = DateTimeOffset.UtcNow;
         var elapsed = (now - startTime).TotalSeconds;
         var distanceKm = (double)currentRoute.LengthKm;
@@ -711,12 +711,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var eta = (distanceKm / speedKmh) * 3600;
         var progress = Math.Clamp(elapsed / eta, 0, 1);
 
+        // ✅ Fix: Không cho nhảy trạm khi progress >= 1
+        if (progress >= 1)
+            progress = 1;
+
+        // Nội suy vị trí dựa trên progress hiện tại
         var (lat, lng) = GeoUtils.Interpolate(
             from.Latitude!.Value, from.Longitude!.Value,
             to.Latitude!.Value, to.Longitude!.Value,
             progress);
 
-        // --- Lấy status thực tế từ DB, không overwrite ---
+        // --- Lấy status thực tế ---
         var displayStatus = train.Status;
         if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
         {
@@ -855,7 +860,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             var segmentKey = $"{trainId}-SegmentIndex";
             var directionKey = $"{trainId}-Direction";
 
-            // ===== 1. Lấy direction =====
+            // 1. Xác định direction
             DirectionEnum direction;
             if (_cache.TryGetValue(directionKey, out DirectionEnum cachedDirection))
             {
@@ -875,7 +880,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _cache.Set(directionKey, direction, TimeSpan.FromHours(1));
             }
 
-            // ===== 2. Lấy routes theo direction =====
+            // 2. Lấy danh sách route theo direction
             var routes = train.Line.Routes
                 .Where(r => r.Direction == direction)
                 .OrderBy(r => r.SeqOrder)
@@ -884,7 +889,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (routes.Count == 0)
                 throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
 
-            // ===== 3. Lấy segmentIndex hiện tại =====
+            // 3. Lấy segmentIndex hiện tại
             int segmentIndex;
             if (_cache.TryGetValue(segmentKey, out int cachedSegmentIndex))
             {
@@ -899,39 +904,42 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 segmentIndex = 0;
             }
 
-            // ===== 4. Expected next station =====
             if (segmentIndex < 0 || segmentIndex >= routes.Count)
-                throw new AppException(ErrorCode.BadRequest, "Train segment index out of range.", StatusCodes.Status400BadRequest);
+                throw new AppException(ErrorCode.BadRequest, "Train segment index out of range", StatusCodes.Status400BadRequest);
 
+            // 4. Chống nhảy trạm
             var expectedStationId = routes[segmentIndex].ToStationId;
-
-            // ===== 5. Kiểm tra chống nhảy trạm =====
             if (!string.Equals(expectedStationId, stationId, StringComparison.OrdinalIgnoreCase))
             {
+                _logger.Warning(
+                    "⚠️ Unexpected station for TrainId={TrainId}. Expected: {ExpectedStationId}, Received: {ReceivedStationId}, Direction={Direction}, SegmentIndex={SegmentIndex}",
+                    trainId,
+                    expectedStationId,
+                    stationId,
+                    direction,
+                    segmentIndex
+                );
+
                 throw new AppException(
                     ErrorCode.BadRequest,
                     $"Unexpected station. Expected: {expectedStationId}, Received: {stationId}",
                     StatusCodes.Status400BadRequest);
             }
 
-            // ===== 6. Update train =====
             var currentLeg = routes[segmentIndex];
 
+            // 5. Cập nhật trạng thái Train
             if (segmentIndex == routes.Count - 1)
             {
                 train.Status = TrainStatusEnum.Completed;
                 _cache.Remove(segmentKey);
-                _cache.Remove($"{trainId}-StartTime");
-
                 _logger.Information("✅ Train {TrainId} completed journey at station {StationId}", trainId, stationId);
             }
             else
             {
                 train.Status = TrainStatusEnum.ArrivedAtStation;
+                _cache.Set(segmentKey, segmentIndex , TimeSpan.FromHours(1));
                 _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, stationId);
-
-                _cache.Set(segmentKey, segmentIndex + 1, TimeSpan.FromHours(1));
-                _cache.Set($"{trainId}-StartTime", DateTimeOffset.UtcNow, TimeSpan.FromHours(1));
             }
 
             train.CurrentStationId = stationId;
@@ -941,16 +949,13 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-            // ===== 7. Update Shipment Itineraries =====
+            // 6. Cập nhật shipment itineraries
             var allCandidates = await _shipmentItineraryRepository
                 .GetAllWithCondition(x => x.TrainId == trainId && !x.IsCompleted && x.RouteId != null)
                 .ToListAsync();
 
             var matchedItineraries = allCandidates
-                .Where(i =>
-                    train.Line.Routes.Any(r =>
-                        r.Id == i.RouteId &&
-                        r.ToStationId == stationId))
+                .Where(i => train.Line.Routes.Any(r => r.Id == i.RouteId && r.ToStationId == stationId))
                 .ToList();
 
             // ✅ Group by ShipmentId and select leg with lowest LegOrder
