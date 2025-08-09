@@ -24,9 +24,14 @@ public partial class MetroTimeSlot : BaseEntity
 
     public ShiftEnum Shift { get; set; }
 
-    /*[InverseProperty(nameof(ShipmentItinerary.TimeSlot))]
-    public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new List<ShipmentItinerary>();*/
+    [InverseProperty(nameof(ShipmentItinerary.TimeSlot))]
+    public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new List<ShipmentItinerary>();
 
     [InverseProperty(nameof(TrainSchedule.TimeSlot))]
     public virtual ICollection<TrainSchedule> TrainSchedules { get; set; } = new List<TrainSchedule>();
+
+    public bool IsShiftEven ()
+    {
+        return (int)Shift % 2 == 0;
+    }
 }

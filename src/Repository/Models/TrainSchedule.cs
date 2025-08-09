@@ -11,7 +11,7 @@ public class TrainSchedule : BaseEntity
     public string TimeSlotId { get; set; }
 
     [Column(TypeName = "date")]
-    public DateOnly Date { get; set; }
+    public DateOnly? Date { get; set; }
 
     public string DepartureStationId { get; set; }
 
@@ -27,6 +27,6 @@ public class TrainSchedule : BaseEntity
 
     public virtual MetroTimeSlot TimeSlot { get; set; }
 
-    [InverseProperty(nameof(ShipmentItinerary.TrainSchedule))]
-    public virtual ICollection<ShipmentItinerary>? ShipmentItineraries { get; set; }
+    /*[InverseProperty(nameof(ShipmentItinerary.TrainSchedule))]
+    public virtual ICollection<ShipmentItinerary>? ShipmentItineraries { get; set; }*/
 }
