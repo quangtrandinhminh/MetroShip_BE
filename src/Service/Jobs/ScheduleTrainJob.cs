@@ -21,7 +21,6 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         _logger.Information("Starting train scheduling job at {Time}", DateTime.Now);
-        var today = DateOnly.FromDateTime(DateTime.Now);
         var trainScheduleCount = _trainScheduleRepository.GetAll().Count();
         var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
                 x => !x.IsAbnormal && x.DeletedAt == null)
@@ -34,113 +33,72 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
 
         if (trainScheduleCount == 0)
         {
-            _logger.Information("No train schedules found for today. Initializing scheduling process.");
-            // Should call initial scheduling
-            await IntiCreateTrainSchedule(trains.ToList(), timeSlots.ToList());
+            _logger.Information("No train schedules found. Initializing scheduling process for all trains.");
+            await InitCreateTrainSchedule(trains.ToList(), timeSlots.ToList());
         }
         else
         {
-            _logger.Information("Found {Count} train schedules for today. Proceeding with daily continuation scheduling.", trainScheduleCount);
-            // Should call daily continuation scheduling  
-            await ScheduleEveryday(trains.ToList(), timeSlots.ToList());
+            _logger.Information("Found {Count} train schedules. Scheduling process already initialized.", trainScheduleCount);
+            // No daily continuation needed since we removed date dependency
         }
     }
 
-    private async Task IntiCreateTrainSchedule(List<MetroTrain> metroTrains, List<MetroTimeSlot> timeSlots)
+    private async Task InitCreateTrainSchedule(List<MetroTrain> metroTrains, List<MetroTimeSlot> timeSlots)
     {
-        var today = DateOnly.FromDateTime(DateTime.Now);
-
         foreach (var train in metroTrains)
         {
-            foreach (var timeSlot in timeSlots)
+            await CreateTrainScheduleForTrain(train, timeSlots);
+        }
+    }
+
+    // This method can be called when creating a new train to add schedules for that train only
+    public async Task CreateTrainScheduleForNewTrain(MetroTrain newTrain)
+    {
+        var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                x => !x.IsAbnormal && x.DeletedAt == null)
+            .OrderBy(x => x.Shift)
+            .ToListAsync();
+
+        await CreateTrainScheduleForTrain(newTrain, timeSlots);
+    }
+
+    private async Task CreateTrainScheduleForTrain(MetroTrain train, List<MetroTimeSlot> timeSlots)
+    {
+        foreach (var timeSlot in timeSlots)
+        {
+            var direction = GetDirection(train, timeSlot);
+
+            var trainSchedule = new TrainSchedule
             {
-                var direction = GetInitialDirection(train, timeSlot.Shift);
+                TrainId = train.Id,
+                TimeSlotId = timeSlot.Id,
+                DepartureStationId = train.CurrentStationId,
+                Direction = direction,
+            };
 
-                var trainSchedule = new TrainSchedule
-                {
-                    TrainId = train.Id,
-                    TimeSlotId = timeSlot.Id,
-                    Date = today,
-                    DepartureStationId = train.CurrentStationId,
-                    Direction = direction,
-                };
-
-                await _trainScheduleRepository.AddAsync(trainSchedule);
-            }
+            await _trainScheduleRepository.AddAsync(trainSchedule);
         }
     }
 
-    private DirectionEnum GetInitialDirection(MetroTrain train, ShiftEnum shift)
+    private DirectionEnum GetDirection(MetroTrain train, MetroTimeSlot timeSlot)
     {
-        var isEven = train.IsTrainCodeEven();
+        var isTrainOdd = !train.IsTrainCodeEven(); // Odd train code
+        var isShiftEven = timeSlot.IsShiftEven();
 
-        return shift switch
+        // Odd train in odd shift (non-even shift) -> Direction 0 (Forward)
+        // Even train in even shift -> Direction 1 (Backward)
+        if (isTrainOdd && !isShiftEven)
         {
-            ShiftEnum.Morning => isEven ? DirectionEnum.Backward : DirectionEnum.Forward,  // T02:1, T01:0
-            ShiftEnum.Afternoon => isEven ? DirectionEnum.Forward : DirectionEnum.Backward, // T02:0, T01:1
-            ShiftEnum.Evening => isEven ? DirectionEnum.Backward : DirectionEnum.Forward,   // T02:1, T01:0
-            ShiftEnum.Night => isEven ? DirectionEnum.Forward : DirectionEnum.Backward,     // T02:0, T01:1
-            _ => DirectionEnum.Forward
-        };
-    }
-
-    private async Task ScheduleEveryday(List<MetroTrain> metroTrains, List<MetroTimeSlot> timeSlots)
-    {
-        var today = DateOnly.FromDateTime(DateTime.Now);
-        var yesterday = today.AddDays(-1);
-
-        // Get yesterday's night schedules to check direction conflicts
-        var yesterdayNightSchedules = await _trainScheduleRepository.GetAllAsync();
-        var lastNightSchedules = yesterdayNightSchedules
-            .Where(ts => ts.Date == yesterday)
-            .Join(timeSlots.Where(ts => ts.Shift == ShiftEnum.Night),
-                  schedule => schedule.TimeSlotId,
-                  timeSlot => timeSlot.Id,
-                  (schedule, timeSlot) => schedule)
-            .ToList();
-
-        var newSchedules = new List<TrainSchedule>();
-
-        foreach (var train in metroTrains)
-        {
-            foreach (var timeSlot in timeSlots)
-            {
-                var direction = GetContinuationDirection(train, timeSlot.Shift, lastNightSchedules);
-
-                var trainSchedule = new TrainSchedule
-                {
-                    TrainId = train.Id,
-                    TimeSlotId = timeSlot.Id,
-                    Date = today,
-                    DepartureStationId = train.CurrentStationId,
-                    Direction = direction,
-                };
-
-                newSchedules.Add(trainSchedule);
-            }
+            return DirectionEnum.Forward; // Direction 0
         }
-
-        // Save all new schedules
-        foreach (var schedule in newSchedules)
+        else if (!isTrainOdd && isShiftEven)
         {
-            await _trainScheduleRepository.AddAsync(schedule);
+            return DirectionEnum.Backward; // Direction 1
         }
-    }
-
-    private DirectionEnum GetContinuationDirection(MetroTrain train, ShiftEnum currentShift, List<TrainSchedule> lastNightSchedules)
-    {
-        var lastNightDirection = lastNightSchedules
-            .FirstOrDefault(s => s.TrainId == train.Id)?.Direction;
-
-        if (currentShift == ShiftEnum.Morning && lastNightDirection.HasValue)
+        else
         {
-            // If train ran direction X last night, it cannot run direction X this morning
-            return lastNightDirection.Value == DirectionEnum.Forward
-                ? DirectionEnum.Backward
-                : DirectionEnum.Forward;
+            // Default case for other combinations
+            return DirectionEnum.Forward;
         }
-
-        // For other shifts, follow the regular pattern
-        return GetInitialDirection(train, currentShift);
     }
 }

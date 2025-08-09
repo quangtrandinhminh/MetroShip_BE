@@ -20,6 +20,8 @@ public partial class ParcelTracking : BaseEntity
     [StringLength(255)]
     public string Status { get; set; }
 
+    public ParcelStatusEnum CurrentParcelStatus { get; set; }
+
     public ShipmentStatusEnum? CurrentShipmentStatus { get; set; }
 
     public ShipmentStatusEnum TrackingForShipmentStatus { get; set; }
