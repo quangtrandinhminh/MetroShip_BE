@@ -29,12 +29,14 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.User.GetUsers)]
-        public async Task<IActionResult> GetUser([FromQuery] PaginatedListRequest request, UserRoleEnum? role)
+        public async Task<IActionResult> GetUser([FromQuery] PaginatedListRequest request, [FromQuery] UserRoleEnum? role,
+            [FromQuery] string? searchKeyword,[FromQuery] DateTimeOffset? createdFrom,[FromQuery] DateTimeOffset? createdTo,
+            [FromQuery] string? sortBy, [FromQuery] bool sortDesc = true)
         {
-            return Ok(BaseResponse.OkResponseDto(
-                await _userService.GetAllUsersAsync(request.PageNumber, request.PageSize, role),
-                _enumResponses
-                ));
+            var result = await _userService.GetAllUsersAsync(
+                request.PageNumber, request.PageSize, role, searchKeyword, createdFrom, createdTo, sortBy, sortDesc );
+
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [HttpGet]
