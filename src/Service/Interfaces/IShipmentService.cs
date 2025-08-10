@@ -7,8 +7,8 @@ namespace MetroShip.Service.Interfaces;
 
 public interface IShipmentService
 {
-    Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(PaginatedListRequest request,
-        ShipmentFilterRequest? filterRequest = null, OrderByRequest? orderByRequest = null);
+    Task<ShipmentListWithStatsResponse> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
+    string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null);
     Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode);
     Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentsHistory(PaginatedListRequest request, ShipmentStatusEnum? status);
     Task<(string, string)> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default);
