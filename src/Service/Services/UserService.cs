@@ -35,11 +35,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
-    public async Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role, string? searchKeyword = null, 
-        DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null,string? sortBy = null, bool sortDesc = true)
+    public async Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role, string? searchKeyword = null,
+    DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
-        _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', sort by '{sortBy}' {(sortDesc ? "desc" : "asc")}");
+        _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', " +
+                            $"order by '{orderByRequest?.OrderBy}', " +
+                            $"{(orderByRequest?.IsDesc ?? true ? "desc" : "asc")}");
 
+        // ===== FILTER =====
         Expression<Func<UserEntity, bool>> predicate = v => v.DeletedTime == null;
 
         // Filter Role
@@ -72,8 +75,8 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         if (createdTo.HasValue)
             predicate = predicate.And(x => x.CreatedTime <= createdTo.Value);
 
-        // Sort
-        Expression<Func<UserEntity, object>>? orderBy = sortBy?.ToLower() switch
+        // ===== SORT =====
+        Expression<Func<UserEntity, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
         {
             "fullname" => x => x.FullName!,
             "email" => x => x.Email!,
@@ -81,7 +84,9 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             _ => x => x.CreatedTime
         };
 
-        // Lấy dữ liệu user phân trang
+        bool sortDesc = orderByRequest?.IsDesc ?? true;
+
+        // ===== GET DATA =====
         var users = await _userRepository.GetAllPaginatedQueryable(
             pageNumber,
             pageSize,
@@ -131,7 +136,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             }
         }
 
-        // === Tính thống kê ===
+        // ===== STATS =====
         var query = _userRepository.GetAllWithCondition();
 
         var totalUsersWithRoleUser = await query

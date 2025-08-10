@@ -6,8 +6,8 @@ namespace MetroShip.Service.Interfaces;
 
 public interface IUserService
 {
-    Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role,
-     string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, string? sortBy = null, bool sortDesc = true);
+    Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role, string? searchKeyword = null,
+    DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null);
     Task<string> CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default);
     Task UpdateUserAsync(UserUpdateRequest request);
     Task<UserResponse> GetByIdAsync(object id);
