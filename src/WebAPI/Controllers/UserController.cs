@@ -34,7 +34,7 @@ namespace MetroShip.WebAPI.Controllers
             [FromQuery] OrderByRequest? orderBy)
         {
             var result = await _userService.GetAllUsersAsync(
-                request.PageNumber, request.PageSize, role, searchKeyword, createdFrom, createdTo, orderBy);
+                request, role, searchKeyword, createdFrom, createdTo, orderBy);
 
             return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }

@@ -35,7 +35,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
-    public async Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role, string? searchKeyword = null,
+    public async Task<UserListWithStatsResponse> GetAllUsersAsync(PaginatedListRequest paginatedRequest, UserRoleEnum? role, string? searchKeyword = null,
     DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
         _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', " +
@@ -88,8 +88,8 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
         // ===== GET DATA =====
         var users = await _userRepository.GetAllPaginatedQueryable(
-            pageNumber,
-            pageSize,
+            paginatedRequest.PageNumber,
+            paginatedRequest.PageSize,
             predicate,
             orderBy,
             e => e.UserRoles,
