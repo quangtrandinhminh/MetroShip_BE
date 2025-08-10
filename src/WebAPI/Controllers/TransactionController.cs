@@ -25,10 +25,13 @@ namespace MetroShip.WebAPI.Controllers
         /// Get all transactions (paginated & optional payment status filter)
         /// </summary>
         [HttpGet(WebApiEndpoint.TransactionEndpoint.GetTransactions)]
-        public async Task<ActionResult<PaginatedListResponse<TransactionResponse>>> GetAllAsync(
-            [FromQuery] PaymentStatusEnum? status,[FromQuery] PaginatedListRequest request)
+        public async Task<IActionResult> GetTransactions([FromQuery] PaginatedListRequest request, [FromQuery] PaymentStatusEnum? status, 
+        [FromQuery] string? searchKeyword,[FromQuery] DateTimeOffset? createdFrom,[FromQuery] DateTimeOffset? createdTo,[FromQuery] OrderByRequest orderByRequest)
         {
-            var result = await _transactionService.GetAllAsync(status, request);
+            var result = await _transactionService.GetAllTransactionsAsync(
+                request, status, searchKeyword, createdFrom, createdTo, orderByRequest
+            );
+
             return Ok(BaseResponse.OkResponseDto(result, _transactionEnumResponse));
         }
     }

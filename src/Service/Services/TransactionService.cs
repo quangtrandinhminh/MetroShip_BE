@@ -14,11 +14,12 @@ using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Quartz;
 using Serilog;
 using System.Linq.Expressions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MetroShip.Service.Services;
 
@@ -176,32 +177,121 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         return response;
     }
 
-    public async Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request)
+    public async Task<TransactionListWithStatsResponse> GetAllTransactionsAsync(PaginatedListRequest paginatedRequest, PaymentStatusEnum? status = null,
+        string? searchKeyword = null,DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         var userRole = JwtClaimUltils.GetUserRole(_httpContextAccessor);
-        _logger.Information("Fetching transactions. PaymentStatus: {status}", status);
 
+        _logger.Information(
+            $"Get all transactions, status: {status}, search: '{searchKeyword}', order by: '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
+
+        // ===== FILTER =====
         Expression<Func<Transaction, bool>> predicate = t => t.DeletedAt == null;
 
         if (status.HasValue)
-        {
             predicate = predicate.And(t => t.PaymentStatus == status.Value);
-        }
 
         if (!string.IsNullOrEmpty(customerId) && userRole.Contains(UserRoleEnum.Customer.ToString()))
-        {
             predicate = predicate.And(t => t.PaidById == customerId);
+
+        // Search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(t =>
+                (t.PaymentTrackingId != null && t.PaymentTrackingId.ToLower().Contains(keywordLower)) ||
+                (t.PaymentCurrency != null && t.PaymentCurrency.ToLower().Contains(keywordLower))
+            );
         }
 
-        var paginatedTransactions = await _transaction.GetAllPaginatedQueryable(
-            pageNumber: request.PageNumber,
-            pageSize: request.PageSize,
-            predicate: predicate,
-            orderBy: t => t.PaymentDate // Default sort
+        // Created date range
+        if (createdFrom.HasValue)
+            predicate = predicate.And(t => t.CreatedAt >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(t => t.CreatedAt <= createdTo.Value);
+
+        // ===== SORT =====
+        Expression<Func<Transaction, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "paymenttrackingid" => t => t.PaymentTrackingId!,
+            "paymentdate" => t => t.PaymentDate,
+            "paymentamount" => t => t.PaymentAmount,
+            _ => t => t.CreatedAt
+        };
+
+        // ===== GET LIST =====
+        var transactions = await _transaction.GetAllPaginatedQueryable(
+            paginatedRequest.PageNumber,
+            paginatedRequest.PageSize,
+            predicate,
+            orderBy
         );
 
-        return _mapper.MapToTransactionPaginatedList(paginatedTransactions);
+        var transactionResponse = _mapper.MapToTransactionPaginatedList(transactions);
+
+        // ===== STATS =====
+        var query = _transaction.GetAllWithCondition().Where(t => t.DeletedAt == null);
+
+        var totalTransactions = await query.CountAsync();
+
+        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
+        var todayUtc = todayVietnamTime.ToUniversalTime();
+
+        var newTransactionsCount = await query.CountAsync(t => t.CreatedAt >= todayUtc);
+        var percentageNewTransactions = totalTransactions > 0
+            ? Math.Round((double)newTransactionsCount / totalTransactions * 100, 2)
+            : 0;
+
+        // Completed (Paid)
+        var totalCompletedTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Paid);
+        var totalCompletedAmount = await query
+            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
+            .SumAsync(t => t.PaymentAmount);
+
+        var newCompletedTransactionsCount = await query.CountAsync(
+            t => t.PaymentStatus == PaymentStatusEnum.Paid && t.CreatedAt >= todayUtc);
+        var percentageNewCompletedTransactions = totalCompletedTransactions > 0
+            ? Math.Round((double)newCompletedTransactionsCount / totalCompletedTransactions * 100, 2)
+            : 0;
+
+        // Unpaid
+        var totalUnpaidTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Failed);
+        var percentageUnpaidTransactions = totalTransactions > 0
+            ? Math.Round((double)totalUnpaidTransactions / totalTransactions * 100, 2)
+            : 0;
+
+        // Pending
+        var totalPendingTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Pending);
+        var percentagePendingTransactions = totalTransactions > 0
+            ? Math.Round((double)totalPendingTransactions / totalTransactions * 100, 2)
+            : 0;
+
+        // Cancelled
+        var totalCancelledTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Cancelled);
+        var percentageCancelledTransactions = totalTransactions > 0
+            ? Math.Round((double)totalCancelledTransactions / totalTransactions * 100, 2)
+            : 0;
+
+        return new TransactionListWithStatsResponse
+        {
+            Transactions = transactionResponse,
+            TotalTransactions = totalTransactions,
+            PercentageNewTransactions = percentageNewTransactions,
+
+            TotalPaidTransactions = totalCompletedTransactions,
+            PercentageNewPaidTransactions = percentageNewCompletedTransactions,
+            TotalPaiddAmount = totalCompletedAmount,
+
+            TotalUnpaidTransactions = totalUnpaidTransactions,
+            PercentageUnpaidTransactions = percentageUnpaidTransactions,
+
+            TotalPendingTransactions = totalPendingTransactions,
+            PercentagePendingTransactions = percentagePendingTransactions,
+
+            TotalCancelledTransactions = totalCancelledTransactions,
+            PercentageCancelledTransactions = percentageCancelledTransactions
+        };
     }
 
     // tìm transaction loại refund theo shipmentId, cộng amount vào ví ảo của user
