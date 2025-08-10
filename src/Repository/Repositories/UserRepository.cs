@@ -77,6 +77,13 @@ namespace MetroShip.Repository.Repositories
             return paginatedList;
         }
 
+        public async Task<int> CountAsync(Expression<Func<UserEntity, bool>> predicate)
+        {
+            return await _context.Set<UserEntity>()
+                .AsNoTracking()
+                .CountAsync(predicate);
+        }
+
         public async Task<IdentityResult> CreateUserAsync(UserEntity user, CancellationToken cancellationToken = default)
         {
             await _context.Users.AddAsync(user, cancellationToken);

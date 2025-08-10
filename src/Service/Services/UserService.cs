@@ -35,15 +35,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
-    public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role,
-    string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null,
-    string? sortBy = null, bool sortDesc = true)
+    public async Task<UserListWithStatsResponse> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role, string? searchKeyword = null, 
+        DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null,string? sortBy = null, bool sortDesc = true)
     {
         _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', sort by '{sortBy}' {(sortDesc ? "desc" : "asc")}");
 
         Expression<Func<UserEntity, bool>> predicate = v => v.DeletedTime == null;
 
-        // Filter theo Role
+        // Filter Role
         List<RoleEntity> roleEntity;
         if (role != null)
         {
@@ -55,7 +54,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             roleEntity = await _roleManager.Roles.ToListAsync();
         }
 
-        // Filter theo Search Keyword
+        // Filter search keyword
         if (!string.IsNullOrWhiteSpace(searchKeyword))
         {
             var keywordLower = searchKeyword.Trim().ToLower();
@@ -67,7 +66,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             );
         }
 
-        // Filter theo CreatedTime
+        // Filter CreatedTime
         if (createdFrom.HasValue)
             predicate = predicate.And(x => x.CreatedTime >= createdFrom.Value);
         if (createdTo.HasValue)
@@ -79,11 +78,10 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             "fullname" => x => x.FullName!,
             "email" => x => x.Email!,
             "createdtime" => x => x.CreatedTime,
-            "birthdate" => x => x.BirthDate!,
             _ => x => x.CreatedTime
         };
 
-        // Lấy dữ liệu user
+        // Lấy dữ liệu user phân trang
         var users = await _userRepository.GetAllPaginatedQueryable(
             pageNumber,
             pageSize,
@@ -101,7 +99,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                 .ToList();
         }
 
-        // Lấy danh sách Station cho Staff
+        // Lấy danh sách Station
         var stationIds = users.Items
             .SelectMany(u => u.StaffAssignments)
             .Select(sa => sa.StationId)
@@ -113,7 +111,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             .Select(x => new { x.Id, x.StationNameVi })
             .ToList();
 
-        // Map sang DTO
+        // Map DTO
         var userResponse = _mapper.MapToUserResponsePaginatedList(users);
 
         foreach (var user in userResponse.Items)
@@ -133,7 +131,31 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             }
         }
 
-        return userResponse;
+        // === Tính thống kê ===
+        var query = _userRepository.GetAllWithCondition();
+
+        var totalUsersWithRoleUser = await query
+            .CountAsync(v => v.DeletedTime == null &&
+                             v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()));
+
+        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
+        var today = todayVietnamTime.ToUniversalTime();
+
+        var newUsersCount = await query
+            .CountAsync(v => v.DeletedTime == null &&
+                             v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()) &&
+                             v.CreatedTime >= today);
+
+        var percentageNewUsers = totalUsersWithRoleUser > 0
+            ? Math.Round((double)newUsersCount / totalUsersWithRoleUser * 100, 2)
+            : 0;
+
+        return new UserListWithStatsResponse
+        {
+            Users = userResponse,
+            PercentageNewUsers = percentageNewUsers,
+            TotalUsersWithRoleUser = totalUsersWithRoleUser
+        };
     }
 
     public async Task<string> CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default)

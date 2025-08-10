@@ -35,7 +35,7 @@ namespace MetroShip.WebAPI.Controllers
         {
             var result = await _userService.GetAllUsersAsync(
                 request.PageNumber, request.PageSize, role, searchKeyword, createdFrom, createdTo, sortBy, sortDesc );
-
+            
             return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
