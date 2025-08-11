@@ -114,8 +114,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 request.PageNumber, request.PageSize,
                 expression,
                 orderBy: x => x.CreatedAt,
-                isAscending: true,
-                includeProperties: x => x.CategoryInsurance);
+                isAscending: true);
 
         var parcelListResponse = _mapper.MapToParcelPaginatedList(parcels);
         return parcelListResponse;
