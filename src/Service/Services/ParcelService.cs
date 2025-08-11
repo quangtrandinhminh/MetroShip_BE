@@ -203,6 +203,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
             _parcelMediaRepository.Add(mediaEntity);
         }
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Check if the shipment is ready for the next status: all parcels confirmed for pickup
         if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.PickedUp))
@@ -221,12 +222,12 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 EventTime = shipment.PickedUpAt.Value,
                 UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
             });
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }    
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     // load parcel into train update parcel for shipment InTransit
-    public async Task LoadParcelOnTrainAsync(string parcelCode, string trainCode)
+    public async Task LoadParcelOnTrainAsync(string parcelCode, string trainCode, bool isLost = false)
     {
         _logger.Information("Loading parcel {ParcelCode} on train {Train}", parcelCode, trainCode);
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
@@ -287,21 +288,29 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             StatusCodes.Status400BadRequest);
         }
 
-        // Update parcel status to InTransit
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
-        var parcelTracking = new ParcelTracking
+        if (isLost)
         {
-            ParcelId = parcel.Id,
-            Status = $"Kiện hàng đã lên tàu {trainCode} tại Ga {stationName}",
-            CurrentParcelStatus = parcel.Status,
-            CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
-            TrackingForShipmentStatus = ShipmentStatusEnum.InTransit,
-            StationId = stationId,
-            TrainId = train.Id,
-            EventTime = CoreHelper.SystemTimeNow,
-            UpdatedBy = staffId,
-        };
-        _parcelTrackingRepository.Add(parcelTracking);
+            await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.InTransit);
+        }
+        else
+        {
+            // Update parcel status to InTransit
+            var parcelTracking = new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                Status = $"Kiện hàng đã lên tàu {trainCode} tại Ga {stationName}",
+                CurrentParcelStatus = parcel.Status,
+                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                TrackingForShipmentStatus = ShipmentStatusEnum.InTransit,
+                StationId = stationId,
+                TrainId = train.Id,
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = staffId,
+            };
+            _parcelTrackingRepository.Add(parcelTracking);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
 
         // Check if the shipment is ready for the next status: all parcels confirmed for InTransit
         if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.InTransit))
@@ -319,13 +328,12 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = staffId,
             });
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
-
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     // unload parcel from train and update parcel for shipment WaitForNextTrain Or Stored
-    public async Task UnloadParcelFromTrain(string parcelCode, string trainCode)
+    public async Task UnloadParcelFromTrain(string parcelCode, string trainCode, bool isLost = false)
     {
         _logger.Information("Unloading parcel {ParcelCode} from train {Train}", parcelCode, trainCode);
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
@@ -389,18 +397,26 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (!stationId.Equals(shipment.DestinationStationId))
         {
-            var parcelTracking = new ParcelTracking
+            if (isLost)
             {
-                ParcelId = parcel.Id,
-                Status = $"Kiện hàng đã xuống tàu {trainCode} tại Ga {stationName}. Chờ trung chuyển",
-                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
-                TrackingForShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain,
-                StationId = stationId,
-                TrainId = train.Id,
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = staffId,
-            };
-            _parcelTrackingRepository.Add(parcelTracking);
+                await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.WaitingForNextTrain);
+            }
+            else
+            {
+                var parcelTracking = new ParcelTracking
+                {
+                    ParcelId = parcel.Id,
+                    Status = $"Kiện hàng đã xuống tàu {trainCode} tại Ga {stationName}. Chờ trung chuyển",
+                    CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                    TrackingForShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain,
+                    StationId = stationId,
+                    TrainId = train.Id,
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = staffId,
+                };
+                _parcelTrackingRepository.Add(parcelTracking);
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            }
 
             // Check if the shipment is ready for the next status: all parcels confirmed for WaitingForNextTrain
             if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.WaitingForNextTrain))
@@ -419,23 +435,32 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                     EventTime = CoreHelper.SystemTimeNow,
                     UpdatedBy = staffId,
                 });
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
             }
         }
         else
         {
-            // Can update to AwaitingDelivery if wanna a shorter flow
-            var parcelTracking = new ParcelTracking
+            if (isLost)
             {
-                ParcelId = parcel.Id,
-                Status = $"Kiện hàng đã xuống tàu {trainCode} tại trạm đích: Ga {stationName}. Chờ nhập kho",
-                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
-                TrackingForShipmentStatus = ShipmentStatusEnum.Arrived,
-                StationId = stationId,
-                TrainId = train.Id,
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = staffId,
-            };
-            _parcelTrackingRepository.Add(parcelTracking);
+                await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.Arrived);
+            }
+            else
+            {
+                // Can update to AwaitingDelivery if wanna a shorter flow
+                var parcelTracking = new ParcelTracking
+                {
+                    ParcelId = parcel.Id,
+                    Status = $"Kiện hàng đã xuống tàu {trainCode} tại trạm đích: Ga {stationName}. Chờ nhập kho",
+                    CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                    TrackingForShipmentStatus = ShipmentStatusEnum.Arrived,
+                    StationId = stationId,
+                    TrainId = train.Id,
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = staffId,
+                };
+                _parcelTrackingRepository.Add(parcelTracking);
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            }
 
             if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.Arrived))
             {
@@ -452,14 +477,13 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                     EventTime = CoreHelper.SystemTimeNow,
                     UpdatedBy = staffId,
                 });
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
             }
         }
-
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     // update parcel for shipment AwaitingDelivery
-    public async Task UpdateParcelForAwaitingDeliveryAsync(string parcelCode)
+    public async Task UpdateParcelForAwaitingDeliveryAsync(string parcelCode, bool isLost = false)
     {
         _logger.Information("Updating parcel {ParcelCode} for AwaitingDelivery", parcelCode);
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
@@ -508,17 +532,25 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         // Update parcel status to AwaitingDelivery
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
-        var parcelTracking = new ParcelTracking
+        if (isLost)
         {
-            ParcelId = parcel.Id,
-            Status = $"Kiện hàng đã xuất kho để chờ giao hàng ở Ga {stationName}",
-            CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
-            TrackingForShipmentStatus = ShipmentStatusEnum.AwaitingDelivery,
-            StationId = stationId,
-            EventTime = CoreHelper.SystemTimeNow,
-            UpdatedBy = staffId,
-        };
-        _parcelTrackingRepository.Add(parcelTracking);
+            await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.AwaitingDelivery);
+        }
+        else
+        {
+            var parcelTracking = new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                Status = $"Kiện hàng đã xuất kho để chờ giao hàng ở Ga {stationName}",
+                CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+                TrackingForShipmentStatus = ShipmentStatusEnum.AwaitingDelivery,
+                StationId = stationId,
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = staffId,
+            };
+            _parcelTrackingRepository.Add(parcelTracking);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
 
         // Check if the shipment is ready for the next status: all parcels confirmed for AwaitingDelivery
         if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.AwaitingDelivery))
@@ -535,11 +567,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = staffId,
             });
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             // Schedule job to apply surcharge after delivery
             await ScheduleApplySurchargeJob(parcel.ShipmentId);
         }
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     // lost report parcel
@@ -589,8 +621,8 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         };
         _parcelTrackingRepository.Add(parcelTracking);
         _parcelRepository.Update(parcel);
-        await CheckShipmentForLostParcelsAsync(parcel.ShipmentId, staffId);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        await CheckShipmentForLostParcelsAsync(parcel.ShipmentId, staffId);
     }
 
     /*public async Task RejectParcelAsync(ParcelRejectRequest request)
@@ -660,22 +692,23 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             shipmentId, nextShipmentStatus);
 
         // Count parcels in the shipment
-        var parcelCount = _shipmentRepository.GetAll()
+        var normalParcelCount = _shipmentRepository
+            .GetAll()
             .Where(x => x.Id == shipmentId && x.DeletedAt == null)
             .SelectMany(x => x.Parcels)
-            .Count();
+            .Count(x => x.DeletedAt == null && x.Status == ParcelStatusEnum.Normal);
 
         // count parcelTracking have TrackingForShipmentStatus == nextShipmentStatus
         var parcelTrackingCount = _parcelRepository.GetAll()
             .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null && x.Status == ParcelStatusEnum.Normal)
             .SelectMany(p => p.ParcelTrackings)
-            .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus) + 1; // +1 for the current parcel request
+            .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus && pt.DeletedAt == null);
 
-        _logger.Information("Parcel count: {ParcelCount}, Tracking count for status {NextStatus}: {TrackingCount}",
-            parcelCount, nextShipmentStatus, parcelTrackingCount);
+        _logger.Information("Normal parcel count: {ParcelCount}, Tracking count for status {NextStatus}: {TrackingCount}",
+            normalParcelCount, nextShipmentStatus, parcelTrackingCount);
 
         // Check if all parcels have the next status
-        if (parcelCount == parcelTrackingCount)
+        if (normalParcelCount == parcelTrackingCount)
         {
             _logger.Information("Shipment {ShipmentId} is ready for status {NextStatus}",
                 shipmentId, nextShipmentStatus);
@@ -688,7 +721,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     }
 
     // check if all parcels in shipment was lost, end the shipment 
-    public async Task CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
+    private async Task CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
     {
         _logger.Information("Checking shipment {ShipmentId} for lost parcels", shipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
@@ -701,7 +734,8 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
 
         // Check if all parcels are lost
-        var allParcelsLost = shipment.Parcels.All(p => p.Status == ParcelStatusEnum.Lost);
+        var nonDeletedParcels = shipment.Parcels.Where(p => p.DeletedAt == null).ToList();
+        var allParcelsLost = nonDeletedParcels.Any() && nonDeletedParcels.All(p => p.Status == ParcelStatusEnum.Lost);
 
         if (allParcelsLost)
         {
@@ -713,10 +747,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 CurrentShipmentStatus = shipment.ShipmentStatus,
                 Status = "Tất cả kiện hàng đã được báo mất. Đơn hàng đã chuyển sang trạng thái chờ bồi thường.",
                 EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
+                UpdatedBy = userId
             });
 
-            _logger.Information("Shipment {ShipmentId} marked as Lost", shipmentId);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            _logger.Information("Shipment {ShipmentId} marked as ToCompensate - all parcels lost", shipmentId);
         }
     }
 
