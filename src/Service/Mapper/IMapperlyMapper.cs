@@ -4,6 +4,7 @@ using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -110,4 +111,7 @@ public interface IMapperlyMapper
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     RegionResponse MapToRegionResponse(Region entity);
+
+    //notification
+    
 }

@@ -1,32 +1,33 @@
-﻿using System.Text.Json;
-using MetroShip.Repository.Extensions;
+﻿using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.MetroLine;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
-using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Service.ApiModels.ParcelCategory;
+using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Train;
+using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.BusinessModels;
-using Microsoft.CodeAnalysis;
-using Riok.Mapperly.Abstractions;
-using MetroShip.Service.ApiModels.Transaction;
-using static MetroShip.Repository.Repositories.ShipmentRepository;
-using MetroShip.Service.ApiModels.Train;
-using MetroShip.Utility.Helpers;
 using MetroShip.Utility.Enums;
-using MetroShip.Service.ApiModels.MetroTimeSlot;
-using MetroShip.Service.ApiModels.Pricing;
-using MetroShip.Service.ApiModels.Region;
-using MetroShip.Service.ApiModels.StaffAssignment;
+using MetroShip.Utility.Helpers;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Riok.Mapperly.Abstractions;
+using System.Text.Json;
+using static MetroShip.Repository.Repositories.ShipmentRepository;
 
 namespace MetroShip.Service.Mapper;
 
@@ -185,6 +186,61 @@ public partial class MapperlyMapper : IMapperlyMapper
         {
             Id = (int)(object)enumValue,
             Value = enumValue.ToString(),
+        };
+    }
+
+    public NotificationDto MapNotification(Notification notification)
+    {
+        if (notification == null) return null;
+
+        var dto = new NotificationDto
+        {
+            NotificationId = int.TryParse(notification.Id, out var id) ? id : 0,
+            UserId = int.TryParse(notification.ToUserId, out var userId) ? userId : (int?)null,
+            Message = notification.Message,
+            IsRead = notification.IsRead,
+            SenddAt = notification.CreatedAt
+        };
+
+        if (notification.User != null)
+        {
+            dto.Username = notification.User.UserName;
+        }
+
+        return dto;
+    }
+
+    public Notification MapNotificationRequest(NotificationCreateRequest request)
+    {
+        if (request == null) return null;
+
+        return new Notification
+        {
+            ToUserId = request.UserId?.ToString(),
+            Message = request.Message
+        };
+    }
+
+    public Notification MapNotificationUpdate(NotificationUpdateRequest request, Notification notification)
+    {
+        if (request == null || notification == null) return notification;
+
+        notification.Message = request.Message;
+        return notification;
+    }
+
+    public PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList)
+    {
+        if (paginatedList == null) return null;
+
+        var items = paginatedList.Items.Select(MapNotification).ToList();
+
+        return new PaginatedListResponse<NotificationDto>
+        {
+            Items = items,
+            PageNumber = paginatedList.PageNumber,
+            TotalPages = paginatedList.TotalPages,
+            TotalCount = paginatedList.TotalCount
         };
     }
 }
