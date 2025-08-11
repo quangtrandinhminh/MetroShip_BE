@@ -4,18 +4,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static MetroShip.Service.Services.ReportService;
 
 namespace MetroShip.Service.ApiModels.Shipment
 {
     public class ShipmentListWithStatsResponse
     {
-        public PaginatedListResponse<ShipmentListResponse> Shipments { get; set; }
         public int TotalShipments { get; set; }
         public double PercentageNewShipments { get; set; }
         public int TotalCompleteShipments { get; set; }
         public double PercentageNewCompleteShipments { get; set; }
         public List<ParcelCategoryDto> ParcelCategoryStats { get; set; }
     }
+
     public class ParcelCategoryDto
     {
         public Guid ParcelCategoryId { get; set; }

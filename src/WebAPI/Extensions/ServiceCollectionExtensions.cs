@@ -223,6 +223,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
+        services.AddScoped<IReportService, ReportService>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

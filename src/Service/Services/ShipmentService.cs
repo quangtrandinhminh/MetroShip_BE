@@ -51,7 +51,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<ShipmentListWithStatsResponse> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
+    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
     string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
         _logger.Information(
@@ -163,55 +163,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         var shipmentResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
 
-        // ====== STATS ======
-        var query = _shipmentRepository.GetAllWithCondition();
-
-        var totalShipments = await query.CountAsync();
-        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
-        var todayUtc = todayVietnamTime.ToUniversalTime();
-
-        var newShipmentsCount = await query.CountAsync(s => s.CreatedAt >= todayUtc);
-        var percentageNewShipments = totalShipments > 0
-            ? Math.Round((double)newShipmentsCount / totalShipments * 100, 2)
-            : 0;
-
-        var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed);
-        var newCompleteShipmentsCount = await query.CountAsync(
-            s => s.ShipmentStatus == ShipmentStatusEnum.Completed && s.CreatedAt >= todayUtc);
-        var percentageNewCompleteShipments = totalCompleteShipments > 0
-            ? Math.Round((double)newCompleteShipmentsCount / totalCompleteShipments * 100, 2)
-            : 0;
-
-        var parcelCategoryStats = await query
-            .SelectMany(s => s.Parcels, (s, p) => new
-            {
-                Shipment = s,
-                ParcelCategoryId = p.ParcelCategoryId,
-                ParcelCategoryName = p.ParcelCategory != null ? p.ParcelCategory.CategoryName : "Unknown"
-            })
-            .Where(x => x.ParcelCategoryId != null)
-            .GroupBy(x => new { x.ParcelCategoryId, x.ParcelCategoryName })
-            .Select(g => new ParcelCategoryDto
-            {
-                ParcelCategoryId = string.IsNullOrEmpty(g.Key.ParcelCategoryId) ? Guid.Empty : Guid.Parse(g.Key.ParcelCategoryId),
-                ParcelCategoryName = g.Key.ParcelCategoryName ?? "Unknown",
-                Total = g.Count(),
-                NewToday = g.Count(x => x.Shipment.CreatedAt >= todayUtc),
-                PercentageNew = g.Count() > 0
-                    ? Math.Round((double)g.Count(x => x.Shipment.CreatedAt >= todayUtc) / g.Count() * 100, 2)
-                    : 0
-            })
-            .ToListAsync();
-
-        return new ShipmentListWithStatsResponse
-        {
-            Shipments = shipmentResponse,
-            TotalShipments = totalShipments,
-            PercentageNewShipments = percentageNewShipments,
-            TotalCompleteShipments = totalCompleteShipments,
-            PercentageNewCompleteShipments = percentageNewCompleteShipments,
-            ParcelCategoryStats = parcelCategoryStats
-        };
+        return shipmentResponse;
     }
 
     public async Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode)
