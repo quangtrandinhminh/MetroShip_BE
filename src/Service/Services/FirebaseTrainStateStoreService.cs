@@ -65,5 +65,30 @@ namespace MetroShip.Service.Services
             try { return await _firebase.Child("train_position").Child(trainId).OnceSingleAsync<TrainPositionResult>(); }
             catch { return null; }
         }
+
+        public async Task RemoveDirectionAsync(string trainId)
+            => await _firebase.Child("train_state").Child(trainId).Child("Direction").DeleteAsync();
+
+        public async Task RemoveSegmentIndexAsync(string trainId)
+            => await _firebase.Child("train_state").Child(trainId).Child("SegmentIndex").DeleteAsync();
+
+        public async Task RemoveStartTimeAsync(string trainId)
+            => await _firebase.Child("train_state").Child(trainId).Child("StartTime").DeleteAsync();
+
+        public async Task RemovePositionResultAsync(string trainId)
+            => await _firebase.Child("train_position").Child(trainId).DeleteAsync();
+
+        public async Task<bool> HasDirectionAsync(string trainId)
+            => await GetDirectionAsync(trainId) != null;
+
+        public async Task<bool> HasSegmentIndexAsync(string trainId)
+            => await GetSegmentIndexAsync(trainId) != null;
+
+        public async Task<bool> HasStartTimeAsync(string trainId)
+            => await GetStartTimeAsync(trainId) != null;
+
+        public async Task<bool> HasPositionResultAsync(string trainId)
+            => await GetPositionResultAsync(trainId) != null;
+
     }
 }
