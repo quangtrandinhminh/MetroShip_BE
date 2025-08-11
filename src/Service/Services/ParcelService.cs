@@ -48,6 +48,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
     private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
     private readonly IMemoryCache _parcelCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly IShipmentTrackingRepository _shipmentTrackingRepository = serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
 
 
     /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
@@ -571,11 +572,12 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         // Update parcel status to Lost
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        parcel.Status = ParcelStatusEnum.Lost;
         var parcelTracking = new ParcelTracking
         {
             ParcelId = parcel.Id,
             Status = $"Kiện hàng đã được báo mất tại Ga {stationName}",
-            CurrentParcelStatus = ParcelStatusEnum.Lost,
+            CurrentParcelStatus = parcel.Status,
             CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
             TrackingForShipmentStatus = trackingForShipmentStatus,
             StationId = stationId,
@@ -583,6 +585,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             UpdatedBy = staffId,
         };
         _parcelTrackingRepository.Add(parcelTracking);
+        _parcelRepository.Update(parcel);
+        await CheckShipmentForLostParcelsAsync(parcel.ShipmentId, staffId);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     /*public async Task RejectParcelAsync(ParcelRejectRequest request)
@@ -677,6 +682,39 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         _logger.Information("Shipment {ShipmentId} is NOT ready for status {NextStatus}",
             shipmentId, nextShipmentStatus);
         return false;
+    }
+
+    // check if all parcels in shipment was lost, end the shipment 
+    public async Task CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
+    {
+        _logger.Information("Checking shipment {ShipmentId} for lost parcels", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+                       s => s.Id == shipmentId && s.DeletedAt == null,
+                                  includeProperties: s => s.Parcels);
+
+        if (shipment == null)
+        {
+            throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
+        }
+
+        // Check if all parcels are lost
+        var allParcelsLost = shipment.Parcels.All(p => p.Status == ParcelStatusEnum.Lost);
+
+        if (allParcelsLost)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.ToCompensate;
+            _shipmentRepository.Update(shipment);
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                Status = "Tất cả kiện hàng đã được báo mất. Đơn hàng đã chuyển sang trạng thái chờ bồi thường.",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor),
+            });
+
+            _logger.Information("Shipment {ShipmentId} marked as Lost", shipmentId);
+        }
     }
 
     private async Task ScheduleApplySurchargeJob(string shipmentId)
