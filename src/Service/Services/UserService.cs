@@ -35,7 +35,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
-    public async Task<UserListWithStatsResponse> GetAllUsersAsync(PaginatedListRequest paginatedRequest, UserRoleEnum? role, string? searchKeyword = null,
+    public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(PaginatedListRequest paginatedRequest, UserRoleEnum? role, string? searchKeyword = null,
     DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
         _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', " +
@@ -135,32 +135,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                 }
             }
         }
-
-        // ===== STATS =====
-        var query = _userRepository.GetAllWithCondition();
-
-        var totalUsersWithRoleUser = await query
-            .CountAsync(v => v.DeletedTime == null &&
-                             v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()));
-
-        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
-        var today = todayVietnamTime.ToUniversalTime();
-
-        var newUsersCount = await query
-            .CountAsync(v => v.DeletedTime == null &&
-                             v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()) &&
-                             v.CreatedTime >= today);
-
-        var percentageNewUsers = totalUsersWithRoleUser > 0
-            ? Math.Round((double)newUsersCount / totalUsersWithRoleUser * 100, 2)
-            : 0;
-
-        return new UserListWithStatsResponse
-        {
-            Users = userResponse,
-            PercentageNewUsers = percentageNewUsers,
-            TotalUsersWithRoleUser = totalUsersWithRoleUser
-        };
+        return userResponse;
     }
 
     public async Task<string> CreateUserAsync(UserCreateRequest request, CancellationToken cancellationToken = default)
