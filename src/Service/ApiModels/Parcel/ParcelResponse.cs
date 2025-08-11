@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels.Insurance;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Utility.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -28,8 +29,8 @@ public class ParcelResponse
     public DateTimeOffset? LastUpdatedAt { get; set; }
     public string? ParcelCategoryId { get; set; }
     public string? CategoryInsuranceId { get; set; }
-    public ParcelCategoryResponse? ParcelCategory { get; set; }
+    //public ParcelCategoryResponse? ParcelCategory { get; set; }
+    public ParcelCategoryInsuranceResponse? CategoryInsurance { get; set; }
     public IList<ParcelTrackingResponse> ParcelTrackings { get; set; } = new List<ParcelTrackingResponse>();
     public IList<ParcelMediaResponse> ParcelMedias { get; set; } = new List<ParcelMediaResponse>();
-
 }

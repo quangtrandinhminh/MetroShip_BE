@@ -1,11 +1,13 @@
-﻿using MetroShip.Utility.Helpers;
+﻿using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Service.ApiModels.ParcelCategory;
+using MetroShip.Utility.Helpers;
 
 namespace MetroShip.Service.ApiModels.Insurance;
 
 public record CategoryInsuranceResponse
 {
     public string Id { get; set; }
-    public InsuranceResponse InsurancePolicy { get; set; }
+    public InsuranceResponse? InsurancePolicy { get; set; }
 }
 
 public record InsuranceResponse

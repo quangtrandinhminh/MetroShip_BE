@@ -126,11 +126,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         _logger.Information("Get parcel by ID: {ParcelId}", parcelCode);
 
         // Truy vấn parcel theo ID và kiểm tra quyền truy cập
-        var parcel = await _parcelRepository.GetSingleAsync(
-                       p => p.ParcelCode == parcelCode && p.DeletedAt == null, false,
-                                   p => p.CategoryInsurance,
-                                   p => p.ParcelMedias,
-                                   p =>  p.ParcelTrackings);
+        var parcel = await _parcelRepository.GetAll()
+            .Include(p => p.CategoryInsurance)
+            .ThenInclude(p => p.ParcelCategory)
+            .Include(p => p.CategoryInsurance)
+            .ThenInclude(p => p.InsurancePolicy)
+            .Include(p => p.ParcelTrackings)
+            .Include(p => p.ParcelMedias)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(p => p.DeletedAt == null && p.ParcelCode == parcelCode);
 
         if (parcel == null)
         {
