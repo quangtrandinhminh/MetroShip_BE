@@ -49,14 +49,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(BaseResponse.OkResponseDto(result));
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcelByTrackingCode)]
         public async Task<IActionResult> GetParcelByParcelCodeAsync([FromRoute] string parcelCode)
         {
             var parcel = await _parcelService.GetParcelByParcelCodeAsync(parcelCode);
-            return Ok(BaseResponse.OkResponseDto(parcel));
+            return Ok(BaseResponse.OkResponseDto(parcel, _enumResponses));
         }
 
         [HttpGet("qrcode/{parcelTrackingCode}")]
