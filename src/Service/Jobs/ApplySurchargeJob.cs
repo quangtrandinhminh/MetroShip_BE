@@ -1,4 +1,5 @@
 ﻿using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Config;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
 using Serilog;

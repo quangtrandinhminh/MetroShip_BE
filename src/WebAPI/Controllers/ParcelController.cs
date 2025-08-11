@@ -49,14 +49,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<ActionResult> GetAll([FromQuery] PaginatedListRequest request)
         {
             var result = await _parcelService.GetAllParcels(request);
-            return Ok(BaseResponse.OkResponseDto(result));
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [HttpGet(WebApiEndpoint.ParcelEndpoint.GetParcelByTrackingCode)]
         public async Task<IActionResult> GetParcelByParcelCodeAsync([FromRoute] string parcelCode)
         {
             var parcel = await _parcelService.GetParcelByParcelCodeAsync(parcelCode);
-            return Ok(BaseResponse.OkResponseDto(parcel));
+            return Ok(BaseResponse.OkResponseDto(parcel, _enumResponses));
         }
 
         [HttpGet("qrcode/{parcelTrackingCode}")]
@@ -114,6 +114,15 @@ namespace MetroShip.WebAPI.Controllers
         {
             await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
             return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
+        }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.ReportLostParcel)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> ReportLostParcelAsync([FromRoute] string parcelCode, 
+            [FromQuery] ShipmentStatusEnum trackingForShipmentStatus)
+        {
+            await _parcelService.ReportLostParcelAsync(parcelCode, trackingForShipmentStatus);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} reported as lost successfully.", null));
         }
     }
 }

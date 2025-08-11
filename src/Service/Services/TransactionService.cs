@@ -20,6 +20,7 @@ using Serilog;
 using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using MetroShip.Repository.Repositories;
+using MetroShip.Service.Jobs;
 
 namespace MetroShip.Service.Services;
 
@@ -35,6 +36,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+    private readonly IPricingService pricingService = serviceProvider.GetRequiredService<IPricingService>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
@@ -43,9 +45,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             request.ShipmentId, userId);
         TransactionValidator.ValidateTransactionRequest(request);
         var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == request.ShipmentId || x.TrackingCode == request.ShipmentId,
-                       includeProperties: x => x.Transactions
-                       );
+                       x => x.Id == request.ShipmentId || x.TrackingCode == request.ShipmentId);
 
         if (shipment == null)
         {
@@ -74,14 +74,17 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             return transactionExists.PaymentUrl ?? string.Empty;
         }
 
-        var transaction = _mapper.MapToTransactionEntity(request);
+        /*var transaction = _mapper.MapToTransactionEntity(request);
         transaction.PaidById = userId;
         transaction.PaymentMethod = PaymentMethodEnum.VnPay;
         transaction.PaymentStatus = PaymentStatusEnum.Pending;
-        transaction.PaymentAmount = shipment.TotalCostVnd;
+        transaction.ShipmentId = shipment.Id;
         transaction.TransactionType = request.TransactionType.Value;
         transaction.Description = request.ToJsonString();
-        
+        transaction.PaymentAmount = shipment.TotalCostVnd;*/
+
+        var transaction = await HandleCreateTransaction(shipment, request);
+
         var paymentUrl = await _vnPayService.CreatePaymentUrl(
             shipment.TrackingCode, shipment.TotalCostVnd);
         transaction.PaymentUrl = paymentUrl;
@@ -301,6 +304,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             });
 
             await CancelScheduledUnpaidJob(shipment.Id);
+            await ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
         }
         else if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingRefund)
         {
@@ -332,5 +336,56 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
 
         _shipmentRepository.Update(shipment);
+    }
+
+    private async Task ScheduleUpdateNoDropOffJob(string shipmentId, DateTimeOffset scheduledDateTime)
+    {
+        _logger.Information("Scheduling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "NoDropOff-for-shipmentId", shipmentId }
+        };
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<UpdateShipmentToNoDropOff>()
+            .WithIdentity($"UpdateShipmentToNoDropOff-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-UpdateShipmentToNoDropOff-{shipmentId}")
+            .StartAt(scheduledDateTime.AddMinutes(5))
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
+    }
+
+    private async Task<Transaction> HandleCreateTransaction(Shipment shipment, TransactionRequest request)
+    {
+        _logger.Information("Handling creation of transaction for shipment: {shipmentId}", shipment.Id);
+
+        var transaction = _mapper.MapToTransactionEntity(request);
+        transaction.ShipmentId = shipment.Id;
+        transaction.PaidById = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        transaction.PaymentMethod = PaymentMethodEnum.VnPay;
+        transaction.PaymentStatus = PaymentStatusEnum.Pending;
+        transaction.TransactionType = request.TransactionType.Value;
+        transaction.Description = request.ToJsonString();
+
+        if (request.TransactionType == TransactionTypeEnum.ShipmentCost)
+        {
+            transaction.PaymentAmount = shipment.TotalCostVnd;
+        }
+        else if (request.TransactionType == TransactionTypeEnum.Refund)
+        {
+            transaction.PaymentAmount = shipment.TotalCostVnd * (decimal)0.8;
+        }
+        else if (request.TransactionType == TransactionTypeEnum.Surcharge)
+        {
+            transaction.PaymentAmount = shipment.TotalSurchargeFeeVnd.Value;
+        }
+
+        return transaction;
     }
 }

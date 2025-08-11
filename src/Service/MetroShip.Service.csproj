@@ -7,6 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="FirebaseAdmin" Version="3.3.0" />
+      <PackageReference Include="FirebaseDatabase.net" Version="5.0.0" />
       <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
     </ItemGroup>
 

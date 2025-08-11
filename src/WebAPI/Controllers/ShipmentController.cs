@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels;
+﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
@@ -17,12 +18,19 @@ namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/shipments")]
-    public class ShipmentController(
-        IShipmentService shipmentService,
-        ITransactionService transactionService
-        ) : ControllerBase
+    public class ShipmentController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
+        private readonly IShipmentService shipmentService = serviceProvider.GetRequiredService<IShipmentService>();
+        private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
+        private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+
+        [HttpGet("load-station")]
+        public async Task<IActionResult> GetAllStationIdCanLoadShipment(string shipmentId)
+        {
+            var response = await stationRepository.GetAllStationsCanUnloadShipmentAsync(shipmentId);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }
 
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
@@ -115,6 +123,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.REJECTED_SUCCESS, null));
         }
 
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         // feedback
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.FeedbackShipment)]
@@ -141,15 +150,24 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        [HttpPut(WebApiEndpoint.ShipmentEndpoint.UpdateStatusAtStation)]
-        public async Task<IActionResult> UpdateStatus([FromBody] UpdateShipmentStatusRequest request)
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.UnloadingAtStation)]
+        public async Task<IActionResult> UpdateStatusUnload([FromBody] UpdateShipmentStatusRequest request)
         {
             var staffId = User?.Identity?.Name ?? "unknown";
-            var result = await shipmentService.UpdateShipmentStatusByStationAsync(request, staffId);
+            var result = await shipmentService.UpdateShipmentStatusAsync(request, ShipmentStatusEnum.UnloadingAtStation, staffId);
             return Ok(result);
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.StorageInWarehouse)]
+        public async Task<IActionResult> UpdateStatusStorage([FromBody] UpdateShipmentStatusRequest request)
+        {
+            var staffId = User?.Identity?.Name ?? "unknown";
+            var result = await shipmentService.UpdateShipmentStatusAsync(request, ShipmentStatusEnum.StorageInWarehouse, staffId);
+            return Ok(result);
+        }
+
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.AssignTrainToShipment)]
         public async Task<IActionResult> AssignTrainToShipment(string trackingCode, string trainId)
         {

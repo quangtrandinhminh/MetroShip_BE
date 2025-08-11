@@ -22,6 +22,57 @@ namespace MetroShip.Repository.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("MetroShip.Repository.Models.CategoryInsurance", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InsurancePolicyId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ParcelCategoryId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("InsurancePolicyId");
+
+                    b.HasIndex("ParcelCategoryId");
+
+                    b.ToTable("CategoryInsurance");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.DistanceTier", b =>
                 {
                     b.Property<string>("Id")
@@ -230,6 +281,75 @@ namespace MetroShip.Repository.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("MetroShip.Repository.Models.InsurancePolicy", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("BaseFeeVnd")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("InsuranceFeeRateOnValue")
+                        .HasColumnType("decimal(8, 6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal?>("MaxInsuranceRateOnValue")
+                        .HasColumnType("decimal(8, 6)");
+
+                    b.Property<decimal?>("MaxParcelValueVnd")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal?>("MinInsuranceRateOnValue")
+                        .HasColumnType("decimal(8, 6)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("StandardCompensationValueVnd")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<DateOnly>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.ToTable("InsurancePolicy");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.MetroLine", b =>
@@ -533,6 +653,10 @@ namespace MetroShip.Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<string>("CategoryInsuranceId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -577,7 +701,6 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("decimal(10, 2)");
 
                     b.Property<string>("ParcelCategoryId")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -597,6 +720,9 @@ namespace MetroShip.Repository.Migrations
                     b.Property<decimal?>("ShippingFeeVnd")
                         .HasColumnType("decimal(18, 2)");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal?>("ValueVnd")
                         .HasColumnType("decimal(18, 2)");
 
@@ -608,12 +734,12 @@ namespace MetroShip.Repository.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryInsuranceId");
+
                     b.HasIndex("CreatedAt");
 
                     b.HasIndex("Id")
                         .IsUnique();
-
-                    b.HasIndex("ParcelCategoryId");
 
                     b.HasIndex("ShipmentId");
 
@@ -674,6 +800,9 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal?>("LengthLimitCm")
+                        .HasColumnType("decimal(10, 2)");
+
+                    b.Property<decimal?>("MinValueVnd")
                         .HasColumnType("decimal(10, 2)");
 
                     b.Property<decimal?>("TotalSizeLimitCm")
@@ -766,6 +895,9 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int>("CurrentParcelStatus")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("CurrentShipmentStatus")
                         .HasColumnType("integer");
 
@@ -830,6 +962,9 @@ namespace MetroShip.Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text");
 
+                    b.Property<decimal?>("BaseSurchargePerDayVnd")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -844,11 +979,17 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("EffectiveFrom")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset?>("EffectiveTo")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("FreeStoreDays")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -859,6 +1000,12 @@ namespace MetroShip.Repository.Migrations
                     b.Property<string>("LastUpdatedBy")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<int?>("RefundForCancellationBeforeScheduledHours")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("RefundRate")
+                        .HasColumnType("decimal(5, 2)");
 
                     b.HasKey("Id");
 
@@ -1361,6 +1508,10 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("TrainScheduleId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
@@ -1751,6 +1902,78 @@ namespace MetroShip.Repository.Migrations
                     b.ToTable("SystemConfigs");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.TrainSchedule", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ArrivalTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateOnly?>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("DepartureStationId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("DepartureTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DestinationStationId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("LineId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TimeSlotId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TrainId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("TimeSlotId");
+
+                    b.HasIndex("TrainId");
+
+                    b.ToTable("TrainSchedule");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.Transaction", b =>
                 {
                     b.Property<string>("Id")
@@ -2016,6 +2239,25 @@ namespace MetroShip.Repository.Migrations
                     b.HasDiscriminator().HasValue("UserRoleEntity");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.CategoryInsurance", b =>
+                {
+                    b.HasOne("MetroShip.Repository.Models.InsurancePolicy", "InsurancePolicy")
+                        .WithMany("CategoryInsurances")
+                        .HasForeignKey("InsurancePolicyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MetroShip.Repository.Models.ParcelCategory", "ParcelCategory")
+                        .WithMany("CategoryInsurances")
+                        .HasForeignKey("ParcelCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("InsurancePolicy");
+
+                    b.Navigation("ParcelCategory");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.DistanceTier", b =>
                 {
                     b.HasOne("MetroShip.Repository.Models.PricingConfig", "PricingConfig")
@@ -2060,11 +2302,9 @@ namespace MetroShip.Repository.Migrations
 
             modelBuilder.Entity("MetroShip.Repository.Models.Parcel", b =>
                 {
-                    b.HasOne("MetroShip.Repository.Models.ParcelCategory", "ParcelCategory")
+                    b.HasOne("MetroShip.Repository.Models.CategoryInsurance", "CategoryInsurance")
                         .WithMany("Parcels")
-                        .HasForeignKey("ParcelCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CategoryInsuranceId");
 
                     b.HasOne("MetroShip.Repository.Models.Shipment", "Shipment")
                         .WithMany("Parcels")
@@ -2072,7 +2312,7 @@ namespace MetroShip.Repository.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ParcelCategory");
+                    b.Navigation("CategoryInsurance");
 
                     b.Navigation("Shipment");
                 });
@@ -2254,6 +2494,25 @@ namespace MetroShip.Repository.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.TrainSchedule", b =>
+                {
+                    b.HasOne("MetroShip.Repository.Models.MetroTimeSlot", "TimeSlot")
+                        .WithMany("TrainSchedules")
+                        .HasForeignKey("TimeSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MetroShip.Repository.Models.MetroTrain", "Train")
+                        .WithMany("TrainSchedules")
+                        .HasForeignKey("TrainId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TimeSlot");
+
+                    b.Navigation("Train");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.Transaction", b =>
                 {
                     b.HasOne("MetroShip.Repository.Models.Identity.UserEntity", "PaidBy")
@@ -2335,6 +2594,11 @@ namespace MetroShip.Repository.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.CategoryInsurance", b =>
+                {
+                    b.Navigation("Parcels");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.Identity.RoleEntity", b =>
                 {
                     b.Navigation("UserRoles");
@@ -2357,6 +2621,11 @@ namespace MetroShip.Repository.Migrations
                     b.Navigation("UserRoles");
                 });
 
+            modelBuilder.Entity("MetroShip.Repository.Models.InsurancePolicy", b =>
+                {
+                    b.Navigation("CategoryInsurances");
+                });
+
             modelBuilder.Entity("MetroShip.Repository.Models.MetroLine", b =>
                 {
                     b.Navigation("Routes");
@@ -2367,11 +2636,15 @@ namespace MetroShip.Repository.Migrations
             modelBuilder.Entity("MetroShip.Repository.Models.MetroTimeSlot", b =>
                 {
                     b.Navigation("ShipmentItineraries");
+
+                    b.Navigation("TrainSchedules");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.MetroTrain", b =>
                 {
                     b.Navigation("ShipmentItineraries");
+
+                    b.Navigation("TrainSchedules");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.Parcel", b =>
@@ -2383,7 +2656,7 @@ namespace MetroShip.Repository.Migrations
 
             modelBuilder.Entity("MetroShip.Repository.Models.ParcelCategory", b =>
                 {
-                    b.Navigation("Parcels");
+                    b.Navigation("CategoryInsurances");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.PricingConfig", b =>

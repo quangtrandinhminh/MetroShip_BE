@@ -51,6 +51,7 @@
             public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainCode}";
             public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainCode}";
             public const string UpdateParcelStatusToAwaitingDelivery = BaseEndpoint + "/staff/awaiting-delivery/{parcelCode}";
+            public const string ReportLostParcel = BaseEndpoint + "/staff/lost/{parcelCode}/{trackingForShipmentStatus}";
         }
 
         public static class ShipmentEndpoint
@@ -73,7 +74,8 @@
             public const string PickUpShipment = BaseEndpoint + "/staff/pickup-confirmation";
             public const string RejectShipment = BaseEndpoint + "/staff/reject-confirmation";
             public const string GetLocation = BaseEndpoint + "/{trackingCode}/location";
-            public const string UpdateStatusAtStation = BaseEndpoint + "/staff/update-status-at-station";
+            public const string UnloadingAtStation = BaseEndpoint + "/staff/update-unloading"; 
+            public const string StorageInWarehouse = BaseEndpoint + "/staff/update-storage";
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
             public const string GetShipmentById = BaseEndpoint + "/{id}";
             public const string CancelShipment = BaseEndpoint + "/cancel";

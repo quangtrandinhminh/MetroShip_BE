@@ -90,31 +90,34 @@ namespace MetroShip.WebAPI.Controllers
         [HttpGet("{trackingCode}/position")]
         public async Task<IActionResult> GetPositionByTrackingCode(string trackingCode)
         {
-            var result = await _trainService.GetPositionByTrackingCodeAsync(trackingCode);
+            var result = await _trainService.GetTrainPositionByTrackingCodeAsync(trackingCode);
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpGet("/api/train/{trainId}/position")]
         public async Task<IActionResult> GetPositionByTrainId(string trainId)
         {
             var result = await _trainService.GetTrainPositionAsync(trainId);
+
+            // Gắn thêm dòng này là sẽ real-time không cần fetch mỗi 5s, chỉ cần connect với hub, khi nào hub trigged thì gọi api này
+            //await _hub.Clients.Group(trainId).SendAsync("ReceiveLocationUpdate", result);
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost("/api/train/{trainId}/status")]
         public async Task<IActionResult> UpdateTrainStatus(string trainId)
         {
-            var result = await _trainService.UpdateTrainStatusAsync(trainId);
-            if (result)
-            {
-                return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
-            }
-            else
-            {
-                return BadRequest(BaseResponse.BadRequestResponseDto("Failed to update train status", null));
-            }
+            await _trainService.StartOrContinueSimulationAsync(trainId);
+            return Ok(BaseResponse.OkResponseDto("Train status updated successfully", null));
+        }
+
+        [HttpPost("/api/train/{trainId}/confirm-arrival")]
+        public async Task<IActionResult> ConfirmTrainArrived(string trainId, [FromQuery] string stationId)
+        {
+            await _trainService.ConfirmTrainArrivedAsync(trainId, stationId);
+            return Ok(BaseResponse.OkResponseDto("Train arrival confirmed successfully", null));
         }
     }
 }

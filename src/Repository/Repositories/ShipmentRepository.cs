@@ -1,16 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 using MetroShip.Repository.Base;
 using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Helpers;
+using Serilog;
 
 
 namespace MetroShip.Repository.Repositories;
@@ -23,18 +20,6 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
     {
         _context = context;
     }
-
-    /*public class ShipmentDto : Shipment
-    {
-        public string DepartureStationName { get; set; }
-        public string DestinationStationName { get; set; }
-        public string? CurrentStationName { get; set; } 
-    }*/
-
-    /*public class RouteDto : Route
-    {
-        public string LineName { get; set; }
-    }*/
 
     public async Task<PaginatedList<Shipment>>
         GetPaginatedListForListResponseAsync(
@@ -92,8 +77,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             RecipientPhone = s.RecipientPhone,
 
             ShipmentStatus = s.ShipmentStatus,
-            //BookedAt = s.BookedAt.Value,
+   
             TotalCostVnd = s.TotalCostVnd,
+            StartReceiveAt = s.StartReceiveAt,
             ScheduledDateTime = s.ScheduledDateTime,
             TotalVolumeM3 = s.TotalVolumeM3,
             TotalWeightKg = s.TotalWeightKg,
@@ -101,6 +87,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
             Rating = s.Rating,
             Feedback = s.Feedback,
+            CreatedAt = s.CreatedAt,
+            LastUpdatedAt = s.LastUpdatedAt
         });
 
         // Use your existing paging helper on the projection
@@ -117,6 +105,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         {
             // Base Entity fields
             Id = s.Id,
+            CreatedAt = s.CreatedAt,
+            LastUpdatedAt = s.LastUpdatedAt,
 
             // Basic shipment info
             TrackingCode = s.TrackingCode,
@@ -237,7 +227,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
-            
+
             Parcels = s.Parcels
             .Select(parcel => new Parcel
             {
@@ -253,7 +243,10 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 ParcelCategoryId = parcel.ParcelCategoryId,
                 ShippingFeeVnd = parcel.ShippingFeeVnd,
                 InsuranceFeeVnd = parcel.InsuranceFeeVnd,
-                ParcelCategory = new ParcelCategory
+                CreatedAt = parcel.CreatedAt,
+                LastUpdatedAt = parcel.LastUpdatedAt,
+                Status = parcel.Status,
+                /*ParcelCategory = new ParcelCategory
                 {
                     Id = parcel.ParcelCategory.Id,
                     CategoryName = parcel.ParcelCategory.CategoryName,
@@ -261,6 +254,37 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     InsuranceRate = parcel.ParcelCategory.InsuranceRate,
                     InsuranceFeeVnd = parcel.ParcelCategory.InsuranceFeeVnd,
                     IsInsuranceRequired = parcel.ParcelCategory.IsInsuranceRequired,
+                },*/
+                CategoryInsuranceId = parcel.CategoryInsuranceId,
+                CategoryInsurance = new CategoryInsurance
+                {
+                    Id = parcel.CategoryInsurance.Id,
+                    ParcelCategoryId = parcel.CategoryInsurance.ParcelCategoryId,
+                    InsurancePolicyId = parcel.CategoryInsurance.InsurancePolicyId,
+                    IsActive = parcel.CategoryInsurance.IsActive,
+                    InsurancePolicy = new InsurancePolicy
+                    {
+                        Id = parcel.CategoryInsurance.InsurancePolicy.Id,
+                        Name = parcel.CategoryInsurance.InsurancePolicy.Name,
+                        BaseFeeVnd = parcel.CategoryInsurance.InsurancePolicy.BaseFeeVnd,
+                        MaxParcelValueVnd = parcel.CategoryInsurance.InsurancePolicy.MaxParcelValueVnd,
+                        InsuranceFeeRateOnValue = parcel.CategoryInsurance.InsurancePolicy.InsuranceFeeRateOnValue,
+                        StandardCompensationValueVnd = parcel.CategoryInsurance.InsurancePolicy.StandardCompensationValueVnd,
+                        MaxInsuranceRateOnValue = parcel.CategoryInsurance.InsurancePolicy.MaxInsuranceRateOnValue,
+                        MinInsuranceRateOnValue = parcel.CategoryInsurance.InsurancePolicy.MinInsuranceRateOnValue,
+                        ValidFrom = parcel.CategoryInsurance.InsurancePolicy.ValidFrom,
+                        ValidTo = parcel.CategoryInsurance.InsurancePolicy.ValidTo,
+                        IsActive = parcel.CategoryInsurance.InsurancePolicy.IsActive,
+                    },
+                    ParcelCategory = new ParcelCategory
+                    {
+                        Id = parcel.CategoryInsurance.ParcelCategory.Id,
+                        CategoryName = parcel.CategoryInsurance.ParcelCategory.CategoryName,
+                        Description = parcel.CategoryInsurance.ParcelCategory.Description,
+                        InsuranceRate = parcel.CategoryInsurance.ParcelCategory.InsuranceRate,
+                        InsuranceFeeVnd = parcel.CategoryInsurance.ParcelCategory.InsuranceFeeVnd,
+                        IsInsuranceRequired = parcel.CategoryInsurance.ParcelCategory.IsInsuranceRequired,
+                    },
                 },
             }).OrderBy(p => p.ParcelCode).ToList(),
 
@@ -535,7 +559,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> CheckIfThisStationCanWaitNextTrain (string stationId, string shipmentId)
+    /*public async Task<bool> CheckIfThisStationCanWaitNextTrain (string stationId, string shipmentId)
     {
         var shipment = await _context.Shipments
             .Include(s => s.ShipmentItineraries)
@@ -593,7 +617,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         Log.Information($"Shipment {shipmentId} can wait for the next train at station {stationId}.");
         return true; // Có thể chờ chuyến tiếp theo
-    }
+    }*/
 
     public async Task<PaginatedList<Shipment>> GetShipmentsCanWaitNextTrainAtStation(
         int pageNumber, int pageSize, string stationId,
@@ -636,5 +660,22 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
 
         return await GetPaginatedListForListResponseAsync(
             pageNumber, pageSize,predicate,orderBy,isDesc);
+    }
+
+    // calculate total kg and total volume of all shipments by lineId and date, and slot
+    public async Task<(decimal TotalWeightKg, decimal TotalVolumeM3)> CalculateTotalWeightAndVolumeAsync(
+               string lineId, DateOnly date, string timeSlotId)
+    {
+        var shipments = await _context.Shipments
+            .Where(s => s.ShipmentItineraries.Any(
+                i => i.Route.LineId == lineId &&
+                i.Date.HasValue && i.Date.Value == date &&
+                i.TimeSlotId == timeSlotId))
+            .ToListAsync();
+
+        var totalWeight = shipments.Sum(s => s.TotalWeightKg) ?? 0;
+        var totalVolume = shipments.Sum(s => s.TotalVolumeM3) ?? 0;
+
+        return (totalWeight, totalVolume);
     }
 }

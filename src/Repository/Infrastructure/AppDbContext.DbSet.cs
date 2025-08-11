@@ -57,4 +57,10 @@ public sealed partial class AppDbContext
     public DbSet<DistanceTier> DistanceTier { get; set; }
 
     public DbSet<ParcelMedia> ParcelMedia { get; set; }
+
+    public DbSet<CategoryInsurance> CategoryInsurance { get; set; }
+
+    public DbSet<InsurancePolicy> InsurancePolicy { get; set; }
+
+    public DbSet<TrainSchedule> TrainSchedule { get; set; }
 }

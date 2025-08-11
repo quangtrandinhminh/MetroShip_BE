@@ -11,13 +11,17 @@ namespace MetroShip.Service.Interfaces
 {
     public interface IParcelCategoryService
     {
-        Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(bool? isActive, PaginatedListRequest request);
+        Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(
+            bool? isActive,
+            PaginatedListRequest request,
+            bool isIncludeAllCategoryInsurances = false
+        );
 
         Task<ParcelCategoryResponse> GetByIdAsync(Guid id);
 
         Task<ParcelCategoryResponse> CreateAsync(ParcelCategoryCreateRequest request);
 
-        Task UpdateAsync(ParcelCategoryUpdateRequest request);
+        Task<ParcelCategoryResponse> UpdateAsync(string id, ParcelCategoryUpdateRequest request);
 
         Task DeleteAsync(Guid id);
     }
