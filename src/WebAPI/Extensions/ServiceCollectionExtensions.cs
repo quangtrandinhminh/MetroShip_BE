@@ -151,8 +151,9 @@ public static class ServiceCollectionExtensions
 
             // Use simple type loader
             q.UseSimpleTypeLoader();
+            q.UseInMemoryStore();
 
-            var isDevelopment = configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development";
+            /*var isDevelopment = configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development";
             if (isDevelopment)
             {
                 // Use in-memory store for development
@@ -169,7 +170,7 @@ public static class ServiceCollectionExtensions
 
                     store.UseNewtonsoftJsonSerializer();
                 });
-            }
+            }*/
 
             // Configure thread pool
             q.UseDefaultThreadPool(tp =>
