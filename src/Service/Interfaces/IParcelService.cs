@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.Service.Interfaces
 {
@@ -19,5 +20,6 @@ namespace MetroShip.Service.Interfaces
         Task LoadParcelOnTrainAsync(string parcelCode, string trainCode);
         Task UnloadParcelFromTrain(string parcelCode, string trainCode);
         Task UpdateParcelForAwaitingDeliveryAsync(string parcelCode);
+        Task ReportLostParcelAsync(string parcelCode, ShipmentStatusEnum trackingForShipmentStatus);
     }
 }

@@ -8,6 +8,7 @@ namespace MetroShip.Service.ApiModels.Parcel;
 public record ParcelRequest : ChargeableWeightRequest
 {
     public string ParcelCategoryId { get; set; }
+    public string CategoryInsuranceId { get; set; }
     public bool IsInsuranceIncluded { get; set; } = false;
     public decimal? ShippingFeeVnd { get; set; } = 0;
     public decimal? InsuranceFeeVnd { get; set; } = 0;

@@ -1,12 +1,22 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using MetroShip.Repository.Models.Base;
+using MetroShip.Utility.Enums;
 using Newtonsoft.Json;
 
 namespace MetroShip.Repository.Models;
 
 public class PricingConfig : BaseEntity
 {
+    public int? FreeStoreDays { get; set; }
+    public decimal? BaseSurchargePerDayVnd { get; set; }
+
+    [Column(TypeName = "decimal(5, 2)")]
+    public decimal? RefundRate { get; set; }
+    public int? RefundForCancellationBeforeScheduledHours { get; set; }
+
+    public string? Description { get; set; }
+
     public bool IsActive { get; set; } = true;
 
     public DateTimeOffset? EffectiveFrom { get; set; }

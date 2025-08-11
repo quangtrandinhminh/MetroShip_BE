@@ -22,9 +22,13 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.ParcelCategory.GetCategories)]
-        public async Task<IActionResult> GetAll([FromQuery] bool? isActive, [FromQuery] PaginatedListRequest request)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] bool? isActive,
+            [FromQuery] PaginatedListRequest request,
+            [FromQuery] bool isIncludeAllCategoryInsurances = false)
         {
-            var result = await _parcelCategoryService.GetAllAsync(isActive,request);
+            var result = await _parcelCategoryService.GetAllAsync(
+                isActive, request, isIncludeAllCategoryInsurances);
             return Ok(BaseResponse.OkResponseDto(result));
         }
 

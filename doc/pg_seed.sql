@@ -75,7 +75,7 @@ VALUES
         NOW(), NULL, NULL,
         'quang@example.com', FALSE, 'Quang', NULL,
         NOW(),
-        FALSE, NULL, 'quang@example.com', 'CUSTOMER',
+        FALSE, NULL, 'quang@example.com', 'QUANGTDM',
         NULL, '$2a$12$xGMlYdHQXreJRAsPVtWVueg2x0MFDeOl472DgWkhKJ.fFX5gvsY5m',
         '012345678', FALSE, FALSE,
         'quangtdm', NOW()
@@ -2456,7 +2456,42 @@ VALUES
      2,100, NULL,800,TRUE,
      NULL, NULL, NULL, NOW(), NOW(), NULL);
 
+-- 11/08/2025: Update BaseSurchargePerDayVnd, FreeStoreDays, RefundRate, RefundForCancellationBeforeScheduledHours
+UPDATE public."PricingConfig"
+SET "BaseSurchargePerDayVnd" = 2000, "FreeStoreDays" = 2,
+    "RefundRate" = 0.8, "RefundForCancellationBeforeScheduledHours" = 24
+WHERE "Id" = 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd';
 
+-- ───────────────────────────────────────────────────────────────
+-- InsurancePolicy Seed Data
+INSERT INTO public."InsurancePolicy"
+("Id", "Name", "BaseFeeVnd", "MaxParcelValueVnd", "InsuranceFeeRateOnValue",
+ "StandardCompensationValueVnd","MaxInsuranceRateOnValue", "MinInsuranceRateOnValue",
+ "ValidFrom","IsActive",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('5f55489c-c92a-4329-b848-b37dae74c252',
+     'Chính sách bảo hiểm từ 1/8/2025',
+     5000, 100000000, 0.005,
+     500000,1,0.3,
+     '2025-08-01',TRUE,
+     NULL, NULL, NULL, NOW(), NOW(), NULL);
 
+INSERT INTO public."CategoryInsurance"
+("Id", "ParcelCategoryId", "InsurancePolicyId", "IsActive",
+ "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+VALUES
+    ('b75c76cb-6c42-47c7-b7d3-c4e1ed333b30',
+     '0a1b2c3d-4e5f-6789-abcd-0fedcba98765', '5f55489c-c92a-4329-b848-b37dae74c252',
+     TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('8e5b26b9-b8c8-495f-956c-ee5149ba5b93',
+     '3d4e5f6a-7b8c-9012-def0-3fedcba98765', '5f55489c-c92a-4329-b848-b37dae74c252',
+     TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('dce2eb72-2449-47b6-8afb-b8844b5b9919',
+     '4e5f6a7b-8c9d-0123-ef01-4fedcba98765', '5f55489c-c92a-4329-b848-b37dae74c252',
+     TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL),
+    ('be213d73-ba20-4bcd-84fc-99901f934010',
+     '9c50210e-5670-4608-b58a-c54d0b3cc249', '5f55489c-c92a-4329-b848-b37dae74c252',
+     TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL);
 
 

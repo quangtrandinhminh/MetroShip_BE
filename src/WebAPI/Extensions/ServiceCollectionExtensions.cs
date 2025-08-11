@@ -166,6 +166,8 @@ public static class ServiceCollectionExtensions
                     store.UseProperties = true;
                     store.UsePostgres(configuration.GetConnectionString("PostgresConnection")
                                       ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION"));
+
+                    store.UseNewtonsoftJsonSerializer();
                 });
             }
 
@@ -222,6 +224,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPricingService, PricingService>();
         services.AddScoped<IRegionService, RegionService>();
         services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
+        services.AddScoped<IItineraryService, ItineraryService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -242,6 +245,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
+        services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

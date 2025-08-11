@@ -7,6 +7,7 @@ using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Jobs;
 using MetroShip.Service.Mapper;
 using MetroShip.Service.Utils;
 using MetroShip.Utility.Config;
@@ -16,7 +17,9 @@ using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
 using Serilog;
 using Sprache;
 using System;
@@ -35,7 +38,6 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-    private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly IMapperlyMapper _mapperlyMapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
@@ -43,7 +45,10 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly ITrainRepository _trainRepository = serviceProvider.GetRequiredService<ITrainRepository>();
-    private static readonly List<CreateParcelResponse> _parcelCache = new();
+    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+    private readonly IMemoryCache _parcelCache = serviceProvider.GetRequiredService<IMemoryCache>();
+
 
     /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
@@ -88,7 +93,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var cost = parcelInfo.ChargeableWeightKg * (decimal)distanceKm * pricePerKm;
         return Math.Round(cost, 0);
     }*/
-    
+
     public async Task<PaginatedListResponse<ParcelResponse>> GetAllParcels(PaginatedListRequest request)
     {
         // Lấy customerId từ JWT claims
@@ -109,7 +114,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 expression,
                 orderBy: x => x.CreatedAt,
                 isAscending: true,
-                includeProperties: x => x.ParcelCategory);
+                includeProperties: x => x.CategoryInsurance);
 
         var parcelListResponse = _mapper.MapToParcelPaginatedList(parcels);
         return parcelListResponse;
@@ -122,7 +127,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         // Truy vấn parcel theo ID và kiểm tra quyền truy cập
         var parcel = await _parcelRepository.GetSingleAsync(
                        p => p.ParcelCode == parcelCode && p.DeletedAt == null, false,
-                                   p => p.ParcelCategory,
+                                   p => p.CategoryInsurance,
                                    p => p.ParcelMedias,
                                    p =>  p.ParcelTrackings);
 
@@ -140,19 +145,10 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var parcel = await _parcelRepository.GetAll()
             .Where(p => p.DeletedAt == null && p.ParcelCode == request.ParcelCode)
             .Include(p => p.Shipment)
-            .Include(p => p.ParcelTrackings)
-            .Include(p => p.ParcelMedias)
             .FirstOrDefaultAsync();
 
         if (parcel == null)
             throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
-
-        // Only allow confirmation for parcels in AwaitingConfirmation status
-        /*if (parcel.ParcelStatus != ParcelStatusEnum.AwaitingConfirmation)
-            throw new AppException(ErrorCode.BadRequest, "Parcel is not in AwaitingConfirmation status",
-                StatusCodes.Status400BadRequest);
-
-        parcel.ParcelStatus = ParcelStatusEnum.AwaitingPayment;*/
 
         var shipment = parcel.Shipment;
         if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
@@ -169,6 +165,16 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             throw new AppException(
             ErrorCode.BadRequest,
             "Parcel has already been confirmed for pickup.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if pick up in time range
+        var now = CoreHelper.SystemTimeNow;
+        if (now < shipment.StartReceiveAt || now > shipment.ScheduledDateTime)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Parcel confirmation is outside the allowed pickup time range.",
             StatusCodes.Status400BadRequest);
         }
 
@@ -224,11 +230,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (string.IsNullOrEmpty(stationId))
             throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
 
-        var parcel = await _parcelRepository.GetAll()
-            .Where(p => p.DeletedAt == null && p.ParcelCode == parcelCode)
-            .Include(p => p.Shipment)
-            .Include(p => p.ParcelTrackings)
-            .FirstOrDefaultAsync();
+        var parcel = await _parcelRepository.GetSingleAsync(
+            p => p.ParcelCode == parcelCode,
+            includeProperties: p => p.Shipment);
 
         if (parcel == null)
             throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
@@ -250,12 +254,42 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (train == null)
             throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
+        var validStationId = await _stationRepository.GetAllStationsCanLoadShipmentAsync(shipment.Id);
+        if (!validStationId.Contains(stationId))
+        {
+            var validStationNames = await _stationRepository.GetAll()
+                .Where(s => validStationId.Contains(s.Id))
+                .Select(s => s.StationNameEn)
+                .ToListAsync();
+
+            throw new AppException(
+            ErrorCode.BadRequest,
+            $"Parcel cannot be loaded at this station. Valid stations: {string.Join(", ", validStationNames)}",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // retrieve the parcel tracking 
+        var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
+            pt => pt.ParcelId == parcel.Id &&
+                  pt.TrackingForShipmentStatus == ShipmentStatusEnum.InTransit &&
+                  pt.StationId == stationId &&
+                  pt.DeletedAt == null);
+
+        if (isParcelTrackingExists)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Parcel is already loaded on a train at this station.",
+            StatusCodes.Status400BadRequest);
+        }
+
         // Update parcel status to InTransit
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         var parcelTracking = new ParcelTracking
         {
             ParcelId = parcel.Id,
             Status = $"Kiện hàng đã lên tàu {trainCode} tại Ga {stationName}",
+            CurrentParcelStatus = parcel.Status,
             CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
             TrackingForShipmentStatus = ShipmentStatusEnum.InTransit,
             StationId = stationId,
@@ -295,11 +329,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (string.IsNullOrEmpty(stationId))
             throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
 
-        var parcel = await _parcelRepository.GetAll()
-            .Where(p => p.DeletedAt == null && p.ParcelCode == parcelCode)
-            .Include(p => p.Shipment)
-            .Include(p => p.ParcelTrackings)
-            .FirstOrDefaultAsync();
+        var parcel = await _parcelRepository.GetSingleAsync(
+                       p => p.ParcelCode == parcelCode,
+                                  includeProperties: p => p.Shipment);
 
         if (parcel == null)
             throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
@@ -319,7 +351,37 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (train == null)
             throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
-        // Update parcel status to InTransit
+        var validStationId = await _stationRepository.GetAllStationsCanUnloadShipmentAsync(shipment.Id);
+        if (!validStationId.Contains(stationId))
+        {
+            var validStationNames = await _stationRepository.GetAll()
+                .Where(s => validStationId.Contains(s.Id))
+                .Select(s => s.StationNameEn)
+                .ToListAsync();
+
+            throw new AppException(
+            ErrorCode.BadRequest,
+            $"Parcel cannot be unloaded at this station. Valid stations: {string.Join(", ", validStationNames)}",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // retrieve the parcel tracking 
+        var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
+            pt => pt.ParcelId == parcel.Id &&
+                  (pt.TrackingForShipmentStatus == ShipmentStatusEnum.Arrived 
+                  || pt.TrackingForShipmentStatus == ShipmentStatusEnum.WaitingForNextTrain) &&
+                  pt.StationId == stationId &&
+                  pt.DeletedAt == null);
+
+        if (isParcelTrackingExists)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "Parcel is already unloaded from a train at this station.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Update parcel status to WaitingForNextTrain or Arrived
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (!stationId.Equals(shipment.DestinationStationId))
         {
@@ -363,7 +425,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 ParcelId = parcel.Id,
                 Status = $"Kiện hàng đã xuống tàu {trainCode} tại trạm đích: Ga {stationName}. Chờ nhập kho",
                 CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
-                TrackingForShipmentStatus = ShipmentStatusEnum.Stored,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Arrived,
                 StationId = stationId,
                 TrainId = train.Id,
                 EventTime = CoreHelper.SystemTimeNow,
@@ -371,10 +433,10 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             };
             _parcelTrackingRepository.Add(parcelTracking);
 
-            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.Stored))
+            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.Arrived))
             {
                 // Update shipment status and timestamps
-                shipment.ShipmentStatus = ShipmentStatusEnum.Stored;
+                shipment.ShipmentStatus = ShipmentStatusEnum.Arrived;
                 shipment.CurrentStationId = stationId;
                 _shipmentRepository.Update(shipment);
 
@@ -399,23 +461,45 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
         var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
-        var parcel = await _parcelRepository.GetAll()
-            .Where(p => p.DeletedAt == null && p.ParcelCode == parcelCode)
-            .Include(p => p.Shipment)
-            .Include(p => p.ParcelTrackings)
-            .FirstOrDefaultAsync();
+        if (string.IsNullOrEmpty(stationId))
+            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+
+        var parcel = await _parcelRepository.GetSingleAsync(
+            p => p.ParcelCode == parcelCode,
+            includeProperties: p => p.Shipment);
 
         if (parcel == null)
             throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
 
         // Only allow update for parcels in shipment status Stored
         var shipment = parcel.Shipment;
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Stored)
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Arrived)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Shipment must be in 'Stored' status",
+            "Shipment must be in 'Arrived' status",
             StatusCodes.Status400BadRequest);
+        }
+
+        if (!stationId.Equals(shipment.DestinationStationId))
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Parcel must be at the destination station to update for AwaitingDelivery",
+            StatusCodes.Status400BadRequest);
+
+        // Check if the parcel is already confirmed for AwaitingDelivery
+        var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
+                pt => pt.ParcelId == parcel.Id &&
+                pt.TrackingForShipmentStatus == ShipmentStatusEnum.AwaitingDelivery &&
+                pt.StationId == stationId &&
+                pt.DeletedAt == null);
+
+        if (isParcelTrackingExists)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Parcel has already been updated for AwaitingDelivery.",
+                StatusCodes.Status400BadRequest);
         }
 
         // Update parcel status to AwaitingDelivery
@@ -447,8 +531,58 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = staffId,
             });
+
+            // Schedule job to apply surcharge after delivery
+            await ScheduleApplySurchargeJob(parcel.ShipmentId);
         }
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    // lost report parcel
+    public async Task ReportLostParcelAsync(string parcelCode, ShipmentStatusEnum trackingForShipmentStatus)
+    {
+        _logger.Information("Reporting lost parcel {ParcelCode}", parcelCode);
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+
+        if (string.IsNullOrEmpty(stationId))
+            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+
+        var parcel = await _parcelRepository.GetSingleAsync(
+            p => p.ParcelCode == parcelCode,
+            includeProperties: p => p.Shipment);
+
+        if (parcel == null)
+            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+
+        // Check if the parcel is already reported as Lost
+        var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
+                pt => pt.ParcelId == parcel.Id &&
+                pt.CurrentParcelStatus == ParcelStatusEnum.Lost &&
+                pt.StationId == stationId &&
+                    pt.DeletedAt == null);
+        if (isParcelTrackingExists)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Parcel has already been reported as Lost.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update parcel status to Lost
+        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        var parcelTracking = new ParcelTracking
+        {
+            ParcelId = parcel.Id,
+            Status = $"Kiện hàng đã được báo mất tại Ga {stationName}",
+            CurrentParcelStatus = ParcelStatusEnum.Lost,
+            CurrentShipmentStatus = parcel.Shipment.ShipmentStatus,
+            TrackingForShipmentStatus = trackingForShipmentStatus,
+            StationId = stationId,
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = staffId,
+        };
+        _parcelTrackingRepository.Add(parcelTracking);
     }
 
     /*public async Task RejectParcelAsync(ParcelRejectRequest request)
@@ -525,7 +659,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         // count parcelTracking have TrackingForShipmentStatus == nextShipmentStatus
         var parcelTrackingCount = _parcelRepository.GetAll()
-            .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null)
+            .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null && x.Status == ParcelStatusEnum.Normal)
             .SelectMany(p => p.ParcelTrackings)
             .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus) + 1; // +1 for the current parcel request
 
@@ -543,6 +677,35 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         _logger.Information("Shipment {ShipmentId} is NOT ready for status {NextStatus}",
             shipmentId, nextShipmentStatus);
         return false;
+    }
+
+    private async Task ScheduleApplySurchargeJob(string shipmentId)
+    {
+        _logger.Information("Scheduling job to apply surcharge for shipment ID: {@shipmentId}", shipmentId);
+        var jobData = new JobDataMap
+        {
+            { "ApplySurcharge-for-shipmentId", shipmentId }
+        };
+
+        var freeStoreDays = await _pricingService.GetFreeStoreDaysAsync();
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<ApplySurchargeJob>()
+            .WithIdentity($"ApplySurchargeJob-{shipmentId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-ApplySurchargeJob-{shipmentId}")
+            .StartAt(DateTimeOffset.UtcNow.AddDays(freeStoreDays))
+            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
+            // Repeat every 24 hours
+            .WithSimpleSchedule(x => x
+                .WithIntervalInHours(24)
+            .RepeatForever())
+        .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
     }
 }
 

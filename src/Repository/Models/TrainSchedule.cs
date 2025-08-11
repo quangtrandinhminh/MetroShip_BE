@@ -10,6 +10,8 @@ public class TrainSchedule : BaseEntity
 
     public string TimeSlotId { get; set; }
 
+    public string LineId { get; set; }
+
     [Column(TypeName = "date")]
     public DateOnly? Date { get; set; }
 

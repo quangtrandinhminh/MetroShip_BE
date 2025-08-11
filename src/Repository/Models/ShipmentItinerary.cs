@@ -32,6 +32,9 @@ public partial class ShipmentItinerary : BaseEntity
     [StringLength(50)]
     public string? TrainId { get; set; }
 
+    [StringLength(50)]
+    public string? TrainScheduleId { get; set; }
+
     public string? TimeSlotId { get; set; }
 
     [Column(TypeName = "date")]

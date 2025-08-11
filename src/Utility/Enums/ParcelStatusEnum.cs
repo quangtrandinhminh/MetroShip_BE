@@ -3,16 +3,9 @@
 public enum ParcelStatusEnum
 {
     Created = 1,
-    Received,
-    Delivering,
-    Delivered,
-    Cancelled,
-    Lost,
-    Damaged,
-    Returning,
-    Returned,
-    Delayed,
-    AwaitingCompensation,
-    Compensated,
+    Normal = 2,
+    Damaged = 3,
+    Lost = 4,
+    Canceled = 5,
 }
 

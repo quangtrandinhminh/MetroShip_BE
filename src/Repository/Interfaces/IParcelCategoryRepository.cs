@@ -12,6 +12,13 @@ namespace MetroShip.Repository.Interfaces
 {
     public interface IParcelCategoryRepository : IBaseRepository<ParcelCategory>
     {
-
+        Task<PaginatedList<ParcelCategory>>
+            GetPaginatedListForListResponseAsync(
+                int pageNumber,
+                int pageSize,
+                bool isIncludeAllCategoryInsurances = false,
+                Expression<Func<ParcelCategory, bool>> predicate = null,
+                Expression<Func<ParcelCategory, object>> orderBy = null,
+                bool? isDesc = false);
     }
 }

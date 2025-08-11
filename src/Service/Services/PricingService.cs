@@ -7,6 +7,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ namespace MetroShip.Service.Services;
 public class PricingService(IServiceProvider serviceProvider) : IPricingService
 {
     private readonly IPricingRepository _pricingRepository = serviceProvider.GetRequiredService<IPricingRepository>();
+    private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
@@ -150,6 +152,123 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         return pricingConfig;
     }*/
 
-    // calculate surcharge based on weight and distance
+    //public async Task<decimal> CalculateSurcharge (decimal )
 
+    private async Task<decimal> CalculateRefund(decimal totalPrice, decimal refundRate)
+    {
+        await GetPricingConfigAsync(); // Ensure pricing config is loaded
+        if (refundRate < 0 || refundRate > 1)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Refund rate must be between 0 and 1.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+        if (totalPrice < 0)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Total price must be greater than or equal to zero.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var refundAmount = totalPrice * refundRate;
+        return Math.Round(refundAmount, 2); // Round to 2 decimal places for currency
+    }
+
+    public async Task<decimal> CalculateRefundForShipmentAsync(Shipment shipment)
+    {
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment cannot be null.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var pricingConfig = await GetPricingConfigAsync();
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        if (shipment.TotalCostVnd <= 0)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Total cost of the shipment must be greater than zero.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var refundRate = pricingConfig.RefundRate ?? 0;
+        return await CalculateRefund(shipment.TotalCostVnd, refundRate);
+    }
+
+    public async Task CalculateOverdueSurcharge (Shipment shipment)
+    {
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment cannot be null.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        if (!shipment.Parcels.Any())
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must have at least one parcel to calculate overdue surcharge.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var pricingConfig = await GetPricingConfigAsync();
+        if (pricingConfig.BaseSurchargePerDayVnd == null || pricingConfig.FreeStoreDays == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Base surcharge per day or free store days are not configured.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var overdueDays = shipment.SurchargeAppliedAt.HasValue
+            ? (CoreHelper.SystemTimeNow - shipment.SurchargeAppliedAt.Value).Days
+            : 0;
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            var surchargeDays = overdueDays;
+            var surchargeAmount = pricingConfig.BaseSurchargePerDayVnd.Value * surchargeDays;
+            parcel.OverdueSurchangeFeeVnd = Math.Round(surchargeAmount, 2); // Round to 2 decimal places
+            _parcelRepository.Update(parcel);
+        }
+
+        shipment.TotalSurchargeFeeVnd = shipment.Parcels.Sum(p => p.OverdueSurchangeFeeVnd ?? 0);
+    }
+
+    public async Task<int> GetFreeStoreDaysAsync()
+    {
+        var pricingConfig = await GetPricingConfigAsync();
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        return pricingConfig.FreeStoreDays ?? 0;
+    }
 }

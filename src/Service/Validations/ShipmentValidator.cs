@@ -201,6 +201,12 @@ public class ParcelRequestValidator : AbstractValidator<ParcelRequest>
             .Must(x => Guid.TryParse(x, out _))
             .WithMessage(ResponseMessageParcel.PARCEL_CATEGORY_ID_INVALID);
 
+        RuleFor(x => x.CategoryInsuranceId)
+            .NotNull()
+            .WithMessage(ResponseMessageParcel.CATEGORY_INSURANCE_ID_REQUIRED)
+            .Must(x => string.IsNullOrWhiteSpace(x) || Guid.TryParse(x, out _))
+            .WithMessage(ResponseMessageParcel.CATEGORY_INSURANCE_ID_INVALID);
+
         RuleFor(x => x.WidthCm)
             .NotNull()
             .WithMessage(ResponseMessageParcel.WIDTH_REQUIRED)

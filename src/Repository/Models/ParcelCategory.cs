@@ -37,10 +37,16 @@ public partial class ParcelCategory : BaseEntity
     [Column(TypeName = "decimal(10, 2)")]
     public decimal? InsuranceFeeVnd { get; set; }
 
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal? MinValueVnd { get; set; }
+
     public bool IsInsuranceRequired { get; set; }
 
     public bool IsActive { get; set; } = true;
 
-    [InverseProperty(nameof(Parcel.ParcelCategory))]
-    public virtual ICollection<Parcel> Parcels { get; } = new List<Parcel>();
+    /*[InverseProperty(nameof(Parcel.ParcelCategory))]
+    public virtual ICollection<Parcel> Parcels { get; } = new List<Parcel>();*/
+
+    [InverseProperty(nameof(CategoryInsurance.ParcelCategory))]
+    public virtual ICollection<CategoryInsurance> CategoryInsurances { get; set; } = new List<CategoryInsurance>();
 }

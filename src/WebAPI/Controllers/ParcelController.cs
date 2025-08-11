@@ -115,5 +115,14 @@ namespace MetroShip.WebAPI.Controllers
             await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
             return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
         }
+
+        [HttpPost(WebApiEndpoint.ParcelEndpoint.ReportLostParcel)]
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        public async Task<IActionResult> ReportLostParcelAsync([FromRoute] string parcelCode, 
+            [FromQuery] ShipmentStatusEnum trackingForShipmentStatus)
+        {
+            await _parcelService.ReportLostParcelAsync(parcelCode, trackingForShipmentStatus);
+            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} reported as lost successfully.", null));
+        }
     }
 }

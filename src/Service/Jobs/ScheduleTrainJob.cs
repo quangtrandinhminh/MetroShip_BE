@@ -17,6 +17,7 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
     private readonly IMetroTimeSlotRepository _metroTimeSlotRepository = serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IBaseRepository<TrainSchedule> _trainScheduleRepository = serviceProvider.GetRequiredService<IBaseRepository<TrainSchedule>>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
     public async Task Execute(IJobExecutionContext context)
     {
@@ -39,16 +40,18 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
         else
         {
             _logger.Information("Found {Count} train schedules. Scheduling process already initialized.", trainScheduleCount);
-            // No daily continuation needed since we removed date dependency
         }
     }
 
     private async Task InitCreateTrainSchedule(List<MetroTrain> metroTrains, List<MetroTimeSlot> timeSlots)
     {
+        var lineIds = metroTrains.Select(x => x.LineId).Distinct().ToList();
+        var stationDictionary = await _stationRepository.GetStartAndEndStationIdsOfRouteAsync(lineIds);
         foreach (var train in metroTrains)
         {
-            await CreateTrainScheduleForTrain(train, timeSlots);
+            await CreateTrainScheduleForTrain(train, timeSlots, stationDictionary);
         }
+        await _trainScheduleRepository.SaveChangesAsync();
     }
 
     // This method can be called when creating a new train to add schedules for that train only
@@ -59,21 +62,32 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
             .OrderBy(x => x.Shift)
             .ToListAsync();
 
-        await CreateTrainScheduleForTrain(newTrain, timeSlots);
+        var stationDictionary = await _stationRepository.GetStartAndEndStationIdsOfRouteAsync(newTrain.LineId);
+        await CreateTrainScheduleForTrain(newTrain, timeSlots, stationDictionary);
+        await _trainScheduleRepository.SaveChangesAsync();
     }
 
-    private async Task CreateTrainScheduleForTrain(MetroTrain train, List<MetroTimeSlot> timeSlots)
+    private async Task CreateTrainScheduleForTrain(MetroTrain train, List<MetroTimeSlot> timeSlots,
+        Dictionary<(string, DirectionEnum), (string, string)> stationDictionary)
     {
         foreach (var timeSlot in timeSlots)
         {
             var direction = GetDirection(train, timeSlot);
+            if (!stationDictionary.TryGetValue((train.LineId, direction), out var stations))
+            {
+                _logger.Warning("No station data found for train {TrainCode} in direction {Direction}", 
+                    train.TrainCode, direction);
+                continue; // Skip if no station data available
+            }
 
             var trainSchedule = new TrainSchedule
             {
                 TrainId = train.Id,
                 TimeSlotId = timeSlot.Id,
-                DepartureStationId = train.CurrentStationId,
+                LineId = train.LineId,
+                DepartureStationId = stations.Item1,
                 Direction = direction,
+                DestinationStationId = stations.Item2,
             };
 
             await _trainScheduleRepository.AddAsync(trainSchedule);
@@ -82,23 +96,20 @@ public class ScheduleTrainJob(IServiceProvider serviceProvider) : IJob
 
     private DirectionEnum GetDirection(MetroTrain train, MetroTimeSlot timeSlot)
     {
-        var isTrainOdd = !train.IsTrainCodeEven(); // Odd train code
+        var isTrainOdd = !train.IsTrainCodeEven();
         var isShiftEven = timeSlot.IsShiftEven();
 
-        // Odd train in odd shift (non-even shift) -> Direction 0 (Forward)
-        // Even train in even shift -> Direction 1 (Backward)
-        if (isTrainOdd && !isShiftEven)
+        if (isTrainOdd != isShiftEven)
         {
-            return DirectionEnum.Forward; // Direction 0
-        }
-        else if (!isTrainOdd && isShiftEven)
-        {
-            return DirectionEnum.Backward; // Direction 1
+            // Trường hợp 1: Tàu lẻ (true) và Ca chẵn (true) -> false -> đi vào else
+            // Trường hợp 2: Tàu chẵn (false) và Ca lẻ (false) -> false -> đi vào else
+            // Trường hợp 3: Tàu lẻ (true) và Ca lẻ (false) -> true -> đi vào if
+            // Trường hợp 4: Tàu chẵn (false) và Ca chẵn (true) -> true -> đi vào if
+            return DirectionEnum.Forward; 
         }
         else
         {
-            // Default case for other combinations
-            return DirectionEnum.Forward;
+            return DirectionEnum.Backward; 
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels;
+﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
@@ -17,12 +18,19 @@ namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/shipments")]
-    public class ShipmentController(
-        IShipmentService shipmentService,
-        ITransactionService transactionService
-        ) : ControllerBase
+    public class ShipmentController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
+        private readonly IShipmentService shipmentService = serviceProvider.GetRequiredService<IShipmentService>();
+        private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
+        private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+
+        [HttpGet("load-station")]
+        public async Task<IActionResult> GetAllStationIdCanLoadShipment(string shipmentId)
+        {
+            var response = await stationRepository.GetAllStationsCanUnloadShipmentAsync(shipmentId);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }
 
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]

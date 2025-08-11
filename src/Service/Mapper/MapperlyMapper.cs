@@ -5,6 +5,7 @@ using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
+using MetroShip.Service.ApiModels.Insurance;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -117,6 +118,14 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     [MapperRequiredMapping(RequiredMappingStrategy.Target)]
     public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+
+    // category insurance
+    public partial CategoryInsuranceResponse MapToCategoryInsuranceResponse(CategoryInsurance entity);
+
+    public partial List<CategoryInsuranceResponse> MapToCategoryInsuranceResponseList(ICollection<CategoryInsurance> entity);
+
+    // insurance policy
+    public partial InsuranceResponse MapToInsuranceResponse(InsurancePolicy entity);
 
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 

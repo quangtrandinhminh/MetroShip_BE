@@ -73,18 +73,30 @@ public partial class MetroTrain : BaseEntity
 
     public bool IsTrainCodeEven()
     {
-        // regionCode-linecode-Tnumber
+        // format: regionCode-linecode-Tnumber, e.g: HCMC-L01-T01
         var parts = TrainCode.Split('-');
         if (parts.Length < 3)
         {
             Console.WriteLine("Invalid TrainCode format. Expected format: regionCode-linecode-Tnumber");
             return false;
         }
-           
-        if (int.TryParse(parts[2], out int trainNumber))
+
+        // Get "T01"
+        var numberPart = parts[2];
+
+        // Delete "T" (không phân biệt hoa thường)
+        if (numberPart.StartsWith("T", StringComparison.OrdinalIgnoreCase))
+        {
+            numberPart = numberPart.Substring(1);
+        }
+
+        // Bây giờ mới chuyển đổi chuỗi số thành số nguyên
+        if (int.TryParse(numberPart, out int trainNumber))
         {
             return trainNumber % 2 == 0;
         }
+
+        Console.WriteLine($"Invalid number format in TrainCode part: {parts[2]}");
         return false;
     }
 }

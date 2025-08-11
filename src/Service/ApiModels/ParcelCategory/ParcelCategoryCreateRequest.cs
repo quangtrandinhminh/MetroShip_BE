@@ -8,6 +8,7 @@ namespace MetroShip.Service.ApiModels.ParcelCategory
 {
     public class ParcelCategoryCreateRequest
     {
+        public string InsurancePolicyId { get; set; }
         public string CategoryName { get; set; }
         public string Description { get; set; }
 
