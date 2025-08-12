@@ -15,7 +15,7 @@ public static class ParcelPriceCalculator
         List<ParcelRequest> parcels,
         BestPathGraphResponse pathResponse,
         IPricingService priceCalculationService,
-        List<ParcelCategory> categories)
+        List<CategoryInsurance> categoryInsurances)
     {
         foreach (var parcel in parcels)
         {
@@ -29,6 +29,74 @@ public static class ParcelPriceCalculator
             // Calculate shipping fee
             /*parcel.ShippingFeeVnd = priceCalculationService.
                 CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);*/
+
+            parcel.ShippingFeeVnd = priceCalculationService.
+                CalculatePriceAsync(chargeableWeight, pathResponse.TotalKm).Result;
+            parcel.PriceVnd += parcel.ShippingFeeVnd;
+
+            // Calculate insurance if required
+            CalculateInsurance(parcel, categoryInsurances);
+        }
+    }
+
+    private static void CalculateInsurance(ParcelRequest parcel, List<CategoryInsurance> categoryInsurances)
+    {
+        var categoryInsurance = categoryInsurances.FirstOrDefault(c => c.Id == parcel.CategoryInsuranceId);
+        if (categoryInsurance.ParcelCategory.IsInsuranceRequired && !parcel.ValueVnd.HasValue)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                $"Category '{categoryInsurance.ParcelCategory.CategoryName}' has required insurance " +
+                $"and requires ValueVnd of the parcel for insurance calculation.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Calculate insurance fee if any insurance configuration exists
+        if (categoryInsurance.InsurancePolicy.InsuranceFeeRateOnValue != null || categoryInsurance.InsurancePolicy.BaseFeeVnd != null)
+        {
+            parcel.InsuranceFeeVnd = CalculateInsuranceFee(parcel, categoryInsurance.InsurancePolicy);
+
+            // Add to price only if insurance is required
+            if (categoryInsurance.ParcelCategory.IsInsuranceRequired || parcel.IsInsuranceIncluded)
+            {
+                parcel.PriceVnd += parcel.InsuranceFeeVnd;
+                parcel.IsInsuranceIncluded = true;
+            }
+            else
+            {
+                parcel.InsuranceFeeVnd = 0;
+            }
+        }
+    }
+
+    private static decimal? CalculateInsuranceFee(ParcelRequest parcel, InsurancePolicy policy)
+    {
+        if (policy.InsuranceFeeRateOnValue != null && parcel.ValueVnd > 0)
+        {
+            return parcel.ValueVnd * policy.InsuranceFeeRateOnValue;
+        }
+
+        return policy.BaseFeeVnd;
+    }
+
+    /*public static void CalculateParcelPricing(
+        List<ParcelRequest> parcels,
+        BestPathGraphResponse pathResponse,
+        IPricingService priceCalculationService,
+        List<ParcelCategory> categories)
+    {
+        foreach (var parcel in parcels)
+        {
+            // Calculate chargeable weight
+            var chargeableWeight = CalculateHelper.CalculateChargeableWeight(
+                parcel.LengthCm, parcel.WidthCm, parcel.HeightCm, parcel.WeightKg);
+
+            parcel.ChargeableWeight = chargeableWeight;
+            parcel.IsBulk = parcel.ChargeableWeight > parcel.WeightKg;
+
+            // Calculate shipping fee
+            /*parcel.ShippingFeeVnd = priceCalculationService.
+                CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);#1#
 
             parcel.ShippingFeeVnd = priceCalculationService.
                 CalculatePriceAsync(chargeableWeight, pathResponse.TotalKm).Result;
@@ -73,5 +141,5 @@ public static class ParcelPriceCalculator
         }
 
         return category.InsuranceFeeVnd;
-    }
+    }*/
 }

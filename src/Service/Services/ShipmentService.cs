@@ -52,6 +52,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
+    private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -1170,7 +1171,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         //InitializePricingTableAsync().Wait();
 
         // Get parcel categories
-        var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
+        /*var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
         var categories = await _parcelCategoryRepository.GetAllWithCondition(
             x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
             .ToListAsync();
@@ -1183,7 +1184,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ErrorCode.NotFound,
             $"Parcel categories not found: {string.Join(", ", missingCategories)}",
             StatusCodes.Status404NotFound);
-        }
+        }*/
+
+        // Get insurance policy base on categoryInsuranceIds
+        var categoryInsuranceIds = request.Parcels
+            .Select(p => p.CategoryInsuranceId)
+            .Distinct()
+            .ToList();
+        var categoryInsurance = await _categoryInsuranceRepository
+            .GetAllWithCondition(x => categoryInsuranceIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null
+            , x => x.InsurancePolicy, x => x.ParcelCategory
+            )
+            .ToListAsync();
 
         return pathResults.Select(r =>
         {
@@ -1191,8 +1203,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
+            /*ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
+
             ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, _pricingService, categories);
+                pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
 
             // Check est arrival time
             var date = new DateOnly(request.ScheduledDateTime.Year,
