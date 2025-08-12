@@ -561,9 +561,25 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+        shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
+            ? ShipmentStatusEnum.CompletedWithCompensation
+            : ShipmentStatusEnum.Completed;
         shipment.CompletedAt = CoreHelper.SystemTimeNow;
         var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation)
+        {
+            // If there are lost parcels, calculate compensation
+            var lostParcels = shipment.Parcels
+                .Where(p => p.Status == ParcelStatusEnum.Lost)
+                .ToList();
+            var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
+                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id)
+            ).ToList();
+
+            shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
+                lostParcels, categoryInsurances, _parcelRepository);
+        }
+
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
             ShipmentId = shipment.Id,
@@ -573,7 +589,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
 
-        foreach (var parcel in shipment.Parcels)
+        var normalParcel = shipment.Parcels
+            .Where(p => p.Status == ParcelStatusEnum.Normal)
+            .ToList();
+        foreach (var parcel in normalParcel)
         {
             _parcelTrackingRepository.Add(new ParcelTracking
             {

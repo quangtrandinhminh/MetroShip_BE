@@ -26,11 +26,15 @@ public class InsurancePolicy : BaseEntity
 
     // Nếu mua bảo hiểm, đền tối đa là MaxInsuranceRate * giá trị hàng hóa
     [Column(TypeName = "decimal(8, 6)")]
-    public decimal? MaxInsuranceRateOnValue { get; set; }
+    public decimal? MaxCompensationRateOnValue { get; set; }
 
     // Nếu mua bảo hiểm, hư hại 1 phần, đền tối đa là MaxInsuranceRate * giá trị hàng hóa
     [Column(TypeName = "decimal(8, 6)")]
-    public decimal? MinInsuranceRateOnValue { get; set; }
+    public decimal? MinCompensationRateOnValue { get; set; }
+
+    // Nếu không mua bảo hiểm, đền tối đa là x lần ShippingFeeVnd
+    [Column(TypeName = "decimal(8, 6)")]
+    public decimal? MaxCompensationRateOnShippingFee { get; set; }
 
     [Column(TypeName = "date")]
     public DateOnly ValidFrom { get; set; }

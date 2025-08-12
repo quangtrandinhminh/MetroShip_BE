@@ -66,6 +66,8 @@ public partial class Parcel : BaseEntity
     public decimal ChargeableWeightKg => Math.Max(WeightKg, VolumeCm3 / 5000);
     public decimal TotalLengthCm => LengthCm + WidthCm + HeightCm;
 
+    public decimal? CompensationFeeVnd { get; set; }
+
     public string? DescriptionImageUrl { get; set; }
 
     [StringLength(255)]

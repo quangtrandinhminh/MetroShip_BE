@@ -7,7 +7,7 @@ public interface IPricingService
 {
     Task<decimal> CalculatePriceAsync(decimal weightKg, decimal distanceKm);
     Task<PricingTableResponse> GetPricingTableAsync(string? pricingConfigId);
-    Task<decimal> CalculateRefundForShipmentAsync(Shipment shipment);
+    Task<decimal> CalculateRefund(decimal? totalPrice);
     Task CalculateOverdueSurcharge(Shipment shipment);
     Task<int> GetFreeStoreDaysAsync();
 }

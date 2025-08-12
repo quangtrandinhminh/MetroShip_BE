@@ -152,66 +152,6 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         return pricingConfig;
     }*/
 
-    //public async Task<decimal> CalculateSurcharge (decimal )
-
-    private async Task<decimal> CalculateRefund(decimal totalPrice, decimal refundRate)
-    {
-        await GetPricingConfigAsync(); // Ensure pricing config is loaded
-        if (refundRate < 0 || refundRate > 1)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Refund rate must be between 0 and 1.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-        if (totalPrice < 0)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Total price must be greater than or equal to zero.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var refundAmount = totalPrice * refundRate;
-        return Math.Round(refundAmount, 2); // Round to 2 decimal places for currency
-    }
-
-    public async Task<decimal> CalculateRefundForShipmentAsync(Shipment shipment)
-    {
-        if (shipment == null)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Shipment cannot be null.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var pricingConfig = await GetPricingConfigAsync();
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "No active pricing configuration found.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        if (shipment.TotalCostVnd <= 0)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Total cost of the shipment must be greater than zero.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var refundRate = pricingConfig.RefundRate ?? 0;
-        return await CalculateRefund(shipment.TotalCostVnd, refundRate);
-    }
-
     public async Task CalculateOverdueSurcharge (Shipment shipment)
     {
         if (shipment == null)
@@ -270,5 +210,20 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         }
 
         return pricingConfig.FreeStoreDays ?? 0;
+    }
+
+    public async Task<decimal> CalculateRefund(decimal? totalPrice)
+    {
+        var pricingConfig = await GetPricingConfigAsync();
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
     }
 }

@@ -1,8 +1,10 @@
-﻿using MetroShip.Repository.Models;
+﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
@@ -77,6 +79,47 @@ public static class ParcelPriceCalculator
         }
 
         return policy.BaseFeeVnd;
+    }
+
+    /// <summary>
+    /// Calculate compensation fee for parcels in a shipment based on their insurance policies.
+    /// </summary>
+    /// <param name="parcels">list of parcels with LOST status</param>
+    /// <param name="categoryInsurances"></param>
+    public static decimal CalculateParcelCompensation(
+               List<Parcel> parcels,
+                      List<CategoryInsurance> categoryInsurances, IParcelRepository parcelRepository)
+    {
+        decimal totalCompensation = 0;
+        foreach (var parcel in parcels)
+        {
+            var categoryInsurance = categoryInsurances.FirstOrDefault(c => c.Id == parcel.CategoryInsuranceId);
+      
+            // Calculate compensation fee based on the insurance policy
+            parcel.CompensationFeeVnd = CalculateCompensationFee(
+                               parcel.ValueVnd, categoryInsurance.InsurancePolicy, parcel.InsuranceFeeVnd, parcel.ShippingFeeVnd);
+
+            parcelRepository.Update(parcel);
+
+            totalCompensation += parcel.CompensationFeeVnd ?? 0;
+        }
+
+        return totalCompensation;
+    }
+
+    private static decimal CalculateCompensationFee(
+               decimal? valueVnd,
+                      InsurancePolicy policy,
+                             decimal? insuranceFeeVnd, decimal? shippingFeeVnd)
+    {
+        if (valueVnd == null || valueVnd <= 0 || insuranceFeeVnd == null || insuranceFeeVnd <= 0)
+        {
+            return (decimal)(policy.MaxCompensationRateOnShippingFee * shippingFeeVnd.Value);
+        }
+
+        return policy.InsuranceFeeRateOnValue != null
+            ? valueVnd.Value * policy.InsuranceFeeRateOnValue.Value
+            : valueVnd.Value;
     }
 
     /*public static void CalculateParcelPricing(

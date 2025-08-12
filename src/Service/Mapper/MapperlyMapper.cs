@@ -27,6 +27,7 @@ using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.StaffAssignment;
+using MetroShip.Service.ApiModels.SupportTicket;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
@@ -161,6 +162,11 @@ public partial class MapperlyMapper : IMapperlyMapper
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     public partial RegionResponse MapToRegionResponse(Region entity);
+
+    // support ticket
+    public partial SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
+    public partial PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
+    public partial SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

@@ -225,6 +225,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRegionService, RegionService>();
         services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
         services.AddScoped<IItineraryService, ItineraryService>();
+        services.AddScoped<ISupportTicketService, SupportTicketService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
