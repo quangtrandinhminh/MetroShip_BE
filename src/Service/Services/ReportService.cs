@@ -152,8 +152,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<ShipmentDataItem>> GetShipmentChartAsync(RevenueChartRequest request)
     {
+        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+
         var query = _shipmentRepository.GetAllWithCondition();
-        query = ApplyDateFilter(query, request, s => s.CreatedAt);
+        query = ApplyDateFilter(query, finalFilterType, request, s => s.CreatedAt);
 
         var data = await query
             .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
@@ -169,7 +171,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         return new RevenueChartResponse<ShipmentDataItem>
         {
-            FilterType = request.FilterType,
+            FilterType = finalFilterType,
             Year = request.Year,
             Quarter = request.Quarter,
             StartYear = request.StartYear,
@@ -182,9 +184,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request)
     {
+        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+
         var query = _transactionRepository.GetAllWithCondition()
             .Where(t => t.DeletedAt == null);
-        query = ApplyDateFilter(query, request, t => t.CreatedAt);
+        query = ApplyDateFilter(query, finalFilterType, request, t => t.CreatedAt);
 
         var data = await query
             .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
@@ -202,7 +206,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         return new RevenueChartResponse<TransactionDataItem>
         {
-            FilterType = request.FilterType,
+            FilterType = finalFilterType,
             Year = request.Year,
             Quarter = request.Quarter,
             StartYear = request.StartYear,
@@ -213,13 +217,14 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         };
     }
 
-    #region helper methods
+    #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
         IQueryable<T> query,
+        RevenueFilterType filterType,
         RevenueChartRequest request,
         Expression<Func<T, DateTimeOffset>> dateSelector)
     {
-        switch (request.FilterType)
+        switch (filterType)
         {
             case RevenueFilterType.Year:
                 if (request.Year.HasValue)
@@ -249,6 +254,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) >= start &&
                         EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) <= end);
                 }
+                break;
+
+            case RevenueFilterType.Default:
+            default:
+                // Không filter gì đặc biệt cho Default
                 break;
         }
 

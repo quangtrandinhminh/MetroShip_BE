@@ -9,6 +9,7 @@ namespace MetroShip.Service.ApiModels.Report
     public class RevenueChartResponse<T>
     {
         public RevenueFilterType FilterType { get; set; }
+        public string FilterTypeName => FilterType.ToString();
         public int? Year { get; set; }
         public int? Quarter { get; set; }
         public int? StartYear { get; set; }

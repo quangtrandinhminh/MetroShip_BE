@@ -15,12 +15,12 @@ namespace MetroShip.Service.ApiModels.Report
     }
     public class RevenueChartRequest
     {
-        public RevenueFilterType FilterType { get; set; } = RevenueFilterType.Default;
-        public int? Year { get; set; }           
-        public int? Quarter { get; set; }        
-        public int? StartYear { get; set; }      
-        public int? StartMonth { get; set; }     
-        public int? EndYear { get; set; }        
-        public int? EndMonth { get; set; }      
+        public RevenueFilterType? FilterType { get; set; }
+        public int? Year { get; set; }
+        public int? Quarter { get; set; }
+        public int? StartYear { get; set; }
+        public int? StartMonth { get; set; }
+        public int? EndYear { get; set; }
+        public int? EndMonth { get; set; }
     }
 }
