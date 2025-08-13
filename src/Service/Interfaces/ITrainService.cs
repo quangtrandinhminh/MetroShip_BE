@@ -24,4 +24,5 @@ public interface ITrainService
     Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode);
     Task StartOrContinueSimulationAsync(string trainId);
     Task ConfirmTrainArrivedAsync(string trainId, string stationId);
+    Task<TrainDto> ScheduleTrainAsync(string trainIdOrCode, bool startFromEnd = false);
 }

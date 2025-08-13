@@ -1015,6 +1015,67 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
     }
 
+    public async Task<TrainDto> ScheduleTrainAsync(string trainIdOrCode, bool startFromEnd = false)
+    {
+        // 1. Lấy thông tin train + line + routes + station
+        var train = await _trainRepository
+            .GetAllWithCondition()
+            .Include(t => t.Line)
+                .ThenInclude(l => l.Routes)
+                    .ThenInclude(r => r.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(l => l.Routes)
+                    .ThenInclude(r => r.ToStation)
+            .FirstOrDefaultAsync(t => t.Id == trainIdOrCode || t.TrainCode == trainIdOrCode);
+
+        if (train == null)
+            throw new Exception($"Không tìm thấy đoàn tàu với Id/Code: {trainIdOrCode}");
+
+        if (train.CurrentStationId != null)
+            throw new Exception("Đoàn tàu đã có vị trí hiện tại, không thể khởi tạo xuất phát.");
+        if (train.Status != TrainStatusEnum.NotScheduled)
+            throw new Exception("Chỉ có thể khởi tạo xuất phát cho đoàn tàu ở trạng thái NotScheduled.");
+
+        // 2. Lọc routes thuộc line này & sắp xếp theo SeqOrder
+        var routes = train.Line?.Routes?
+            .Where(r => r.LineId == train.LineId)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (routes == null || routes.Count == 0)
+            throw new Exception("Không tìm thấy tuyến đường (routes) hợp lệ cho đoàn tàu.");
+
+        // 3. Xác định trạm đầu/cuối theo chiều
+        var firstStation = routes.First().FromStation;
+        var lastStation = routes.Last().ToStation;
+
+        if (firstStation == null || lastStation == null)
+            throw new Exception("Không tìm thấy trạm đầu hoặc trạm cuối cho tuyến.");
+
+        // 4. Chọn trạm xuất phát
+        var chosenStation = startFromEnd ? lastStation : firstStation;
+
+        // 5. Gán thông tin cho train
+        train.CurrentStationId = chosenStation.Id;
+        train.Latitude = chosenStation.Latitude;
+        train.Longitude = chosenStation.Longitude;
+        train.Status = TrainStatusEnum.Scheduled;
+        train.LastUpdatedAt = DateTimeOffset.UtcNow;
+
+        _trainRepository.Update(train);
+        await _trainRepository.SaveChangesAsync();
+
+        // 6. Trả DTO
+        return new TrainDto
+        {
+            Id = train.Id,
+            TrainCode = train.TrainCode,
+            CurrentStationId = train.CurrentStationId,
+            CurrentStationLat = train.Latitude,
+            CurrentStationLng = train.Longitude,
+            Status = train.Status
+        };
+    }
     #region Helper Methods
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
     {
