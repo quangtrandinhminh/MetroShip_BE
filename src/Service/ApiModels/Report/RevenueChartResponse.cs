@@ -6,10 +6,31 @@ using System.Threading.Tasks;
 
 namespace MetroShip.Service.ApiModels.Report
 {
-    public class RevenueChartResponse
+    public class RevenueChartResponse<T>
+    {
+        public RevenueFilterType FilterType { get; set; }
+        public int? Year { get; set; }
+        public int? Quarter { get; set; }
+        public int? StartYear { get; set; }
+        public int? StartMonth { get; set; }
+        public int? EndYear { get; set; }
+        public int? EndMonth { get; set; }
+        public List<T> Data { get; set; } = new();
+    }
+
+    public record ShipmentDataItem
     {
         public int Year { get; set; }
         public int Month { get; set; }
-        public decimal Revenue { get; set; }
+        public int TotalShipments { get; set; }
+        public int CompletedShipments { get; set; }
+    }
+
+    public record TransactionDataItem
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+        public int TotalTransactions { get; set; }
+        public decimal TotalPaidAmount { get; set; }
     }
 }

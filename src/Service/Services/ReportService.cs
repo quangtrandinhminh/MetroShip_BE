@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Service.ApiModels.Report;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
@@ -6,6 +7,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq.Expressions;
 using ILogger = Serilog.ILogger;
 
 namespace MetroShip.Service.Services;
@@ -16,22 +18,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     private readonly IShipmentRepository _shipmentRepository = serviceProvider.GetRequiredService<IShipmentRepository>();
     private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
-
-    public record RevenueChartRequest
-    {
-        public int? Year { get; set; }
-        public int? FromMonth { get; set; }
-        public int? FromYear { get; set; }
-        public int? ToMonth { get; set; }
-        public int? ToYear { get; set; }
-    }
-
-    public record RevenueChartResponse
-    {
-        public int Year { get; set; }
-        public int Month { get; set; }
-        public decimal Revenue { get; set; }
-    }
 
     /*public async Task<List<RevenueChartResponse>> GetRevenueChart(RevenueChartRequest request)
     {
@@ -83,6 +69,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             PercentageNewCompleteShipments = percentageNewCompleteShipments
         };
     }
+
     public async Task<UserListWithStatsResponse> GetUserStatsAsync()
     {
         var query = _userRepository.GetAllWithCondition()
@@ -162,4 +149,119 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             PercentageCancelledTransactions = percentageCancelledTransactions
         };
     }
+
+    public async Task<RevenueChartResponse<ShipmentDataItem>> GetShipmentChartAsync(RevenueChartRequest request)
+    {
+        var query = _shipmentRepository.GetAllWithCondition();
+        query = ApplyDateFilter(query, request, s => s.CreatedAt);
+
+        var data = await query
+            .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+            .Select(g => new ShipmentDataItem
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                TotalShipments = g.Count(),
+                CompletedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed)
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync();
+
+        return new RevenueChartResponse<ShipmentDataItem>
+        {
+            FilterType = request.FilterType,
+            Year = request.Year,
+            Quarter = request.Quarter,
+            StartYear = request.StartYear,
+            StartMonth = request.StartMonth,
+            EndYear = request.EndYear,
+            EndMonth = request.EndMonth,
+            Data = data
+        };
+    }
+
+    public async Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request)
+    {
+        var query = _transactionRepository.GetAllWithCondition()
+            .Where(t => t.DeletedAt == null);
+        query = ApplyDateFilter(query, request, t => t.CreatedAt);
+
+        var data = await query
+            .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+            .Select(g => new TransactionDataItem
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                TotalTransactions = g.Count(),
+                TotalPaidAmount = g
+                    .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
+                    .Sum(t => t.PaymentAmount)
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync();
+
+        return new RevenueChartResponse<TransactionDataItem>
+        {
+            FilterType = request.FilterType,
+            Year = request.Year,
+            Quarter = request.Quarter,
+            StartYear = request.StartYear,
+            StartMonth = request.StartMonth,
+            EndYear = request.EndYear,
+            EndMonth = request.EndMonth,
+            Data = data
+        };
+    }
+
+    #region helper methods
+    private IQueryable<T> ApplyDateFilter<T>(
+        IQueryable<T> query,
+        RevenueChartRequest request,
+        Expression<Func<T, DateTimeOffset>> dateSelector)
+    {
+        switch (request.FilterType)
+        {
+            case RevenueFilterType.Year:
+                if (request.Year.HasValue)
+                    query = query.Where(x => EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value);
+                break;
+
+            case RevenueFilterType.Quarter:
+                if (request.Year.HasValue && request.Quarter.HasValue)
+                {
+                    var startMonth = (request.Quarter.Value - 1) * 3 + 1;
+                    var endMonth = startMonth + 2;
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value &&
+                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month >= startMonth &&
+                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month <= endMonth);
+                }
+                break;
+
+            case RevenueFilterType.MonthRange:
+                if (request.StartYear.HasValue && request.StartMonth.HasValue &&
+                    request.EndYear.HasValue && request.EndMonth.HasValue)
+                {
+                    var start = new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero);
+                    var end = new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
+                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero);
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) >= start &&
+                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) <= end);
+                }
+                break;
+        }
+
+        return query;
+    }
+
+    private string GetPropertyName<T, TProp>(Expression<Func<T, TProp>> expression)
+    {
+        if (expression.Body is MemberExpression member)
+            return member.Member.Name;
+        if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
+            return memberExpr.Member.Name;
+        throw new InvalidOperationException("Invalid expression");
+    }
+    #endregion
 }

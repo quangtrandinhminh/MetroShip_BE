@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels.Shipment;
+﻿using MetroShip.Service.ApiModels.Report;
+using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 using System;
@@ -14,5 +15,7 @@ namespace MetroShip.Service.Interfaces
         Task<ShipmentListWithStatsResponse> GetShipmentStatsAsync();
         Task<UserListWithStatsResponse> GetUserStatsAsync();
         Task<TransactionListWithStatsResponse> GetTransactionStatsAsync();
+        Task<RevenueChartResponse<ShipmentDataItem>> GetShipmentChartAsync(RevenueChartRequest request);
+        Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request);
     }
 }
