@@ -51,8 +51,8 @@ namespace MetroShip.WebAPI.Controllers
         /// <summary>
         /// Lấy thống kê shipment chart theo filter (Year, Quarter, MonthRange)
         /// </summary>
-        [HttpPost("shipment-chart")]
-        public async Task<IActionResult> GetShipmentChart([FromForm] RevenueChartRequest request)
+        [HttpGet("shipment-chart")]
+        public async Task<IActionResult> GetShipmentChart([FromQuery] RevenueChartRequest request)
         {
             var result = await _reportService.GetShipmentChartAsync(request);
             return Ok(result);
@@ -61,8 +61,8 @@ namespace MetroShip.WebAPI.Controllers
         /// <summary>
         /// Lấy thống kê transaction chart theo filter (Year, Quarter, MonthRange)
         /// </summary>
-        [HttpPost("transaction-chart")]
-        public async Task<IActionResult> GetTransactionChart([FromForm] RevenueChartRequest request)
+        [HttpGet("transaction-chart")]
+        public async Task<IActionResult> GetTransactionChart([FromQuery] RevenueChartRequest request)
         {
             var result = await _reportService.GetTransactionChartAsync(request);
             return Ok(result);
@@ -71,8 +71,8 @@ namespace MetroShip.WebAPI.Controllers
         /// <summary>
         /// Lấy thống kê category chart theo filter (week, month, year)
         /// </summary>
-        [HttpPost("category-statistics")]
-        public async Task<IActionResult> GetCategoryStatistics([FromForm] CategoryStatisticsRequest request)
+        [HttpGet("category-statistics")]
+        public async Task<IActionResult> GetCategoryStatistics([FromQuery] CategoryStatisticsRequest request)
         {
             var result = await _reportService.GetCategoryStatisticsAsync(request);
             return Ok(result);
