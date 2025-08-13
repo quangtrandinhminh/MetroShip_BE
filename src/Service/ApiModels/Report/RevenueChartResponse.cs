@@ -33,5 +33,6 @@ namespace MetroShip.Service.ApiModels.Report
         public int Month { get; set; }
         public int TotalTransactions { get; set; }
         public decimal TotalPaidAmount { get; set; }
+        public decimal PaidAmountGrowthPercent { get; set; }
     }
 }

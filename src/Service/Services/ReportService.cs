@@ -205,6 +205,25 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
+        // === Thêm tính Growth % ===
+        for (int i = 0; i < data.Count; i++)
+        {
+            var current = data[i];
+            var prevYear = current.Month == 1 ? current.Year - 1 : current.Year;
+            var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
+
+            var prev = data.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
+            if (prev != null && prev.TotalPaidAmount != 0)
+            {
+                current.PaidAmountGrowthPercent = Math.Round(
+                    ((current.TotalPaidAmount - prev.TotalPaidAmount) / prev.TotalPaidAmount) * 100m, 2);
+            }
+            else
+            {
+                current.PaidAmountGrowthPercent = 0;
+            }
+        }
+
         return new RevenueChartResponse<TransactionDataItem>
         {
             FilterType = finalFilterType,
@@ -340,6 +359,34 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
             return memberExpr.Member.Name;
         throw new InvalidOperationException("Invalid expression");
+    }
+
+    private (DateTimeOffset start, DateTimeOffset end) GetDateRangeFromRequest(RevenueChartRequest request, RevenueFilterType filterType)
+    {
+        switch (filterType)
+        {
+            case RevenueFilterType.Year:
+                return (new DateTimeOffset(request.Year.Value, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(request.Year.Value, 12, 31, 23, 59, 59, TimeSpan.Zero));
+
+            case RevenueFilterType.Quarter:
+                var startMonth = (request.Quarter.Value - 1) * 3 + 1;
+                var endMonth = startMonth + 2;
+                return (new DateTimeOffset(request.Year.Value, startMonth, 1, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(request.Year.Value, endMonth,
+                            DateTime.DaysInMonth(request.Year.Value, endMonth), 23, 59, 59, TimeSpan.Zero));
+
+            case RevenueFilterType.MonthRange:
+                return (new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
+                            DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero));
+
+            default:
+                var now = DateTimeOffset.UtcNow;
+                return (new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(now.Year, now.Month,
+                            DateTime.DaysInMonth(now.Year, now.Month), 23, 59, 59, TimeSpan.Zero));
+        }
     }
 
     private (DateTimeOffset startDate, DateTimeOffset endDate) CalculateDateRange(CategoryStatisticsRequest request)
