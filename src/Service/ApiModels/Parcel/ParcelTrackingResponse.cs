@@ -15,6 +15,9 @@ public record ParcelTrackingResponse
 
     public string? TrainId { get; set; }
 
+    public ParcelStatusEnum CurrentParcelStatus { get; set; }
+    public string CurrentParcelStatusName => CurrentParcelStatus.ToString();
+
     public ShipmentStatusEnum? CurrentShipmentStatus { get; set; }
     public string? CurrentShipmentStatusName => CurrentShipmentStatus?.ToString();
 
