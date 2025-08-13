@@ -1,4 +1,6 @@
-﻿namespace MetroShip.Service.ApiModels.Train;
+﻿using MetroShip.Utility.Enums;
+
+namespace MetroShip.Service.ApiModels.Train;
 
 public record TrainListResponse
 {
@@ -7,6 +9,11 @@ public record TrainListResponse
     public string ModelName { get; set; } = string.Empty;
     public string LineId { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public string? CurrentStationId { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public TrainStatusEnum Status { get; set; }
+    public string StatusName => Status.ToString();
 }
 
 public sealed record TrainResponse : TrainListResponse

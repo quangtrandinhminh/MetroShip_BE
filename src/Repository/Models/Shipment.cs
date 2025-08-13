@@ -81,6 +81,9 @@ public partial class Shipment : BaseEntity
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? TotalCompensationFeeVnd { get; set; }
 
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? TotalRefundedFeeVnd { get; set; } // Total refunded amount, if applicable
+
     [Column(TypeName = "decimal(8, 2)")]
     public decimal? TotalKm { get; set; }
 
@@ -96,7 +99,7 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? ScheduledDateTime { get; set; } 
     public ShiftEnum? ScheduledShift { get; set; }
 
-    public string? PricingConfigId { get; set; }
+    public string PricingConfigId { get; set; }
     public string? PriceStructureDescriptionJSON { get; set; }
 
     public DateTimeOffset? BookedAt { get; set; }

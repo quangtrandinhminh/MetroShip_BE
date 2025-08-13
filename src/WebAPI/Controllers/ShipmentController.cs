@@ -70,7 +70,7 @@ namespace MetroShip.WebAPI.Controllers
                 BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [Authorize]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
         {

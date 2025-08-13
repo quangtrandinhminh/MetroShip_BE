@@ -55,9 +55,12 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
         
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment &&
-            shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingRefund &&
-            shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment 
+            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingRefund 
+            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
+            && shipment.ShipmentStatus != ShipmentStatusEnum.CompletedWithCompensation
+            && shipment.ShipmentStatus != ShipmentStatusEnum.ToCompensate
+            )
         {
             throw new AppException(
                 ErrorCode.BadRequest,
@@ -400,11 +403,22 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
         else if (request.TransactionType == TransactionTypeEnum.Refund)
         {
-            transaction.PaymentAmount = await _pricingService.CalculateRefund(shipment.TotalCostVnd);
+            transaction.PaymentAmount = shipment.TotalRefundedFeeVnd.Value;
         }
         else if (request.TransactionType == TransactionTypeEnum.Surcharge)
         {
             transaction.PaymentAmount = shipment.TotalSurchargeFeeVnd.Value;
+        }
+        else if (request.TransactionType == TransactionTypeEnum.Compensation)
+        {
+            transaction.PaymentAmount = shipment.TotalCompensationFeeVnd.Value;
+        }
+        else
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Invalid transaction type for creating a transaction.",
+            StatusCodes.Status400BadRequest);
         }
 
         return transaction;

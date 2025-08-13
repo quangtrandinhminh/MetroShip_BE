@@ -583,7 +583,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             // Schedule job to apply surcharge after delivery
-            await ScheduleApplySurchargeJob(parcel.ShipmentId);
+            await ScheduleApplySurchargeJob(parcel.ShipmentId, shipment.PricingConfigId);
         }
 
         return result;
@@ -780,7 +780,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
     }
 
-    private async Task ScheduleApplySurchargeJob(string shipmentId)
+    private async Task ScheduleApplySurchargeJob(string shipmentId, string pricingConfigId)
     {
         _logger.Information("Scheduling job to apply surcharge for shipment ID: {@shipmentId}", shipmentId);
         var jobData = new JobDataMap
@@ -788,7 +788,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             { "ApplySurcharge-for-shipmentId", shipmentId }
         };
 
-        var freeStoreDays = await _pricingService.GetFreeStoreDaysAsync();
+        var freeStoreDays = await _pricingService.GetFreeStoreDaysAsync(pricingConfigId);
 
         // Schedule the job to run after 15 minutes
         var jobDetail = JobBuilder.Create<ApplySurchargeJob>()

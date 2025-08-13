@@ -732,26 +732,41 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.CancelledAt = CoreHelper.SystemTimeNow;
 
         // Check if the shipment can be cancelled before a certain time
-        var allowedCancelBefore = _systemConfigRepository
+        /*var allowedCancelBefore = _systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
-        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));*/
+        var allowedCancelBefore = await _pricingService.GetRefundForCancellationBeforeScheduledHours(shipment.PricingConfigId);
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-allowedCancelBefore);
         if (shipment.ShipmentStatus is ShipmentStatusEnum.AwaitingDropOff 
             && shipment.CancelledAt > deadlineForRefund)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
-        }
+            shipment.TotalRefundedFeeVnd = await _pricingService.CalculateRefund(shipment.PricingConfigId, shipment.TotalCostVnd);
 
-        // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
-        _shipmentTrackingRepository.Add(new ShipmentTracking
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.AwaitingRefund,
+                Status = $"Đơn hàng đã bị người gửi hủy và đang chờ hoàn tiền",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
+        }
+        else
         {
-            ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
-            Status = $"Đơn hàng đã bị người gửi hủy",
-            EventTime = shipment.CancelledAt.Value,
-            UpdatedBy = customerId,
-            Note = request.Reason
-        });
+            // Update shipment status and timestamps
+            shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
+                Status = $"Đơn hàng đã bị người gửi hủy",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
+        }
 
         foreach (var parcel in shipment.Parcels)
         {

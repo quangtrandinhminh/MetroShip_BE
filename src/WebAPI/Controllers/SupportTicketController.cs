@@ -1,7 +1,9 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.SupportTicket;
+using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +14,7 @@ namespace MetroShip.WebAPI.Controllers
     public class SupportTicketController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly ISupportTicketService _supportTicketService = serviceProvider.GetRequiredService<ISupportTicketService>();
+        private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<SupportTicketStatusEnum>();
 
         [HttpPost]
         public async Task<IActionResult> CreateTicketAsync([FromBody] SupportTicketRequest request, CancellationToken token = default)
@@ -31,7 +34,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAllTicketsAsync([FromQuery] PaginatedListRequest request)
         {
             var tickets = await _supportTicketService.GetAllTicketsAsync(request);
-            return Ok(BaseResponse.OkResponseDto(tickets));
+            return Ok(BaseResponse.OkResponseDto(tickets, _enumResponses));
         }
     }
 }
