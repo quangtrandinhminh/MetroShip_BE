@@ -60,6 +60,32 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
     string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
+        /*_logger.Information("Get all shipments with request: {@request}", paginatedRequest);
+        // Build filter expression based on request
+        Expression<Func<Shipment, bool>> filterExpression = BuildShipmentFilterExpression(filterRequest);
+        // Build order by expression based on request
+        Expression<Func<Shipment, object>>? orderByExpression = BuildShipmentOrderByExpression(orderByRequest,
+            out bool? IsDesc);
+
+        PaginatedList<Shipment> shipments;
+        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        {
+            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                filterExpression, orderByExpression, IsDesc);
+        }
+        else
+        {
+            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+                paginatedRequest.PageNumber, paginatedRequest.PageSize,
+                filterExpression, orderByExpression, IsDesc
+            );
+        }
+
+        var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+        return shipmentListResponse;*/
+
         _logger.Information(
             $"Get all shipments, search '{searchKeyword}', order by '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
 
@@ -160,12 +186,23 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         bool sortDesc = orderByRequest?.IsDesc ?? true;
 
         // ====== GET LIST ======
-        var shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
-            paginatedRequest.PageNumber,
-            paginatedRequest.PageSize,
-            predicate,
-            orderBy,
-            sortDesc);
+        PaginatedList<Shipment> shipments;
+        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        {
+            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                predicate, orderBy, sortDesc);
+        }
+        else
+        {
+            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+                paginatedRequest.PageNumber,
+                paginatedRequest.PageSize,
+                predicate,
+                orderBy,
+                sortDesc);
+        }
 
         var shipmentResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
 

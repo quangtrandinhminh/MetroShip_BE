@@ -231,7 +231,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         };
 
         // ===== GET LIST =====
-        var transactions = await _transaction.GetAllPaginatedQueryable(
+        var transactions = await _transactionRepository.GetAllPaginatedQueryable(
             paginatedRequest.PageNumber,
             paginatedRequest.PageSize,
             predicate,

@@ -267,8 +267,9 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         var totalOrders = await query.CountAsync();
 
         var categoryData = await query
-            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault().ParcelCategory != null
-                ? s.Parcels.FirstOrDefault().ParcelCategory.CategoryName
+            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault()
+            .CategoryInsurance.ParcelCategory != null
+                ? s.Parcels.FirstOrDefault().CategoryInsurance.ParcelCategory.CategoryName
                 : "Unknown")
             .Select(g => new
             {
@@ -286,8 +287,9 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .Where(s => s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd);
 
         var previousData = await prevQuery
-            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault().ParcelCategory != null
-                ? s.Parcels.FirstOrDefault().ParcelCategory.CategoryName
+            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault()
+            .CategoryInsurance.ParcelCategory != null
+                ? s.Parcels.FirstOrDefault().CategoryInsurance.ParcelCategory.CategoryName
                 : "Unknown")
             .Select(g => new
             {
