@@ -14,6 +14,8 @@ using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Quartz;
 using Serilog;
@@ -185,32 +187,60 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         return response;
     }
 
-    public async Task<PaginatedListResponse<TransactionResponse>> GetAllAsync(PaymentStatusEnum? status, PaginatedListRequest request)
+    public async Task<PaginatedListResponse<TransactionResponse>> GetAllTransactionsAsync(PaginatedListRequest paginatedRequest, PaymentStatusEnum? status = null,
+        string? searchKeyword = null,DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         var userRole = JwtClaimUltils.GetUserRole(_httpContextAccessor);
-        _logger.Information("Fetching transactions. PaymentStatus: {status}", status);
 
+        _logger.Information(
+            $"Get all transactions, status: {status}, search: '{searchKeyword}', order by: '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
+
+        // ===== FILTER =====
         Expression<Func<Transaction, bool>> predicate = t => t.DeletedAt == null;
 
         if (status.HasValue)
-        {
             predicate = predicate.And(t => t.PaymentStatus == status.Value);
-        }
 
         if (!string.IsNullOrEmpty(customerId) && userRole.Contains(UserRoleEnum.Customer.ToString()))
-        {
             predicate = predicate.And(t => t.PaidById == customerId);
+
+        // Search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(t =>
+                (t.PaymentTrackingId != null && t.PaymentTrackingId.ToLower().Contains(keywordLower)) ||
+                (t.PaymentCurrency != null && t.PaymentCurrency.ToLower().Contains(keywordLower))
+            );
         }
 
-        var paginatedTransactions = await _transactionRepository.GetAllPaginatedQueryable(
-            pageNumber: request.PageNumber,
-            pageSize: request.PageSize,
-            predicate: predicate,
-            orderBy: t => t.PaymentDate // Default sort
+        // Created date range
+        if (createdFrom.HasValue)
+            predicate = predicate.And(t => t.CreatedAt >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(t => t.CreatedAt <= createdTo.Value);
+
+        // ===== SORT =====
+        Expression<Func<Transaction, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "paymenttrackingid" => t => t.PaymentTrackingId!,
+            "paymentdate" => t => t.PaymentDate,
+            "paymentamount" => t => t.PaymentAmount,
+            _ => t => t.CreatedAt
+        };
+
+        // ===== GET LIST =====
+        var transactions = await _transaction.GetAllPaginatedQueryable(
+            paginatedRequest.PageNumber,
+            paginatedRequest.PageSize,
+            predicate,
+            orderBy
         );
 
-        return _mapper.MapToTransactionPaginatedList(paginatedTransactions);
+        var transactionResponse = _mapper.MapToTransactionPaginatedList(transactions);
+
+        return transactionResponse;
     }
 
     // tìm transaction loại refund theo shipmentId, cộng amount vào ví ảo của user

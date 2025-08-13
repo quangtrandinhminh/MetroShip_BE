@@ -247,6 +247,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
         services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
+        services.AddScoped<IReportService, ReportService>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

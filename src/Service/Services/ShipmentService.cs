@@ -57,37 +57,119 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
-        PaginatedListRequest request
-        , ShipmentFilterRequest? filterRequest = null, OrderByRequest? orderByRequest = null
-        )
+    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
+    string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
-        _logger.Information("Get all shipments with request: {@request}", request);
-        // Build filter expression based on request
-        Expression<Func<Shipment, bool>> filterExpression = BuildShipmentFilterExpression(filterRequest);
-        // Build order by expression based on request
-        Expression<Func<Shipment, object>>? orderByExpression = BuildShipmentOrderByExpression(orderByRequest,
-            out bool? IsDesc);
+        _logger.Information(
+            $"Get all shipments, search '{searchKeyword}', order by '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
 
-        PaginatedList<Shipment> shipments;
-        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        // ====== FILTER ======
+        Expression<Func<Shipment, bool>> predicate = s => true;
+
+        // Search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
         {
-            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
-            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
-                               request.PageNumber, request.PageSize, filterRequest.ItineraryIncludeStationId,
-                                              filterExpression, orderByExpression, IsDesc);
-        }
-        else
-        {
-            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
-                request.PageNumber, request.PageSize,
-                filterExpression, orderByExpression, IsDesc
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(s =>
+                (s.TrackingCode != null && s.TrackingCode.ToLower().Contains(keywordLower)) ||
+                (s.SenderName != null && s.SenderName.ToLower().Contains(keywordLower)) ||
+                (s.RecipientName != null && s.RecipientName.ToLower().Contains(keywordLower)) ||
+                (s.SenderPhone != null && s.SenderPhone.Contains(keywordLower)) ||
+                (s.RecipientPhone != null && s.RecipientPhone.Contains(keywordLower))
             );
         }
 
-        var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
 
-        return shipmentListResponse;
+        // Created date range
+        if (createdFrom.HasValue)
+            predicate = predicate.And(s => s.CreatedAt >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(s => s.CreatedAt <= createdTo.Value);
+
+        // ====== Apply filterRequest ======
+        if (filterRequest != null)
+        {
+            if (!string.IsNullOrWhiteSpace(filterRequest.TrackingCode))
+                predicate = predicate.And(s => s.TrackingCode != null &&
+                    s.TrackingCode.ToLower().Contains(filterRequest.TrackingCode.ToLower()));
+
+            if (filterRequest.ShipmentStatus.HasValue)
+                predicate = predicate.And(s => s.ShipmentStatus == filterRequest.ShipmentStatus);
+
+            if (filterRequest.FromScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime >= filterRequest.FromScheduleDateTime.Value);
+
+            if (filterRequest.ToScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime <= filterRequest.ToScheduleDateTime.Value);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DepartureStationId))
+                predicate = predicate.And(s => s.DepartureStationId == filterRequest.DepartureStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DestinationStationId))
+                predicate = predicate.And(s => s.DestinationStationId == filterRequest.DestinationStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderName))
+                predicate = predicate.And(s => s.SenderName != null &&
+                    s.SenderName.ToLower().Contains(filterRequest.SenderName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderPhone))
+                predicate = predicate.And(s => s.SenderPhone != null &&
+                    s.SenderPhone.Contains(filterRequest.SenderPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientName))
+                predicate = predicate.And(s => s.RecipientName != null &&
+                    s.RecipientName.ToLower().Contains(filterRequest.RecipientName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientPhone))
+                predicate = predicate.And(s => s.RecipientPhone != null &&
+                    s.RecipientPhone.Contains(filterRequest.RecipientPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientEmail))
+                predicate = predicate.And(s => s.RecipientEmail != null &&
+                    s.RecipientEmail.ToLower().Contains(filterRequest.RecipientEmail.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.TimeSlotId))
+                predicate = predicate.And(s => s.TimeSlotId == filterRequest.TimeSlotId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.LineId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si => si.Route.LineId == filterRequest.LineId));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.ItineraryIncludeStationId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si =>
+                    si.Route.FromStationId == filterRequest.ItineraryIncludeStationId ||
+                    si.Route.ToStationId == filterRequest.ItineraryIncludeStationId));
+        }
+
+        // ====== SORT ======
+        Expression<Func<Shipment, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "trackingcode" => s => s.TrackingCode!,
+            "departurestationname" => s => s.DepartureStationName!,
+            "destinationstationname" => s => s.DestinationStationName!,
+            "currentstationname" => s => s.CurrentStationName!,
+            "sendername" => s => s.SenderName!,
+            "recipientname" => s => s.RecipientName!,
+            "senderphone" => s => s.SenderPhone!,
+            "recipientphone" => s => s.RecipientPhone!,
+            "totalcostvnd" => s => s.TotalCostVnd,
+            "scheduleddatetime" => s => s.ScheduledDateTime,
+            "bookedat" => s => s.BookedAt,
+            _ => s => s.CreatedAt
+        };
+
+        bool sortDesc = orderByRequest?.IsDesc ?? true;
+
+        // ====== GET LIST ======
+        var shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+            paginatedRequest.PageNumber,
+            paginatedRequest.PageSize,
+            predicate,
+            orderBy,
+            sortDesc);
+
+        var shipmentResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+
+        return shipmentResponse;
     }
 
     public async Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode)

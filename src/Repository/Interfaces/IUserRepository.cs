@@ -20,6 +20,8 @@ namespace MetroShip.Repository.Interfaces
             Expression<Func<UserEntity, object>>? orderBy = null,
             params Expression<Func<UserEntity, object>>[]? includeProperties);
 
+        Task<int> CountAsync(Expression<Func<UserEntity, bool>> predicate);
+
         Task AddUserToRoleAsync(string userId, List<string> lisRoleId, CancellationToken cancellationToken = default);
 
         Task<bool> IsExistAsync(Expression<Func<UserEntity, bool>> predicate);
