@@ -61,6 +61,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
+    public partial List<ShipmentTrackingResponse> MapToParcelTrackingResponseList(ICollection<ShipmentTrackingResponse> entity);
+    public partial ShipmentTrackingResponse MapToShipmentTrackingResponse(ShipmentTracking entity);
+
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
@@ -108,10 +111,10 @@ public partial class MapperlyMapper : IMapperlyMapper
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
-
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
-
     public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
+    public partial List<ParcelTrackingResponse> MapToParcelTrackingResponseList(ICollection<ParcelTracking> entity);
+    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
 
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);

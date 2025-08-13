@@ -304,6 +304,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             {
                 Id = tracking.Id,
                 ShipmentId = tracking.ShipmentId,
+                CurrentShipmentStatus = tracking.CurrentShipmentStatus,
                 Status = tracking.Status,
                 UpdatedBy = tracking.UpdatedBy,
                 EventTime = tracking.EventTime,
