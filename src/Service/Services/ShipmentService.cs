@@ -551,7 +551,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been accepted.",
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã được nhân viên nhận tại Ga {stationName}.",
             };
             //_emailSender.SendMail(sendMailModel);
             await _emailSender.ScheduleEmailJob(sendMailModel);
@@ -857,7 +857,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         var allowedCancelBefore = await _pricingService.GetRefundForCancellationBeforeScheduledHours(shipment.PricingConfigId);
         var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-allowedCancelBefore);
         if (shipment.ShipmentStatus is ShipmentStatusEnum.AwaitingDropOff 
-            && shipment.CancelledAt > deadlineForRefund)
+            && shipment.CancelledAt < deadlineForRefund)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
             shipment.TotalRefundedFeeVnd = await _pricingService.CalculateRefund(shipment.PricingConfigId, shipment.TotalCostVnd);

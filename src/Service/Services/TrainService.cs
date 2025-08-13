@@ -695,7 +695,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // ✅ Nếu shipment status thay đổi → cập nhật DB
-        if (shipment.ShipmentStatus != mappedShipmentStatus)
+        /*if (shipment.ShipmentStatus != mappedShipmentStatus)
         {
             shipment.ShipmentStatus = mappedShipmentStatus;
 
@@ -728,7 +728,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        }
+        }*/
 
         // ✅ Gộp ShipmentItineraries + Polyline thành 1 array
         const int steps = 10;
