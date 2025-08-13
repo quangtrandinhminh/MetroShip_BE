@@ -131,8 +131,25 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             ? Math.Round((double)totalCancelledTransactions / totalTransactions * 100, 2)
             : 0;
 
+        // ===== Thêm phần tính Growth so với tháng trước =====
+        var prevMonthStart = firstDayOfMonth.AddMonths(-1);
+        var prevMonthEnd = firstDayOfMonth.AddTicks(-1);
+
+        decimal CalcGrowth(decimal current, decimal prev) =>
+            prev > 0 ? Math.Round(((current - prev) / prev) * 100m, 2) : 0;
+
+        var prevTotalTransactions = await query.CountAsync(t => t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd);
+        var prevTotalPaidAmount = await query
+            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
+                        t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd)
+            .SumAsync(t => t.PaymentAmount);
+
+        var growthTotalTransactions = CalcGrowth(newTransactionsCount, prevTotalTransactions);
+        var growthPaidAmount = CalcGrowth(totalPaidAmount, prevTotalPaidAmount);
+
         return new TransactionListWithStatsResponse
         {
+            // Giữ nguyên trường cũ
             TotalTransactions = totalTransactions,
             PercentageNewTransactions = percentageNewTransactions,
 
@@ -147,7 +164,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             PercentagePendingTransactions = percentagePendingTransactions,
 
             TotalCancelledTransactions = totalCancelledTransactions,
-            PercentageCancelledTransactions = percentageCancelledTransactions
+            PercentageCancelledTransactions = percentageCancelledTransactions,
+
+            GrowthTotalTransactions = growthTotalTransactions,
+            GrowthPaidAmount = growthPaidAmount
         };
     }
 

@@ -25,5 +25,7 @@ namespace MetroShip.Service.ApiModels.Transaction
 
         public int TotalCancelledTransactions { get; set; }
         public double PercentageCancelledTransactions { get; set; }
+        public decimal GrowthTotalTransactions { get; internal set; }
+        public decimal GrowthPaidAmount { get; internal set; }
     }
 }
