@@ -2324,11 +2324,11 @@ VALUES
      TRUE, 3, 'c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2',
      NULL, NULL, NULL, NOW(), NOW(), NULL),
     ('97ac027f-c0ba-4bb5-a70f-79aeb4f9caef', 'HCMC-L4-T01','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     'f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
      TRUE, 3, 'a3e9f4c7-5b8d-4a3e-f4c7-5b8da3e9f4c7',
      NULL, NULL, NULL, NOW(), NOW(), NULL),
     ('89145ee1-6a8a-4df6-a485-acb2853a83ac', 'HCMC-L4-T02','HITACHI',
-     'a1f4e7c8-6b2d-4a1f-e7c8-6b2da1f4e7c8',
+     'f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
      TRUE, 3, 'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4',
      NULL, NULL, NULL, NOW(), NOW(), NULL)
 ;
