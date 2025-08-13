@@ -1,4 +1,5 @@
 ﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Report;
 using MetroShip.Service.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -64,6 +65,16 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetTransactionChart([FromForm] RevenueChartRequest request)
         {
             var result = await _reportService.GetTransactionChartAsync(request);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Lấy thống kê category chart theo filter (week, month, year)
+        /// </summary>
+        [HttpPost("category-statistics")]
+        public async Task<IActionResult> GetCategoryStatistics([FromForm] CategoryStatisticsRequest request)
+        {
+            var result = await _reportService.GetCategoryStatisticsAsync(request);
             return Ok(result);
         }
     }

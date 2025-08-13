@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Report;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
@@ -217,6 +218,73 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         };
     }
 
+    public async Task<CategoryStatisticsResponse> GetCategoryStatisticsAsync(CategoryStatisticsRequest request)
+    {
+        var (startDate, endDate) = CalculateDateRange(request);
+
+        var query = _shipmentRepository.GetAllWithCondition()
+            .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate);
+
+        var totalOrders = await query.CountAsync();
+
+        var categoryData = await query
+            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault().ParcelCategory != null
+                ? s.Parcels.FirstOrDefault().ParcelCategory.CategoryName
+                : "Unknown")
+            .Select(g => new
+            {
+                Name = g.Key,
+                Orders = g.Count()
+            })
+            .ToListAsync();
+
+        // Kỳ trước
+        var durationDays = (endDate - startDate).TotalDays + 1;
+        var previousStart = startDate.AddDays(-durationDays);
+        var previousEnd = startDate.AddDays(-1);
+
+        var prevQuery = _shipmentRepository.GetAllWithCondition()
+            .Where(s => s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd);
+
+        var previousData = await prevQuery
+            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault().ParcelCategory != null
+                ? s.Parcels.FirstOrDefault().ParcelCategory.CategoryName
+                : "Unknown")
+            .Select(g => new
+            {
+                Name = g.Key,
+                Orders = g.Count()
+            })
+            .ToListAsync();
+
+        var categories = categoryData.Select(cd =>
+        {
+            var prevOrders = previousData.FirstOrDefault(p => p.Name == cd.Name)?.Orders ?? 0;
+            var growth = prevOrders > 0
+                ? Math.Round((decimal)(cd.Orders - prevOrders) / prevOrders * 100, 2)
+                : 0;
+
+            return new CategoryStatsItem
+            {
+                Name = cd.Name,
+                Orders = cd.Orders,
+                Percentage = totalOrders > 0
+                    ? Math.Round((decimal)cd.Orders / totalOrders * 100, 2)
+                    : 0,
+                Growth = growth
+            };
+        }).ToList();
+
+        return new CategoryStatisticsResponse
+        {
+            RangeType = request.RangeType.ToString(),
+            StartDate = startDate.DateTime,
+            EndDate = endDate.DateTime,
+            TotalOrders = totalOrders,
+            Categories = categories
+        };
+    }
+
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
         IQueryable<T> query,
@@ -272,6 +340,53 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
             return memberExpr.Member.Name;
         throw new InvalidOperationException("Invalid expression");
+    }
+
+    private (DateTimeOffset startDate, DateTimeOffset endDate) CalculateDateRange(CategoryStatisticsRequest request)
+    {
+        var today = DateTimeOffset.UtcNow; // luôn UTC
+
+        switch (request.RangeType)
+        {
+            case RangeType.Today:
+                var startOfToday = new DateTimeOffset(today.Year, today.Month, today.Day, 0, 0, 0, TimeSpan.Zero);
+                return (startOfToday, startOfToday.AddDays(1).AddTicks(-1));
+
+            case RangeType.ThisWeek:
+                var startOfTodayWeek = new DateTimeOffset(today.Year, today.Month, today.Day, 0, 0, 0, TimeSpan.Zero);
+                var diff = (int)today.DayOfWeek;
+                var weekStart = startOfTodayWeek.AddDays(-diff);
+                var weekEnd = weekStart.AddDays(7).AddTicks(-1);
+                return (weekStart, weekEnd);
+
+            case RangeType.ThisMonth:
+                var monthStart = new DateTimeOffset(today.Year, today.Month, 1, 0, 0, 0, TimeSpan.Zero);
+                var monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+                return (monthStart, monthEnd);
+
+            case RangeType.Year:
+                var yearStart = new DateTimeOffset(today.Year, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                var yearEnd = yearStart.AddYears(1).AddTicks(-1);
+                return (yearStart, yearEnd);
+
+            default:
+                if (request.StartDate == null || request.EndDate == null)
+                    throw new ArgumentException("StartDate and EndDate are required for custom date range.");
+
+                var customStart = new DateTimeOffset(
+                    request.StartDate.Value.Year,
+                    request.StartDate.Value.Month,
+                    request.StartDate.Value.Day,
+                    0, 0, 0, TimeSpan.Zero);
+
+                var customEnd = new DateTimeOffset(
+                    request.EndDate.Value.Year,
+                    request.EndDate.Value.Month,
+                    request.EndDate.Value.Day,
+                    23, 59, 59, TimeSpan.Zero);
+
+                return (customStart, customEnd);
+        }
     }
     #endregion
 }
