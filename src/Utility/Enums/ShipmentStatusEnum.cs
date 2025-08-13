@@ -42,6 +42,7 @@ public enum ShipmentStatusEnum
     // Unhappy case
     Delayed,              // parcels delayed at any stage
     Arrived,
+    CompletedWithCompensation, // parcels delivered with compensation
     ToCompensate,
     Compensated,          // compensation processed
 }

@@ -69,7 +69,7 @@ namespace MetroShip.Repository.Base
 
             // Apply the predicate
             queryable = predicate != null ? queryable.Where(predicate) : queryable;
-            queryable = orderBy != null ? queryable.OrderByDescending(orderBy) : queryable.OrderByDescending(p => p.CreatedAt);
+            queryable = orderBy != null ? queryable.OrderByDescending(orderBy) : queryable.OrderByDescending(p => p.LastUpdatedAt);
             // Apply ascending order if specified
             if (isAscending)
             {

@@ -34,15 +34,13 @@ namespace MetroShip.WebAPI.Controllers
 
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
-        public async Task<IActionResult> Get(
-            [FromQuery] PaginatedListRequest request,
-            [FromQuery] ShipmentFilterRequest filterRequest,
-            [FromQuery] OrderByRequest orderByRequest
-            )
+        public async Task<IActionResult> GetShipments([FromQuery] PaginatedListRequest request, [FromQuery] ShipmentFilterRequest? filterRequest,[FromQuery] string? searchKeyword, 
+            [FromQuery] DateTimeOffset? createdFrom, [FromQuery] DateTimeOffset? createdTo, [FromQuery] OrderByRequest? orderByRequest)
         {
-            var response = await shipmentService.GetAllShipments(request, filterRequest, orderByRequest
-                );
-            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+            var result = await shipmentService.GetAllShipmentsAsync(
+                request, filterRequest, searchKeyword, createdFrom, createdTo, orderByRequest
+            );
+            return Ok(BaseResponse.OkResponseDto(result));
         }
 
         [Authorize]
@@ -70,7 +68,7 @@ namespace MetroShip.WebAPI.Controllers
                 BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [Authorize]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
         public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
         {

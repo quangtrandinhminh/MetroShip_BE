@@ -52,16 +52,15 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
+    private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
-        PaginatedListRequest request
-        , ShipmentFilterRequest? filterRequest = null, OrderByRequest? orderByRequest = null
-        )
+    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
+    string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
-        _logger.Information("Get all shipments with request: {@request}", request);
+        /*_logger.Information("Get all shipments with request: {@request}", paginatedRequest);
         // Build filter expression based on request
         Expression<Func<Shipment, bool>> filterExpression = BuildShipmentFilterExpression(filterRequest);
         // Build order by expression based on request
@@ -73,20 +72,141 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
             shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
-                               request.PageNumber, request.PageSize, filterRequest.ItineraryIncludeStationId,
-                                              filterExpression, orderByExpression, IsDesc);
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                filterExpression, orderByExpression, IsDesc);
         }
         else
         {
             shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
-                request.PageNumber, request.PageSize,
+                paginatedRequest.PageNumber, paginatedRequest.PageSize,
                 filterExpression, orderByExpression, IsDesc
             );
         }
 
         var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+        return shipmentListResponse;*/
 
-        return shipmentListResponse;
+        _logger.Information(
+            $"Get all shipments, search '{searchKeyword}', order by '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
+
+        // ====== FILTER ======
+        Expression<Func<Shipment, bool>> predicate = s => true;
+
+        // Search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(s =>
+                (s.TrackingCode != null && s.TrackingCode.ToLower().Contains(keywordLower)) ||
+                (s.SenderName != null && s.SenderName.ToLower().Contains(keywordLower)) ||
+                (s.RecipientName != null && s.RecipientName.ToLower().Contains(keywordLower)) ||
+                (s.SenderPhone != null && s.SenderPhone.Contains(keywordLower)) ||
+                (s.RecipientPhone != null && s.RecipientPhone.Contains(keywordLower))
+            );
+        }
+
+
+        // Created date range
+        if (createdFrom.HasValue)
+            predicate = predicate.And(s => s.CreatedAt >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(s => s.CreatedAt <= createdTo.Value);
+
+        // ====== Apply filterRequest ======
+        if (filterRequest != null)
+        {
+            if (!string.IsNullOrWhiteSpace(filterRequest.TrackingCode))
+                predicate = predicate.And(s => s.TrackingCode != null &&
+                    s.TrackingCode.ToLower().Contains(filterRequest.TrackingCode.ToLower()));
+
+            if (filterRequest.ShipmentStatus.HasValue)
+                predicate = predicate.And(s => s.ShipmentStatus == filterRequest.ShipmentStatus);
+
+            if (filterRequest.FromScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime >= filterRequest.FromScheduleDateTime.Value);
+
+            if (filterRequest.ToScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime <= filterRequest.ToScheduleDateTime.Value);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DepartureStationId))
+                predicate = predicate.And(s => s.DepartureStationId == filterRequest.DepartureStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DestinationStationId))
+                predicate = predicate.And(s => s.DestinationStationId == filterRequest.DestinationStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderName))
+                predicate = predicate.And(s => s.SenderName != null &&
+                    s.SenderName.ToLower().Contains(filterRequest.SenderName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderPhone))
+                predicate = predicate.And(s => s.SenderPhone != null &&
+                    s.SenderPhone.Contains(filterRequest.SenderPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientName))
+                predicate = predicate.And(s => s.RecipientName != null &&
+                    s.RecipientName.ToLower().Contains(filterRequest.RecipientName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientPhone))
+                predicate = predicate.And(s => s.RecipientPhone != null &&
+                    s.RecipientPhone.Contains(filterRequest.RecipientPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientEmail))
+                predicate = predicate.And(s => s.RecipientEmail != null &&
+                    s.RecipientEmail.ToLower().Contains(filterRequest.RecipientEmail.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.TimeSlotId))
+                predicate = predicate.And(s => s.TimeSlotId == filterRequest.TimeSlotId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.LineId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si => si.Route.LineId == filterRequest.LineId));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.ItineraryIncludeStationId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si =>
+                    si.Route.FromStationId == filterRequest.ItineraryIncludeStationId ||
+                    si.Route.ToStationId == filterRequest.ItineraryIncludeStationId));
+        }
+
+        // ====== SORT ======
+        Expression<Func<Shipment, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "trackingcode" => s => s.TrackingCode!,
+            "departurestationname" => s => s.DepartureStationName!,
+            "destinationstationname" => s => s.DestinationStationName!,
+            "currentstationname" => s => s.CurrentStationName!,
+            "sendername" => s => s.SenderName!,
+            "recipientname" => s => s.RecipientName!,
+            "senderphone" => s => s.SenderPhone!,
+            "recipientphone" => s => s.RecipientPhone!,
+            "totalcostvnd" => s => s.TotalCostVnd,
+            "scheduleddatetime" => s => s.ScheduledDateTime,
+            "bookedat" => s => s.BookedAt,
+            _ => s => s.CreatedAt
+        };
+
+        bool sortDesc = orderByRequest?.IsDesc ?? true;
+
+        // ====== GET LIST ======
+        PaginatedList<Shipment> shipments;
+        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        {
+            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                predicate, orderBy, sortDesc);
+        }
+        else
+        {
+            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+                paginatedRequest.PageNumber,
+                paginatedRequest.PageSize,
+                predicate,
+                orderBy,
+                sortDesc);
+        }
+
+        var shipmentResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+
+        return shipmentResponse;
     }
 
     public async Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode)
@@ -431,7 +551,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been accepted.",
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã được nhân viên nhận tại Ga {stationName}.",
             };
             //_emailSender.SendMail(sendMailModel);
             await _emailSender.ScheduleEmailJob(sendMailModel);
@@ -560,9 +680,25 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
+        shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
+            ? ShipmentStatusEnum.CompletedWithCompensation
+            : ShipmentStatusEnum.Completed;
         shipment.CompletedAt = CoreHelper.SystemTimeNow;
         var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation)
+        {
+            // If there are lost parcels, calculate compensation
+            var lostParcels = shipment.Parcels
+                .Where(p => p.Status == ParcelStatusEnum.Lost)
+                .ToList();
+            var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
+                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id)
+            ).ToList();
+
+            shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
+                lostParcels, categoryInsurances, _parcelRepository);
+        }
+
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
             ShipmentId = shipment.Id,
@@ -572,7 +708,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
 
-        foreach (var parcel in shipment.Parcels)
+        var normalParcel = shipment.Parcels
+            .Where(p => p.Status == ParcelStatusEnum.Normal)
+            .ToList();
+        foreach (var parcel in normalParcel)
         {
             _parcelTrackingRepository.Add(new ParcelTracking
             {
@@ -712,26 +851,41 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.CancelledAt = CoreHelper.SystemTimeNow;
 
         // Check if the shipment can be cancelled before a certain time
-        var allowedCancelBefore = _systemConfigRepository
+        /*var allowedCancelBefore = _systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
-        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));*/
+        var allowedCancelBefore = await _pricingService.GetRefundForCancellationBeforeScheduledHours(shipment.PricingConfigId);
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-allowedCancelBefore);
         if (shipment.ShipmentStatus is ShipmentStatusEnum.AwaitingDropOff 
-            && shipment.CancelledAt > deadlineForRefund)
+            && shipment.CancelledAt < deadlineForRefund)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
-        }
+            shipment.TotalRefundedFeeVnd = await _pricingService.CalculateRefund(shipment.PricingConfigId, shipment.TotalCostVnd);
 
-        // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
-        _shipmentTrackingRepository.Add(new ShipmentTracking
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.AwaitingRefund,
+                Status = $"Đơn hàng đã bị người gửi hủy và đang chờ hoàn tiền",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
+        }
+        else
         {
-            ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
-            Status = $"Đơn hàng đã bị người gửi hủy",
-            EventTime = shipment.CancelledAt.Value,
-            UpdatedBy = customerId,
-            Note = request.Reason
-        });
+            // Update shipment status and timestamps
+            shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
+                Status = $"Đơn hàng đã bị người gửi hủy",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
+        }
 
         foreach (var parcel in shipment.Parcels)
         {
@@ -1170,7 +1324,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         //InitializePricingTableAsync().Wait();
 
         // Get parcel categories
-        var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
+        /*var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
         var categories = await _parcelCategoryRepository.GetAllWithCondition(
             x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
             .ToListAsync();
@@ -1183,7 +1337,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ErrorCode.NotFound,
             $"Parcel categories not found: {string.Join(", ", missingCategories)}",
             StatusCodes.Status404NotFound);
-        }
+        }*/
+
+        // Get insurance policy base on categoryInsuranceIds
+        var categoryInsuranceIds = request.Parcels
+            .Select(p => p.CategoryInsuranceId)
+            .Distinct()
+            .ToList();
+        var categoryInsurance = await _categoryInsuranceRepository
+            .GetAllWithCondition(x => categoryInsuranceIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null
+            , x => x.InsurancePolicy, x => x.ParcelCategory
+            )
+            .ToListAsync();
 
         return pathResults.Select(r =>
         {
@@ -1191,8 +1356,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
+            /*ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
+
             ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, _pricingService, categories);
+                pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
 
             // Check est arrival time
             var date = new DateOnly(request.ScheduledDateTime.Year,

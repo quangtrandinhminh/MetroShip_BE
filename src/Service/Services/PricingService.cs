@@ -26,8 +26,27 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     private const int CACHE_EXPIRY_MINUTES = 30;
     private const string CACHE_KEY = "DefaultPricingConfig";
 
-    private async Task<PricingConfig?> GetPricingConfigAsync()
+    private async Task<PricingConfig?> GetPricingConfigAsync(string? pricingConfigId = null)
     {
+        PricingConfig pricingConfig;
+        if (!string.IsNullOrEmpty(pricingConfigId))
+        {
+            pricingConfig = await _pricingRepository.GetSingleAsync(
+                x => x.Id == pricingConfigId && x.IsActive,
+                false,
+                x => x.WeightTiers, x => x.DistanceTiers
+                );
+            if (pricingConfig == null)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                "The specified pricing configuration is not found or is inactive.",
+                StatusCodes.Status400BadRequest
+                );
+            }
+            return pricingConfig;
+        }
+
         var cacheKey = CACHE_KEY;
         if (_cache.TryGetValue(cacheKey, out PricingConfig? cachedTable))
         {
@@ -35,7 +54,7 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             return cachedTable;
         }
 
-        var pricingConfig = await _pricingRepository.GetSingleAsync(
+        pricingConfig = await _pricingRepository.GetSingleAsync(
             x => x.IsActive, false,
             x => x.WeightTiers, x => x.DistanceTiers
         );
@@ -152,66 +171,6 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         return pricingConfig;
     }*/
 
-    //public async Task<decimal> CalculateSurcharge (decimal )
-
-    private async Task<decimal> CalculateRefund(decimal totalPrice, decimal refundRate)
-    {
-        await GetPricingConfigAsync(); // Ensure pricing config is loaded
-        if (refundRate < 0 || refundRate > 1)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Refund rate must be between 0 and 1.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-        if (totalPrice < 0)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Total price must be greater than or equal to zero.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var refundAmount = totalPrice * refundRate;
-        return Math.Round(refundAmount, 2); // Round to 2 decimal places for currency
-    }
-
-    public async Task<decimal> CalculateRefundForShipmentAsync(Shipment shipment)
-    {
-        if (shipment == null)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Shipment cannot be null.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var pricingConfig = await GetPricingConfigAsync();
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "No active pricing configuration found.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        if (shipment.TotalCostVnd <= 0)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Total cost of the shipment must be greater than zero.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
-        var refundRate = pricingConfig.RefundRate ?? 0;
-        return await CalculateRefund(shipment.TotalCostVnd, refundRate);
-    }
-
     public async Task CalculateOverdueSurcharge (Shipment shipment)
     {
         if (shipment == null)
@@ -232,7 +191,7 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             );
         }
 
-        var pricingConfig = await GetPricingConfigAsync();
+        var pricingConfig = await GetPricingConfigAsync(shipment.PricingConfigId);
         if (pricingConfig.BaseSurchargePerDayVnd == null || pricingConfig.FreeStoreDays == null)
         {
             throw new AppException(
@@ -257,9 +216,9 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         shipment.TotalSurchargeFeeVnd = shipment.Parcels.Sum(p => p.OverdueSurchangeFeeVnd ?? 0);
     }
 
-    public async Task<int> GetFreeStoreDaysAsync()
+    public async Task<int> GetFreeStoreDaysAsync(string pricingConfigId)
     {
-        var pricingConfig = await GetPricingConfigAsync();
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
         if (pricingConfig == null || !pricingConfig.IsActive)
         {
             throw new AppException(
@@ -270,5 +229,36 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         }
 
         return pricingConfig.FreeStoreDays ?? 0;
+    }
+
+    public async Task<int> GetRefundForCancellationBeforeScheduledHours (string pricingConfigId)
+    {
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException
+            (
+                ErrorCode.BadRequest,
+                "No active pricing configuration found.",
+                StatusCodes.Status400BadRequest
+            );
+        }
+
+        return pricingConfig.RefundForCancellationBeforeScheduledHours ?? 0;
+    }
+
+    public async Task<decimal> CalculateRefund(string pricingConfigId, decimal? totalPrice)
+    {
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
     }
 }

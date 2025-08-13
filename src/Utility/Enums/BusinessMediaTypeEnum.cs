@@ -5,7 +5,7 @@ public enum BusinessMediaTypeEnum
     Pickup = 1,
     TransitTracking,
     Delivery,
-    Damage,
+    Claims,
     Invoice,
     IdentityVerification,
     Other

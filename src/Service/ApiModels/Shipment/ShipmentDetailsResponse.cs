@@ -13,6 +13,8 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public decimal? TotalSurchargeFeeVnd { get; set; }
     public decimal TotalShippingFeeVnd { get; set; }
     public decimal? TotalOverdueSurchargeFee { get; set; }
+    public decimal? TotalRefundedFeeVnd { get; set; }
+    public decimal? TotalCompensationFeeVnd { get; set; } 
 
     // Measurement fields
     public decimal? TotalKm { get; set; }

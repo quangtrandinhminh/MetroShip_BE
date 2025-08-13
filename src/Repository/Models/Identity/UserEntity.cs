@@ -58,8 +58,11 @@ public class UserEntity : IdentityUser
     [InverseProperty(nameof(Shipment.Sender))]
     public virtual ICollection<Shipment> Shipments { get; set; } = new List<Shipment>();
 
-    [InverseProperty(nameof(SupportingTicket.User))]
-    public virtual ICollection<SupportingTicket> SupportingTickets { get; set; } = new List<SupportingTicket>();
+    [InverseProperty(nameof(SupportTicket.OpenBy))]
+    public virtual ICollection<SupportTicket> OpenedSupportTickets { get; set; } = new List<SupportTicket>();
+
+    [InverseProperty(nameof(SupportTicket.ResolvedBy))]
+    public virtual ICollection<SupportTicket> ResolvedSupportTickets { get; set; } = new List<SupportTicket>();
 
     [InverseProperty(nameof(Notification.User))]
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();

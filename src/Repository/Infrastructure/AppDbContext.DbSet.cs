@@ -46,7 +46,7 @@ public sealed partial class AppDbContext
 
     public DbSet<StaffAssignment> StaffAssignments { get; set; }
 
-    public DbSet<SupportingTicket> SupportingTickets { get; set; }
+    public DbSet<SupportTicket> SupportTicket { get; set; }
 
     public DbSet<SystemConfig> SystemConfigs { get; set; }
 

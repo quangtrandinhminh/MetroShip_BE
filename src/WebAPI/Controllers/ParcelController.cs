@@ -93,36 +93,36 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPost(WebApiEndpoint.ParcelEndpoint.LoadParcelOnTrain)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainCode)
+        public async Task<IActionResult> LoadParcelOnTrainAsync([FromRoute] string parcelCode, string trainCode, [FromQuery] bool isLost = false)
         {
-            await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainCode);
-            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} loaded onto train {trainCode} successfully.", null));
+            var result = await _parcelService.LoadParcelOnTrainAsync(parcelCode, trainCode, isLost);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
         [HttpPost(WebApiEndpoint.ParcelEndpoint.UnloadParcelFromTrain)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainCode)
+        public async Task<IActionResult> UnloadParcelFromTrainAsync([FromRoute] string parcelCode, string trainCode, [FromQuery] bool isLost = false)
         {
-            await _parcelService.UnloadParcelFromTrain(parcelCode, trainCode);
-            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} unloaded from train {trainCode} successfully.", null));
+            var result = await _parcelService.UnloadParcelFromTrain(parcelCode, trainCode, isLost);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
         // update to awaiting delivery
         [HttpPost(WebApiEndpoint.ParcelEndpoint.UpdateParcelStatusToAwaitingDelivery)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
-        public async Task<IActionResult> UpdateParcelStatusToAwaitingDeliveryAsync([FromRoute] string parcelCode)
+        public async Task<IActionResult> UpdateParcelStatusToAwaitingDeliveryAsync([FromRoute] string parcelCode, [FromQuery] bool isLost = false)
         {
-            await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode);
-            return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} status updated to Awaiting Delivery successfully.", null));
+            var result = await _parcelService.UpdateParcelForAwaitingDeliveryAsync(parcelCode, isLost);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
-        [HttpPost(WebApiEndpoint.ParcelEndpoint.ReportLostParcel)]
+        /*[HttpPost(WebApiEndpoint.ParcelEndpoint.ReportLostParcel)]
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
         public async Task<IActionResult> ReportLostParcelAsync([FromRoute] string parcelCode, 
             [FromQuery] ShipmentStatusEnum trackingForShipmentStatus)
         {
             await _parcelService.ReportLostParcelAsync(parcelCode, trackingForShipmentStatus);
             return Ok(BaseResponse.OkResponseDto($"Parcel {parcelCode} reported as lost successfully.", null));
-        }
+        }*/
     }
 }
