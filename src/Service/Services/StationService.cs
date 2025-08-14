@@ -47,8 +47,13 @@ namespace MetroShip.Service.Services
         public async Task<IEnumerable<StationListResponse>> GetAllStationsAsync(string? regionId)
         {
             var stations = string.IsNullOrWhiteSpace(regionId)
-                ? _stationRepository.GetAll().Where(s => s.IsActive).ToList()
-                : _stationRepository.GetStationsByRegion(regionId);
+                ? _stationRepository.GetAll()
+                    .Where(s => s.IsActive)
+                    .OrderBy(s => s.StationCode)
+                    .ToList()
+                : _stationRepository.GetStationsByRegion(regionId)
+                    .OrderBy(s => s.StationCode)
+                    .ToList();
 
             return stations.Select(_mapper.MapToStationListResponse).ToList();
         }
