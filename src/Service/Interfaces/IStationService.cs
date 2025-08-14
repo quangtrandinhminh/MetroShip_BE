@@ -15,5 +15,6 @@ namespace MetroShip.Service.Interfaces
         Task<StationDetailResponse> CreateStationAsync(CreateStationRequest request);
         Task<StationDetailResponse> UpdateStationAsync(Guid id, UpdateStationRequest request);
         Task DeleteStationAsync(Guid id);
+        Task<List<StationResponse>> GetStationsNearUsers(NearbyStationsRequest request);
     }
 }

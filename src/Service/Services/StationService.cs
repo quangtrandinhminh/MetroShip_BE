@@ -119,5 +119,28 @@ namespace MetroShip.Service.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
+        // get station near user location
+        public async Task<List<StationResponse>> GetStationsNearUsers(NearbyStationsRequest request)
+        {
+            _logger.Information("Fetching stations near user at latitude: {Latitude}, longitude: {Longitude}", 
+                request.UserLatitude, request.UserLongitude);
+
+            var stationIds = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude,
+                    request.UserLongitude,
+                    request.MaxDistanceInMeters,
+                    request.MaxCount);
+
+            if (!stationIds.Any())
+            {
+                return new List<StationResponse>();
+            }
+
+            var stations = _stationRepository.GetAll()
+                .Where(s => stationIds.Contains(s.Id) && s.IsActive)
+                .ToList();
+
+            return _mapper.MapToStationResponseList(stations).ToList();
+        }
     }
 }

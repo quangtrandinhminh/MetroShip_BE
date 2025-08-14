@@ -81,6 +81,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
 
+    public partial List<StationResponse> MapToStationResponseList(ICollection<Station> entity);
+
     public partial ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
 
     public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);

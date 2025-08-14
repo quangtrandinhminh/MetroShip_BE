@@ -46,6 +46,7 @@ public interface IMapperlyMapper
 
     // station
     StationResponse MapToStationResponse(Station entity);
+    List<StationResponse> MapToStationResponseList(ICollection<Station> entity);
     PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
     StationListResponse MapToStationListResponse(Station entity);
     StationDetailResponse MapToStationDetailResponse(Station entity);

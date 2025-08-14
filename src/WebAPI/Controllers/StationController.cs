@@ -36,6 +36,13 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(station);
         }
 
+        [HttpPost("nearby")]
+        public async Task<IActionResult> GetStationsNearUsers([FromBody] NearbyStationsRequest request)
+        {
+            var stations = await _stationService.GetStationsNearUsers(request);
+            return Ok(BaseResponse.OkResponseDto(stations));
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateStation([FromBody] CreateStationRequest request)
         {
