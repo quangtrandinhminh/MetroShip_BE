@@ -10,16 +10,32 @@ namespace MetroShip.Service.Interfaces
 {
     public interface ITrainStateStoreService
     {
+        #region Set methods
         Task SetDirectionAsync(string trainId, DirectionEnum direction);
-        Task<DirectionEnum?> GetDirectionAsync(string trainId);
-
         Task SetSegmentIndexAsync(string trainId, int index);
-        Task<int?> GetSegmentIndexAsync(string trainId);
-
         Task SetStartTimeAsync(string trainId, DateTimeOffset startTime);
-        Task<DateTimeOffset?> GetStartTimeAsync(string trainId);
-
         Task SetPositionResultAsync(string trainId, TrainPositionResult result);
+        #endregion
+
+        #region Get methods
+        Task<DirectionEnum?> GetDirectionAsync(string trainId);
+        Task<int?> GetSegmentIndexAsync(string trainId);
+        Task<DateTimeOffset?> GetStartTimeAsync(string trainId);
         Task<TrainPositionResult?> GetPositionResultAsync(string trainId);
+        #endregion
+
+        #region Remove methods
+        Task RemoveDirectionAsync(string trainId);
+        Task RemoveSegmentIndexAsync(string trainId);
+        Task RemoveStartTimeAsync(string trainId);
+        Task RemovePositionResultAsync(string trainId);
+        #endregion
+
+        #region has methods
+        Task<bool> HasDirectionAsync(string trainId);
+        Task<bool> HasSegmentIndexAsync(string trainId);
+        Task<bool> HasStartTimeAsync(string trainId);
+        Task<bool> HasPositionResultAsync(string trainId);
+        #endregion
     }
 }
