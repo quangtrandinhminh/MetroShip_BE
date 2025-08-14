@@ -70,13 +70,19 @@ public partial class Shipment : BaseEntity
     public decimal TotalShippingFeeVnd { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
-    public decimal? TotalInsuranceFeeVnd { get; set; } = 0;
+    public decimal? TotalInsuranceFeeVnd { get; set; } 
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? TotalSurchargeFeeVnd { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal? TotalOverdueSurchargeFee { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? TotalCompensationFeeVnd { get; set; }
+
+    [Column(TypeName = "decimal(18, 2)")]
+    public decimal? TotalRefundedFeeVnd { get; set; } // Total refunded amount, if applicable
 
     [Column(TypeName = "decimal(8, 2)")]
     public decimal? TotalKm { get; set; }
@@ -93,7 +99,7 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? ScheduledDateTime { get; set; } 
     public ShiftEnum? ScheduledShift { get; set; }
 
-    public string? PricingConfigId { get; set; }
+    public string PricingConfigId { get; set; }
     public string? PriceStructureDescriptionJSON { get; set; }
 
     public DateTimeOffset? BookedAt { get; set; }
@@ -113,6 +119,8 @@ public partial class Shipment : BaseEntity
     public DateTimeOffset? ReturnDeliveredAt { get; set; }
     public DateTimeOffset? ReturnCancelledAt { get; set; }
     public DateTimeOffset? CompletedAt { get; set; } // When the shipment is fully completed
+    public DateTimeOffset? ExpiredAt { get; set; } // When the shipment is expired, if applicable
+    public DateTimeOffset? CompensatedAt { get; set; } // When compensation was processed, if applicable
     public string? RejectionReason { get; set; } // Reason for rejection, if applicable
 
     public string? RejectedBy { get; set; } // User who rejected the shipment   
@@ -177,8 +185,8 @@ public partial class Shipment : BaseEntity
     [InverseProperty(nameof(ShipmentItinerary.Shipment))]
     public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new List<ShipmentItinerary>();
 
-    [InverseProperty(nameof(SupportingTicket.Shipment))]
-    public virtual ICollection<SupportingTicket> SupportingTickets { get; set; } = new List<SupportingTicket>();
+    [InverseProperty(nameof(SupportTicket.Shipment))]
+    public virtual ICollection<SupportTicket> SupportTickets { get; set; } = new List<SupportTicket>();
 
     [InverseProperty(nameof(Transaction.Shipment))]
     public virtual ICollection<Transaction> Transactions { get; set; } = new List<Transaction>();

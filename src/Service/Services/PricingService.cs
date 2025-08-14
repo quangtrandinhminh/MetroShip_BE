@@ -7,6 +7,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +18,7 @@ namespace MetroShip.Service.Services;
 public class PricingService(IServiceProvider serviceProvider) : IPricingService
 {
     private readonly IPricingRepository _pricingRepository = serviceProvider.GetRequiredService<IPricingRepository>();
+    private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
@@ -24,8 +26,27 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     private const int CACHE_EXPIRY_MINUTES = 30;
     private const string CACHE_KEY = "DefaultPricingConfig";
 
-    private async Task<PricingConfig?> GetPricingConfigAsync()
+    private async Task<PricingConfig?> GetPricingConfigAsync(string? pricingConfigId = null)
     {
+        PricingConfig pricingConfig;
+        if (!string.IsNullOrEmpty(pricingConfigId))
+        {
+            pricingConfig = await _pricingRepository.GetSingleAsync(
+                x => x.Id == pricingConfigId && x.IsActive,
+                false,
+                x => x.WeightTiers, x => x.DistanceTiers
+                );
+            if (pricingConfig == null)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                "The specified pricing configuration is not found or is inactive.",
+                StatusCodes.Status400BadRequest
+                );
+            }
+            return pricingConfig;
+        }
+
         var cacheKey = CACHE_KEY;
         if (_cache.TryGetValue(cacheKey, out PricingConfig? cachedTable))
         {
@@ -33,7 +54,7 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             return cachedTable;
         }
 
-        var pricingConfig = await _pricingRepository.GetSingleAsync(
+        pricingConfig = await _pricingRepository.GetSingleAsync(
             x => x.IsActive, false,
             x => x.WeightTiers, x => x.DistanceTiers
         );
@@ -150,6 +171,94 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         return pricingConfig;
     }*/
 
-    // calculate surcharge based on weight and distance
+    public async Task CalculateOverdueSurcharge (Shipment shipment)
+    {
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment cannot be null.",
+            StatusCodes.Status400BadRequest
+            );
+        }
 
+        if (!shipment.Parcels.Any())
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must have at least one parcel to calculate overdue surcharge.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var pricingConfig = await GetPricingConfigAsync(shipment.PricingConfigId);
+        if (pricingConfig.BaseSurchargePerDayVnd == null || pricingConfig.FreeStoreDays == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Base surcharge per day or free store days are not configured.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var overdueDays = shipment.SurchargeAppliedAt.HasValue
+            ? (CoreHelper.SystemTimeNow - shipment.SurchargeAppliedAt.Value).Days
+            : 0;
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            var surchargeDays = overdueDays;
+            var surchargeAmount = pricingConfig.BaseSurchargePerDayVnd.Value * surchargeDays;
+            parcel.OverdueSurchangeFeeVnd = Math.Round(surchargeAmount, 2); // Round to 2 decimal places
+            _parcelRepository.Update(parcel);
+        }
+
+        shipment.TotalSurchargeFeeVnd = shipment.Parcels.Sum(p => p.OverdueSurchangeFeeVnd ?? 0);
+    }
+
+    public async Task<int> GetFreeStoreDaysAsync(string pricingConfigId)
+    {
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        return pricingConfig.FreeStoreDays ?? 0;
+    }
+
+    public async Task<int> GetRefundForCancellationBeforeScheduledHours (string pricingConfigId)
+    {
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException
+            (
+                ErrorCode.BadRequest,
+                "No active pricing configuration found.",
+                StatusCodes.Status400BadRequest
+            );
+        }
+
+        return pricingConfig.RefundForCancellationBeforeScheduledHours ?? 0;
+    }
+
+    public async Task<decimal> CalculateRefund(string pricingConfigId, decimal? totalPrice)
+    {
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
+        if (pricingConfig == null || !pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "No active pricing configuration found.",
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
+    }
 }

@@ -67,4 +67,36 @@ public partial class MetroTrain : BaseEntity
 
     [InverseProperty(nameof(ShipmentItinerary.Train))]
     public virtual ICollection<ShipmentItinerary> ShipmentItineraries { get; set; } = new HashSet<ShipmentItinerary>();
+
+    [InverseProperty(nameof(TrainSchedule.Train))]
+    public virtual ICollection<TrainSchedule> TrainSchedules { get; set; } = new List<TrainSchedule>();
+
+    public bool IsTrainCodeEven()
+    {
+        // format: regionCode-linecode-Tnumber, e.g: HCMC-L01-T01
+        var parts = TrainCode.Split('-');
+        if (parts.Length < 3)
+        {
+            Console.WriteLine("Invalid TrainCode format. Expected format: regionCode-linecode-Tnumber");
+            return false;
+        }
+
+        // Get "T01"
+        var numberPart = parts[2];
+
+        // Delete "T" (không phân biệt hoa thường)
+        if (numberPart.StartsWith("T", StringComparison.OrdinalIgnoreCase))
+        {
+            numberPart = numberPart.Substring(1);
+        }
+
+        // Bây giờ mới chuyển đổi chuỗi số thành số nguyên
+        if (int.TryParse(numberPart, out int trainNumber))
+        {
+            return trainNumber % 2 == 0;
+        }
+
+        Console.WriteLine($"Invalid number format in TrainCode part: {parts[2]}");
+        return false;
+    }
 }

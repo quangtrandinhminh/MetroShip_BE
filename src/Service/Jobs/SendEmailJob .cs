@@ -6,6 +6,7 @@ using Serilog;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using MetroShip.Repository.Models;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace MetroShip.Service.Jobs;
 

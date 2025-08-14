@@ -22,4 +22,6 @@ public record ShipmentListResponse
     public DateTimeOffset ScheduledDateTime { get; set; }
     public ShipmentStatusEnum ShipmentStatus { get; set; }
     public string ShipmentStatusName => ShipmentStatus.ToString();
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastUpdatedAt { get; set; }
 }

@@ -51,16 +51,16 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
+    private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
+    private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipments(
-        PaginatedListRequest request
-        , ShipmentFilterRequest? filterRequest = null, OrderByRequest? orderByRequest = null
-        )
+    public async Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
+    string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
-        _logger.Information("Get all shipments with request: {@request}", request);
+        /*_logger.Information("Get all shipments with request: {@request}", paginatedRequest);
         // Build filter expression based on request
         Expression<Func<Shipment, bool>> filterExpression = BuildShipmentFilterExpression(filterRequest);
         // Build order by expression based on request
@@ -72,20 +72,141 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
             shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
-                               request.PageNumber, request.PageSize, filterRequest.ItineraryIncludeStationId,
-                                              filterExpression, orderByExpression, IsDesc);
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                filterExpression, orderByExpression, IsDesc);
         }
         else
         {
             shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
-                request.PageNumber, request.PageSize,
+                paginatedRequest.PageNumber, paginatedRequest.PageSize,
                 filterExpression, orderByExpression, IsDesc
             );
         }
 
         var shipmentListResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+        return shipmentListResponse;*/
 
-        return shipmentListResponse;
+        _logger.Information(
+            $"Get all shipments, search '{searchKeyword}', order by '{orderByRequest?.OrderBy}' {(orderByRequest?.IsDesc == true ? "desc" : "asc")}");
+
+        // ====== FILTER ======
+        Expression<Func<Shipment, bool>> predicate = s => true;
+
+        // Search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(s =>
+                (s.TrackingCode != null && s.TrackingCode.ToLower().Contains(keywordLower)) ||
+                (s.SenderName != null && s.SenderName.ToLower().Contains(keywordLower)) ||
+                (s.RecipientName != null && s.RecipientName.ToLower().Contains(keywordLower)) ||
+                (s.SenderPhone != null && s.SenderPhone.Contains(keywordLower)) ||
+                (s.RecipientPhone != null && s.RecipientPhone.Contains(keywordLower))
+            );
+        }
+
+
+        // Created date range
+        if (createdFrom.HasValue)
+            predicate = predicate.And(s => s.CreatedAt >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(s => s.CreatedAt <= createdTo.Value);
+
+        // ====== Apply filterRequest ======
+        if (filterRequest != null)
+        {
+            if (!string.IsNullOrWhiteSpace(filterRequest.TrackingCode))
+                predicate = predicate.And(s => s.TrackingCode != null &&
+                    s.TrackingCode.ToLower().Contains(filterRequest.TrackingCode.ToLower()));
+
+            if (filterRequest.ShipmentStatus.HasValue)
+                predicate = predicate.And(s => s.ShipmentStatus == filterRequest.ShipmentStatus);
+
+            if (filterRequest.FromScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime >= filterRequest.FromScheduleDateTime.Value);
+
+            if (filterRequest.ToScheduleDateTime.HasValue)
+                predicate = predicate.And(s => s.ScheduledDateTime <= filterRequest.ToScheduleDateTime.Value);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DepartureStationId))
+                predicate = predicate.And(s => s.DepartureStationId == filterRequest.DepartureStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.DestinationStationId))
+                predicate = predicate.And(s => s.DestinationStationId == filterRequest.DestinationStationId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderName))
+                predicate = predicate.And(s => s.SenderName != null &&
+                    s.SenderName.ToLower().Contains(filterRequest.SenderName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.SenderPhone))
+                predicate = predicate.And(s => s.SenderPhone != null &&
+                    s.SenderPhone.Contains(filterRequest.SenderPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientName))
+                predicate = predicate.And(s => s.RecipientName != null &&
+                    s.RecipientName.ToLower().Contains(filterRequest.RecipientName.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientPhone))
+                predicate = predicate.And(s => s.RecipientPhone != null &&
+                    s.RecipientPhone.Contains(filterRequest.RecipientPhone));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.RecipientEmail))
+                predicate = predicate.And(s => s.RecipientEmail != null &&
+                    s.RecipientEmail.ToLower().Contains(filterRequest.RecipientEmail.ToLower()));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.TimeSlotId))
+                predicate = predicate.And(s => s.TimeSlotId == filterRequest.TimeSlotId);
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.LineId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si => si.Route.LineId == filterRequest.LineId));
+
+            if (!string.IsNullOrWhiteSpace(filterRequest.ItineraryIncludeStationId))
+                predicate = predicate.And(s => s.ShipmentItineraries.Any(si =>
+                    si.Route.FromStationId == filterRequest.ItineraryIncludeStationId ||
+                    si.Route.ToStationId == filterRequest.ItineraryIncludeStationId));
+        }
+
+        // ====== SORT ======
+        Expression<Func<Shipment, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "trackingcode" => s => s.TrackingCode!,
+            "departurestationname" => s => s.DepartureStationName!,
+            "destinationstationname" => s => s.DestinationStationName!,
+            "currentstationname" => s => s.CurrentStationName!,
+            "sendername" => s => s.SenderName!,
+            "recipientname" => s => s.RecipientName!,
+            "senderphone" => s => s.SenderPhone!,
+            "recipientphone" => s => s.RecipientPhone!,
+            "totalcostvnd" => s => s.TotalCostVnd,
+            "scheduleddatetime" => s => s.ScheduledDateTime,
+            "bookedat" => s => s.BookedAt,
+            _ => s => s.CreatedAt
+        };
+
+        bool sortDesc = orderByRequest?.IsDesc ?? true;
+
+        // ====== GET LIST ======
+        PaginatedList<Shipment> shipments;
+        if (filterRequest.IsAwaitingNextTrain.HasValue && filterRequest.IsAwaitingNextTrain.Value)
+        {
+            var stationId = filterRequest.ItineraryIncludeStationId ?? JwtClaimUltils.GetUserStation(_httpContextAccessor);
+            shipments = await _shipmentRepository.GetShipmentsCanWaitNextTrainAtStation(
+                paginatedRequest.PageNumber, paginatedRequest.PageSize, filterRequest.ItineraryIncludeStationId,
+                predicate, orderBy, sortDesc);
+        }
+        else
+        {
+            shipments = await _shipmentRepository.GetPaginatedListForListResponseAsync(
+                paginatedRequest.PageNumber,
+                paginatedRequest.PageSize,
+                predicate,
+                orderBy,
+                sortDesc);
+        }
+
+        var shipmentResponse = _mapperlyMapper.MapToShipmentListResponsePaginatedList(shipments);
+
+        return shipmentResponse;
     }
 
     public async Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode)
@@ -260,7 +381,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Check if all itineraries have been scheduled
         /*var maxAttempt = _systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS));*/
-        await CheckAvailableTimeSlotsAsync(shipment.Id, 3);
+        await _itineraryService.CheckAvailableTimeSlotsAsync(shipment.Id, 3);
 
         // send email to customer
         _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}", 
@@ -339,63 +460,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return BuildTotalPriceResponse(bestPathResponses, stationIds.ToList());
     }
 
-    public async Task UpdateShipmentStatusNoDropOff (string shipmentId)
-    {
-        _logger.Information("Update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
-        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
-
-        // Check if the shipment exists
-        if (shipment == null)
-        {
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
-            StatusCodes.Status400BadRequest);
-        }
-
-        // Check if the shipment is awaiting drop-off
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Shipment must be in AwaitingDropOff status to update to NoDropOff.",
-            StatusCodes.Status400BadRequest);
-        }
-
-        // Update shipment status to NoDropOff
-        shipment.ShipmentStatus = ShipmentStatusEnum.NoDropOff;
-        _shipmentTrackingRepository.Add(new ShipmentTracking
-        {
-            ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.NoDropOff,
-            Status = $"Đã tới giờ cắt hàng nhưng Kiện hàng trong đơn chưa được nhận",
-            EventTime = CoreHelper.SystemTimeNow,
-            UpdatedBy = "System",
-        });
-        _parcelTrackingRepository.AddRange(
-            shipment.Parcels.Select(parcel => new ParcelTracking
-            {
-                ParcelId = parcel.Id,
-                CurrentShipmentStatus = ShipmentStatusEnum.NoDropOff,
-                TrackingForShipmentStatus = ShipmentStatusEnum.NoDropOff,
-                Status = $"Kiện hàng trong đơn chưa được nhận",
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = "System"
-            })
-        );
-
-        // Save changes to the database
-        _shipmentRepository.Update(shipment);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-    }
+    // from staff, need tracking parcel
     public async Task PickUpShipment (ShipmentPickUpRequest request)
     {
         _logger.Information("Confirm shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId, false,
-                       x => x.Parcels, 
-                       x => x.ShipmentItineraries,
-                       x => x.ShipmentMedias
+                       x => x.Parcels
                        );
 
         // Check if the shipment exists
@@ -416,13 +487,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             StatusCodes.Status400BadRequest);
         }
 
-        // Check if all itineraries have been scheduled
-        if (shipment.ShipmentItineraries.Any(si => si.Date == null || si.TimeSlotId == null))
+        // Check if pick up in time range
+        var now = CoreHelper.SystemTimeNow;
+        if (now < shipment.StartReceiveAt || now > shipment.ScheduledDateTime)
         {
             throw new AppException(
-            ErrorCode.BadRequest,
-            ResponseMessageShipment.SHIPMENT_ITINERARY_NOT_SCHEDULED,
-            StatusCodes.Status400BadRequest);
+                ErrorCode.BadRequest,
+                "Parcel confirmation is outside the allowed pickup time range.",
+                StatusCodes.Status400BadRequest);
         }
 
         // Update shipment status and timestamps
@@ -439,17 +511,23 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             EventTime = shipment.PickedUpAt.Value,
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
-        _parcelTrackingRepository.AddRange(
-                       shipment.Parcels.Select(parcel => new ParcelTracking
-                       {
-                           ParcelId = parcel.Id,
-                           CurrentShipmentStatus = ShipmentStatusEnum.PickedUp,
-                           TrackingForShipmentStatus = ShipmentStatusEnum.PickedUp,
-                           Status = $"Kiện hàng đã được nhận tại Ga {stationName}",
-                           EventTime = shipment.PickedUpAt.Value,
-                           UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
-                       })
-        );    
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            parcel.Status = ParcelStatusEnum.Normal;
+            _parcelRepository.Update(parcel);
+
+            _parcelTrackingRepository.Add(new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                CurrentParcelStatus = parcel.Status,
+                TrackingForShipmentStatus = ShipmentStatusEnum.PickedUp,
+                Status = $"Kiện hàng đã được nhận tại Ga {stationName}",
+                EventTime = shipment.PickedUpAt.Value,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+        }
         await CancelUpdateNoDropOffJob(shipment.Id);
 
         foreach (var media in request.PickedUpMedias)
@@ -473,7 +551,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Your shipment with tracking code {shipment.TrackingCode} has been accepted.",
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã được nhân viên nhận tại Ga {stationName}.",
             };
             //_emailSender.SendMail(sendMailModel);
             await _emailSender.ScheduleEmailJob(sendMailModel);
@@ -522,10 +600,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         foreach (var parcel in shipment.Parcels)
         {
+            parcel.Status = ParcelStatusEnum.Canceled;
+            _parcelRepository.Update(parcel);
+
             _parcelTrackingRepository.Add(new ParcelTracking
             {
                 ParcelId = parcel.Id,
                 CurrentShipmentStatus = shipment.ShipmentStatus,
+                CurrentParcelStatus = parcel.Status,
                 TrackingForShipmentStatus = ShipmentStatusEnum.Rejected,
                 Status = $"Kiện hàng đã bị từ chối tại Ga {stationName}",
                 EventTime = shipment.RejectedAt.Value,
@@ -553,6 +635,188 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
+    public async Task CompleteShipment(ShipmentPickUpRequest request)
+    {
+        _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
+        //ShipmentValidator.ValidateShipmentCompleteRequest(request);
+
+        var shipment = await _shipmentRepository.GetSingleAsync(
+        x => x.Id == request.ShipmentId, false, x => x.Parcels);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting delivery
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.Arrived
+            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery
+            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
+            )
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageShipment.SHIPMENT_NOT_AWAITING_DELIVERY,
+            StatusCodes.Status400BadRequest);
+        }
+
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            var transaction = await _transactionRepository.GetSingleAsync(
+                x => x.ShipmentId == shipment.Id && x.TransactionType == TransactionTypeEnum.Surcharge
+                                && x.PaymentStatus == PaymentStatusEnum.Pending);
+            if (transaction != null)
+            {
+                // If there is a pending surcharge transaction, we cannot complete the shipment
+                throw new AppException(
+                ErrorCode.BadRequest,
+                "Cannot complete shipment while surcharge is pending.",
+                StatusCodes.Status400BadRequest);
+            }
+        }
+
+        // Update shipment status and timestamps
+        shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
+            ? ShipmentStatusEnum.CompletedWithCompensation
+            : ShipmentStatusEnum.Completed;
+        shipment.CompletedAt = CoreHelper.SystemTimeNow;
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation)
+        {
+            // If there are lost parcels, calculate compensation
+            var lostParcels = shipment.Parcels
+                .Where(p => p.Status == ParcelStatusEnum.Lost)
+                .ToList();
+            var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
+                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id)
+            ).ToList();
+
+            shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
+                lostParcels, categoryInsurances, _parcelRepository);
+        }
+
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Completed,
+            Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
+            EventTime = shipment.CompletedAt.Value,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+        });
+
+        var normalParcel = shipment.Parcels
+            .Where(p => p.Status == ParcelStatusEnum.Normal)
+            .ToList();
+        foreach (var parcel in normalParcel)
+        {
+            _parcelTrackingRepository.Add(new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                CurrentParcelStatus = parcel.Status,
+                StationId = shipment.DestinationStationId,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Completed,
+                Status = $"Kiện hàng đã được giao thành công tại Ga {stationName}",
+                EventTime = shipment.CompletedAt.Value,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+        }
+
+        foreach (var media in request.PickedUpMedias)
+        {
+            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
+            mediaEntity.ShipmentId = shipment.Id;
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.IdentityVerification;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
+            _shipmentMediaRepository.Add(mediaEntity);
+        }
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // Optionally send completion email to sender
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã hoàn thành",
+            };
+            //_emailSender.SendMail(sendMailModel);
+            await _emailSender.ScheduleEmailJob(sendMailModel);
+        }
+    }
+    public async Task ApplySurchargeForShipment(string shipmentId)
+    {
+        _logger.Information("Applying surcharge for shipment ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(
+            x => x.Id == shipmentId,
+            false,
+            x => x.Parcels
+        );
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting payment
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery ||
+            shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Shipment must be in AwaitingDelivery or ApplyingSurcharge status to apply surcharge.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update the shipment status and save changes
+        if (shipment.SurchargeAppliedAt == null)
+        {
+            shipment.SurchargeAppliedAt = CoreHelper.SystemTimeNow;
+            shipment.ShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge;
+            await _pricingService.CalculateOverdueSurcharge(shipment);
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge,
+                Status = $"Đơn hàng bắt đầu áp dụng phụ phí lưu kho quá hạn",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+
+            // Optionally send notification email about the surcharge
+            var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+            if (user != null)
+            {
+                var sendMailModel = new SendMailModel
+                {
+                    Email = user.Email,
+                    Type = MailTypeEnum.Notification,
+                    Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã bắt đầu tính phụ phí lưu kho." +
+                    $"Vui lòng liên lạc người nhận nhanh chóng nhận hàng để tránh phát sinh thêm chi phí nhận hàng."
+                };
+                await _emailSender.ScheduleEmailJob(sendMailModel);
+            }
+        }
+        else
+        {
+            await _pricingService.CalculateOverdueSurcharge(shipment);
+        }
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
 
     // from customer, no need tracking parcel
     public async Task CancelShipment(ShipmentRejectRequest request)
@@ -560,7 +824,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _logger.Information("Reject shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
             x => x.Id == request.ShipmentId, false,
-            x => x.Parcels, x => x.ShipmentItineraries);
+            x => x.Parcels);
 
         // Check if the shipment exists
         if (shipment == null)
@@ -587,42 +851,47 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.CancelledAt = CoreHelper.SystemTimeNow;
 
         // Check if the shipment can be cancelled before a certain time
-        var allowedCancelBefore = _systemConfigRepository
+        /*var allowedCancelBefore = _systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.ALLOW_CANCEL_BEFORE_HOUR));
-        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-int.Parse(allowedCancelBefore));*/
+        var allowedCancelBefore = await _pricingService.GetRefundForCancellationBeforeScheduledHours(shipment.PricingConfigId);
+        var deadlineForRefund = shipment.ScheduledDateTime.Value.AddHours(-allowedCancelBefore);
         if (shipment.ShipmentStatus is ShipmentStatusEnum.AwaitingDropOff 
-            && shipment.CancelledAt > deadlineForRefund)
+            && shipment.CancelledAt < deadlineForRefund)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingRefund;
+            shipment.TotalRefundedFeeVnd = await _pricingService.CalculateRefund(shipment.PricingConfigId, shipment.TotalCostVnd);
 
-            var refundPercent = _systemConfigRepository
-                .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.REFUND_PERCENT));
-            // create transaction for refund
-            var transaction = new Transaction
+            _shipmentTrackingRepository.Add(new ShipmentTracking
             {
                 ShipmentId = shipment.Id,
-                PaymentAmount = shipment.TotalCostVnd *
-                                decimal.Parse(refundPercent),
-                TransactionType = TransactionTypeEnum.Refund,
-                PaymentStatus = PaymentStatusEnum.Pending
-            };
-
-            // Add transaction to shipment
-            _transactionRepository.Add(transaction);
-            _logger.Information("Created refund transaction for shipment ID: {@shipmentId}", shipment.Id);
+                CurrentShipmentStatus = ShipmentStatusEnum.AwaitingRefund,
+                Status = $"Đơn hàng đã bị người gửi hủy và đang chờ hoàn tiền",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
+        }
+        else
+        {
+            // Update shipment status and timestamps
+            shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
+                Status = $"Đơn hàng đã bị người gửi hủy",
+                EventTime = shipment.CancelledAt.Value,
+                UpdatedBy = customerId,
+                Note = request.Reason
+            });
         }
 
-        // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Cancelled;
-        _shipmentTrackingRepository.Add(new ShipmentTracking
+        foreach (var parcel in shipment.Parcels)
         {
-            ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Cancelled,
-            Status = $"Đơn hàng đã bị người gửi hủy",
-            EventTime = shipment.CancelledAt.Value,
-            UpdatedBy = customerId,
-            Note = request.Reason
-        });
+            parcel.Status = ParcelStatusEnum.Canceled;
+            _parcelRepository.Update(parcel);
+        }
 
         // Save changes to the database
         _shipmentRepository.Update(shipment);
@@ -643,7 +912,50 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }*/
     }
+    public async Task UpdateShipmentStatusNoDropOff(string shipmentId)
+    {
+        _logger.Information("Update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
 
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is awaiting drop-off
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                "Shipment must be in AwaitingDropOff status to update to NoDropOff.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        // Update shipment status to NoDropOff
+        shipment.ShipmentStatus = ShipmentStatusEnum.NoDropOff;
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.NoDropOff,
+            Status = $"Đã tới giờ cắt hàng nhưng Kiện hàng trong đơn chưa được nhận",
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = "System",
+        });
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            parcel.Status = ParcelStatusEnum.Canceled;
+            _parcelRepository.Update(parcel);
+        }
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
     public async Task UpdateShipmentStatusUnpaid(string shipmentId)
     {
         _logger.Information("Update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
@@ -679,11 +991,16 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
 
+        foreach (var parcel in shipment.Parcels)
+        {
+            parcel.Status = ParcelStatusEnum.Canceled;
+            _parcelRepository.Update(parcel);
+        }
+
         // Save changes to the database
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
-
     public async Task FeedbackShipment(ShipmentFeedbackRequest request)
     {
         _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
@@ -720,191 +1037,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    public async Task CompleteShipment(ShipmentPickUpRequest request)
-    {
-        _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
-        //ShipmentValidator.ValidateShipmentCompleteRequest(request);
-
-        var shipment = await _shipmentRepository.GetSingleAsync(
-        x => x.Id == request.ShipmentId, false, x => x.Parcels);
-
-        // Check if the shipment exists
-        if (shipment == null)
-        {
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
-            StatusCodes.Status400BadRequest);
-        }
-
-        // Check if the shipment is awaiting delivery
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Stored
-            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
-            )
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            ResponseMessageShipment.SHIPMENT_NOT_AWAITING_DELIVERY,
-            StatusCodes.Status400BadRequest);
-        }
-
-        if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
-        {
-            var transaction = await _transactionRepository.GetSingleAsync(
-                x => x.ShipmentId == shipment.Id && x.TransactionType == TransactionTypeEnum.Surcharge
-                                && x.PaymentStatus == PaymentStatusEnum.Pending);
-            if (transaction != null)
-            {
-                // If there is a pending surcharge transaction, we cannot complete the shipment
-                throw new AppException(
-                ErrorCode.BadRequest,
-                "Cannot complete shipment while surcharge is pending.",
-                StatusCodes.Status400BadRequest);
-            }
-        }
-
-        // Update shipment status and timestamps
-        shipment.ShipmentStatus = ShipmentStatusEnum.Completed;
-        shipment.CompletedAt = CoreHelper.SystemTimeNow;
-        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
-        _shipmentTrackingRepository.Add(new ShipmentTracking
-        {
-            ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Completed,
-            Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
-            EventTime = shipment.CompletedAt.Value,
-            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
-        });
-
-        foreach (var parcel in shipment.Parcels)
-        {
-            _parcelTrackingRepository.Add(new ParcelTracking
-            {
-                ParcelId = parcel.Id,
-                CurrentShipmentStatus = shipment.ShipmentStatus,
-                StationId = shipment.DestinationStationId,
-                TrackingForShipmentStatus = ShipmentStatusEnum.Completed,
-                Status = $"Kiện hàng đã được giao thành công tại Ga {stationName}",
-                EventTime = shipment.CompletedAt.Value,
-                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
-            });
-        }
-
-        foreach (var media in request.PickedUpMedias)
-        {
-            var mediaEntity = _mapperlyMapper.MapToShipmentMediaEntity(media);
-            mediaEntity.ShipmentId = shipment.Id;
-            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.IdentityVerification;
-            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
-            _shipmentMediaRepository.Add(mediaEntity);
-        }
-
-        // Save changes to the database
-        _shipmentRepository.Update(shipment);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-
-        // Optionally send completion email to sender
-        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
-        if (user != null)
-        {
-            var sendMailModel = new SendMailModel
-            {
-                Email = user.Email,
-                Type = MailTypeEnum.Notification,
-                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã hoàn thành",
-            };
-            //_emailSender.SendMail(sendMailModel);
-            await _emailSender.ScheduleEmailJob(sendMailModel);
-        }
-    }
-
-    public async Task ApplySurchargeForShipment(string shipmentId)
-    {
-        _logger.Information("Applying surcharge for shipment ID: {@shipmentId}", shipmentId);
-        var shipment = await _shipmentRepository.GetSingleAsync(
-            x => x.Id == shipmentId,
-            false,
-            x => x.Parcels
-        );
-
-        // Check if the shipment exists
-        if (shipment == null)
-        {
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
-            StatusCodes.Status400BadRequest);
-        }
-
-        // Check if the shipment is awaiting payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery ||
-            shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "Shipment must be in AwaitingDelivery or ApplyingSurcharge status to apply surcharge.",
-            StatusCodes.Status400BadRequest);
-        }
-
-        // Apply surcharge logic here
-        var applyAt = shipment.SurchargeAppliedAt ?? CoreHelper.SystemTimeNow;
-        ParcelPriceCalculator.CalculateOverdueSurcharge(shipment.Parcels.ToList(), applyAt, 2000);
-        shipment.TotalOverdueSurchargeFee = shipment.Parcels.Sum(p => p.OverdueSurchangeFeeVnd);
-
-        // Update the shipment status and save changes
-        if (shipment.SurchargeAppliedAt == null)
-        {
-            shipment.ShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge;
-            _shipmentTrackingRepository.Add(new ShipmentTracking
-            {
-                ShipmentId = shipment.Id,
-                CurrentShipmentStatus = ShipmentStatusEnum.ApplyingSurcharge,
-                Status = $"Đơn hàng bắt đầu áp dụng phụ phí lưu kho quá hạn",
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
-            });
-
-            // Optionally send notification email about the surcharge
-            var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
-            if (user != null)
-            {
-                var sendMailModel = new SendMailModel
-                {
-                    Email = user.Email,
-                    Type = MailTypeEnum.Notification,
-                    Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã bắt đầu tính phụ phí lưu kho." +
-                    $"Vui lòng liên lạc người nhận nhanh chóng nhận hàng để tránh phát sinh thêm chi phí nhận hàng."
-                };
-                await _emailSender.ScheduleEmailJob(sendMailModel);
-            }
-        }
-        _shipmentRepository.Update(shipment);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-    }
-
-    public async Task ScheduleUpdateNoDropOffJob(string shipmentId, DateTimeOffset scheduledDateTime)
-    {
-        _logger.Information("Scheduling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
-        var jobData = new JobDataMap
-        {
-            { "NoDropOff-for-shipmentId", shipmentId }
-        };
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<UpdateShipmentToNoDropOff>()
-            .WithIdentity($"UpdateShipmentToNoDropOff-{shipmentId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-UpdateShipmentToNoDropOff-{shipmentId}")
-            .StartAt(scheduledDateTime.AddMinutes(5))
-            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
-    }
 
     public async Task CancelUpdateNoDropOffJob(string shipmentId)
     {
@@ -940,38 +1072,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .WithIdentity($"Trigger-UpdateShipmentToUnpaid-{shipmentId}")
             .StartAt(paymentDeadline)
             //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
-    }
-
-    // Schedule by Update Out for delivery method
-    private async Task ScheduleApplySurchargeJob(string shipmentId)
-    {
-        _logger.Information("Scheduling job to apply surcharge for shipment ID: {@shipmentId}", shipmentId);
-        var jobData = new JobDataMap
-        {
-            { "ApplySurcharge-for-shipmentId", shipmentId }
-        };
-
-        var runAfterHours = int.Parse(
-                       _systemConfigRepository.GetSystemConfigValueByKey(
-                                          nameof(SystemConfigSetting.Instance.SURCHARGE_AFTER_DELIVERED_HOUR)));
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<ApplySurchargeJob>()
-            .WithIdentity($"ApplySurchargeJob-{shipmentId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-ApplySurchargeJob-{shipmentId}")
-            .StartAt(DateTimeOffset.UtcNow.AddHours(runAfterHours))
-            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            // Repeat every 24 hours
-            .WithSimpleSchedule(x => x
-                .WithIntervalInHours(24)
-                .RepeatForever())
             .Build();
 
         await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
@@ -1224,7 +1324,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         //InitializePricingTableAsync().Wait();
 
         // Get parcel categories
-        var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
+        /*var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
         var categories = await _parcelCategoryRepository.GetAllWithCondition(
             x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
             .ToListAsync();
@@ -1237,7 +1337,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             ErrorCode.NotFound,
             $"Parcel categories not found: {string.Join(", ", missingCategories)}",
             StatusCodes.Status404NotFound);
-        }
+        }*/
+
+        // Get insurance policy base on categoryInsuranceIds
+        var categoryInsuranceIds = request.Parcels
+            .Select(p => p.CategoryInsuranceId)
+            .Distinct()
+            .ToList();
+        var categoryInsurance = await _categoryInsuranceRepository
+            .GetAllWithCondition(x => categoryInsuranceIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null
+            , x => x.InsurancePolicy, x => x.ParcelCategory
+            )
+            .ToListAsync();
 
         return pathResults.Select(r =>
         {
@@ -1245,13 +1356,16 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
             // Calculate pricing for each parcel
+            /*ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
+
             ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, _pricingService, categories);
+                pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
 
             // Check est arrival time
             var date = new DateOnly(request.ScheduledDateTime.Year,
                                request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
+            pathResponse.EstArrivalTime = _itineraryService.CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
 
             return new
             {
@@ -1282,392 +1396,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
         response.StationsInDistanceMeter = maxDistanceInMeters;
         return response;
-    }
-
-    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
-    {
-        _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
-
-        // for each line, get next time slot
-        var nextTimeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
-                       x => !x.IsAbnormal && x.DeletedAt == null)
-            .ToListAsync();
-
-        if (nextTimeSlots == null || !nextTimeSlots.Any())
-        {
-            _logger.Warning("No available time slots found for estimation.");
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
-            StatusCodes.Status404NotFound);
-        }
-
-        // Find the current time slot in the list
-        var currentSlot = nextTimeSlots.FirstOrDefault(x => x.Id == currentSlotId);
-        if (currentSlot == null)
-        {
-            _logger.Warning("Current time slot with ID {CurrentSlotId} not found in available time slots.",
-                               currentSlotId);
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
-            StatusCodes.Status404NotFound);
-        }
-
-        // -1 is eliminate if only 1 line, does not change to next slot
-        for (var i = 0; i < pathResponse.TotalMetroLines-1; i++)
-        {
-            (date, currentSlot) = GetNextSlot(date, currentSlot, nextTimeSlots);
-        }
-
-        // Normalize date to start of the day, gmt +7, include if for loop not run
-        var result = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.FromHours(7));
-
-        // + hour from 0 to close time
-        var hour = currentSlot.CloseTime.ToTimeSpan().TotalHours;
-        // calculate how many hour from current slot
-        if (currentSlot.CloseTime.ToTimeSpan().TotalHours > currentSlot.OpenTime.ToTimeSpan().TotalHours)
-        {
-            // date to be 00:00 and add hour
-            result = result.AddHours(hour);
-        }
-        else
-        {
-            result = result.AddDays(1).AddHours(hour);
-        }
-
-        // cus timeonly from slot is +7, convert to +0
-        result = result.ToUniversalTime();
-        return result;
-    }
-
-    /*public async Task<List<ShipmentAvailableTimeSlotResponse>> CheckAvailableTimeSlotsAsync
-        (ShipmentAvailableTimeSlotsRequest request)
-    {
-        var shipment = await _shipmentRepository.GetByIdAsync(request.ShipmentId);
-        if (shipment?.Parcels == null)
-        {
-            _logger.Warning("Shipment or its parcels are null.");
-        }
-
-        var availableSlotsRequest = new ShipmentRepository.CheckAvailableTimeSlotsRequest
-        {
-            ShipmentId = request.ShipmentId,
-            MaxAttempts = request.MaxAttempts > 0 ? request.MaxAttempts : 3
-        };
-
-        var availableSlots = await _shipmentRepository.FindAvailableTimeSlotsAsync(availableSlotsRequest);
-
-        var validSlots = availableSlots
-            .Where(s => s.StartDate != default && s.Date != default)
-            .ToList();
-
-        if (!validSlots.Any())
-        {
-            _logger.Warning("No valid time slots found for shipment {ShipmentId}", request.ShipmentId);
-            return new List<ShipmentAvailableTimeSlotResponse>();
-        }
-
-        var mappedSlots = validSlots.Select(slot =>
-        {
-            var slotDetail = new MetroTimeSlotResponse
-            {
-                Id = slot.TimeSlotId,
-                Shift = slot.Shift,
-                DayOfWeek = slot.DayOfWeek,
-                SpecialDate = slot.SpecialDate,
-                OpenTime = slot.OpenTime,
-                CloseTime = slot.CloseTime,
-                IsAbnormal = slot.IsAbnormal,
-                ScheduleBeforeShiftMinutes = 30
-            };
-
-            return (
-                StartDate: slot.StartDate,
-                Date: slot.Date,
-                SlotDetail: slotDetail,
-                RemainingVolumeM3: slot.RemainingVolumeM3,
-                RemainingWeightKg: slot.RemainingWeightKg,
-                ShipmentStatus: ShipmentStatusEnum.AwaitingDropOff,
-                ParcelIds: slot.ParcelIds ?? new List<string>()
-            );
-        }).ToList();
-
-        return _mapperlyMapper.MapToAvailableTimeSlotResponseList(mappedSlots);
-    }*/
-
-    private record CalculatedItinerary
-    {
-        public DateOnly? Date { get; init; } = null;
-        public string TimeSlotId { get; init; } = string.Empty;
-        public string ShipmentId { get; init; } = string.Empty;
-        public decimal? TotalWeightKg { get; init; } = null;
-        public decimal? TotalVolumeM3 { get; init; } = null;
-        public ShiftEnum? Shift { get; init; } = null;
-        public string? LineId { get; init; } = null;
-        public string? RouteId { get; init; } = null;
-    }
-
-    public async Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(
-        string shipmentId, int maxAttempt)
-    {
-        _logger.Information("Checking available time slots for shipment ID: {@ShipmentId}, Max Attempts: {@MaxAttempts}",
-            shipmentId, maxAttempt);
-
-        // 1. Get shipment with itineraries and routes
-        var shipment = await _shipmentRepository.GetAll()
-            .Include(x => x.ShipmentItineraries.OrderBy(i => i.LegOrder))
-            .ThenInclude(x => x.Route)
-            .FirstOrDefaultAsync(x => x.Id == shipmentId && x.DeletedAt == null);
-
-        if (shipment == null)
-        {
-            throw new AppException(
-                ErrorCode.NotFound,
-                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
-                StatusCodes.Status400BadRequest);
-        }
-
-        // 2. Get system configuration
-        var maxWeightKg = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
-        var maxVolumeM3 = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
-
-        // 3. Get all available time slots
-        var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
-                x => !x.IsAbnormal && x.DeletedAt == null)
-            .OrderBy(x => x.Shift)
-            .ToListAsync();
-
-        // 4. Bulk fetch all relevant itineraries for capacity calculation
-        var capacityData = await BulkFetchCapacityDataAsync(shipment, maxAttempt);
-
-        // 5. Process slot assignment for each itinerary
-        await ProcessSlotAssignmentAsync(shipment, capacityData, timeSlots, maxWeightKg, maxVolumeM3, maxAttempt);
-
-        // 6. Save changes to database
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        return _mapperlyMapper.MapToListShipmentItineraryResponse(shipment.ShipmentItineraries.ToList());
-    }
-
-
-    /// <summary>
-    /// Bulk fetch all itineraries that could affect capacity calculation
-    /// This is the key performance optimization
-    /// </summary>
-    private async Task<Dictionary<CapacityKey, List<CalculatedItinerary>>> BulkFetchCapacityDataAsync(
-        Shipment shipment, int maxAttempts)
-    {
-        // Define valid shipment statuses for capacity calculation
-        var validStatuses = new[]
-        {
-            ShipmentStatusEnum.AwaitingPayment,
-            ShipmentStatusEnum.AwaitingDropOff,
-            ShipmentStatusEnum.PickedUp,
-            ShipmentStatusEnum.InTransit,
-            ShipmentStatusEnum.ToReturn,
-            ShipmentStatusEnum.Returning
-        };
-
-        // Calculate date range for bulk fetch
-        var startDate = new DateOnly(
-                shipment.ScheduledDateTime.Value.Year,
-                shipment.ScheduledDateTime.Value.Month,
-                shipment.ScheduledDateTime.Value.Day);
-        var endDate = startDate.AddDays(4 * maxAttempts); // 4 shifts per day
-
-        // Get all lines involved in this shipment
-        var routeIds = shipment.ShipmentItineraries.Select(i => i.RouteId).Distinct().ToList();
-
-        // Bulk fetch ALL relevant itineraries for capacity calculation
-        var allRelevantItineraries = await _shipmentItineraryRepository.GetAllWithCondition(
-            x => routeIds.Contains(x.RouteId) &&
-                 validStatuses.Contains(x.Shipment.ShipmentStatus) &&
-                 x.Date.HasValue &&
-                 x.Date.Value >= startDate &&
-                 x.Date.Value <= endDate &&
-                 x.DeletedAt == null)
-            .Include(x => x.Shipment)
-            .Include(x => x.Route)
-            .Include(x => x.TimeSlot)
-            .Select(x => new CalculatedItinerary
-            {
-                Date = x.Date.Value,
-                TimeSlotId = x.TimeSlotId,
-                ShipmentId = x.ShipmentId,
-                TotalWeightKg = x.Shipment.TotalWeightKg,
-                TotalVolumeM3 = x.Shipment.TotalVolumeM3,
-                Shift = x.TimeSlot.Shift,
-                LineId = x.Route.LineId,
-                RouteId = x.RouteId
-            })
-            .ToListAsync();
-
-        // Group by (RouteId, Date, Shift) for fast lookup
-        return allRelevantItineraries
-            .GroupBy(x => new CapacityKey(x.RouteId, x.Date.Value, x.Shift.Value))
-            .ToDictionary(g => g.Key, g => g.ToList());
-    }
-
-    /// <summary>
-    /// Process slot assignment for all itineraries in the shipment
-    /// </summary>
-    private async Task ProcessSlotAssignmentAsync(
-        Shipment shipment,
-        Dictionary<CapacityKey, List<CalculatedItinerary>> capacityData,
-        List<MetroTimeSlot> timeSlots,
-        decimal maxWeightKg,
-        decimal maxVolumeM3,
-        int maxAttempts)
-    {
-        // Initialize with shipment's scheduled date and shift
-        var currentDate = new DateOnly(
-                shipment.ScheduledDateTime.Value.Year,
-                shipment.ScheduledDateTime.Value.Month,
-                shipment.ScheduledDateTime.Value.Day);
-        var currentSlot = timeSlots.FirstOrDefault(ts => ts.Shift == shipment.ScheduledShift);
-
-        if (currentSlot == null)
-        {
-            throw new AppException(
-                ErrorCode.NotFound,
-                $"No time slot found for shift {shipment.ScheduledShift}",
-                StatusCodes.Status400BadRequest);
-        }
-
-        string previousLineId = null;
-
-        foreach (var itinerary in shipment.ShipmentItineraries.OrderBy(i => i.LegOrder))
-        {
-            var currentLineId = itinerary.Route.LineId;
-
-            // If not first itinerary and different line, find next available slot
-            if (itinerary.LegOrder > 1 && currentLineId != previousLineId)
-            {
-                (currentDate, currentSlot) = GetNextSlot(currentDate, currentSlot, timeSlots);
-            }
-
-            // Find available slot with capacity check
-            var (assignedDate, assignedSlot) = await FindAvailableSlotWithCapacityAsync(
-                currentDate, currentSlot, itinerary, shipment,
-                capacityData, timeSlots, maxWeightKg, maxVolumeM3, maxAttempts);
-
-            // Assign slot to itinerary
-            itinerary.TimeSlotId = assignedSlot.Id;
-            itinerary.Date = assignedDate;
-            _shipmentItineraryRepository.Update(itinerary);
-
-            // Update for next iteration
-            currentDate = assignedDate;
-            currentSlot = assignedSlot;
-            previousLineId = currentLineId;
-
-            _logger.Information("Assigned slot {SlotId} on {Date} to itinerary {ItineraryId} (Line: {LineId})",
-                assignedSlot.Id, assignedDate, itinerary.Id, currentLineId);
-        }
-    }
-
-    /// Find available slot with capacity check using pre-fetched data
-    private async Task<(DateOnly, MetroTimeSlot)> FindAvailableSlotWithCapacityAsync(
-        DateOnly startDate,
-        MetroTimeSlot startSlot,
-        ShipmentItinerary itinerary,
-        Shipment shipment,
-        Dictionary<CapacityKey, List<CalculatedItinerary>> capacityData,
-        List<MetroTimeSlot> timeSlots,
-        decimal maxWeightKg,
-        decimal maxVolumeM3,
-        int maxAttempts)
-    {
-        var currentDate = startDate;
-        var currentSlot = startSlot;
-        var attempts = 0;
-
-        while (attempts < maxAttempts)
-        {
-            var capacityKey = new CapacityKey(itinerary.RouteId, currentDate, currentSlot.Shift);
-
-            // Get existing capacity for this line/date/shift
-            var existingItineraries = capacityData
-                .GetValueOrDefault(capacityKey, new List<CalculatedItinerary>());
-
-            var totalWeightKg = existingItineraries.Sum(i => i.TotalWeightKg ?? 0);
-            var totalVolumeM3 = existingItineraries.Sum(i => i.TotalVolumeM3 ?? 0);
-
-            // Check if adding this shipment exceeds capacity
-            if (totalWeightKg + (shipment.TotalWeightKg ?? 0) <= maxWeightKg &&
-                totalVolumeM3 + (shipment.TotalVolumeM3 ?? 0) <= maxVolumeM3)
-            {
-                // Add this shipment to capacity data for future iterations
-                var newItinerary = new CalculatedItinerary
-                {
-                    Date = currentDate,
-                    TimeSlotId = currentSlot.Id,
-                    ShipmentId = shipment.Id,
-                    TotalWeightKg = shipment.TotalWeightKg,
-                    TotalVolumeM3 = shipment.TotalVolumeM3,
-                    Shift = currentSlot.Shift,
-                    LineId = itinerary.Route.LineId,
-                    RouteId = itinerary.RouteId
-                };
-
-                if (!capacityData.ContainsKey(capacityKey))
-                    capacityData[capacityKey] = new List<CalculatedItinerary>();
-                capacityData[capacityKey].Add(newItinerary);
-
-                return (currentDate, currentSlot);
-            }
-
-            // Try next slot
-            (currentDate, currentSlot) = GetNextSlot(currentDate, currentSlot, timeSlots);
-            attempts++;
-
-            _logger.Debug("Attempt {Attempt}: Slot {SlotId} on {Date} has insufficient capacity for route {Route}",
-                attempts, currentSlot.Id, currentDate, itinerary.Route.RouteNameEn);
-        }
-
-        _shipmentRepository.Delete(shipment);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        throw new AppException(
-            ErrorCode.BadRequest,
-            $"No available slot found for itinerary on route {itinerary.Route.RouteNameEn} after {maxAttempts} attempts",
-            StatusCodes.Status400BadRequest);
-    }
-
-    /// Get next slot
-    private (DateOnly, MetroTimeSlot) GetNextSlot(
-        DateOnly date,
-        MetroTimeSlot currentSlot,
-        List<MetroTimeSlot> timeSlots)
-    {
-        // Normalize date to start of the day, default to UTC+0
-        //date = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, TimeSpan.Zero);
-        var nextShift = currentSlot.Shift switch
-        {
-            ShiftEnum.Morning => ShiftEnum.Afternoon,
-            ShiftEnum.Afternoon => ShiftEnum.Evening,
-            ShiftEnum.Evening => ShiftEnum.Night,
-            ShiftEnum.Night => ShiftEnum.Morning,
-            _ => ShiftEnum.Morning
-        };
-
-        // If current slot is Night, move to next date's Morning
-        var nextDate = currentSlot.Shift == ShiftEnum.Night ? date.AddDays(1) : date;
-        var nextSlot = timeSlots.FirstOrDefault(ts => ts.Shift == nextShift);
-
-        if (nextSlot == null)
-        {
-            throw new AppException(
-                ErrorCode.NotFound,
-                $"No time slot found for shift {nextShift}",
-                StatusCodes.Status500InternalServerError);
-        }
-
-        return (nextDate, nextSlot);
-    }
-
-    public record CapacityKey(string RouteId, DateOnly Date, ShiftEnum Shift);
+    } 
 
     public async Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode)
     {

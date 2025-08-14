@@ -18,6 +18,7 @@ using MetroShip.Service.Jobs;
 using Quartz;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 namespace MetroShip.Service.Services
 {

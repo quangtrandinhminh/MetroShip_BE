@@ -223,6 +223,8 @@
         public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND must be greater than or equal to 0.";
         public const string PRICE_VND_INVALID = "Price in VND must be greater than or equal to 0.";
         public const string VALUE_VND_INVALID = "Value in VND must be greater than to 0.";
+        public const string CATEGORY_INSURANCE_ID_REQUIRED = "Category insurance ID is required.";
+        public const string CATEGORY_INSURANCE_ID_INVALID = "Category insurance ID is invalid.";
     }
 
     public class ResponseMessageStation

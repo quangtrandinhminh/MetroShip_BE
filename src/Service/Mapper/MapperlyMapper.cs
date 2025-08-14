@@ -5,6 +5,7 @@ using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
+using MetroShip.Service.ApiModels.Insurance;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -26,6 +27,7 @@ using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.StaffAssignment;
+using MetroShip.Service.ApiModels.SupportTicket;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace MetroShip.Service.Mapper;
@@ -59,6 +61,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
+    public partial List<ShipmentTrackingResponse> MapToParcelTrackingResponseList(ICollection<ShipmentTrackingResponse> entity);
+    public partial ShipmentTrackingResponse MapToShipmentTrackingResponse(ShipmentTracking entity);
+
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
@@ -106,10 +111,10 @@ public partial class MapperlyMapper : IMapperlyMapper
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
-
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
-
     public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
+    public partial List<ParcelTrackingResponse> MapToParcelTrackingResponseList(ICollection<ParcelTracking> entity);
+    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
 
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
@@ -117,6 +122,14 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     [MapperRequiredMapping(RequiredMappingStrategy.Target)]
     public partial ParcelCategoryResponse MapToParcelCategoryResponse(ParcelCategory entity);
+
+    // category insurance
+    public partial CategoryInsuranceResponse MapToCategoryInsuranceResponse(CategoryInsurance entity);
+
+    public partial List<CategoryInsuranceResponse> MapToCategoryInsuranceResponseList(ICollection<CategoryInsurance> entity);
+
+    // insurance policy
+    public partial InsuranceResponse MapToInsuranceResponse(InsurancePolicy entity);
 
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
@@ -152,6 +165,11 @@ public partial class MapperlyMapper : IMapperlyMapper
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     public partial RegionResponse MapToRegionResponse(Region entity);
+
+    // support ticket
+    public partial SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
+    public partial PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
+    public partial SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

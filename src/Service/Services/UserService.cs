@@ -35,11 +35,17 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
 
-    public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(int pageNumber, int pageSize, UserRoleEnum? role)
+    public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(PaginatedListRequest paginatedRequest, UserRoleEnum? role, string? searchKeyword = null,
+    DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
     {
-        _logger.Information($"Get all users by role {role.ToString()}");
+        _logger.Information($"Get all users by role {role?.ToString() ?? "All"}, search '{searchKeyword}', " +
+                            $"order by '{orderByRequest?.OrderBy}', " +
+                            $"{(orderByRequest?.IsDesc ?? true ? "desc" : "asc")}");
+
+        // ===== FILTER =====
         Expression<Func<UserEntity, bool>> predicate = v => v.DeletedTime == null;
 
+        // Filter Role
         List<RoleEntity> roleEntity;
         if (role != null)
         {
@@ -51,11 +57,46 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             roleEntity = await _roleManager.Roles.ToListAsync();
         }
 
-        var users = await _userRepository.GetAllPaginatedQueryable(
-            pageNumber, pageSize,
-            predicate, null, e => e.UserRoles, _ => _.StaffAssignments);
+        // Filter search keyword
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keywordLower = searchKeyword.Trim().ToLower();
+            predicate = predicate.And(x =>
+                (x.FullName != null && x.FullName.ToLower().Contains(keywordLower)) ||
+                (x.Email != null && x.Email.ToLower().Contains(keywordLower)) ||
+                (x.PhoneNumber != null && x.PhoneNumber.Contains(keywordLower)) ||
+                (x.Address != null && x.Address.ToLower().Contains(keywordLower))
+            );
+        }
 
-        // Keep only IsActive StaffAssignments in users
+        // Filter CreatedTime
+        if (createdFrom.HasValue)
+            predicate = predicate.And(x => x.CreatedTime >= createdFrom.Value);
+        if (createdTo.HasValue)
+            predicate = predicate.And(x => x.CreatedTime <= createdTo.Value);
+
+        // ===== SORT =====
+        Expression<Func<UserEntity, object>>? orderBy = orderByRequest?.OrderBy?.ToLower() switch
+        {
+            "fullname" => x => x.FullName!,
+            "email" => x => x.Email!,
+            "createdtime" => x => x.CreatedTime,
+            _ => x => x.CreatedTime
+        };
+
+        bool sortDesc = orderByRequest?.IsDesc ?? true;
+
+        // ===== GET DATA =====
+        var users = await _userRepository.GetAllPaginatedQueryable(
+            paginatedRequest.PageNumber,
+            paginatedRequest.PageSize,
+            predicate,
+            orderBy,
+            e => e.UserRoles,
+            _ => _.StaffAssignments
+        );
+
+        // Giữ lại StaffAssignments active
         foreach (var user in users.Items)
         {
             user.StaffAssignments = user.StaffAssignments
@@ -63,7 +104,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                 .ToList();
         }
 
-        // get station for staff
+        // Lấy danh sách Station
         var stationIds = users.Items
             .SelectMany(u => u.StaffAssignments)
             .Select(sa => sa.StationId)
@@ -71,10 +112,13 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             .ToList();
 
         var stationList = _stationRepository.GetAll()
-        .Where(x => x.DeletedAt == null && stationIds.Contains(x.Id))
-        .Select(x => new { x.Id, x.StationNameVi });
+            .Where(x => x.DeletedAt == null && stationIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.StationNameVi })
+            .ToList();
 
+        // Map DTO
         var userResponse = _mapper.MapToUserResponsePaginatedList(users);
+
         foreach (var user in userResponse.Items)
         {
             user.Role = _mapper.MapRoleToRoleName(roleEntity);
@@ -83,7 +127,6 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             {
                 foreach (var assignment in user.StaffAssignments)
                 {
-                    // get station name for staff
                     var station = stationList.FirstOrDefault(x => x.Id == assignment.StationId);
                     if (station != null)
                     {

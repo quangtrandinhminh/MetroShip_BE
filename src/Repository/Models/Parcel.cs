@@ -13,6 +13,11 @@ namespace MetroShip.Repository.Models;
 [Index("ParcelCode", Name = "UQ__ParcelCode__A2A2A54B1E001898", IsUnique = true)]
 public partial class Parcel : BaseEntity
 {
+    public Parcel()
+    {
+        Status = ParcelStatusEnum.Created;
+    }
+
     [Required]
     [StringLength(50)]
     public string ParcelCode { get; set; }
@@ -21,9 +26,13 @@ public partial class Parcel : BaseEntity
     [StringLength(50)]
     public string ShipmentId { get; set; }
 
-    [Required]
+    public ParcelStatusEnum Status { get; set; }
+
     [StringLength(50)]
-    public string ParcelCategoryId { get; set; }
+    public string? ParcelCategoryId { get; set; }
+
+    [StringLength(50)]
+    public string? CategoryInsuranceId { get; set; }
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal WeightKg { get; set; }
@@ -57,6 +66,8 @@ public partial class Parcel : BaseEntity
     public decimal ChargeableWeightKg => Math.Max(WeightKg, VolumeCm3 / 5000);
     public decimal TotalLengthCm => LengthCm + WidthCm + HeightCm;
 
+    public decimal? CompensationFeeVnd { get; set; }
+
     public string? DescriptionImageUrl { get; set; }
 
     [StringLength(255)]
@@ -66,9 +77,13 @@ public partial class Parcel : BaseEntity
     [InverseProperty(nameof(Shipment.Parcels))]
     public virtual Shipment Shipment { get; set; }
 
-    [ForeignKey(nameof(ParcelCategoryId))]
+    /*[ForeignKey(nameof(ParcelCategoryId))]
     [InverseProperty(nameof(ParcelCategory.Parcels))]
-    public virtual ParcelCategory ParcelCategory { get; set; }
+    public virtual ParcelCategory ParcelCategory { get; set; }*/
+
+    [ForeignKey(nameof(CategoryInsuranceId))]
+    [InverseProperty(nameof(CategoryInsurance.Parcels))]
+    public virtual CategoryInsurance? CategoryInsurance { get; set; }
 
     [InverseProperty(nameof(ParcelTracking.Parcel))]
     public virtual ICollection<ParcelTracking> ParcelTrackings { get; set; } = new List<ParcelTracking>();

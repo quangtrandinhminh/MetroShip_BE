@@ -2,6 +2,7 @@
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.Interfaces;
@@ -23,12 +24,16 @@ namespace MetroShip.Service.Services;
 
 public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCategoryService
 {
-    private readonly IBaseRepository<ParcelCategory> _parcelCategoryRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelCategory>>();
+    private readonly IParcelCategoryRepository _parcelCategoryRepository = serviceProvider.GetRequiredService<IParcelCategoryRepository>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
 
-    public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(bool? isActive, PaginatedListRequest request)
+    public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(
+        bool? isActive,
+        PaginatedListRequest request,
+        bool isIncludeAllCategoryInsurances = false
+        )
     {
         _logger.Information("Get all parcel categories. IsActive: {isActive}", isActive);
 
@@ -38,12 +43,22 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
             predicate = predicate.And(c => c.IsActive == isActive.Value);
         }
 
-        var paginatedCategories = await _parcelCategoryRepository.GetAllPaginatedQueryable(
+        /*var paginatedCategories = await _parcelCategoryRepository.GetAllPaginatedQueryable(
             pageNumber: 1,
             pageSize: 10,
             predicate: predicate,
-            orderBy: c => c.CreatedAt // default order
-        );
+            orderBy: c => c.CreatedAt,
+            isAscending: true,
+            includeProperties: c => c.CategoryInsurances
+        );*/
+
+        var paginatedCategories = await _parcelCategoryRepository.GetPaginatedListForListResponseAsync(
+                request.PageNumber,
+                request.PageSize,
+                isIncludeAllCategoryInsurances,
+                predicate,
+                c => c.CreatedAt,
+                true);
 
         return _mapper.MapToParcelCategoryPaginatedList(paginatedCategories);
     }
@@ -71,6 +86,12 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
         // Correctly map the request to the ParcelCategory entity
         var entity = _mapper.MapToParcelCategoryEntity(request);
+
+        entity.CategoryInsurances.Add(new CategoryInsurance
+        {
+            InsurancePolicyId = request.InsurancePolicyId,
+            ParcelCategoryId = entity.Id,
+        });
 
         // Pass the correctly mapped entity to the repository
         await _parcelCategoryRepository.AddAsync(entity);
@@ -107,7 +128,9 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     private async Task<ParcelCategory> GetParcelCategoryById(Guid id)
     {
-        var entity = await _parcelCategoryRepository.GetSingleAsync(c => c.Id == id.ToString());
+        var entity = await _parcelCategoryRepository.GetSingleAsync(
+            c => c.Id == id.ToString(), false,
+            c => c.CategoryInsurances);
 
         if (entity == null)
         {

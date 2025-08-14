@@ -13,6 +13,8 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public decimal? TotalSurchargeFeeVnd { get; set; }
     public decimal TotalShippingFeeVnd { get; set; }
     public decimal? TotalOverdueSurchargeFee { get; set; }
+    public decimal? TotalRefundedFeeVnd { get; set; }
+    public decimal? TotalCompensationFeeVnd { get; set; } 
 
     // Measurement fields
     public decimal? TotalKm { get; set; }
@@ -71,8 +73,6 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string? FeedbackResponseBy { get; set; }
 
     // Base Entity fields (if needed in response)
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset LastUpdatedAt { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public string? CreatedBy { get; set; }
     public string? LastUpdatedBy { get; set; }

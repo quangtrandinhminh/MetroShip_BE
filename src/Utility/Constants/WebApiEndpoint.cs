@@ -51,6 +51,7 @@
             public const string LoadParcelOnTrain = BaseEndpoint + "/staff/loading/{parcelCode}/{trainCode}";
             public const string UnloadParcelFromTrain = BaseEndpoint + "/staff/unloading/{parcelCode}/{trainCode}";
             public const string UpdateParcelStatusToAwaitingDelivery = BaseEndpoint + "/staff/awaiting-delivery/{parcelCode}";
+            public const string ReportLostParcel = BaseEndpoint + "/staff/lost/{parcelCode}/{trackingForShipmentStatus}";
         }
 
         public static class ShipmentEndpoint

@@ -14,6 +14,7 @@ using AppDbContext = MetroShip.Repository.Infrastructure.AppDbContext;
 using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
 using MetroShip.Service.Jobs;
 using Quartz;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -137,8 +138,6 @@ public static class ServiceCollectionExtensions
         // Đảm bảo đặt trước dòng AddSignalR
         services.AddSignalR();
 
-        // Add Cache
-        services.AddMemoryCache();
         // Add Identity
         services.AddIdentityCore<UserEntity>()
             .AddRoles<RoleEntity>()
@@ -153,14 +152,36 @@ public static class ServiceCollectionExtensions
             // Use simple type loader
             q.UseSimpleTypeLoader();
 
-            // Use in-memory store (for development)
-            // For production, consider using persistent store
-            q.UseInMemoryStore();
+            var isDevelopment = configuration.GetValue<string>("ASPNETCORE_ENVIRONMENT") == "Development";
+            if (isDevelopment)
+            {
+                // Use in-memory store for development
+                q.UseInMemoryStore();
+            }
+            else
+            {
+                // Use persistent store for production/staging
+                q.UsePersistentStore(store =>
+                {
+                    store.UseProperties = true;
+                    store.UsePostgres(configuration.GetConnectionString("PostgresConnection")
+                                      ?? GetEnvironmentVariableOrThrow("POSTGRES_CONNECTION"));
+
+                    store.UseNewtonsoftJsonSerializer();
+                });
+            }
 
             // Configure thread pool
             q.UseDefaultThreadPool(tp =>
             {
                 tp.MaxConcurrency = 10; // Adjust based on your needs
+            });
+
+            // run schedule train job when starting
+            q.ScheduleJob<ScheduleTrainJob>(trigger =>
+            {
+                trigger.WithIdentity("ScheduleTrainJob")
+                    .StartNow();
             });
         });
 
@@ -203,6 +224,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPricingService, PricingService>();
         services.AddScoped<IRegionService, RegionService>();
         services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
+        services.AddScoped<IItineraryService, ItineraryService>();
+        services.AddScoped<ISupportTicketService, SupportTicketService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -223,6 +246,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffAssignmentRepository, StaffAssignmentRepository>();
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddScoped<IPricingRepository, PricingRepository>();
+        services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
+        services.AddScoped<IReportService, ReportService>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

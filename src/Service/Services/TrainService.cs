@@ -378,6 +378,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task StartOrContinueSimulationAsync(string trainId)
     {
+        _logger.Information("Starting or continuing simulation for train {TrainId}", trainId);
+
         var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
             ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
@@ -506,6 +508,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // ✅ Cập nhật ShipmentStatus sang InTransit
         var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+        /*var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+
         var shipmentsToUpdate = rawShipments
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
             .ToList();
@@ -531,7 +535,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             _logger.Information("📦 Updated {Count} shipments to InTransit as train {TrainId} departed.", shipmentsToUpdate.Count, train.Id);
-        }
+        }*/
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response,
@@ -648,8 +652,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // ❌ Không tracking nếu shipment chưa nằm trên tàu
         if (shipment.ShipmentStatus != ShipmentStatusEnum.LoadOnMetro &&
-            shipment.ShipmentStatus != ShipmentStatusEnum.InTransit &&
-            shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
+            shipment.ShipmentStatus != ShipmentStatusEnum.InTransit 
+            /*&& shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery*/)
         {
             throw new AppException(ErrorCode.BadRequest, "Shipment not ready for tracking", StatusCodes.Status400BadRequest);
         }
@@ -695,7 +699,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // ✅ Nếu shipment status thay đổi → cập nhật DB
-        if (shipment.ShipmentStatus != mappedShipmentStatus)
+        /*if (shipment.ShipmentStatus != mappedShipmentStatus)
         {
             shipment.ShipmentStatus = mappedShipmentStatus;
 
@@ -728,7 +732,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        }
+        }*/
 
         // ✅ Gộp ShipmentItineraries + Polyline thành 1 array
         const int steps = 10;
@@ -1105,7 +1109,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 _shipmentItineraryRepository.Update(itinerary);
 
                 // ✅ Nếu tất cả legs của shipment đã hoàn tất → mark shipment completed
-                var shipment = await _shipmentRepository.GetByIdAsync(itinerary.ShipmentId);
+                /*var shipment = await _shipmentRepository.GetByIdAsync(itinerary.ShipmentId);
                 if (shipment != null)
                 {
                     if (await _shipmentItineraryRepository
@@ -1125,7 +1129,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
                         _shipmentRepository.Update(shipment);
                     }
-                }
+                }*/
             }
 
             if (itinerariesToComplete.Count > 0)

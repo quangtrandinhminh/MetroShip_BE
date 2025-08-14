@@ -10,11 +10,8 @@ public record ShipmentTrackingResponse
 
     public string Status { get; set; }
 
-    public ShipmentStatusEnum? CurrentShipmentStatus { get; set; }
-    public string? CurrentShipmentStatusName => CurrentShipmentStatus?.ToString();
-
-    public ShipmentStatusEnum TrackingForShipmentStatus { get; set; }
-    public string TrackingForShipmentStatusName => TrackingForShipmentStatus.ToString();
+    public ShipmentStatusEnum CurrentShipmentStatus { get; set; }
+    public string? CurrentShipmentStatusName => CurrentShipmentStatus.ToString();
 
     public DateTimeOffset EventTime { get; set; }
 

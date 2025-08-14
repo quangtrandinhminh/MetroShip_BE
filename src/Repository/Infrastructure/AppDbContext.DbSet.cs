@@ -46,7 +46,7 @@ public sealed partial class AppDbContext
 
     public DbSet<StaffAssignment> StaffAssignments { get; set; }
 
-    public DbSet<SupportingTicket> SupportingTickets { get; set; }
+    public DbSet<SupportTicket> SupportTicket { get; set; }
 
     public DbSet<SystemConfig> SystemConfigs { get; set; }
 
@@ -57,4 +57,10 @@ public sealed partial class AppDbContext
     public DbSet<DistanceTier> DistanceTier { get; set; }
 
     public DbSet<ParcelMedia> ParcelMedia { get; set; }
+
+    public DbSet<CategoryInsurance> CategoryInsurance { get; set; }
+
+    public DbSet<InsurancePolicy> InsurancePolicy { get; set; }
+
+    public DbSet<TrainSchedule> TrainSchedule { get; set; }
 }

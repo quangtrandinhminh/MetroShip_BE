@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="ApiModels\SupportTicket\" />
       <Folder Include="ApiModels\Region\" />
       <Folder Include="ApiModels\Pricing\" />
     </ItemGroup>
