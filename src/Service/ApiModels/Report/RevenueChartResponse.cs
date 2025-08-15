@@ -25,6 +25,9 @@ namespace MetroShip.Service.ApiModels.Report
         public int Month { get; set; }
         public int TotalShipments { get; set; }
         public int CompletedShipments { get; set; }
+        public int ReturnedShipments { get; set; }
+        public double OnTimeDeliveryRate { get; set; }
+        public double SatisfactionRate { get; set; }
     }
 
     public record TransactionDataItem

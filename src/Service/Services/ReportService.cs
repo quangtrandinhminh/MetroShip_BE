@@ -179,16 +179,27 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         query = ApplyDateFilter(query, finalFilterType, request, s => s.CreatedAt);
 
         var data = await query
-            .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
-            .Select(g => new ShipmentDataItem
-            {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
-                TotalShipments = g.Count(),
-                CompletedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed)
-            })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
-            .ToListAsync();
+         .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+         .Select(g => new ShipmentDataItem
+         {
+             Year = g.Key.Year,
+             Month = g.Key.Month,
+             TotalShipments = g.Count(),
+             CompletedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed),
+             ReturnedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Returned),
+             OnTimeDeliveryRate = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed) > 0
+                 ? Math.Round(
+                     g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed &&
+                                  s.CompletedAt <= s.StartReceiveAt) * 100.0 /
+                     g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed), 2)
+                 : 0,
+             SatisfactionRate = g.Any(s => s.Rating != null)
+                 ? Math.Round(g.Average(s => (double)s.Rating.Value) * 20, 2) // Convert 0-5 rating to 0-100%
+                 : 0
+         })
+         .OrderBy(x => x.Year)
+         .ThenBy(x => x.Month)
+         .ToListAsync();
 
         return new RevenueChartResponse<ShipmentDataItem>
         {
