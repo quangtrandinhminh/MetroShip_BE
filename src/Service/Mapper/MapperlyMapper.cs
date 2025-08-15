@@ -145,6 +145,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
+    public partial MetroTrain MapToMetroTrainEntity(CreateTrainRequest request);
 
     // time slot
     public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
@@ -167,6 +168,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     public partial RegionResponse MapToRegionResponse(Region entity);
+
+    public partial Region MapToRegionEntity(CreateRegionRequest request);
 
     // support ticket
     public partial SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);

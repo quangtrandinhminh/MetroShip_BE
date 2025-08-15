@@ -116,6 +116,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             CurrentStationId = s.CurrentStationId,
             CurrentTrainId = s.CurrentTrainId,
             ShipmentStatus = s.ShipmentStatus,
+            WaitingForTrainCode = s.ShipmentItineraries.FirstOrDefault(i => i.IsCompleted == false)
+                .Train.TrainCode ?? s.WaitingForTrainCode,
 
             // Financial fields
             TotalCostVnd = s.TotalCostVnd,

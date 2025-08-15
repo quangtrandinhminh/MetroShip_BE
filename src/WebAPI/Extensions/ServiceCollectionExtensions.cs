@@ -204,6 +204,9 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterApplicationServices(IServiceCollection services)
     {
+        // IJob
+        services.AddScoped<ScheduleTrainJob>();
+
         // Register services
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();

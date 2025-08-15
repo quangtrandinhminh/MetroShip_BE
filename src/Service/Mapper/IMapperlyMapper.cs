@@ -90,6 +90,7 @@ public interface IMapperlyMapper
     IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     TrainResponse MapToTrainResponse(MetroTrain request);
+    MetroTrain MapToMetroTrainEntity(CreateTrainRequest request);
 
     // time slot
     MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
@@ -112,6 +113,7 @@ public interface IMapperlyMapper
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     RegionResponse MapToRegionResponse(Region entity);
+    Region MapToRegionEntity(CreateRegionRequest request);
 
     // support ticket
     SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);

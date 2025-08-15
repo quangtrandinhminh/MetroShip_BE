@@ -4,11 +4,12 @@ using MetroShip.Service.ApiModels.SupportTicket;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Enums;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
+    [Authorize]
     [Route("api/support-tickets")]
     [ApiController]
     public class SupportTicketController(IServiceProvider serviceProvider) : ControllerBase
@@ -35,6 +36,26 @@ namespace MetroShip.WebAPI.Controllers
         {
             var tickets = await _supportTicketService.GetAllTicketsAsync(request);
             return Ok(BaseResponse.OkResponseDto(tickets, _enumResponses));
+        }
+
+        [HttpGet("status")]
+        public IActionResult GetTicketStatusEnum()
+        {
+            return Ok(BaseResponse.OkResponseDto(_enumResponses));
+        }
+
+        [HttpPost("resolve")]
+        public async Task<IActionResult> ResolveTicketAsync([FromBody] ResolveTicketRequest request)
+        {
+            await _supportTicketService.ResolveTicketAsync(request);
+            return Ok(BaseResponse.OkResponseDto("Support ticket resolved successfully.", null));
+        }
+
+        [HttpPost("close/{ticketId}")]
+        public async Task<IActionResult> CloseTicketAsync([FromRoute] string ticketId)
+        {
+            var message = await _supportTicketService.CloseTicketAsync(ticketId);
+            return Ok(BaseResponse.OkResponseDto(message, null));
         }
     }
 }

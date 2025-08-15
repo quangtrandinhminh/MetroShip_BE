@@ -653,10 +653,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Check if the shipment is awaiting delivery
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Arrived
-            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
-            )
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
         {
             throw new AppException(
             ErrorCode.BadRequest,
@@ -664,7 +661,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             StatusCodes.Status400BadRequest);
         }
 
-        if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
+        /*if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
         {
             var transaction = await _transactionRepository.GetSingleAsync(
                 x => x.ShipmentId == shipment.Id && x.TransactionType == TransactionTypeEnum.Surcharge
@@ -677,7 +674,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 "Cannot complete shipment while surcharge is pending.",
                 StatusCodes.Status400BadRequest);
             }
-        }
+        }*/
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
@@ -702,7 +699,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
             ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Completed,
+            CurrentShipmentStatus = shipment.ShipmentStatus,
             Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
             EventTime = shipment.CompletedAt.Value,
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)

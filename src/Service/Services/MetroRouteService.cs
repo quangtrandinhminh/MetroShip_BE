@@ -129,7 +129,7 @@ namespace MetroShip.Service.Services
                     {
                         throw new AppException(
                             ErrorCode.BadRequest,
-                            RouteMessageConstants.ROUTE_EXISTED + $" with MetroRouteCode: {metroRoute.LineCode}",
+                            MetroRouteMessageConstants.METROROUTE_EXISTED + $" with MetroRouteCode: {metroRoute.LineCode}",
                             StatusCodes.Status400BadRequest);
                     }
 
@@ -155,6 +155,16 @@ namespace MetroShip.Service.Services
 
                         _logger.Information("Retrieved {Count} existing stations from database", 
                             existingStations.Count);
+
+                        // check if all existing stations are valid
+                        if (existingStations.Count != existingStationIds.Count)
+                        {
+                            throw new AppException(
+                            ErrorCode.BadRequest,
+                            "Some existing stations not found or invalid. Please check the provided station IDs.",
+                            StatusCodes.Status400BadRequest);
+                        }
+
                         // Update IsMultiLine for existing stations
                         foreach (var station in existingStations)
                         {
@@ -163,13 +173,22 @@ namespace MetroShip.Service.Services
 
                             var stationCodeList = station.StationCodeList;
                             if (stationCodeList.Any()) station.IsMultiLine = true;
-                            stationCodeList.Add(new StationCodeListItem
+                            /*stationCodeList.Add(new StationCodeListItem
                             {
                                 RouteId = metroRoute.Id,
                                 StationCode = MetroCodeGenerator.GenerateStationCode(
                                     request.Stations.IndexOf(order) + 1,
                                     request.LineNumber,
                                     region.RegionCode)
+                            });*/
+
+                            stationCodeList.Add(new StationCodeListItem
+                            {
+                                RouteId = metroRoute.Id,
+                                StationCode = MetroCodeGenerator.GenerateStationCode(
+                                    request.Stations.IndexOf(order) + 1,
+                                    metroRoute.LineCode
+                                    )
                             });
 
                             station.StationCodeListJSON = stationCodeList.ToJsonString();
@@ -194,12 +213,18 @@ namespace MetroShip.Service.Services
                             s => s.StationNameEn != null &&
                             s.StationNameEn.Equals(station.StationNameEn));
 
-                        station.RegionId = region.Id;
+                        station.RegionId = metroRoute.RegionId;
+                        station.IsActive = false;
+
+                        /*station.StationCode = MetroCodeGenerator.GenerateStationCode(
+                            request.Stations.IndexOf(order) + 1,
+                            request.LineNumber,
+                            region.RegionCode);*/
 
                         station.StationCode = MetroCodeGenerator.GenerateStationCode(
                             request.Stations.IndexOf(order) + 1,
-                            request.LineNumber,
-                            region.RegionCode);
+                            metroRoute.LineCode
+                            );
 
                         station.StationCodeListJSON =
                             System.Text.Json.JsonSerializer.Serialize(
@@ -221,7 +246,7 @@ namespace MetroShip.Service.Services
                     {
                         throw new AppException(
                         ErrorCode.BadRequest,
-                        RouteMessageConstants.METROLINE_STATION_COUNT_LESS_THAN_2,
+                        MetroRouteMessageConstants.METROROUTE_STATION_COUNT_LESS_THAN_2,
                         StatusCodes.Status400BadRequest);
                     }
 
@@ -282,13 +307,13 @@ namespace MetroShip.Service.Services
                         .Select(x => x.idx)
                         .ToList();
 
-                    _logger.Information("Active station indices: [{Indices}]", string.Join(", ", activeIndices));
+                    /*_logger.Information("Active station indices: [{Indices}]", string.Join(", ", activeIndices));
 
                     // Validate active stations
                     if (!activeIndices.Any() || activeIndices.First() != 0 || activeIndices.Last() != request.Stations.Count - 1)
                     {
                         throw new Exception("First and last station must be active.");
-                    }
+                    }*/
 
                     // Create routes
                     var routes = new List<Route>();
@@ -375,6 +400,50 @@ namespace MetroShip.Service.Services
                 _logger.Error(ex, "Error creating MetroLine: {Message}", ex.Message);
                 throw;
             }
+        }
+
+        // activate a metro line, ensure that all stations are active, all routes are active, contains at least 2 metroTrains
+        public async Task<string> ActivateMetroLine(string metroRouteId)
+        {
+            _logger.Information("Activating MetroLine with ID: {MetroLineId}", metroRouteId);
+
+            var metroLine = await _metroRouteRepository.GetSingleAsync(
+                    line => line.Id == metroRouteId && !line.IsActive, false,
+                    l => l.Trains);
+            if (metroLine == null || metroLine.DeletedAt != null)
+            {
+                throw new AppException(
+                ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_ALREADY_ACTIVATED,
+                StatusCodes.Status404NotFound);
+            }
+
+            if (metroLine.Trains.Count < 2)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                MetroRouteMessageConstants.METROROUTE_NOT_ENOUGH_TRAINS,
+                StatusCodes.Status400BadRequest);
+            }
+
+            var stationIds = metroLine.StationList.Select(sc => sc.StationId).ToList();
+
+            // Check if all stations are active
+            var stations = await _stationRepository.GetAll()
+                .Where(s => stationIds.Contains(s.Id))
+                .ToListAsync();
+
+            // Activate the metro line
+            metroLine.IsActive = true;
+            _metroRouteRepository.Update(metroLine);
+            foreach (var station in stations)
+            {
+                station.IsActive = true;
+                _stationRepository.Update(station);
+            }
+
+            await _unitOfWork.SaveChangeAsync();
+            return MetroRouteMessageConstants.METROROUTE_ACTIVATE_SUCCESS;
         }
     }
 }

@@ -34,278 +34,292 @@
 
     public class ResponseMessageIdentity
     {
-        public const string USER_ID_REQUIRED = "User ID is required.";
-        public const string USER_ID_INVALID = "User ID is invalid.";
-        public const string INVALID_USER = "User does not exist.";
-        public const string UNAUTHENTICATED = "Unauthenticated.";
-        public const string PASSWORD_NOT_MATCH = "Passwords do not match.";
-        public const string PASSWORD_WRONG = "Incorrect password.";
-        public const string EXISTED_USER = "User name already exists.";
-        public const string EXISTED_EMAIL = "Email already exists.";
-        public const string EXISTED_PHONE = "Phone number already exists.";
-        public const string OTP_INVALID = "OTP is invalid.";
-        public const string OTP_EXPIRED = "OTP is invalid or expired.";
-        public const string OTP_INVALID_OR_EXPIRED = "Token is invalid or expired.";
-        public const string GOOGLE_TOKEN_INVALID = "Invalid Google token.";
-        public const string EMAIL_VALIDATED = "Email has been validated.";
-        public const string PHONE_VALIDATED = "Phone number has been validated.";
-        public const string ROLE_INVALID = "Roles are invalid.";
-        public const string BIRTHDATE_INVALID = "Birth date is invalid, must be in the past.";
-        public const string CLAIM_NOTFOUND = "Claim not found.";
-        public const string EXISTED_ROLE = "Role already exists.";
-        public const string REFRESH_TOKEN_INVALID = "Refresh token is invalid or used";
-        public const string REFRESH_TOKEN_EXPIRED = "Refresh token has expired.";
+        public const string USER_ID_REQUIRED = "User Id không được trống.";
+        public const string USER_ID_INVALID = "User Id không hợp lệ.";
+        public const string INVALID_USER = "Người dùng không tồn tại.";
+        public const string UNAUTHENTICATED = "Chưa xác thực.";
+        public const string PASSWORD_NOT_MATCH = "Mật khẩu xác nhận không khớp.";
+        public const string PASSWORD_WRONG = "Mật khẩu không đúng.";
+        public const string EXISTED_USER = "Tên người dùng đã tồn tại.";
+        public const string EXISTED_EMAIL = "Email đã tồn tại.";
+        public const string EXISTED_PHONE = "Số điện thoại đã tồn tại.";
+        public const string OTP_INVALID = "Mã OTP không hợp lệ.";
+        public const string OTP_EXPIRED = "Mã OTP không hợp lệ hoặc đã hết hạn.";
+        public const string OTP_INVALID_OR_EXPIRED = "Token không hợp lệ hoặc đã hết hạn.";
+        public const string GOOGLE_TOKEN_INVALID = "Token Google không hợp lệ.";
+        public const string EMAIL_VALIDATED = "Email đã được xác thực.";
+        public const string PHONE_VALIDATED = "Số điện thoại đã được xác thực.";
+        public const string ROLE_INVALID = "Vai trò không hợp lệ.";
+        public const string BIRTHDATE_INVALID = "Ngày sinh không hợp lệ, phải ở trong quá khứ.";
+        public const string CLAIM_NOTFOUND = "Không tìm thấy quyền.";
+        public const string EXISTED_ROLE = "Vai trò đã tồn tại.";
+        public const string REFRESH_TOKEN_INVALID = "Refresh token không hợp lệ hoặc đã được sử dụng";
+        public const string REFRESH_TOKEN_EXPIRED = "Refresh token đã hết hạn.";
 
-        public const string USERNAME_REQUIRED = "Username cannot be empty.";
-        public const string USERNAME_INVALID = "Username cannot contain special characters or spaces.";
-        public const string NAME_REQUIRED = "Name cannot be empty.";
-        public const string NAME_INVALID = "Name cannot contain numbers.";
-        public const string USERCODE_REQUIRED = "User code cannot be empty.";
-        public const string PASSWORD_REQUIRED = "Password cannot be empty.";
-        public const string PASSSWORD_LENGTH = "Password must be at least 8 characters.";
-        public const string CONFIRM_PASSWORD_REQUIRED = "Confirm password cannot be empty.";
-        public const string EMAIL_REQUIRED = "Email cannot be empty.";
-        public const string EMAIL_INVALID = "Email is invalid.";
-        public const string PHONENUMBER_REQUIRED = "Phone number cannot be empty.";
-        public const string PHONENUMBER_INVALID = "Phone number is invalid.";
-        public const string PHONENUMBER_LENGTH_INVALID = "Phone number must be exactly 10 digits.";
-        public const string ROLES_REQUIRED = "Role cannot be empty.";
-        public const string USER_NOT_ALLOWED = "You do not have permission to access this section.";
-        public const string EMAIL_VALIDATION_REQUIRED = "Please enter the OTP code sent to your email to activate your account.";
+        public const string USERNAME_REQUIRED = "Tên người dùng không được để trống.";
+        public const string USERNAME_INVALID = "Tên người dùng không được chứa ký tự đặc biệt hoặc khoảng trắng.";
+        public const string NAME_REQUIRED = "Tên không được để trống.";
+        public const string NAME_INVALID = "Tên không được chứa số.";
+        public const string USERCODE_REQUIRED = "UserId không được để trống.";
+        public const string PASSWORD_REQUIRED = "Mật khẩu không được để trống.";
+        public const string PASSSWORD_LENGTH = "Mật khẩu phải có ít nhất 8 ký tự.";
+        public const string CONFIRM_PASSWORD_REQUIRED = "Mật khẩu xác nhận không được để trống.";
+        public const string EMAIL_REQUIRED = "Email không được để trống.";
+        public const string EMAIL_INVALID = "Email không hợp lệ.";
+        public const string PHONENUMBER_REQUIRED = "Số điện thoại không được để trống.";
+        public const string PHONENUMBER_INVALID = "Số điện thoại không hợp lệ.";
+        public const string PHONENUMBER_LENGTH_INVALID = "Số điện thoại phải đúng 10 chữ số.";
+        public const string ROLES_REQUIRED = "Vai trò không được để trống.";
+        public const string USER_NOT_ALLOWED = "Bạn không có quyền truy cập mục này.";
+        public const string EMAIL_VALIDATION_REQUIRED = "Vui lòng nhập mã OTP gửi đến email để kích hoạt tài khoản.";
     }
 
     public class ResponseMessageIdentitySuccess
     {
-        public const string REGIST_USER_SUCCESS = "Account registration successful! Please verify your email to activate your account.";
-        public const string VERIFY_PHONE_SUCCESS = "Phone number verification successful!";
-        public const string VERIFY_EMAIL_SUCCESS = "Email verification successful!";
-        public const string FORGOT_PASSWORD_SUCCESS = "Password reset request successful, please check your email.";
-        public const string RESET_PASSWORD_SUCCESS = "Password reset successful!";
-        public const string CHANGE_PASSWORD_SUCCESS = "Password change successful!";
-        public const string RESEND_EMAIL_SUCCESS = "Resent verification email successfully!";
-        public const string UPDATE_USER_SUCCESS = "User information updated successfully!";
-        public const string DELETE_USER_SUCCESS = "User deleted successfully!";
-        public const string ADD_ROLE_SUCCESS = "Role added successfully!";
-        public const string UPDATE_ROLE_SUCCESS = "Role updated successfully!";
-        public const string DELETE_ROLE_SUCCESS = "Role deleted successfully!";
+        public const string REGIST_USER_SUCCESS = "Đăng ký tài khoản thành công! Vui lòng xác minh email để kích hoạt tài khoản.";
+        public const string VERIFY_PHONE_SUCCESS = "Xác thực số điện thoại thành công!";
+        public const string VERIFY_EMAIL_SUCCESS = "Xác thực email thành công!";
+        public const string FORGOT_PASSWORD_SUCCESS = "Yêu cầu đặt lại mật khẩu thành công, vui lòng kiểm tra email.";
+        public const string RESET_PASSWORD_SUCCESS = "Đặt lại mật khẩu thành công!";
+        public const string CHANGE_PASSWORD_SUCCESS = "Thay đổi mật khẩu thành công!";
+        public const string RESEND_EMAIL_SUCCESS = "Gửi lại email xác thực thành công!";
+        public const string UPDATE_USER_SUCCESS = "Cập nhật thông tin người dùng thành công!";
+        public const string DELETE_USER_SUCCESS = "Xóa người dùng thành công!";
+        public const string ADD_ROLE_SUCCESS = "Thêm vai trò thành công!";
+        public const string UPDATE_ROLE_SUCCESS = "Cập nhật vai trò thành công!";
+        public const string DELETE_ROLE_SUCCESS = "Xóa vai trò thành công!";
     }
 
-    // Response message constants for entities: not found, existed, update success, delete success
     public class ResponseMessageConstantsUser
     {
-        public const string USER_NOT_FOUND = "User not found.";
-        public const string USER_EXISTED = "User already exists";
-        public const string CREATE_USER_SUCCESS = "User added successfully.";
-        public const string UPDATE_USER_SUCCESS = "User updated successfully.";
-        public const string BAN_USER_SUCCESS = "User banned successfully.";
-        public const string ADMIN_NOT_FOUND = "Administrator not found.";
-        public const string CUSTOMER_NOT_FOUND = "Customer not found.";
-        public const string ASSIGN_ROLE_SUCCESS = "Role assigned successfully.";
+        public const string USER_NOT_FOUND = "Không tìm thấy người dùng.";
+        public const string USER_EXISTED = "Người dùng đã tồn tại";
+        public const string CREATE_USER_SUCCESS = "Thêm người dùng thành công.";
+        public const string UPDATE_USER_SUCCESS = "Cập nhật người dùng thành công.";
+        public const string BAN_USER_SUCCESS = "Khóa người dùng thành công.";
+        public const string ADMIN_NOT_FOUND = "Không tìm thấy quản trị viên.";
+        public const string CUSTOMER_NOT_FOUND = "Không tìm thấy khách hàng.";
+        public const string ASSIGN_ROLE_SUCCESS = "Gán vai trò thành công.";
     }
 
     public class ResponseMessageConstrantsImage
     {
-        public const string INVALID_IMAGE = "Hình ảnh không hợp lệ. ";
-        public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ. ";
-        public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ. ";
-        public const string INVALID_URL = "Đường dẫn không hợp lệ. ";
+        public const string INVALID_IMAGE = "Hình ảnh không hợp lệ.";
+        public const string INVALID_SIZE = "Kích thước hình ảnh không hợp lệ.";
+        public const string INVALID_FORMAT = "Định dạng hình ảnh không hợp lệ.";
+        public const string INVALID_URL = "Đường dẫn không hợp lệ.";
     }
 
     public static class ResponseMessageConstantsParcelCategory
     {
-        public const string NOT_FOUND = "Parcel category not found.";
-        public const string UPDATE_SUCCESS = "Parcel category updated successfully.";
-        public const string DELETE_SUCCESS = "Parcel category deleted successfully.";
+        public const string NOT_FOUND = "Không tìm thấy loại bưu kiện.";
+        public const string UPDATE_SUCCESS = "Cập nhật loại bưu kiện thành công.";
+        public const string DELETE_SUCCESS = "Xóa loại bưu kiện thành công.";
     }
+
     public class ResponseMessageShipment
     {
-        public const string SHIPMENT_NOT_FOUND = "Shipment not found.";
-        public const string SHIPMENT_EXISTED = "Shipment already exists.";
-        public const string SHIPMENT_UPDATE_SUCCESS = "Shipment updated successfully.";
-        public const string SHIPMENT_DELETE_SUCCESS = "Shipment deleted successfully.";
-        public const string SHIPMENT_CREATE_SUCCESS = "Shipment created successfully.";
-        public const string SHIPMENT_CANCEL_SUCCESS = "Shipment canceled successfully.";
-        public const string SENDER_ID_REQUIRED = "Sender ID is required.";
-        public const string SENDER_NAME_REQUIRED = "Sender name is required.";
-        public const string SENDER_PHONE_REQUIRED = "Sender phone number is required.";
-        public const string RECIPIENT_NAME_REQUIRED = "Recipient name is required.";
-        public const string RECIPIENT_PHONE_REQUIRED = "Recipient phone number is required.";
-        public const string RECIPIENT_NATIONAL_ID_REQUIRED = "Recipient national ID is required.";
-        public const string RECIPIENT_NATIONAL_ID_INAVLID = "Recipient national ID must be 9 to 12 digits.";
-        public const string TOTAL_COST_VND_REQUIRED = "Total cost in VND is required.";
-        public const string TOTAL_COST_VND_INVALID = "Total cost must be greater than or equal to 0.";
-        public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND is invalid.";
-        public const string SHIPPING_FEE_VND_REQUIRED = "Shipping fee in VND is required.";
-        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND must be greater than or equal to 0.";
-        public const string SHIPMENT_STATUS_INVALID = "Shipment status is invalid.";
-        public const string SHIPMENT_STATUS_NOT_FOUND = "Shipment status not found.";
-        public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Shipment status updated successfully.";
-        public const string START_RECEIVE_AT_REQUIRED = "Start receive time is required.";
-        public const string START_RECEIVE_AT_INVALID = "Start receive time must be before the scheduledDateTime";
-        public const string SHIPMENT_DATE_REQUIRED = "ScheduledDateTime is required.";
-        public const string DEPARTURE_STATION_ID_REQUIRED = "Departure station ID is required.";
-        public const string DEPARTURE_STATION_ID_INVALID = "Departure station ID is invalid.";
-        public const string DEPARTURE_STATION_NOT_FOUND = "Departure station not found.";
-        public const string DESTINATION_STATION_ID_REQUIRED = "Destination station ID is required.";
-        public const string DESTINATION_STATION_ID_INVALID = "Destination station ID is invalid.";
-        public const string DESTINATION_STATION_NOT_FOUND = "Destination station not found.";
-        public const string PATH_NOT_FOUND = "Path not found between two stations.";
-        public const string USER_COORDINATE_REQUIRED = "User coordinates (latitude and longitude) " +
-            "or Departure station ID are required.";
-        public const string USER_COORDINATE_INVALID = "User coordinates (latitude and longitude) are invalid.";
-        public const string SHIFT_REQUIRED = "Shift is required.";
-        public const string SHIFT_INVALID = "Shift is invalid.";
-        public const string SHIPMENT_ALREADY_CONFIRMED = "Shipment must be in 'AwaitingDropoff' status to confirm. " +
-            "Please check the shipment status before confirming.";
-        public const string SHIPMENT_CANNOT_CANCEL = "Shipment must be in 'AwaitingDropoff' or 'AwaitingPayment' status to cancel.";
-        public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Shipment itinerary is not scheduled. " +
-            "Please schedule the itinerary before confirming the shipment.";
-        public const string SCHEDULED_SHIFT_INVALID = "Scheduled shift is invalid. " +
-            "Please select a valid shift for the shipment.";
-        public const string TIME_SLOT_NOT_FOUND = "Time slot not found.";
-        public const string TOTAL_KM_REQUIRED = "Total kilometers are required.";
-        public const string TOTAL_KM_INVALID = "Total kilometers must be greater than to 0.";
-        public const string PICKED_UP_IMAGE_LINK_REQUIRED = "Picked up image link is required.";
-        public const string PICKED_UP_IMAGE_LINK_INVALID = "Picked up image link is invalid.";
-        public const string DELIVERED_IMAGE_LINK_REQUIRED = "Delivered image link is required.";
-        public const string DELIVERED_IMAGE_LINK_INVALID = "Delivered image link is invalid.";
-        public const string PICKED_UP_SUCCESS = "Shipment picked up successfully.";
-        public const string DELIVERED_SUCCESS = "Shipment delivered successfully.";
-        public const string REJECTED_SUCCESS = "Shipment rejected successfully.";
-        public const string CANCELLED_SUCCESS = "Shipment canceled successfully.";
-        public const string SHIPMENT_NOT_COMPLETED = "Shipment has not been completed yet.";
-        public const string FEEDBACK_TEXT_TOO_LONG = "Feedback text cannot exceed 500 characters.";
-        public const string RATING_INVALID = "Rating must be between 1 and 5.";
-        public const string SHIPMENT_ID_REQUIRED = "Shipment ID is required.";
-        public const string SHIPMENT_ID_INVALID = "Shipment ID is invalid.";
-        public const string FEEDBACK_SUCCESS = "Feedback submitted successfully.";
-        public const string COMPLETED_SUCCESS = "Shipment completed successfully.";
-        public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Shipment is not in 'Stored', 'AwaitingDelivery' or 'ApplyingSurcharge' status.";
+        public const string SHIPMENT_NOT_FOUND = "Không tìm thấy đơn hàng.";
+        public const string SHIPMENT_EXISTED = "Đơn hàng đã tồn tại.";
+        public const string SHIPMENT_UPDATE_SUCCESS = "Cập nhật đơn hàng thành công.";
+        public const string SHIPMENT_DELETE_SUCCESS = "Xóa đơn hàng thành công.";
+        public const string SHIPMENT_CREATE_SUCCESS = "Tạo đơn hàng thành công.";
+        public const string SHIPMENT_CANCEL_SUCCESS = "Hủy đơn hàng thành công.";
+        public const string SENDER_ID_REQUIRED = "Yêu cầu userId người gửi.";
+        public const string SENDER_NAME_REQUIRED = "Yêu cầu tên người gửi.";
+        public const string SENDER_PHONE_REQUIRED = "Yêu cầu số điện thoại người gửi.";
+        public const string RECIPIENT_NAME_REQUIRED = "Yêu cầu tên người nhận.";
+        public const string RECIPIENT_PHONE_REQUIRED = "Yêu cầu số điện thoại người nhận.";
+        public const string RECIPIENT_NATIONAL_ID_REQUIRED = "Yêu cầu CCCD người nhận.";
+        public const string RECIPIENT_NATIONAL_ID_INAVLID = "CCCD người nhận phải từ 9 đến 12 chữ số.";
+        public const string TOTAL_COST_VND_REQUIRED = "Yêu cầu tổng chi phí (VND).";
+        public const string TOTAL_COST_VND_INVALID = "Tổng chi phí phải lớn hơn hoặc bằng 0.";
+        public const string INSURANCE_FEE_VND_INVALID = "Phí bảo hiểm (VND) không hợp lệ.";
+        public const string SHIPPING_FEE_VND_REQUIRED = "Yêu cầu phí vận chuyển (VND).";
+        public const string SHIPPING_FEE_VND_INVALID = "Phí vận chuyển (VND) phải lớn hơn hoặc bằng 0.";
+        public const string SHIPMENT_STATUS_INVALID = "Trạng thái đơn hàng không hợp lệ.";
+        public const string SHIPMENT_STATUS_NOT_FOUND = "Không tìm thấy trạng thái đơn hàng.";
+        public const string SHIPMENT_STATUS_UPDATE_SUCCESS = "Cập nhật trạng thái đơn hàng thành công.";
+        public const string START_RECEIVE_AT_REQUIRED = "Yêu cầu thời gian bắt đầu nhận.";
+        public const string START_RECEIVE_AT_INVALID = "Thời gian bắt đầu nhận hàng phải trước ngày giờ hạn chót gửi hàng.";
+        public const string SHIPMENT_DATE_REQUIRED = "Yêu cầu ngày giờ hạn chót gửi hàng.";
+        public const string DEPARTURE_STATION_ID_REQUIRED = "Yêu cầu StationId ga đi.";
+        public const string DEPARTURE_STATION_ID_INVALID = "StationId ga đi không hợp lệ.";
+        public const string DEPARTURE_STATION_NOT_FOUND = "Không tìm thấy ga đi.";
+        public const string DESTINATION_STATION_ID_REQUIRED = "Yêu cầu stationId ga đến.";
+        public const string DESTINATION_STATION_ID_INVALID = "StationId ga đến không hợp lệ.";
+        public const string DESTINATION_STATION_NOT_FOUND = "Không tìm thấy ga đến.";
+        public const string PATH_NOT_FOUND = "Không tìm thấy đường đi giữa hai ga.";
+        public const string USER_COORDINATE_REQUIRED = "Yêu cầu tọa độ người dùng (vĩ độ và kinh độ) hoặc StationId ga đi.";
+        public const string USER_COORDINATE_INVALID = "Tọa độ người dùng (vĩ độ và kinh độ) không hợp lệ.";
+        public const string SHIFT_REQUIRED = "Yêu cầu ca làm việc.";
+        public const string SHIFT_INVALID = "Ca làm việc không hợp lệ.";
+        public const string SHIPMENT_ALREADY_CONFIRMED = "Đơn hàng phải ở trạng thái 'Chờ gửi hàng' để xác nhận. Vui lòng kiểm tra trạng thái đơn hàng trước khi xác nhận.";
+        public const string SHIPMENT_CANNOT_CANCEL = "Đơn hàng phải ở trạng thái 'Chờ gửi hàng' hoặc 'Chờ thanh toán' để hủy.";
+        public const string SHIPMENT_ITINERARY_NOT_SCHEDULED = "Lịch trình đơn hàng chưa được lên lịch. Vui lòng lên lịch trước khi xác nhận đơn hàng.";
+        public const string SCHEDULED_SHIFT_INVALID = "Ca làm việc lên lịch không hợp lệ. Vui lòng chọn ca phù hợp cho đơn hàng.";
+        public const string TIME_SLOT_NOT_FOUND = "Không tìm thấy khung giờ.";
+        public const string TOTAL_KM_REQUIRED = "Yêu cầu tổng số km.";
+        public const string TOTAL_KM_INVALID = "Tổng số km phải lớn hơn 0.";
+        public const string PICKED_UP_IMAGE_LINK_REQUIRED = "Yêu cầu đường dẫn ảnh lấy hàng.";
+        public const string PICKED_UP_IMAGE_LINK_INVALID = "Đường dẫn ảnh lấy hàng không hợp lệ.";
+        public const string DELIVERED_IMAGE_LINK_REQUIRED = "Yêu cầu đường dẫn ảnh giao hàng.";
+        public const string DELIVERED_IMAGE_LINK_INVALID = "Đường dẫn ảnh giao hàng không hợp lệ.";
+        public const string PICKED_UP_SUCCESS = "Lấy hàng thành công.";
+        public const string DELIVERED_SUCCESS = "Giao hàng thành công.";
+        public const string REJECTED_SUCCESS = "Từ chối đơn hàng thành công.";
+        public const string CANCELLED_SUCCESS = "Hủy đơn hàng thành công.";
+        public const string SHIPMENT_NOT_COMPLETED = "Đơn hàng chưa hoàn thành.";
+        public const string FEEDBACK_TEXT_TOO_LONG = "Nội dung phản hồi không được vượt quá 500 ký tự.";
+        public const string RATING_INVALID = "Đánh giá phải từ 1 đến 5.";
+        public const string SHIPMENT_ID_REQUIRED = "Yêu cầu ShipmentId.";
+        public const string SHIPMENT_ID_INVALID = "ShipmentId không hợp lệ.";
+        public const string FEEDBACK_SUCCESS = "Gửi phản hồi thành công.";
+        public const string COMPLETED_SUCCESS = "Hoàn thành đơn hàng thành công.";
+        public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Đơn hàng không ở trạng thái 'Chờ giao hàng'.";
+
     }
 
     public class ResponseMessageItinerary
     {
-        public const string ITINERARY_REQUIRED = "Itinerary is required.";
-        public const string ROUTE_ID_REQUIRED = "Route ID is required.";
-        public const string LEG_ORDER_REQUIRED = "Leg order is required.";
-        public const string LEG_ORDER_INVALID = "Leg order must be large than 0";
-        public const string EST_MINUTES_INVALID = "Estimated minutes must be large than 0";
-        public const string BASE_PRICE_VND_PER_KM_REQUIRED = "Base price per kilometer in VND is required.";
-        public const string BASE_PRICE_VND_PER_KM_INVALID = "Base price per kilometer in VND must be greater than or equal to 0.";
+        public const string ITINERARY_REQUIRED = "Yêu cầu gửi lộ trình.";
+        public const string ROUTE_ID_REQUIRED = "Yêu cầu RouteId.";
+        public const string LEG_ORDER_REQUIRED = "Yêu cầu thứ tự chặng.";
+        public const string LEG_ORDER_INVALID = "Thứ tự chặng phải lớn hơn 0";
+        public const string EST_MINUTES_INVALID = "Số phút dự kiến phải lớn hơn 0";
+        public const string BASE_PRICE_VND_PER_KM_REQUIRED = "Yêu cầu giá cơ bản mỗi km (VND).";
+        public const string BASE_PRICE_VND_PER_KM_INVALID = "Giá cơ bản mỗi km (VND) phải lớn hơn hoặc bằng 0.";
     }
 
     public class ResponseMessageParcel
     {
-        public const string PARCEL_REQUIRED = "Parcel is required";
-        public const string PARCEL_NOT_FOUND = "Parcel not found.";
-        public const string PARCEL_EXISTED = "Parcel already exists.";
-        public const string PARCEL_UPDATE_SUCCESS = "Parcel updated successfully.";
-        public const string PARCEL_DELETE_SUCCESS = "Parcel deleted successfully.";
-        public const string PARCEL_CREATE_SUCCESS = "Parcel created successfully.";
-        public const string PARCEL_CANCEL_SUCCESS = "Parcel canceled successfully.";
-        public const string PARCEL_STATUS_INVALID = "Parcel status is invalid.";
-        public const string PARCEL_STATUS_NOT_FOUND = "Parcel status not found.";
-        public const string PARCEL_STATUS_UPDATE_SUCCESS = "Parcel status updated successfully.";
-        public const string PARCEL_CATEGORY_ID_REQUIRED = "Parcel category ID is required.";
-        public const string WIDTH_REQUIRED = "Width is required.";
-        public const string HEIGHT_REQUIRED = "Height is required.";
-        public const string LENGTH_REQUIRED = "Length is required.";
-        public const string WEIGHT_REQUIRED = "Weight is required.";
-        public const string WEIGHT_INVALID = "Weight must be greater than 0.";
-        public const string HEIGHT_INVALID = "Height must be greater than 0.";
-        public const string WIDTH_INVALID = "Width must be greater than 0.";
-        public const string LENGTH_INVALID = "Length must be greater than 0.";
-        public const string IS_BULK_REQUIRED = "Is Bulk is required";
-        public const string IS_BULK_INVALID = "Is Bulk must be true or false";
-        public const string PARCEL_CATEGORY_ID_INVALID = "Parcel category ID is invalid.";
-        public const string CHARGEABLE_WEIGHT_INVALID = "Chargeable weight must be greater than 0.";
-        public const string SHIPPING_FEE_VND_INVALID = "Shipping fee in VND must be greater than or equal to 0.";
-        public const string INSURANCE_FEE_VND_INVALID = "Insurance fee in VND must be greater than or equal to 0.";
-        public const string PRICE_VND_INVALID = "Price in VND must be greater than or equal to 0.";
-        public const string VALUE_VND_INVALID = "Value in VND must be greater than to 0.";
-        public const string CATEGORY_INSURANCE_ID_REQUIRED = "Category insurance ID is required.";
-        public const string CATEGORY_INSURANCE_ID_INVALID = "Category insurance ID is invalid.";
+        public const string PARCEL_REQUIRED = "Yêu cầu bưu kiện";
+        public const string PARCEL_NOT_FOUND = "Không tìm thấy bưu kiện.";
+        public const string PARCEL_EXISTED = "Bưu kiện đã tồn tại.";
+        public const string PARCEL_UPDATE_SUCCESS = "Cập nhật bưu kiện thành công.";
+        public const string PARCEL_DELETE_SUCCESS = "Xóa bưu kiện thành công.";
+        public const string PARCEL_CREATE_SUCCESS = "Tạo bưu kiện thành công.";
+        public const string PARCEL_CANCEL_SUCCESS = "Hủy bưu kiện thành công.";
+        public const string PARCEL_STATUS_INVALID = "Trạng thái bưu kiện không hợp lệ.";
+        public const string PARCEL_STATUS_NOT_FOUND = "Không tìm thấy trạng thái bưu kiện.";
+        public const string PARCEL_STATUS_UPDATE_SUCCESS = "Cập nhật trạng thái bưu kiện thành công.";
+        public const string PARCEL_CATEGORY_ID_REQUIRED = "Yêu cầu parcelCategoryId.";
+        public const string WIDTH_REQUIRED = "Yêu cầu chiều rộng.";
+        public const string HEIGHT_REQUIRED = "Yêu cầu chiều cao.";
+        public const string LENGTH_REQUIRED = "Yêu cầu chiều dài.";
+        public const string WEIGHT_REQUIRED = "Yêu cầu trọng lượng.";
+        public const string WEIGHT_INVALID = "Trọng lượng phải lớn hơn 0.";
+        public const string HEIGHT_INVALID = "Chiều cao phải lớn hơn 0.";
+        public const string WIDTH_INVALID = "Chiều rộng phải lớn hơn 0.";
+        public const string LENGTH_INVALID = "Chiều dài phải lớn hơn 0.";
+        public const string IS_BULK_REQUIRED = "Yêu cầu thông tin hàng cồng kềnh";
+        public const string IS_BULK_INVALID = "Thông tin hàng cồng kềnh phải là true hoặc false";
+        public const string PARCEL_CATEGORY_ID_INVALID = "ParcelCategoryId không hợp lệ.";
+        public const string CHARGEABLE_WEIGHT_INVALID = "Trọng lượng tính phí phải lớn hơn 0.";
+        public const string SHIPPING_FEE_VND_INVALID = "Phí vận chuyển (VND) phải lớn hơn hoặc bằng 0.";
+        public const string INSURANCE_FEE_VND_INVALID = "Phí bảo hiểm (VND) phải lớn hơn hoặc bằng 0.";
+        public const string PRICE_VND_INVALID = "Giá (VND) phải lớn hơn hoặc bằng 0.";
+        public const string VALUE_VND_INVALID = "Giá trị (VND) phải lớn hơn 0.";
+        public const string CATEGORY_INSURANCE_ID_REQUIRED = "Yêu cầu CategoryInsuranceId.";
+        public const string CATEGORY_INSURANCE_ID_INVALID = "CategoryInsuranceId không hợp lệ.";
+        public const string PARCEL_ALREADY_LOADED = "Bưu kiện đã lên tàu tại ga này.";
     }
 
     public class ResponseMessageStation
     {
-        public const string STATION_NOT_FOUND = "Station not found.";
-        public const string STATION_EXISTED = "Station already exists.";
-        public const string STATION_UPDATE_SUCCESS = "Station updated successfully.";
-        public const string STATION_DELETE_SUCCESS = "Station deleted successfully.";
-        public const string STATION_CREATE_SUCCESS = "Station created successfully.";
+        public const string STATION_NOT_FOUND = "Không tìm thấy ga.";
+        public const string STATION_EXISTED = "Ga đã tồn tại.";
+        public const string STATION_UPDATE_SUCCESS = "Cập nhật ga thành công.";
+        public const string STATION_DELETE_SUCCESS = "Xóa ga thành công.";
+        public const string STATION_CREATE_SUCCESS = "Tạo ga thành công.";
     }
 
     public class ResponseMessageRoute
     {
-        public const string ROUTE_NOT_FOUND = "Route not found.";
-        public const string ROUTE_EXISTED = "Route already exists.";
-        public const string ROUTE_UPDATE_SUCCESS = "Route updated successfully.";
-        public const string ROUTE_DELETE_SUCCESS = "Route deleted successfully.";
-        public const string ROUTE_CREATE_SUCCESS = "Route created successfully.";
+        public const string ROUTE_NOT_FOUND = "Không tìm thấy tuyến.";
+        public const string ROUTE_EXISTED = "Tuyến đã tồn tại.";
+        public const string ROUTE_UPDATE_SUCCESS = "Cập nhật tuyến thành công.";
+        public const string ROUTE_DELETE_SUCCESS = "Xóa tuyến thành công.";
+        public const string ROUTE_CREATE_SUCCESS = "Tạo tuyến thành công.";
     }
 
     public class ResponseMessageTransaction
     {
-        public const string TRANSACTION_NOT_FOUND = "Transaction not found.";
-        public const string TRANSACTION_EXISTED = "Transaction already exists.";
-        public const string TRANSACTION_UPDATE_SUCCESS = "Transaction updated successfully.";
-        public const string TRANSACTION_DELETE_SUCCESS = "Transaction deleted successfully.";
-        public const string TRANSACTION_CREATE_SUCCESS = "Transaction created successfully.";
+        public const string TRANSACTION_NOT_FOUND = "Không tìm thấy giao dịch.";
+        public const string TRANSACTION_EXISTED = "Giao dịch đã tồn tại.";
+        public const string TRANSACTION_UPDATE_SUCCESS = "Cập nhật giao dịch thành công.";
+        public const string TRANSACTION_DELETE_SUCCESS = "Xóa giao dịch thành công.";
+        public const string TRANSACTION_CREATE_SUCCESS = "Tạo giao dịch thành công.";
     }
 
     public class ResponseMessageTrain
     {
-        public const string TRAIN_NOT_FOUND = "Train not found.";
-        public const string TRAIN_EXISTED = "Train already exists.";
-        public const string TRAIN_UPDATE_SUCCESS = "Train updated successfully.";
-        public const string TRAIN_DELETE_SUCCESS = "Train deleted successfully.";
-        public const string TRAIN_CREATE_SUCCESS = "Train created successfully.";
-        public const string LINE_ID_REQUIRED = "Line ID is required.";
-        public const string TIME_SLOT_ID_REQUIRED = "Time slot ID is required.";
-        public const string DATE_REQUIRED = "Date is required.";
-        public const string LINE_ID_INVALID = "Line ID is invalid.";
-        public const string TIME_SLOT_ID_INVALID = "Time slot ID is invalid.";
-        public const string DATE_INVALID = "Date is invalid. Format: yyyy-mm-dd";
-        public const string TRAIN_FULL = "Train is full, cannot add more shipments.";
-        public const string MODEL_NAME_TOO_LONG = "Model name cannot exceed 100 characters.";
-        public const string IS_AVAILABLE_INVALID = "Is available must be true or false.";
-        public const string TRAIN_ID_REQUIRED = "Train ID is required.";
-        public const string TRAIN_ID_INVALID = "Train ID is invalid.";
-        public const string ITINERARY_IDS_REQUIRED = "Itinerary IDs are required.";
-        public const string ITINERARY_IDS_INVALID = "Itinerary IDs are invalid.";
-        public const string TRAIN_ALREADY_ASSIGNED_TO_SLOT_ON_DATE = "Train is already assigned to this time slot" +
-            " on the specified date.";
-        public const string SHIPMENT_ITINERARIES_NOT_FOUND = 
-            "Shipment itineraries not found for the specified train.";
-
-        public const string TRAIN_MUST_BE_SAME_LINE = "Train must be on the same line as the route.";
+        public const string TRAIN_NOT_FOUND = "Không tìm thấy tàu.";
+        public const string TRAIN_EXISTED = "Mã tàu đã tồn tại.";
+        public const string TRAIN_UPDATE_SUCCESS = "Cập nhật tàu thành công.";
+        public const string TRAIN_DELETE_SUCCESS = "Xóa tàu thành công.";
+        public const string TRAIN_CREATE_SUCCESS = "Tạo tàu thành công.";
+        public const string LINE_ID_REQUIRED = "Yêu cầu LineId.";
+        public const string TIME_SLOT_ID_REQUIRED = "Yêu cầu TimeSlotId.";
+        public const string DATE_REQUIRED = "Yêu cầu ngày.";
+        public const string LINE_ID_INVALID = "LineId không hợp lệ.";
+        public const string TIME_SLOT_ID_INVALID = "TimeSlotId không hợp lệ.";
+        public const string DATE_INVALID = "Ngày không hợp lệ. Định dạng: yyyy-mm-dd";
+        public const string TRAIN_FULL = "Tàu đã đầy, không thể thêm đơn hàng.";
+        public const string MODEL_NAME_TOO_LONG = "Tên mẫu tàu không được vượt quá 100 ký tự.";
+        public const string IS_AVAILABLE_INVALID = "Thông tin khả dụng phải là true hoặc false.";
+        public const string TRAIN_ID_REQUIRED = "Yêu cầu TrainId.";
+        public const string TRAIN_ID_INVALID = "TrainId không hợp lệ.";
+        public const string ITINERARY_IDS_REQUIRED = "Yêu cầu ShipmentItineraryId.";
+        public const string ITINERARY_IDS_INVALID = "ShipmentItineraryId không hợp lệ.";
+        public const string TRAIN_ALREADY_ASSIGNED_TO_SLOT_ON_DATE = "Tàu đã được gán vào khung giờ này trong ngày đã chọn.";
+        public const string SHIPMENT_ITINERARIES_NOT_FOUND = "Không tìm thấy lịch trình đơn hàng cho tàu đã chọn.";
+        public const string TRAIN_MUST_BE_SAME_LINE = "Tàu phải thuộc cùng tuyến với tuyến đường.";
+        public const string TRAIN_CODE_INVALID = "Train code không hợp lệ.";
+        public const string TRAIN_CODE_TOO_LONG = "Train code không được vượt quá 20 ký tự.";
     }
 
     public class RegionMessageConstants
     {
-        public const string REGION_NOT_FOUND = "Region not found.";
-        public const string REGION_EXISTED = "Region already exists.";
-        public const string REGION_UPDATE_SUCCESS = "Region updated successfully.";
-        public const string REGION_DELETE_SUCCESS = "Region deleted successfully.";
-        public const string REGION_CREATE_SUCCESS = "Region created successfully.";
-        public const string REGION_CODE_REQUIRED = "Region code is required.";
-        public const string REGION_NAME_REQUIRED = "Region name is required.";
-        public const string REGION_CODE_INVALID = "Region code is invalid.";
-        public const string REGION_NAME_INVALID = "Region name is invalid.";
+        public const string REGION_NOT_FOUND = "Không tìm thấy vùng.";
+        public const string REGION_EXISTED = "Vùng đã tồn tại.";
+        public const string REGION_UPDATE_SUCCESS = "Cập nhật vùng thành công.";
+        public const string REGION_DELETE_SUCCESS = "Xóa vùng thành công.";
+        public const string REGION_CREATE_SUCCESS = "Tạo vùng thành công.";
+        public const string REGION_CODE_REQUIRED = "Yêu cầu RegionId.";
+        public const string REGION_NAME_REQUIRED = "Yêu cầu tên vùng.";
+        public const string REGION_CODE_INVALID = "RegionId không hợp lệ.";
+        public const string REGION_NAME_INVALID = "Tên vùng không hợp lệ.";
     }
 
-    public class RouteMessageConstants
+    public class MetroRouteMessageConstants
     {
-        public const string ROUTE_NOT_FOUND = "Route not found.";
-        public const string ROUTE_EXISTED = "Route already exists.";
-        public const string ROUTE_UPDATE_SUCCESS = "Route updated successfully.";
-        public const string ROUTE_DELETE_SUCCESS = "Route deleted successfully.";
-        public const string ROUTE_CREATE_SUCCESS = "Route created successfully.";
-        public const string ROUTE_CODE_REQUIRED = "Route code is required.";
-        public const string ROUTE_NAME_REQUIRED = "Route name is required.";
-        public const string ROUTE_CODE_INVALID = "Route code is invalid.";
-        public const string ROUTE_NAME_INVALID = "Route name is invalid.";
-        public const string METROLINE_STATION_COUNT_LESS_THAN_2 = "Metro line must have at least 2 stations.";
+        public const string METROROUTE_EXISTED = "Tuyến đã tồn tại.";
+        public const string ROUTE_UPDATE_SUCCESS = "Cập nhật tuyến thành công.";
+        public const string ROUTE_DELETE_SUCCESS = "Xóa tuyến thành công.";
+        public const string ROUTE_CREATE_SUCCESS = "Tạo tuyến thành công.";
+        public const string ROUTE_CODE_REQUIRED = "Yêu cầu RouteId.";
+        public const string ROUTE_NAME_REQUIRED = "Yêu cầu tên tuyến.";
+        public const string ROUTE_CODE_INVALID = "RouteId không hợp lệ.";
+        public const string ROUTE_NAME_INVALID = "Tên tuyến không hợp lệ.";
+        public const string METROROUTE_STATION_COUNT_LESS_THAN_2 = "Tuyến metro phải có ít nhất 2 ga.";
+        public const string METROROUTE_NOT_FOUND = "Không tìm thấy tuyến metro.";
+        public const string METROROUTE_NOT_ENOUGH_TRAINS = "Tuyến yêu cầu ít nhất 2 tàu để sẵn sàng giao hàng";
+        public const string METROROUTE_ACTIVATE_SUCCESS = "Kích hoạt tuyến metro thành công.";
+        public const string METROROUTE_DEACTIVATE_SUCCESS = "Vô hiệu hóa tuyến metro thành công.";
+        public const string METROROUTE_ALREADY_ACTIVATED = "Tuyến metro không tồn tại hoặc đã được kích hoạt.";
+    }
+
+    public class ResponseMessageSupportTicket
+    {
+        public const string TICKET_NOT_FOUND = "Không tìm thấy phiếu hỗ trợ.";
+        public const string TICKET_EXISTED = "Phiếu hỗ trợ đã tồn tại.";
+        public const string TICKET_UPDATE_SUCCESS = "Cập nhật phiếu hỗ trợ thành công.";
+        public const string TICKET_DELETE_SUCCESS = "Xóa phiếu hỗ trợ thành công.";
+        public const string TICKET_CREATE_SUCCESS = "Tạo phiếu hỗ trợ thành công.";
+        public const string TICKET_CANCEL_SUCCESS = "Hủy phiếu hỗ trợ thành công.";
+        public const string TICKET_STATUS_INVALID = "Trạng thái phiếu hỗ trợ không hợp lệ.";
+        public const string TICKET_STATUS_NOT_FOUND = "Không tìm thấy trạng thái phiếu hỗ trợ.";
+        public const string TICKET_STATUS_UPDATE_SUCCESS = "Cập nhật trạng thái phiếu hỗ trợ thành công.";
     }
 }

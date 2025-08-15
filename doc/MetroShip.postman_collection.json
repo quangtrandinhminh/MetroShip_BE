@@ -117,6 +117,166 @@
 					"response": []
 				},
 				{
+					"name": "Login - Checker - Staff BT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('staffRT', pm.response.json().refreshToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"staff-ck-bt\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Staff - Cargo - BT",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('staffRT', pm.response.json().refreshToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"staff-cg-bt\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Staff - Checker - BXST",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('staffRT', pm.response.json().refreshToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"staff-ck-bxst\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Staff - Cargo- BXST",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('staffAccessToken', pm.response.json().token);\r",
+									"pm.collectionVariables.set('staffRT', pm.response.json().refreshToken);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"username\": \"staff-cg-bxst\",\r\n  \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/authentication",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"authentication"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Login - Customer 1",
 					"event": [
 						{
@@ -945,7 +1105,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"staffId\": \"64b4c4c2-48ab-4a97-af1c-b25f1aa86362\",\n  \"stationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\n  \"assignedRole\": 1,\n  \"fromTime\": \"2025-07-19T08:12:02.184Z\",\n  \"toTime\": \"2025-08-19T08:12:02.184Z\",\n  \"description\": \"Check hàng nha\"\n}",
+							"raw": "{\n  \"staffId\": \"31e9418d-a25d-429e-9e1c-268db21fb514\",\n  \"stationId\": \"d6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1\",\n  \"assignedRole\": 2,\n  \"fromTime\": \"2025-08-05T08:12:02.184Z\",\n  \"toTime\": \"2025-09-05T08:12:02.184Z\",\n  \"description\": \"Check hàng nha\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1246,21 +1406,11 @@
 			]
 		},
 		{
-			"name": "Stat",
+			"name": "Report",
 			"item": [
 				{
-					"name": "ADMIN TotalRevenue",
+					"name": "shipment stat",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1269,44 +1419,22 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/revenue?FromDateTimeOffset=2024-11-01T00:00:00.070Z&DayNumber=30",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/Report/shipments/stats",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"revenue"
-							],
-							"query": [
-								{
-									"key": "FromDateTimeOffset",
-									"value": "2024-11-01T00:00:00.070Z"
-								},
-								{
-									"key": "DayNumber",
-									"value": "30"
-								}
+								"Report",
+								"shipments",
+								"stats"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "ADMIN general",
+					"name": "user stat",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1315,35 +1443,22 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/admin/general",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/Report/users/stats",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"admin",
-								"general"
+								"Report",
+								"users",
+								"stats"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "ADMIN revenue chart",
+					"name": "transaction stat",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1352,46 +1467,22 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/revenue/chart?year=2024",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/Report/transactions/stats",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"revenue",
-								"chart"
-							],
-							"query": [
-								{
-									"key": "year",
-									"value": "2024"
-								},
-								{
-									"key": "month",
-									"value": "12",
-									"disabled": true
-								}
+								"Report",
+								"transactions",
+								"stats"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "SHOP TotalRevenue",
+					"name": "shipment chart",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{shopkeeperAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1400,44 +1491,21 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/revenue?FromDateTimeOffset=2024-11-01T00:00:00.070Z&DayNumber=30",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/Report/shipment-chart",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"revenue"
-							],
-							"query": [
-								{
-									"key": "FromDateTimeOffset",
-									"value": "2024-11-01T00:00:00.070Z"
-								},
-								{
-									"key": "DayNumber",
-									"value": "30"
-								}
+								"Report",
+								"shipment-chart"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "SHOP general",
+					"name": "transaction chart",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{shopkeeperAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1446,35 +1514,20 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/shop/general",
-							"protocol": "https",
+							"raw": "{{baseUrl}}Report/transaction-chart",
 							"host": [
-								"localhost"
+								"{{baseUrl}}Report"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"shop",
-								"general"
+								"transaction-chart"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "SHOP revenue chart",
+					"name": "category stat",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{shopkeeperAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "GET",
 						"header": [
 							{
@@ -1483,299 +1536,49 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/stats/revenue/chart?year=2024",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/Report/category-statistics",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
-								"stats",
-								"revenue",
-								"chart"
-							],
-							"query": [
-								{
-									"key": "year",
-									"value": "2024"
-								},
-								{
-									"key": "month",
-									"value": "12",
-									"disabled": true
-								}
+								"Report",
+								"category-statistics"
 							]
 						}
 					},
 					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				},
 				{
-					"name": "ADMIN Product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://localhost:7085/api/stats/product",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"stats",
-								"product"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "SHOP Product",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{shopkeeperAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://localhost:7085/api/stats/product",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"stats",
-								"product"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "User",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://localhost:7085/api/stats/admin/user",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"stats",
-								"admin",
-								"user"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Shop",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://localhost:7085/api/stats/admin/shop",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"stats",
-								"admin",
-								"shop"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Order",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{adminAccessToken}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://localhost:7085/api/stats/admin/order",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"stats",
-								"admin",
-								"order"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "ADMIN REVENUE CLOUD",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjEyLzAyLzIwMjQiLCJuYmYiOjE3MzMwMzc5ODUsImV4cCI6MTczMzEyNDM4NSwiaWF0IjoxNzMzMDM3OTg1fQ.zkUlXDxJUEBwGpxwjx-dgtz63qlJYtpQKhcWsUl8gnw",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://rentezapi-latest.onrender.com/api/stats/revenue?FromDateTimeOffset=2024-11-24T16%3A26%3A31.8511935%2B00%3A00&DayNumber=7",
-							"protocol": "https",
-							"host": [
-								"rentezapi-latest",
-								"onrender",
-								"com"
-							],
-							"path": [
-								"api",
-								"stats",
-								"revenue"
-							],
-							"query": [
-								{
-									"key": "FromDateTimeOffset",
-									"value": "2024-11-24T16%3A26%3A31.8511935%2B00%3A00"
-								},
-								{
-									"key": "DayNumber",
-									"value": "7"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "ADMIN PRODUCT CLOUD",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjEyLzAyLzIwMjQiLCJuYmYiOjE3MzMwMzc5ODUsImV4cCI6MTczMzEyNDM4NSwiaWF0IjoxNzMzMDM3OTg1fQ.zkUlXDxJUEBwGpxwjx-dgtz63qlJYtpQKhcWsUl8gnw",
-									"type": "string"
-								}
-							]
-						},
-						"method": "GET",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							}
-						],
-						"url": {
-							"raw": "https://rentezapi-latest.onrender.com/api/stats/product",
-							"protocol": "https",
-							"host": [
-								"rentezapi-latest",
-								"onrender",
-								"com"
-							],
-							"path": [
-								"api",
-								"stats",
-								"product"
-							]
-						}
-					},
-					"response": []
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -2033,7 +1836,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"dce2eb72-2449-47b6-8afb-b8844b5b9919\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2087,7 +1890,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-08-09T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"9c50210e-5670-4608-b58a-c54d0b3cc249\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 11,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11,\r\n            \"valueVnd\": 10000000\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2114,7 +1917,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n    \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 20,\r\n            \"heightCm\": 30\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 30,\r\n            \"widthCm\": 40,\r\n            \"heightCm\": 50,\r\n            \"valueVnd\": 2000000\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n    \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00Z\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"isInsuranceIncluded\": false,\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 20,\r\n            \"heightCm\": 30\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n            \"categoryInsuranceId\": \"dce2eb72-2449-47b6-8afb-b8844b5b9919\",\r\n            \"weightKg\": 20,\r\n            \"lengthCm\": 30,\r\n            \"widthCm\": 40,\r\n            \"heightCm\": 50,\r\n            \"valueVnd\": 2000000\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2162,13 +1965,39 @@
 					"response": []
 				},
 				{
+					"name": "Book a shipment - TDY - ĐHYD - BXMT - 1 parcels",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 12467,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 12467,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-11T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-11T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Book a shipment - TDY - ĐHYD - BXMT - 2 parcels",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-03T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-03T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-05T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-05T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2257,13 +2086,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MSHCMC2508032230VBZ1",
+							"raw": "{{baseUrl}}/shipments/MSHCMC2508070730JK9Y",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MSHCMC2508032230VBZ1"
+								"MSHCMC2508070730JK9Y"
 							]
 						}
 					},
@@ -2275,7 +2104,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments?orderBy=rejectedAt&orderDirection=desc&pageNumber=1&pageSize=5",
+							"raw": "{{baseUrl}}/shipments?orderDirection=desc&pageNumber=1&pageSize=5&isAwaitingNextTrain=true&itineraryIncludeStationId=5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2290,7 +2119,8 @@
 								},
 								{
 									"key": "orderBy",
-									"value": "rejectedAt"
+									"value": "rejectedAt",
+									"disabled": true
 								},
 								{
 									"key": "orderDirection",
@@ -2308,6 +2138,14 @@
 								{
 									"key": "pageSize",
 									"value": "5"
+								},
+								{
+									"key": "isAwaitingNextTrain",
+									"value": "true"
+								},
+								{
+									"key": "itineraryIncludeStationId",
+									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0"
 								}
 							]
 						}
@@ -2378,7 +2216,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"shipmentId\": \"ffe0a3e3-34af-49b1-a9f9-5a646fa9ddba\",\n  \"returnUrl\": \"https://localhost:7085/api/auth/hello\",\n  \"cancelUrl\": \"https://metroship-cosdy.ondigitalocean.app/swagger/index.html\"\n}",
+							"raw": "{\n  \"shipmentId\": \"8db47bfb-3826-4866-979c-ed4c0fb1e038\",\n  \"transactionType\": 1,\n  \"returnUrl\": \"https://localhost:7085/api/auth/hello\",\n  \"cancelUrl\": \"https://metroship-cosdy.ondigitalocean.app/swagger/index.html\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2663,6 +2501,88 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Cancel",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"6fa7d4ee-bfe6-4ef7-ad6b-b6f2221dd5a7\",\n  \"reason\": \"Khác\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/cancel",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff complete shipment at BXST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNoZWNrZXIiLCJTdGF0aW9uSWQiOiJkNmU3ZjhhOS1iMGMxLWQyZTMtZjRhNS1iNmM3ZDhlOWYwYTEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIzMWU5NDE4ZC1hMjVkLTQyOWUtOWUxYy0yNjhkYjIxZmI1MTQiLCJVc2VyTmFtZSI6InN0YWZmLWNrLWJ4c3QiLCJ1bmlxdWVfbmFtZSI6IlN0YWZmIGNoZWNrZXIgYuG6v24geGUgc3Xhu5FpIHRpw6puIiwiZW1haWwiOiJzdGFmZi1jay1ieHN0QGdtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiMDEyMzQ1Njc4NCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjA3LzA4LzIwMjUiLCJuYmYiOjE3NTQ0OTcwNDUsImV4cCI6MTc1NDU4MzQ0NSwiaWF0IjoxNzU0NDk3MDQ1fQ.TRX40-V4rvTwMGOe4qvGXnjg0vnb5WN24E88cIiUr6Q",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"091be410-222f-4361-854b-850d0e0b4534\",\n  \"pickedUpMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"complete"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"auth": {
@@ -2768,6 +2688,186 @@
 					"response": []
 				},
 				{
+					"name": "Staff load a parcel into train",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/loading/MSHCMC2508070730T203-02/2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"loading",
+								"MSHCMC2508070730T203-02",
+								"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff confirms a parcel at BT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNoZWNrZXIiLCJTdGF0aW9uSWQiOiI1ZTlmM2MyNy04ZDZiLTRjNDQtOWExNC1kZmQ2YTNlMmU4ZjAiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiJkODdhYzgxNy1lYWE0LTRiOTAtOGJjMy0zYzFlMDQxNzVhMTUiLCJVc2VyTmFtZSI6InN0YWZmLWNrLWJ0IiwidW5pcXVlX25hbWUiOiJTdGFmZiBjaGVja2VyIGJlbiB0aGFuaCIsImVtYWlsIjoic3RhZmZAZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjA3LzA4LzIwMjUiLCJuYmYiOjE3NTQ0OTU5NDQsImV4cCI6MTc1NDU4MjM0NCwiaWF0IjoxNzU0NDk1OTQ0fQ.yCOkSQfMzqyRKqvi5CYkfdZc7ZefiSQj1Y1Is60MCYk",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"parcelCode\": \"MSHCMC2508070730JK9Y-01\",\n  \"confirmedMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/confirmation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"confirmation"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff load a parcel at BT",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNhcmdvTG9hZGVyIiwiU3RhdGlvbklkIjoiNWU5ZjNjMjctOGQ2Yi00YzQ0LTlhMTQtZGZkNmEzZTJlOGYwIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvc2lkIjoiZGZlOTUwMTYtZjFjZC00YzZlLWIwM2YtZWU5MTc1NTA1ODRlIiwiVXNlck5hbWUiOiJzdGFmZi1jZy1idCIsInVuaXF1ZV9uYW1lIjoiU3RhZmYgY2FyZ28gYmVuIHRoYW5oIiwiZW1haWwiOiJzdGFmZkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9leHBpcmVkIjoiMDcvMDgvMjAyNSIsIm5iZiI6MTc1NDQ5NjU0MCwiZXhwIjoxNzU0NTgyOTQwLCJpYXQiOjE3NTQ0OTY1NDB9.sfPpUhXeQmrLfWjzf_sbHg6-tLDoGL9urPeSWASmMUE",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/loading/MSHCMC2508070730JK9Y-01/HCMC-L1-T01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"loading",
+								"MSHCMC2508070730JK9Y-01",
+								"HCMC-L1-T01"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff unload a parcel at BXST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNhcmdvTG9hZGVyIiwiU3RhdGlvbklkIjoiZDZlN2Y4YTktYjBjMS1kMmUzLWY0YTUtYjZjN2Q4ZTlmMGExIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvc2lkIjoiM2M2N2MzYjAtZWZjNi00MjQ1LTk3YzctYmQ1YWZhNTk2Mjc5IiwiVXNlck5hbWUiOiJzdGFmZi1jZy1ieHN0IiwidW5pcXVlX25hbWUiOiJTdGFmZiBjYXJnbyBi4bq_biB4ZSBzdeG7kWkgdGnDqm4iLCJlbWFpbCI6InN0YWZmLWNnLWJ4c3RAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbW9iaWxlcGhvbmUiOiIwMTIzNDU2Nzg1IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9leHBpcmVkIjoiMDcvMDgvMjAyNSIsIm5iZiI6MTc1NDUwMDk2MiwiZXhwIjoxNzU0NTg3MzYyLCJpYXQiOjE3NTQ1MDA5NjJ9.elyHp3QDL7FGmECT9997dRpzcH3iS24WdI3co2Dma5M",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/unloading/MSHCMC2508070730JK9Y-01/HCMC-L1-T01",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"unloading",
+								"MSHCMC2508070730JK9Y-01",
+								"HCMC-L1-T01"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Staff update a parcel to awaitingDeli at BXST",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNoZWNrZXIiLCJTdGF0aW9uSWQiOiJkNmU3ZjhhOS1iMGMxLWQyZTMtZjRhNS1iNmM3ZDhlOWYwYTEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIzMWU5NDE4ZC1hMjVkLTQyOWUtOWUxYy0yNjhkYjIxZmI1MTQiLCJVc2VyTmFtZSI6InN0YWZmLWNrLWJ4c3QiLCJ1bmlxdWVfbmFtZSI6IlN0YWZmIGNoZWNrZXIgYuG6v24geGUgc3Xhu5FpIHRpw6puIiwiZW1haWwiOiJzdGFmZi1jay1ieHN0QGdtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiMDEyMzQ1Njc4NCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjA3LzA4LzIwMjUiLCJuYmYiOjE3NTQ1MDI1NjUsImV4cCI6MTc1NDU4ODk2NSwiaWF0IjoxNzU0NTAyNTY1fQ.BgvkA93otddg6s4T1VPJ3jOa7_9QWGrQrq8LZUe-cG4",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcels/staff/awaiting-delivery/MSHCMC2508070730JK9Y-02",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcels",
+								"staff",
+								"awaiting-delivery",
+								"MSHCMC2508070730JK9Y-02"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Staff rejects a parcel",
 					"request": {
 						"method": "POST",
@@ -2809,13 +2909,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/parcels/MSHCMC2508032230VBZ1-01",
+							"raw": "{{baseUrl}}/parcels/MSHCMC2508070730T203-01",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"parcels",
-								"MSHCMC2508032230VBZ1-01"
+								"MSHCMC2508070730T203-01"
 							]
 						}
 					},
@@ -3041,7 +3141,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains?LineId=e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+							"raw": "{{baseUrl}}/metro-trains",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -3051,7 +3151,8 @@
 							"query": [
 								{
 									"key": "LineId",
-									"value": "e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c"
+									"value": "e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
+									"disabled": true
 								},
 								{
 									"key": "TimeSlotId",
@@ -3086,6 +3187,11 @@
 								{
 									"key": "ModelName",
 									"value": "hitachi",
+									"disabled": true
+								},
+								{
+									"key": "StationId",
+									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
 									"disabled": true
 								}
 							]
@@ -3137,7 +3243,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"lineId\": \"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"date\": \"2025-07-31\",\r\n  \"direction\": 0\r\n}",
+							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"date\": \"2025-08-07\",\r\n  \"direction\": 0\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3223,6 +3329,51 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Create a train",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{adminAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"trainCode\": null,\n  \"modelName\": \"HITACHI\",\n  \"isActive\": true,\n  \"lineId\": \"d1d4994a-6d56-4d8b-a597-c485af1368ba\",\n  \"trainNumber\": 2,\n  \"numberOfCarriages\": 3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/metro-trains",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-trains"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"auth": {
@@ -3272,13 +3423,19 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-lines/dropdown",
+							"raw": "{{baseUrl}}/metro-lines/dropdown?stationId=7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"metro-lines",
 								"dropdown"
+							],
+							"query": [
+								{
+									"key": "stationId",
+									"value": "7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b"
+								}
 							]
 						}
 					},
@@ -3314,6 +3471,100 @@
 							],
 							"path": [
 								"metro-lines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add metroline - HN-L2A",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"lineNameVi\": \"Tuyến 2A: Cát Linh - Hà Đông\",\n  \"lineNameEn\": \"Line 2A: Cat Linh - Ha Dong\",\n  \"regionId\": \"d75d6e5a-34b5-4396-b0b9-2947250ed138\",\n  \"lineNumber\": 2,\n  \"lineCode\": \"HN-L2A\",\n  \"lineType\": \"Đường sắt đô thị Hà Nội\",\n  \"lineOwner\": \"Công ty Đường sắt Hà Nội (Hanoi Metro Company)\",\n  \"colorHex\": \"#00B359\",\n  \"RouteTimeMin\": \"\",\n  \"DwellTimeMin\": 30,\n  \"stations\": [\n    {\n      \"stationNameVi\": \"Cát Linh\",\n      \"stationNameEn\": \"Cat Linh\",\n      \"address\": \"Số 168 Hào Nam, phường Cát Linh, quận Đống Đa, Hà Nội\",\n      \"isUnderground\": false,\n      \"isActive\": true,\n      \"latitude\": 21.0286,\n      \"longitude\": 105.8239,\n      \"toNextStationKm\": 0.9\n    },\n    {\n      \"stationNameVi\": \"La Thành\",\n      \"stationNameEn\": \"La Thanh\",\n      \"address\": \"Ngã tư Giảng Võ - La Thành, phường Cát Linh, quận Đống Đa, Hà Nội\",\n      \"isUnderground\": false,\n      \"isActive\": true,\n      \"latitude\": 21.0219,\n      \"longitude\": 105.8197,\n      \"toNextStationKm\": 1.0\n    },\n    {\n      \"stationNameVi\": \"Thái Hà\",\n      \"stationNameEn\": \"Thai Ha\",\n      \"address\": \"Ngã tư Hoàng Cầu - Thái Hà - Yên Lãng, quận Đống Đa, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 21.0135,\n      \"longitude\": 105.8159,\n      \"toNextStationKm\": 1.2\n    },\n    {\n      \"stationNameVi\": \"Láng\",\n      \"stationNameEn\": \"Lang\",\n      \"address\": \"Gần Ngã Tư Sở, phường Thịnh Quang, quận Đống Đa, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 21.0044,\n      \"longitude\": 105.8094,\n      \"toNextStationKm\": 1.2\n    },\n    {\n      \"stationNameVi\": \"Thượng Đình\",\n      \"stationNameEn\": \"Thuong Dinh\",\n      \"address\": \"Đường Nguyễn Trãi, gần cầu Thượng Đình, quận Thanh Xuân, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9959,\n      \"longitude\": 105.8028,\n      \"toNextStationKm\": 1.0\n    },\n    {\n      \"stationNameVi\": \"Vành đai 3\",\n      \"stationNameEn\": \"Ring Road 3\",\n      \"address\": \"Ngã tư Nguyễn Trãi - Khuất Duy Tiến, quận Thanh Xuân, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9886,\n      \"longitude\": 105.7947,\n      \"toNextStationKm\": 1.6\n    },\n    {\n      \"stationNameVi\": \"Phùng Khoang\",\n      \"stationNameEn\": \"Phung Khoang\",\n      \"address\": \"Đường Nguyễn Trãi, phường Trung Văn, quận Nam Từ Liêm, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9803,\n      \"longitude\": 105.7828,\n      \"toNextStationKm\": 1.1\n    },\n    {\n      \"stationNameVi\": \"Văn Quán\",\n      \"stationNameEn\": \"Van Quan\",\n      \"address\": \"Đối diện Học viện An ninh Nhân dân, đường Trần Phú, quận Hà Đông, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9754,\n      \"longitude\": 105.7741,\n      \"toNextStationKm\": 1.0\n    },\n    {\n      \"stationNameVi\": \"Hà Đông\",\n      \"stationNameEn\": \"Ha Dong\",\n      \"address\": \"Trung tâm quận Hà Đông, gần Bưu điện Hà Đông, quận Hà Đông, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9691,\n      \"longitude\": 105.7663,\n      \"toNextStationKm\": 1.2\n    },\n    {\n      \"stationNameVi\": \"La Khê\",\n      \"stationNameEn\": \"La Khe\",\n      \"address\": \"Đường Quang Trung, phường La Khê, quận Hà Đông, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9631,\n      \"longitude\": 105.7558,\n      \"toNextStationKm\": 1.1\n    },\n    {\n      \"stationNameVi\": \"Văn Khê\",\n      \"stationNameEn\": \"Van Khe\",\n      \"address\": \"Ngã tư Quang Trung - Lê Trọng Tấn, quận Hà Đông, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9579,\n      \"longitude\": 105.7468,\n      \"toNextStationKm\": 1.3\n    },\n    {\n      \"stationNameVi\": \"Yên Nghĩa\",\n      \"stationNameEn\": \"Yen Nghia\",\n      \"address\": \"Bến xe Yên Nghĩa, Quốc lộ 6, phường Yên Nghĩa, quận Hà Đông, Hà Nội\",\n      \"isUnderground\": false,\n      \"latitude\": 20.9536,\n      \"longitude\": 105.7348,\n      \"toNextStationKm\": 0\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add metroline - HN-L3 - Ga Cát Linh existed",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"lineNameVi\": \"Tuyến 3: Nhổn - Ga Hà Nội\",\n    \"lineNameEn\": \"Line 3: Nhon - Hanoi Station\",\n    \"regionId\": \"d75d6e5a-34b5-4396-b0b9-2947250ed138\",\n    \"lineNumber\": 3,\n    \"lineCode\": \"HN-L3\",\n    \"lineType\": \"Đường sắt đô thị Hà Nội\",\n    \"lineOwner\": \"Công ty Đường sắt Hà Nội (Hanoi Metro Company)\",\n    \"colorHex\": \"#00B359\",\n    \"RouteTimeMin\": \"\",\n    \"DwellTimeMin\": 30,\n    \"stations\": [\n        {\n            \"stationNameVi\": \"Nhổn\",\n            \"stationNameEn\": \"Nhon\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0456,\n            \"longitude\": 105.7423,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Minh Khai\",\n            \"stationNameEn\": \"Minh Khai\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0431,\n            \"longitude\": 105.7505,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Phú Diễn\",\n            \"stationNameEn\": \"Phu Dien\",\n            \"address\": \"Đường Cầu Diễn, phường Phúc Diễn, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0392,\n            \"longitude\": 105.7597,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Cầu Diễn\",\n            \"stationNameEn\": \"Cau Dien\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Cầu Diễn, quận Nam Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0361,\n            \"longitude\": 105.7675,\n            \"toNextStationKm\": 1.3\n        },\n        {\n            \"stationNameVi\": \"Lê Đức Thọ\",\n            \"stationNameEn\": \"Le Duc Tho\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Mai Dịch, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0321,\n            \"longitude\": 105.7788,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Đại học Quốc gia\",\n            \"stationNameEn\": \"Vietnam National University\",\n            \"address\": \"Đường Xuân Thủy, phường Dịch Vọng Hậu, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0322,\n            \"longitude\": 105.7891,\n            \"toNextStationKm\": 1.0\n        },\n        {\n            \"stationNameVi\": \"Chùa Hà\",\n            \"stationNameEn\": \"Chua Ha\",\n            \"address\": \"Đường Cầu Giấy, phường Dịch Vọng, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0315,\n            \"longitude\": 105.7984,\n            \"toNextStationKm\": 1.2\n        },\n        {\n            \"stationNameVi\": \"Cầu Giấy\",\n            \"stationNameEn\": \"Cau Giay\",\n            \"address\": \"Đường Cầu Giấy, phường Ngọc Khánh, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0298,\n            \"longitude\": 105.8087,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Kim Mã\",\n            \"stationNameEn\": \"Kim Ma\",\n            \"address\": \"Đường Kim Mã, phường Kim Mã, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0305,\n            \"longitude\": 105.8201,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"id\": \"980ab103-9b6a-4ef9-9082-3098146cfab0\",\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Văn Miếu\",\n            \"stationNameEn\": \"Van Mieu\",\n            \"address\": \"Phố Quốc Tử Giám, phường Văn Miếu, quận Đống Đa, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0270,\n            \"longitude\": 105.8354,\n            \"toNextStationKm\": 0.8\n        },\n        {\n            \"stationNameVi\": \"Ga Hà Nội\",\n            \"stationNameEn\": \"Hanoi Station\",\n            \"address\": \"Đường Trần Hưng Đạo, phường Cửa Nam, quận Hoàn Kiếm, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0242,\n            \"longitude\": 105.8412,\n            \"toNextStationKm\": 0\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activate a metroRoute",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines/activation/d1d4994a-6d56-4d8b-a597-c485af1368ba",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines",
+								"activation",
+								"d1d4994a-6d56-4d8b-a597-c485af1368ba"
 							]
 						}
 					},
@@ -3443,6 +3694,283 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Create region",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"regionName\": \"Hải Phòng\",\n  \"regionCode\": \"HP\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/regions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"regions"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SupportTicket",
+			"item": [
+				{
+					"name": "Create ticket",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customerAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"8db47bfb-3826-4866-979c-ed4c0fb1e038\",\n  \"subject\": \"Yêu cầu bồi thường cho đơn hàng\",\n  \"description\": \"Yêu cầu bồi thường cho đơn hàng\",\n  \"supportType\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"support-tickets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get ticket by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets/ceca5eba-666b-4325-84dd-d0fa8095c140",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"support-tickets",
+								"ceca5eba-666b-4325-84dd-d0fa8095c140"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all support ticket",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/support-tickets",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"support-tickets"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "resolve ticket",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{staffAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ticketId\": \"string\",\n  \"resolvedContent\": \"string\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets/resolve",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"support-tickets",
+								"resolve"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Close a ticket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/support-tickets/close/ceca5eba-666b-4325-84dd-d0fa8095c140",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"support-tickets",
+								"close",
+								"ceca5eba-666b-4325-84dd-d0fa8095c140"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		}

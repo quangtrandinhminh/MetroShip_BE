@@ -31,6 +31,13 @@ namespace MetroShip.WebAPI.Controllers
             return Created(nameof(CreateMetroRouteAsync), BaseResponse.OkResponseDto(response));
         }
 
+        [HttpPost(WebApiEndpoint.MetroRouteEndpoint.ActivateMetroLine)]
+        public async Task<IActionResult> ActivateMetroLineAsync([FromRoute] string id)
+        {
+            var response = await _metroRouteService.ActivateMetroLine(id);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
+
         /*[HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLines)]
         public async Task<IActionResult> GetAllMetroRoutesAsync()
         {

@@ -24,6 +24,8 @@ using MetroShip.Utility.Helpers;
 using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
 using RestSharp.Extensions;
+using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Jobs;
 
 namespace MetroShip.Service.Services;
 
@@ -49,6 +51,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IMemoryCache _cache =
         serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly ScheduleTrainJob _scheduleTrainJob = serviceProvider.GetRequiredService<ScheduleTrainJob>();
+    private readonly IMetroRouteRepository _metroRoute = serviceProvider.GetRequiredService<IMetroRouteRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -111,6 +115,43 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             c.ConfigKey,
             c.ConfigValue
         }).ToList()];
+    }
+
+    // create a train
+    public async Task<string> CreateTrainAsync(CreateTrainRequest request)
+    {
+        _logger.Information("Creating a new train with request: {@request}", request);
+        _trainValidator.ValidateCreateTrainRequest(request);
+
+        var metroRouteCode = await _metroRoute.GetAll()
+            .Where(l => l.DeletedAt == null && l.Id == request.LineId)
+            .Select(l => l.LineCode)
+            .FirstOrDefaultAsync();
+
+        if (metroRouteCode == null)
+        {
+            throw new AppException(ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        request.TrainCode = string.IsNullOrEmpty(request.TrainCode)
+            ? MetroCodeGenerator.GenerateTrainCode(metroRouteCode, request.TrainNumber)
+            : request.TrainCode;
+        // Check if train code already exists
+        var existingTrain = await _trainRepository.IsExistAsync(t => t.TrainCode == request.TrainCode);
+        if (existingTrain)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            ResponseMessageTrain.TRAIN_EXISTED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Map to train entity
+        var train = _mapper.MapToMetroTrainEntity(request);
+        await _trainRepository.AddAsync(train);
+        await _scheduleTrainJob.CreateTrainScheduleForNewTrain(train);
+        return ResponseMessageTrain.TRAIN_CREATE_SUCCESS;
     }
 
     public async Task<bool> IsShipmentDeliveredAsync(string trackingCode)

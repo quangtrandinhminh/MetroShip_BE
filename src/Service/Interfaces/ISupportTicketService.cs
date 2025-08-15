@@ -11,9 +11,7 @@ public interface ISupportTicketService
         PaginatedListRequest request);
 
     Task CreateTicketAsync(SupportTicketRequest request, CancellationToken token = default);
-    /*Task<SupportTicketResponse> UpdateSupportTicketAsync(string id, SupportTicketUpdateRequest request);
 
-    Task ResolveSupportTicketAsync(string id, SupportTicketResolveRequest request);
-
-    Task CloseSupportTicketAsync(string id, SupportTicketCloseRequest request);*/
+    Task<string> ResolveTicketAsync(ResolveTicketRequest request);
+    Task<string> CloseTicketAsync(string ticketId);
 }
