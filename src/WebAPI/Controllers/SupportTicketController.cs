@@ -20,8 +20,8 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTicketAsync([FromBody] SupportTicketRequest request, CancellationToken token = default)
         {
-            await _supportTicketService.CreateTicketAsync(request, token);
-            return Ok(BaseResponse.OkResponseDto("Support ticket created successfully.", null));
+            var result = await _supportTicketService.CreateTicketAsync(request, token);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
         [HttpGet("{ticketId}")]
@@ -47,8 +47,8 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPost("resolve")]
         public async Task<IActionResult> ResolveTicketAsync([FromBody] ResolveTicketRequest request)
         {
-            await _supportTicketService.ResolveTicketAsync(request);
-            return Ok(BaseResponse.OkResponseDto("Support ticket resolved successfully.", null));
+            var result = await _supportTicketService.ResolveTicketAsync(request);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
         [HttpPost("close/{ticketId}")]

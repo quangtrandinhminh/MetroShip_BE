@@ -689,7 +689,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 .Where(p => p.Status == ParcelStatusEnum.Lost)
                 .ToList();
             var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
-                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id)
+                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id),
+                x => x.ParcelCategory, _ => _.InsurancePolicy
             ).ToList();
 
             shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
@@ -1295,8 +1296,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Filter out null/empty paths and log them
         // Valid path: path has more than 1 vertex (path is a station list, 1 route need 2 station)
-        var validPaths = allPaths.Where(
-            r => r.Path.Count > 1).ToList();
+        var validPaths = allPaths.Where(r => r.Path?.Any() == true).ToList();
 
         if (!validPaths.Any())
         {
@@ -1317,25 +1317,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private async Task<List<dynamic>> CalculatePricingForPaths(
         List<(string StationId, List<string> Path)> pathResults, TotalPriceCalcRequest request)
     {
-        // Get pricing configuration
-        //InitializePricingTableAsync().Wait();
-
-        // Get parcel categories
-        /*var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
-        var categories = await _parcelCategoryRepository.GetAllWithCondition(
-            x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
-            .ToListAsync();
-
-        // check if all categories are exist in categoryIds and if not, throw exception at which is not found
-        if (categories.Count() != categoryIds.Count)
-        {
-            var missingCategories = categoryIds.Except(categories.Select(c => c.Id)).ToList();
-            throw new AppException(
-            ErrorCode.NotFound,
-            $"Parcel categories not found: {string.Join(", ", missingCategories)}",
-            StatusCodes.Status404NotFound);
-        }*/
-
         // Get insurance policy base on categoryInsuranceIds
         var categoryInsuranceIds = request.Parcels
             .Select(p => p.CategoryInsuranceId)

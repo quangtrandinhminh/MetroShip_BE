@@ -24,7 +24,7 @@ public class SupportTicketService(IServiceProvider serviceProvider) : ISupportTi
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
 
-    public async Task CreateTicketAsync(SupportTicketRequest request, CancellationToken token = default)
+    public async Task<string> CreateTicketAsync(SupportTicketRequest request, CancellationToken token = default)
     {
         var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Creating support ticket for shipment {ShipmentId}", request.ShipmentId);
@@ -37,7 +37,7 @@ public class SupportTicketService(IServiceProvider serviceProvider) : ISupportTi
                     t.SupportType == SupportTypeEnum.CompensationRequired &&
                     t.Status == SupportTicketStatusEnum.Opened);
 
-            if (existingTicket != null)
+            if (existingTicket)
             {
                 throw new AppException(
                 ErrorCode.BadRequest,
@@ -51,6 +51,7 @@ public class SupportTicketService(IServiceProvider serviceProvider) : ISupportTi
         ticket.OpenById = userId;
         await _supportingTicketRepository.AddAsync(ticket, token);
         await _unitOfWork.SaveChangeAsync();
+        return ResponseMessageSupportTicket.TICKET_CREATE_SUCCESS;
     }
 
     public async Task<SupportTicketResponse> GetTicketByIdAsync(string ticketId)
