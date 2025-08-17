@@ -337,16 +337,21 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
-        IQueryable<T> query,
-        RevenueFilterType filterType,
-        RevenueChartRequest request,
-        Expression<Func<T, DateTimeOffset>> dateSelector)
+    IQueryable<T> query,
+    RevenueFilterType filterType,
+    RevenueChartRequest request,
+    Expression<Func<T, DateTimeOffset>> dateSelector)
     {
+        var propertyName = GetPropertyName(dateSelector);
+
         switch (filterType)
         {
             case RevenueFilterType.Year:
                 if (request.Year.HasValue)
-                    query = query.Where(x => EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value);
+                {
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value);
+                }
                 break;
 
             case RevenueFilterType.Quarter:
@@ -354,10 +359,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 {
                     var startMonth = (request.Quarter.Value - 1) * 3 + 1;
                     var endMonth = startMonth + 2;
+
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month >= startMonth &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month <= endMonth);
+                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value &&
+                        EF.Property<DateTimeOffset>(x, propertyName).Month >= startMonth &&
+                        EF.Property<DateTimeOffset>(x, propertyName).Month <= endMonth);
                 }
                 break;
 
@@ -365,18 +371,39 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 if (request.StartYear.HasValue && request.StartMonth.HasValue &&
                     request.EndYear.HasValue && request.EndMonth.HasValue)
                 {
-                    var start = new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero);
-                    var end = new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
-                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero);
+                    var start = new DateTimeOffset(
+                        request.StartYear.Value,
+                        request.StartMonth.Value,
+                        1, 0, 0, 0, TimeSpan.Zero);
+
+                    var end = new DateTimeOffset(
+                        request.EndYear.Value,
+                        request.EndMonth.Value,
+                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value),
+                        23, 59, 59, TimeSpan.Zero);
+
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) >= start &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) <= end);
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
+                }
+                break;
+
+            case RevenueFilterType.day: // ✅ thêm lọc theo ngày cụ thể
+                if (request.Day.HasValue)
+                {
+                    var targetDate = request.Day.Value.Date;
+                    var start = new DateTimeOffset(targetDate, TimeSpan.Zero);
+                    var end = start.AddDays(1).AddTicks(-1);
+
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
                 }
                 break;
 
             case RevenueFilterType.Default:
             default:
-                // Không filter gì đặc biệt cho Default
+                // Không filter gì cho Default
                 break;
         }
 
