@@ -23,13 +23,13 @@ namespace MetroShip.Service.Services
     {
         private readonly INotificationRepository _notificationRepository;
         private readonly ILogger _logger;
-        private readonly MapperlyMapper _mapper;
+        private readonly IMapperlyMapper _mapper;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IUserRepository _userRepository;
         public NotificationService(
             INotificationRepository notificationRepository,
             ILogger logger,
-            MapperlyMapper mapper,
+            IMapperlyMapper mapper,
             IHttpContextAccessor httpContextAccessor,
             IUserRepository userRepository)
         {
@@ -40,10 +40,16 @@ namespace MetroShip.Service.Services
             _userRepository = userRepository;
         }
 
-        public async Task<PaginatedListResponse<NotificationDto>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize)
+        public async Task<PaginatedListResponse<NotificationDto>> GetNotificationsByUserIdAsync(int pageNumber, int pageSize)
         {
-            _logger.Information($"Getting notifications for user {userId}, page {pageNumber}, size {pageSize}");
-            var notifications = await _notificationRepository.GetNotificationsByUserIdAsync(userId, pageNumber, pageSize);
+            var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+
+            _logger.Information($"Getting notifications for user {currentUserId}, page {pageNumber}, size {pageSize}");
+            var notifications = await _notificationRepository.GetNotificationsByUserIdAsync(
+                int.TryParse(currentUserId, out var userIdInt) ? userIdInt : 0, 
+                pageNumber, 
+                pageSize
+            );
             return _mapper.MapNotificationList(notifications);
         }
 
@@ -162,7 +168,6 @@ namespace MetroShip.Service.Services
         {
             return await _notificationRepository.MarkAllAsReadAsync(userId);
         }
-
 
         public async Task<bool> SendNotificationToAllUsersAsync(string message, string title = "Thông báo mới")
         {

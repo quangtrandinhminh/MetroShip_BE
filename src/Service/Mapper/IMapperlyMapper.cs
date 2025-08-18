@@ -2,6 +2,7 @@
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.Notification;
@@ -113,5 +114,9 @@ public interface IMapperlyMapper
     RegionResponse MapToRegionResponse(Region entity);
 
     //notification
+    NotificationDto MapNotification(Notification notification);
+    Notification MapNotificationRequest(NotificationCreateRequest request);
+    Notification MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
     
 }

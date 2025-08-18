@@ -8,6 +8,7 @@ using MetroShip.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 using ILogger = Serilog.ILogger;
 
 namespace MetroShip.WebAPI.Controllers
@@ -20,6 +21,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly IHubContext<NotificationHub> _notificationHubContext;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger _logger;
+        private readonly IUserService _userService;
 
 
         public NotificationController(IServiceProvider serviceProvider)
@@ -28,18 +30,15 @@ namespace MetroShip.WebAPI.Controllers
             _notificationHubContext = serviceProvider.GetRequiredService<IHubContext<NotificationHub>>();
             _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
             _logger = serviceProvider.GetRequiredService<ILogger>();
+            _userService = serviceProvider.GetRequiredService<IUserService>();
         }
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotifications)]
+        [Authorize]
         public async Task<IActionResult> GetNotifications([FromQuery] PaginatedListRequest request)
         {
-            var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
-            var currentUserId = JwtClaimUltils.GetUserId(currentUser);
-
-            var notifications = await _notificationService.GetNotificationsByUserIdAsync(
-                currentUserId, request.PageNumber, request.PageSize);
-
+            var notifications = await _notificationService.GetNotificationsByUserIdAsync(request.PageNumber, request.PageSize);
             return Ok(BaseResponse.OkResponseDto(notifications));
         }
 

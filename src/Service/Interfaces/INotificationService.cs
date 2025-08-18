@@ -5,7 +5,7 @@ namespace MetroShip.Service.Interfaces;
 
 public interface INotificationService
 {
-    Task<PaginatedListResponse<NotificationDto>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize);
+    Task<PaginatedListResponse<NotificationDto>> GetNotificationsByUserIdAsync( int pageNumber, int pageSize);
     Task<NotificationDto> GetNotificationByIdAsync(int id);
     Task<NotificationDto> CreateNotificationAsync(NotificationCreateRequest request);
     Task<int> UpdateNotificationAsync(NotificationUpdateRequest request);
