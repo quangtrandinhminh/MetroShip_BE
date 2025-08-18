@@ -40,7 +40,7 @@ namespace MetroShip.WebAPI.Controllers
             var result = await shipmentService.GetAllShipmentsAsync(
                 request, filterRequest, searchKeyword, createdFrom, createdTo, orderByRequest
             );
-            return Ok(BaseResponse.OkResponseDto(result));
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [Authorize]
