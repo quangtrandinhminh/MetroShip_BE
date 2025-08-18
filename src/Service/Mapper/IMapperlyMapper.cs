@@ -2,6 +2,7 @@
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
+using MetroShip.Service.ApiModels.InsurancePolicy;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.PaginatedList;
@@ -109,6 +110,7 @@ public interface IMapperlyMapper
 
     // pricing config
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+    PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
@@ -119,4 +121,8 @@ public interface IMapperlyMapper
     SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
     PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
     SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
+
+    // insurance policy
+    InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
+    PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
 }

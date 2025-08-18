@@ -322,4 +322,24 @@
         public const string TICKET_STATUS_NOT_FOUND = "Không tìm thấy trạng thái phiếu hỗ trợ.";
         public const string TICKET_STATUS_UPDATE_SUCCESS = "Cập nhật trạng thái phiếu hỗ trợ thành công.";
     }
+
+    public class ResponseMessageInsurancePolicy
+    {
+        public const string INSURANCE_POLICY_NOT_FOUND = "Không tìm thấy chính sách bảo hiểm.";
+        public const string INSURANCE_POLICY_EXISTED = "Chính sách bảo hiểm đã tồn tại.";
+        public const string INSURANCE_POLICY_UPDATE_SUCCESS = "Cập nhật chính sách bảo hiểm thành công.";
+        public const string INSURANCE_POLICY_DELETE_SUCCESS = "Xóa chính sách bảo hiểm thành công.";
+        public const string INSURANCE_POLICY_CREATE_SUCCESS = "Tạo chính sách bảo hiểm thành công.";
+        public const string NAME_REQUIRED = "Yêu cầu tên chính sách bảo hiểm.";
+        public const string DESCRIPTION_REQUIRED = "Yêu cầu mô tả chính sách bảo hiểm.";
+        public const string BASE_FEE_VND_INVALID = "Phí cơ bản (VND) phải lớn hơn hoặc bằng 0.";
+        public const string MAX_PARCEL_VALUE_VND_INVALID = "Giá trị hàng hóa tối đa (VND) phải lớn hơn 0.";
+        public const string INSURANCE_FEE_RATE_ON_VALUE_INVALID = "Tỷ lệ phí bảo hiểm trên giá trị phải từ 0 đến 1.";
+        public const string STANDARD_COMPENSATION_VALUE_VND_INVALID = "Giá trị bồi thường tiêu chuẩn (VND) phải lớn hơn hoặc bằng 0.";
+        public const string MAX_COMPENSATION_RATE_ON_VALUE_INVALID = "Tỷ lệ bồi thường tối đa trên giá trị phải từ 0 đến 1.";
+        public const string MIN_COMPENSATION_RATE_ON_VALUE_INVALID = "Tỷ lệ bồi thường tối thiểu trên giá trị phải từ 0 đến 1.";
+        public const string MAX_COMPENSATION_RATE_ON_SHIPPING_FEE_INVALID = "Tỷ lệ bồi thường tối đa trên phí vận chuyển phải từ 0 đến 1.";
+        public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
+        public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
+    }
 }

@@ -6,6 +6,7 @@ using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Insurance;
+using MetroShip.Service.ApiModels.InsurancePolicy;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -164,6 +165,7 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // pricing config
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+    public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
@@ -175,6 +177,10 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
     public partial PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
     public partial SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
+
+    // insurance policy
+    public partial InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
+    public partial PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)
