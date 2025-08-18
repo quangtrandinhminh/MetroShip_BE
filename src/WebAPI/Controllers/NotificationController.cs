@@ -4,6 +4,7 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Utils;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -35,7 +36,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotifications)]
-        [Authorize]
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         public async Task<IActionResult> GetNotifications([FromQuery] PaginatedListRequest request)
         {
             var notifications = await _notificationService.GetNotificationsByUserIdAsync(request.PageNumber, request.PageSize);
@@ -44,6 +45,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotification)]
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         public async Task<IActionResult> GetNotification([FromRoute] int id)
         {
             var notification = await _notificationService.GetNotificationByIdAsync(id);
@@ -52,7 +54,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPost]
         [Route(WebApiEndpoint.Notification.CreateNotification)]
-        [Authorize]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> CreateNotification([FromBody] NotificationCreateRequest request)
         {
             _logger.Information("Đang tạo thông báo mới cho người dùng {UserId}", request.UserId);
@@ -67,12 +69,10 @@ namespace MetroShip.WebAPI.Controllers
 
             return Ok(BaseResponse.OkResponseDto(notification));
         }
-
         
-
         [HttpPost]
         [Route(WebApiEndpoint.Notification.SendNotificationToAllUsers)]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> SendNotificationToAllUsers([FromBody] SendNotificationToAllRequest request)
         {
             _logger.Information("Đang gửi thông báo quảng bá đến tất cả người dùng. Title: {Title}, Message: {Message}",
@@ -116,7 +116,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPut]
         [Route(WebApiEndpoint.Notification.UpdateNotification)]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> UpdateNotification([FromBody] NotificationUpdateRequest request)
         {
             var result = await _notificationService.UpdateNotificationAsync(request);
@@ -160,7 +160,6 @@ namespace MetroShip.WebAPI.Controllers
             var result = await _notificationService.MarkAllAsReadAsync(currentUserId);
             return Ok(BaseResponse.OkResponseDto(result));
         }
-
         
         /// <summary>
         /// Gửi thông báo qua SignalR
