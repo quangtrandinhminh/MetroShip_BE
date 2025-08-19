@@ -55,18 +55,23 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 "Shipment not found",
                 StatusCodes.Status404NotFound);
         }
-        
+
+        ShipmentStatusEnum[] validStatus =
+        {
+            ShipmentStatusEnum.AwaitingPayment,
+            ShipmentStatusEnum.AwaitingRefund,
+            ShipmentStatusEnum.ApplyingSurcharge,
+            ShipmentStatusEnum.CompletedWithCompensation,
+            ShipmentStatusEnum.ToCompensate
+        };
+
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment 
-            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingRefund 
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
-            && shipment.ShipmentStatus != ShipmentStatusEnum.CompletedWithCompensation
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ToCompensate
-            )
+        if (!validStatus.Contains(shipment.ShipmentStatus))
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment status must be AwaitingPayment, AwaitingRefund, or ApplyingSurcharge to create a payment link.",
+                $"Đơn hàng {shipment.TrackingCode} không thể thanh toán trong trạng thái hiện tại. " +
+                $"Các trạng thái hợp lệ: {string.Join(", ", validStatus)}",
                 StatusCodes.Status400BadRequest);
         }
 
