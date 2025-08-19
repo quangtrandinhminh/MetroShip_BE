@@ -15,7 +15,8 @@ namespace MetroShip.WebAPI.Controllers
     public class SupportTicketController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly ISupportTicketService _supportTicketService = serviceProvider.GetRequiredService<ISupportTicketService>();
-        private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<SupportTicketStatusEnum>();
+        private readonly IList<EnumResponse> _statusEnumResponses = EnumHelper.GetEnumList<SupportTicketStatusEnum>();
+        private readonly IList<EnumResponse> _supportTypeResponses = EnumHelper.GetEnumList<SupportTypeEnum>();
 
         [HttpPost(WebApiEndpoint.SupportTicketEndpoint.CreateTicket)]
         public async Task<IActionResult> CreateTicketAsync([FromBody] SupportTicketRequest request, CancellationToken token = default)
@@ -35,13 +36,19 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAllTicketsAsync([FromQuery] PaginatedListRequest request)
         {
             var tickets = await _supportTicketService.GetAllTicketsAsync(request);
-            return Ok(BaseResponse.OkResponseDto(tickets, _enumResponses));
+            return Ok(BaseResponse.OkResponseDto(tickets, _statusEnumResponses));
         }
 
         [HttpGet(WebApiEndpoint.SupportTicketEndpoint.GetTicketStatusEnum)]
         public IActionResult GetTicketStatusEnum()
         {
-            return Ok(BaseResponse.OkResponseDto(_enumResponses));
+            return Ok(BaseResponse.OkResponseDto(_statusEnumResponses));
+        }
+
+        [HttpGet(WebApiEndpoint.SupportTicketEndpoint.GetSupportTypeEnum)]
+        public IActionResult GetSupportTypeEnum()
+        {
+            return Ok(BaseResponse.OkResponseDto(_supportTypeResponses));
         }
 
         [HttpPost(WebApiEndpoint.SupportTicketEndpoint.ResolveTicket)] 
