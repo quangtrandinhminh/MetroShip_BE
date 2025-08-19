@@ -242,7 +242,7 @@
             public const string DeleteTicket = BaseEndpoint + "/{id}";
             public const string GetTicketsByUserId = BaseEndpoint + "/user/{userId}";
             public const string GetTicketStatusEnum = BaseEndpoint + "/status";
-            public const string GetTicketTypeEnum = BaseEndpoint + "/type";
+            public const string GetSupportTypeEnum = BaseEndpoint + "/type";
             public const string ResolveTicket = BaseEndpoint + "/resolve";
             public const string CloseTicket = BaseEndpoint + "/close/{ticketId}";
         }
