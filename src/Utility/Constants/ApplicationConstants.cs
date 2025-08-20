@@ -189,6 +189,7 @@
         public const string EST_MINUTES_INVALID = "Số phút dự kiến phải lớn hơn 0";
         public const string BASE_PRICE_VND_PER_KM_REQUIRED = "Yêu cầu giá cơ bản mỗi km (VND).";
         public const string BASE_PRICE_VND_PER_KM_INVALID = "Giá cơ bản mỗi km (VND) phải lớn hơn hoặc bằng 0.";
+        public const string ITINERARY_NOT_FOUND = "Không tìm thấy lộ trình.";
     }
 
     public class ResponseMessageParcel
