@@ -313,7 +313,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Note = tracking.Note,
             }).OrderByDescending(st => st.EventTime).ToList(),
             //Transactions = shipment.Transactions.ToList(),
-        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
+        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode || x.Id == trackingCode);
 
         if (shipmentDto == null)
         {

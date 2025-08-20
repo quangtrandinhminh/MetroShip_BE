@@ -15,6 +15,7 @@ namespace MetroShip.Service.Services
         private readonly VnPaySetting _vnpaySetting;
         private readonly VnPayLibrary _vnpayHelper;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private const int WaitingTimeMinutes = 15;
 
         public VnPayService(IServiceProvider serviceProvider)
         {
@@ -137,6 +138,11 @@ namespace MetroShip.Service.Services
                 PaymentTime = paymentDate,
                 VnPayResponseCode = vnpResponseCode
             };
+        }
+
+        public int GetVnPayWaitingTimeMinutes()
+        {
+            return WaitingTimeMinutes;
         }
     }
 }

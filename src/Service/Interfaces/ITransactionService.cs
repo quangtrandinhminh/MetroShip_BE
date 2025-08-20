@@ -11,4 +11,6 @@ public interface ITransactionService
     Task<string?> ExecuteVnPayPayment(VnPayCallbackModel model);
     Task<PaginatedListResponse<TransactionResponse>> GetAllTransactionsAsync(PaginatedListRequest paginatedRequest, PaymentStatusEnum? status = null,
         string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null);
+
+    Task CancelTransactionAsync(string transactionId);
 }
