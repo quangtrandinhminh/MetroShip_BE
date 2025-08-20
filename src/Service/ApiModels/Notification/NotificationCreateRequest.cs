@@ -10,7 +10,7 @@ namespace MetroShip.Service.ApiModels.Notification
     public class NotificationCreateRequest
     {
         [Required]
-        public int? UserId { get; set; }
+        public string? ToUserId { get; set; }
 
         [Required]
         public string Message { get; set; }

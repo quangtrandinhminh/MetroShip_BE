@@ -3,6 +3,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using RestSharp.Extensions;
 using System.Security.Claims;
 using ILogger = Serilog.ILogger;
 
@@ -11,23 +12,24 @@ namespace MetroShip.WebAPI.Hubs
     [Authorize]
     public class NotificationHub : Hub
     {
-        public static readonly Dictionary<int, string> _userConnectionMap = new Dictionary<int, string>();
+        public static readonly Dictionary<string, string> _userConnectionMap = new Dictionary<string, string>();
         private readonly ILogger _logger;
         private readonly INotificationService _notificationService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public NotificationHub(IServiceProvider serviceProvider)
         {
             _logger = serviceProvider.GetRequiredService<ILogger>();
             _notificationService = serviceProvider.GetRequiredService<INotificationService>();
+            _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         }
 
         public override async Task OnConnectedAsync()
         {
-            var user = Context.User;
-            var userId = JwtClaimUltils.GetUserId(user);
+            var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
             _userConnectionMap[userId] = Context.ConnectionId;
-            _logger.Information("Người dùng {UserId} đã kết nối với NotificationHub, ConnectionId: {ConnectionId}",
+            _logger.Information("User {UserId} connected to NotificationHub, ConnectionId: {ConnectionId}",
                                userId, Context.ConnectionId);
 
             await base.OnConnectedAsync();
@@ -35,15 +37,14 @@ namespace MetroShip.WebAPI.Hubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var user = Context.User;
-            var userId = JwtClaimUltils.GetUserId(user);
+            var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
             _userConnectionMap.Remove(userId);
-            _logger.Information("Người dùng {UserId} đã ngắt kết nối khỏi NotificationHub", userId);
+            _logger.Information("User {UserId} disconnected to NotificationHub", userId);
 
             if (exception != null)
             {
-                _logger.Error(exception, "Lỗi khi ngắt kết nối của người dùng {UserId}", userId);
+                _logger.Error(exception, "Error when disconnecting for user {UserId}", userId);
             }
 
             await base.OnDisconnectedAsync(exception);
@@ -51,12 +52,12 @@ namespace MetroShip.WebAPI.Hubs
 
         public async Task JoinNotificationGroup()
         {
-            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
             if (!string.IsNullOrEmpty(userId))
             {
                 var groupName = $"user_{userId}_notifications";
                 await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-                _logger.Information("Người dùng {UserId} đã tham gia nhóm thông báo {GroupName}",
+                _logger.Information("User {UserId} joined notification group {GroupName}",
                                   userId, groupName);
             }
         }
@@ -64,47 +65,47 @@ namespace MetroShip.WebAPI.Hubs
         public async Task SendNotification(NotificationDto notification)
         {
             // Gửi thông báo đến người nhận nếu họ đang online
-            if (notification.UserId.HasValue && _userConnectionMap.TryGetValue(notification.UserId.Value, out var connectionId))
+            if (notification.ToUserId.HasValue() && _userConnectionMap.TryGetValue(notification.ToUserId, out var connectionId))
             {
-                _logger.Information("Gửi thông báo SignalR đến người dùng {UserId}, NotificationId: {NotificationId}, Message: {Message}",
-                    notification.UserId.Value, notification.NotificationId, notification.Message);
+                _logger.Information("Sending SignalR notification to user {UserId}, NotificationId: {NotificationId}, Message: {Message}",
+                    notification.ToUserId, notification.Id, notification.Message);
 
                 await Clients.Client(connectionId).SendAsync("ReceiveNotification", notification);
 
                 // Gửi theo cả nhóm nếu người dùng đã tham gia nhóm
-                var groupName = $"user_{notification.UserId.Value}_notifications";
+                var groupName = $"user_{notification.ToUserId}_notifications";
                 await Clients.Group(groupName).SendAsync("ReceiveNotification", notification);
 
-                _logger.Information("Đã gửi thông báo SignalR đến nhóm {GroupName}", groupName);
+                _logger.Information("Sent SignalR notification to group {GroupName}", groupName);
             }
-            else if (notification.UserId.HasValue)
+            else if (notification.ToUserId.HasValue())
             {
-                _logger.Warning("Không thể gửi thông báo SignalR đến người dùng {UserId} vì họ không online",
-                    notification.UserId.Value);
+                _logger.Warning("Cannot send notification to user {UserId} because they are not connected",
+                notification.ToUserId);
             }
         }
 
-        public async Task ConfirmNotificationReceived(int notificationId)
+        public async Task ConfirmNotificationReceived(string notificationId)
         {
             try
             {
-                _logger.Information("Xác nhận đã nhận thông báo {NotificationId}", notificationId);
+                _logger.Information("Confirm received {NotificationId}", notificationId);
 
                 // Đánh dấu thông báo là đã đọc
                 var result = await _notificationService.MarkAsReadAsync(notificationId);
 
                 if (result)
                 {
-                    _logger.Information("Đã đánh dấu thông báo {NotificationId} là đã đọc", notificationId);
+                    _logger.Information("Marked notification {NotificationId} to Read", notificationId);
                 }
                 else
                 {
-                    _logger.Warning("Không thể đánh dấu thông báo {NotificationId} là đã đọc", notificationId);
+                    _logger.Warning("Cannot Marked notification {NotificationId} to Read", notificationId);
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Lỗi khi xác nhận đã nhận thông báo {NotificationId}", notificationId);
+                _logger.Error(ex, "Error when receiving notification {NotificationId}", notificationId);
             }
         }
     }

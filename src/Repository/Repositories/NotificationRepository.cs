@@ -21,9 +21,9 @@ namespace MetroShip.Repository.Repositories
             _context = context;
         }
 
-        public async Task<PaginatedList<Notification>> GetNotificationsByUserIdAsync(int userId, int pageNumber, int pageSize)
+        public async Task<PaginatedList<Notification>> GetNotificationsByUserIdAsync(string userId, int pageNumber, int pageSize)
         {
-            var userIdString = userId.ToString();
+            var userIdString = userId;
             var query = _context.Notifications
                 .Where(n => n.ToUserId == userIdString)
                 .OrderByDescending(n => n.CreatedAt)
@@ -32,14 +32,14 @@ namespace MetroShip.Repository.Repositories
             return await PaginatedList<Notification>.CreateAsync(query, pageNumber, pageSize);
         }
 
-        public async Task<int> GetUnreadCountAsync(int userId)
+        public async Task<int> GetUnreadCountAsync(string userId)
         {
             var userIdString = userId.ToString();
             return await _context.Notifications
                 .CountAsync(n => n.ToUserId == userIdString && !n.IsRead);
         }
 
-        public async Task<bool> MarkAsReadAsync(int notificationId)
+        public async Task<bool> MarkAsReadAsync(string notificationId)
         {
             var notification = await _context.Notifications
                 .AsTracking()
@@ -55,7 +55,7 @@ namespace MetroShip.Repository.Repositories
             return true;
         }
 
-        public async Task<bool> MarkAllAsReadAsync(int userId)
+        public async Task<bool> MarkAllAsReadAsync(string userId)
         {
             var userIdString = userId.ToString();
             var unreadNotifications = await _context.Notifications

@@ -116,7 +116,7 @@ public interface IMapperlyMapper
     //notification
     NotificationDto MapNotification(Notification notification);
     Notification MapNotificationRequest(NotificationCreateRequest request);
-    Notification MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
     PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
     
 }

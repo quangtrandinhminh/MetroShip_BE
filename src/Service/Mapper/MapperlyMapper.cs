@@ -156,6 +156,12 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     public partial RegionResponse MapToRegionResponse(Region entity);
 
+    // notification
+    public partial NotificationDto MapNotification(Notification notification);
+    public partial Notification MapNotificationRequest(NotificationCreateRequest request);
+    public partial void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    public partial PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
+
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)
     {
@@ -186,61 +192,6 @@ public partial class MapperlyMapper : IMapperlyMapper
         {
             Id = (int)(object)enumValue,
             Value = enumValue.ToString(),
-        };
-    }
-
-    public NotificationDto MapNotification(Notification notification)
-    {
-        if (notification == null) return null;
-
-        var dto = new NotificationDto
-        {
-            NotificationId = int.TryParse(notification.Id, out var id) ? id : 0,
-            UserId = int.TryParse(notification.ToUserId, out var userId) ? userId : (int?)null,
-            Message = notification.Message,
-            IsRead = notification.IsRead,
-            SenddAt = notification.CreatedAt
-        };
-
-        if (notification.User != null)
-        {
-            dto.Username = notification.User.UserName;
-        }
-
-        return dto;
-    }
-
-    public Notification MapNotificationRequest(NotificationCreateRequest request)
-    {
-        if (request == null) return null;
-
-        return new Notification
-        {
-            ToUserId = request.UserId?.ToString(),
-            Message = request.Message
-        };
-    }
-
-    public Notification MapNotificationUpdate(NotificationUpdateRequest request, Notification notification)
-    {
-        if (request == null || notification == null) return notification;
-
-        notification.Message = request.Message;
-        return notification;
-    }
-
-    public PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList)
-    {
-        if (paginatedList == null) return null;
-
-        var items = paginatedList.Items.Select(MapNotification).ToList();
-
-        return new PaginatedListResponse<NotificationDto>
-        {
-            Items = items,
-            PageNumber = paginatedList.PageNumber,
-            TotalPages = paginatedList.TotalPages,
-            TotalCount = paginatedList.TotalCount
         };
     }
 }

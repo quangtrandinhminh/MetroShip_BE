@@ -6,6 +6,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Service.Utils;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
@@ -46,14 +47,14 @@ namespace MetroShip.Service.Services
 
             _logger.Information($"Getting notifications for user {currentUserId}, page {pageNumber}, size {pageSize}");
             var notifications = await _notificationRepository.GetNotificationsByUserIdAsync(
-                int.TryParse(currentUserId, out var userIdInt) ? userIdInt : 0, 
+                currentUserId,
                 pageNumber, 
                 pageSize
             );
             return _mapper.MapNotificationList(notifications);
         }
 
-        public async Task<NotificationDto> GetNotificationByIdAsync(int id)
+        public async Task<NotificationDto> GetNotificationByIdAsync(string id)
         {
             _logger.Information($"Getting notification with id {id}");
             var notification = await _notificationRepository.GetSingleAsync(x => x.Id == id.ToString());
@@ -68,7 +69,7 @@ namespace MetroShip.Service.Services
 
         public async Task<NotificationDto> CreateNotificationAsync(NotificationCreateRequest request)
         {
-            _logger.Information($"Creating notification for user {request.UserId}");
+            _logger.Information($"Creating notification for user {request.ToUserId}");
 
             var notification = _mapper.MapNotificationRequest(request);
             notification.CreatedAt = DateTime.UtcNow.AddHours(7);
@@ -80,23 +81,23 @@ namespace MetroShip.Service.Services
             var result = _mapper.MapNotification(notification);
 
             // Gửi thông báo đ PUSH qua Firebase
-            await SendPushNotificationAsync(notification);
+            //await SendPushNotificationAsync(notification);
 
             return result;
         }
 
-        private async Task SendPushNotificationAsync(Notification notification)
+        /*private async Task SendPushNotificationAsync(Notification notification)
         {
             if (string.IsNullOrEmpty(notification.ToUserId))
                 return;
 
             
             var dto = _mapper.MapNotification(notification);
-            dto.SenddAt = DateTimeOffset.UtcNow.AddHours(7);
+            dto.SendAt = DateTimeOffset.UtcNow.AddHours(7);
 
             
             await Task.CompletedTask;
-        }
+        }*/
 
         public async Task<int> UpdateNotificationAsync(NotificationUpdateRequest request)
         {
@@ -110,7 +111,7 @@ namespace MetroShip.Service.Services
             }
 
             // Kiểm tra quyền chỉnh sửa (chỉ admin mới có quyền)
-            var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
+            //var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
             var roles = JwtClaimUltils.GetUserRole(_httpContextAccessor);
 
             if (!roles.Contains("Admin"))
@@ -126,7 +127,7 @@ namespace MetroShip.Service.Services
             return 1;
         }
 
-        public async Task<int> DeleteNotificationAsync(int id)
+        public async Task<int> DeleteNotificationAsync(string id)
         {
             _logger.Information($"Deleting notification {id}");
 
@@ -138,11 +139,11 @@ namespace MetroShip.Service.Services
             }
 
             // Kiểm tra quyền xóa (chỉ admin hoặc chủ sở hữu mới có quyền)
-            var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
+            //var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
             var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
             var roles = JwtClaimUltils.GetUserRole(_httpContextAccessor);
 
-            if (notification.ToUserId != currentUserId && !roles.Contains("Admin"))
+            if (notification.ToUserId != currentUserId && !roles.Contains(nameof(UserRoleEnum.Admin)))
             {
                 throw new AppException(HttpResponseCodeConstants.FORBIDDEN,
                     "Bạn không có quyền xóa thông báo này", StatusCodes.Status403Forbidden);
@@ -154,18 +155,21 @@ namespace MetroShip.Service.Services
             return 1;
         }
 
-        public async Task<int> GetUnreadCountAsync(int userId)
+        public async Task<int> GetUnreadCountAsync(string userId)
         {
+            _logger.Information($"Getting unread notification count for user {userId}");
             return await _notificationRepository.GetUnreadCountAsync(userId);
         }
 
-        public async Task<bool> MarkAsReadAsync(int notificationId)
+        public async Task<bool> MarkAsReadAsync(string notificationId)
         {
+            _logger.Information($"Marking notification {notificationId} as read");
             return await _notificationRepository.MarkAsReadAsync(notificationId);
         }
 
-        public async Task<bool> MarkAllAsReadAsync(int userId)
+        public async Task<bool> MarkAllAsReadAsync(string userId)
         {
+            _logger.Information($"Marking all notifications as read for user {userId}");
             return await _notificationRepository.MarkAllAsReadAsync(userId);
         }
 
@@ -185,7 +189,7 @@ namespace MetroShip.Service.Services
                     // Tạo thông báo cho mỗi người dùng
                     var notificationRequest = new NotificationCreateRequest
                     {
-                        UserId = int.TryParse(user.Id, out var uid) ? uid : 0,
+                        ToUserId = user.Id,
                         Message = message
                     };
 

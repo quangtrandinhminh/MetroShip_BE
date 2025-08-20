@@ -14,6 +14,7 @@ using ILogger = Serilog.ILogger;
 
 namespace MetroShip.WebAPI.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class NotificationController : ControllerBase
@@ -36,7 +37,6 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotifications)]
-        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         public async Task<IActionResult> GetNotifications([FromQuery] PaginatedListRequest request)
         {
             var notifications = await _notificationService.GetNotificationsByUserIdAsync(request.PageNumber, request.PageSize);
@@ -45,8 +45,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotification)]
-        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
-        public async Task<IActionResult> GetNotification([FromRoute] int id)
+        public async Task<IActionResult> GetNotification([FromRoute] string id)
         {
             var notification = await _notificationService.GetNotificationByIdAsync(id);
             return Ok(BaseResponse.OkResponseDto(notification));
@@ -57,16 +56,8 @@ namespace MetroShip.WebAPI.Controllers
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> CreateNotification([FromBody] NotificationCreateRequest request)
         {
-            _logger.Information("Đang tạo thông báo mới cho người dùng {UserId}", request.UserId);
             var notification = await _notificationService.CreateNotificationAsync(request);
-
-            // Thông báo thành công tạo thông báo
-            _logger.Information("New notification created: NotificationId={NotificationId}, UserId={UserId}, Message={Message}",
-                            notification.NotificationId, notification.UserId, notification.Message);
-
             await SendNotificationViaSignalR(notification);
-            
-
             return Ok(BaseResponse.OkResponseDto(notification));
         }
         
@@ -75,13 +66,10 @@ namespace MetroShip.WebAPI.Controllers
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> SendNotificationToAllUsers([FromBody] SendNotificationToAllRequest request)
         {
-            _logger.Information("Đang gửi thông báo quảng bá đến tất cả người dùng. Title: {Title}, Message: {Message}",
-                            request.Title, request.Message);
-
             var result = await _notificationService.SendNotificationToAllUsersAsync(request.Message, request.Title);
 
             // Thông báo qua SignalR cho tất cả người dùng
-            _logger.Information("Đang gửi thông báo quảng bá qua SignalR");
+            _logger.Information("Sending broadcast notification via SignalR to all users");
 
             await _notificationHubContext.Clients.All.SendAsync("ReceiveBroadcastNotification", new
             {
@@ -90,10 +78,10 @@ namespace MetroShip.WebAPI.Controllers
                 Timestamp = DateTime.UtcNow.AddHours(7)
             });
 
-            _logger.Information("Đã gửi thông báo quảng bá qua SignalR thành công");
+            _logger.Information("Broadcast notification sent via SignalR to all users successfully");
 
             // Gửi Firebase Push Notification đến tất cả người dùng (theo chủ đề)
-            try
+            /*try
             {
                 // Chuẩn bị dữ liệu
                 var data = new Dictionary<string, string>
@@ -109,7 +97,7 @@ namespace MetroShip.WebAPI.Controllers
             {
                 // Log lỗi nhưng không ngăn việc trả về kết quả
                 _logger.Error(ex, "Lỗi khi gửi Firebase broadcast notification: {ErrorMessage}", ex.Message);
-            }
+            }*/
 
             return Ok(BaseResponse.OkResponseDto(result));
         }
@@ -125,7 +113,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpDelete]
         [Route(WebApiEndpoint.Notification.DeleteNotification)]
-        public async Task<IActionResult> DeleteNotification([FromRoute] int id)
+        public async Task<IActionResult> DeleteNotification([FromRoute] string id)
         {
             var result = await _notificationService.DeleteNotificationAsync(id);
             return Ok(BaseResponse.OkResponseDto(result));
@@ -135,8 +123,7 @@ namespace MetroShip.WebAPI.Controllers
         [Route(WebApiEndpoint.Notification.GetUnreadCount)]
         public async Task<IActionResult> GetUnreadCount()
         {
-            var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
-            var currentUserId = JwtClaimUltils.GetUserId(currentUser);
+            var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
             var count = await _notificationService.GetUnreadCountAsync(currentUserId);
             return Ok(BaseResponse.OkResponseDto(count));
@@ -144,7 +131,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPut]
         [Route(WebApiEndpoint.Notification.MarkAsRead)]
-        public async Task<IActionResult> MarkAsRead([FromRoute] int id)
+        public async Task<IActionResult> MarkAsRead([FromRoute] string id)
         {
             var result = await _notificationService.MarkAsReadAsync(id);
             return Ok(BaseResponse.OkResponseDto(result));
@@ -154,8 +141,7 @@ namespace MetroShip.WebAPI.Controllers
         [Route(WebApiEndpoint.Notification.MarkAllAsRead)]
         public async Task<IActionResult> MarkAllAsRead()
         {
-            var currentUser = JwtClaimUltils.GetLoginedUser(_httpContextAccessor);
-            var currentUserId = JwtClaimUltils.GetUserId(currentUser);
+            var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
             var result = await _notificationService.MarkAllAsReadAsync(currentUserId);
             return Ok(BaseResponse.OkResponseDto(result));
@@ -164,20 +150,20 @@ namespace MetroShip.WebAPI.Controllers
         /// <summary>
         /// Gửi thông báo qua SignalR
         /// </summary>
-        private async Task SendNotificationViaSignalR(NotificationDto notification)
+        public async Task SendNotificationViaSignalR(NotificationDto notification)
         {
             try
             {
-                if (notification.UserId.HasValue)
+                if (notification.ToUserId != null)
                 {
                     _logger.Information("Đang gửi thông báo SignalR cho người dùng {UserId}, NotificationId: {NotificationId}",
-                                    notification.UserId.Value, notification.NotificationId);
+                                    notification.ToUserId, notification.Id);
 
                     // Gửi thông báo qua SignalR sử dụng connectionId từ mapping
-                    if (NotificationHub._userConnectionMap.TryGetValue(notification.UserId.Value, out var connectionId))
+                    if (NotificationHub._userConnectionMap.TryGetValue(notification.ToUserId, out var connectionId))
                     {
                         _logger.Information("Người dùng {UserId} đang kết nối với SignalR, gửi thông báo qua connectionId {ConnectionId}",
-                                        notification.UserId.Value, connectionId);
+                                        notification.ToUserId, connectionId);
 
                         await _notificationHubContext.Clients.Client(connectionId).SendAsync("ReceiveNotification", notification);
 
@@ -186,11 +172,11 @@ namespace MetroShip.WebAPI.Controllers
                     else
                     {
                         _logger.Warning("Người dùng {UserId} không kết nối với NotificationHub, không thể gửi qua connectionId",
-                                    notification.UserId.Value);
+                                    notification.ToUserId);
                     }
 
                     // Gửi thông báo đến nhóm người dùng
-                    var groupName = $"user_{notification.UserId.Value}_notifications";
+                    var groupName = $"user_{notification.ToUserId}_notifications";
                     _logger.Information("Đang gửi thông báo SignalR đến nhóm {GroupName}", groupName);
 
                     await _notificationHubContext.Clients.Group(groupName).SendAsync("ReceiveNotification", notification);

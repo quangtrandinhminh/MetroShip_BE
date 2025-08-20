@@ -6,12 +6,12 @@ namespace MetroShip.Service.Interfaces;
 public interface INotificationService
 {
     Task<PaginatedListResponse<NotificationDto>> GetNotificationsByUserIdAsync( int pageNumber, int pageSize);
-    Task<NotificationDto> GetNotificationByIdAsync(int id);
+    Task<NotificationDto> GetNotificationByIdAsync(string id);
     Task<NotificationDto> CreateNotificationAsync(NotificationCreateRequest request);
     Task<int> UpdateNotificationAsync(NotificationUpdateRequest request);
-    Task<int> DeleteNotificationAsync(int id);
-    Task<int> GetUnreadCountAsync(int userId);
-    Task<bool> MarkAsReadAsync(int notificationId);
-    Task<bool> MarkAllAsReadAsync(int userId);
+    Task<int> DeleteNotificationAsync(string id);
+    Task<int> GetUnreadCountAsync(string userId);
+    Task<bool> MarkAsReadAsync(string notificationId);
+    Task<bool> MarkAllAsReadAsync(string userId);
     Task<bool> SendNotificationToAllUsersAsync(string message, string title = "Thông báo mới");
 }
