@@ -217,7 +217,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             predicate = predicate.And(t => t.PaymentStatus == status.Value);
 
         if (!string.IsNullOrEmpty(customerId) && userRole.Contains(UserRoleEnum.Customer.ToString()))
-            predicate = predicate.And(t => t.PaidById == customerId);
+            predicate = predicate.And(t => t.PaidById == customerId || t.Shipment.SenderId == customerId);
 
         // Search keyword
         if (!string.IsNullOrWhiteSpace(searchKeyword))
