@@ -3,8 +3,10 @@ using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.InsurancePolicy;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -125,4 +127,11 @@ public interface IMapperlyMapper
     // insurance policy
     InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
     PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
+
+    //notification
+    NotificationDto MapNotification(Notification notification);
+    Notification MapNotificationRequest(NotificationCreateRequest request);
+    void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
+    
 }

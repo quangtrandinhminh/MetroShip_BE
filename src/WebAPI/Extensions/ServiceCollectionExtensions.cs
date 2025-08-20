@@ -230,6 +230,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IItineraryService, ItineraryService>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
         services.AddScoped<IInsuranceService, InsuranceService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -253,6 +255,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IInsuranceRepository, InsuranceRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

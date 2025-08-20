@@ -97,7 +97,7 @@
 
         public static class Notification
         {
-            private const string BaseEndpoint = "/" + AreaName + "notifications";
+            private const string BaseEndpoint = "/" + AreaName + "/notifications";
 
             public const string GetNotifications = BaseEndpoint;
             public const string GetNotification = $"{BaseEndpoint}/{{id}}";
@@ -114,7 +114,7 @@
 
         public static class UserDevice
         {
-            private const string BaseEndpoint = "/" + AreaName + "user-devices";
+            private const string BaseEndpoint = "/" + AreaName + "/user-devices";
             public const string RegisterDevice = $"{BaseEndpoint}/register";
             public const string UnregisterDevice = $"{BaseEndpoint}/unregister";
             public const string GetUserDevices = BaseEndpoint;
