@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using MetroShip.Utility.Helpers;
 using MetroShip.Service.ApiModels.PaginatedList;
 using System.Linq.Expressions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services
 {
@@ -35,6 +36,8 @@ namespace MetroShip.Service.Services
         private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
         private readonly IBaseRepository<Route> _routeStationRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
         private readonly IRegionRepository _regionRepository = serviceProvider.GetRequiredService<IRegionRepository>();
+        private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+        private const string CACHE_KEY = nameof(MetroGraph);
 
         public async Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown(string? stationId)
         {
@@ -443,6 +446,13 @@ namespace MetroShip.Service.Services
             }
 
             await _unitOfWork.SaveChangeAsync();
+            // delete metrograph cache
+            if (_memoryCache.TryGetValue(CACHE_KEY, out MetroGraph? metroGraph))
+            {
+                _memoryCache.Remove(CACHE_KEY);
+                _logger.Information("MetroGraph cache cleared");
+            }
+
             return MetroRouteMessageConstants.METROROUTE_ACTIVATE_SUCCESS;
         }
     }

@@ -96,7 +96,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         var transaction = await HandleCreateTransaction(shipment, request);
 
         var paymentUrl = await _vnPayService.CreatePaymentUrl(
-            shipment.TrackingCode, shipment.TotalCostVnd);
+            transaction.Id, transaction.PaymentAmount);
         transaction.PaymentUrl = paymentUrl;
         _transactionRepository.Add(transaction);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -113,8 +113,16 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             throw new AppException("Invalid payment response");
         }
 
-        var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == vnPaymentResponse.OrderId 
+        var transaction = await _transactionRepository.GetSingleAsync(
+                       x => x.Id == vnPaymentResponse.OrderId
+                                       && x.PaymentMethod == PaymentMethodEnum.VnPay
+                                                       && x.PaymentStatus == PaymentStatusEnum.Pending,
+                                  includeProperties: x => x.Shipment);
+
+        var shipment = transaction?.Shipment;
+
+        /*var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Transactions.FirstOrDefault(t => t.Id == vnPaymentResponse.OrderId) 
                        || x.TrackingCode == vnPaymentResponse.OrderId, 
                        false,
                        x => x.Transactions
@@ -131,7 +139,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         // Get only the transaction that is pending for shipment cost
         var transaction = await _transactionRepository.GetSingleAsync(
                        x => (x.ShipmentId == shipment.Id || x.Shipment.TrackingCode == shipment.TrackingCode)
-                                                       && x.PaymentStatus == PaymentStatusEnum.Pending);
+                                                       && x.PaymentStatus == PaymentStatusEnum.Pending);*/
         if (transaction == null)
         {
             throw new AppException(

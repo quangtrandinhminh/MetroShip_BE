@@ -32,7 +32,7 @@ namespace MetroShip.Service.Services
             var returnUrl = $"{scheme}://{host}" + WebApiEndpoint.ShipmentEndpoint.VnpayExecute;
             var hostName = System.Net.Dns.GetHostName();
             var clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0).ToString();
-            var orderInfo = $"Thanh toán đơn hàng ID: {orderId}, Tổng giá trị: {totalAmount} VND";
+            var orderInfo = $"Thanh toán giao dịch ID: {orderId}, Tổng giá trị: {totalAmount} VND";
             var amount = (int)totalAmount * 100; // Convert to VND in cents
             // Ensure amount is a whole number (integer), not a decimal or float
             if (amount <= 0)
