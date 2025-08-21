@@ -93,6 +93,7 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
 
+    [MapProperty(nameof(Station.Id), nameof(StationListResponse.StationId))]
     public partial StationListResponse MapToStationListResponse(Station entity);
 
     public partial StationDetailResponse MapToStationDetailResponse(Station entity);
