@@ -475,10 +475,10 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                         lineId, direction, timeSlotId);
 
                     // Optional: throw exception or handle this case based on your business rules
-                    throw new AppException(
+                    /*throw new AppException(
                         ErrorCode.NotFound,
                         $"No train schedule found for line {lineId}, direction {direction}, timeSlot {timeSlotId}",
-                        StatusCodes.Status400BadRequest);
+                        StatusCodes.Status400BadRequest);*/
                 }
             }
             else

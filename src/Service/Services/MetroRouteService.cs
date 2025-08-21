@@ -421,13 +421,13 @@ namespace MetroShip.Service.Services
                 StatusCodes.Status404NotFound);
             }
 
-            if (metroLine.Trains.Count < 2)
+            /*if (metroLine.Trains.Count < 2)
             {
                 throw new AppException(
                 ErrorCode.BadRequest,
                 MetroRouteMessageConstants.METROROUTE_NOT_ENOUGH_TRAINS,
                 StatusCodes.Status400BadRequest);
-            }
+            }*/
 
             var stationIds = metroLine.StationList.Select(sc => sc.StationId).ToList();
 

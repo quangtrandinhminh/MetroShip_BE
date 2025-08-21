@@ -15,6 +15,7 @@ using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
 using MetroShip.Service.Jobs;
 using Quartz;
 using Microsoft.Extensions.DependencyInjection;
+using MetroShip.WebAPI.Hubs;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -256,6 +257,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IInsuranceRepository, InsuranceRepository>();
         services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        // Hub
+        services.AddScoped<NotificationHub>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

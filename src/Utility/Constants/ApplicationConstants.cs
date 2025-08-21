@@ -177,7 +177,7 @@
         public const string FEEDBACK_SUCCESS = "Gửi phản hồi thành công.";
         public const string COMPLETED_SUCCESS = "Hoàn thành đơn hàng thành công.";
         public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Đơn hàng không ở trạng thái 'Chờ giao hàng'.";
-
+        public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";
     }
 
     public class ResponseMessageItinerary

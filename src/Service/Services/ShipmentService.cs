@@ -493,7 +493,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Parcel confirmation is outside the allowed pickup time range.",
+                ResponseMessageShipment.SHIPMENT_PICKUP_OUT_OF_TIME_RANGE,
                 StatusCodes.Status400BadRequest);
         }
 
@@ -635,7 +635,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
-    public async Task CompleteShipment(ShipmentPickUpRequest request)
+    public async Task<(string message, string SenderId)> CompleteShipment(ShipmentPickUpRequest request)
     {
         _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
         //ShipmentValidator.ValidateShipmentCompleteRequest(request);
@@ -697,11 +697,12 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 lostParcels, categoryInsurances, _parcelRepository);
         }
 
+        var message = $"Đơn hàng {shipment.TrackingCode} đã được giao thành công tại Ga {stationName}";
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
             ShipmentId = shipment.Id,
             CurrentShipmentStatus = shipment.ShipmentStatus,
-            Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
+            Status = message,
             EventTime = shipment.CompletedAt.Value,
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
@@ -745,11 +746,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã hoàn thành",
+                Message = message
             };
             //_emailSender.SendMail(sendMailModel);
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }
+
+        return (message, shipment.SenderId);
     }
     public async Task ApplySurchargeForShipment(string shipmentId)
     {

@@ -62,19 +62,22 @@ namespace MetroShip.WebAPI.Hubs
             }
         }
 
-        public async Task SendNotification(NotificationDto notification)
+        public async Task SendNotification(NotificationCreateRequest notification)
         {
+            var response = await _notificationService.CreateNotificationAsync(notification);
+            _logger.Information("Notification created with Id: {NotificationId}, Message: {Message}",
+                                              response.Id, response.Message);
+
             // Gửi thông báo đến người nhận nếu họ đang online
             if (notification.ToUserId.HasValue() && _userConnectionMap.TryGetValue(notification.ToUserId, out var connectionId))
             {
                 _logger.Information("Sending SignalR notification to user {UserId}, NotificationId: {NotificationId}, Message: {Message}",
-                    notification.ToUserId, notification.Id, notification.Message);
-
-                await Clients.Client(connectionId).SendAsync("ReceiveNotification", notification);
+                    notification.ToUserId, notification.Message);
+                await Clients.Client(connectionId).SendAsync("ReceiveNotification", response);
 
                 // Gửi theo cả nhóm nếu người dùng đã tham gia nhóm
                 var groupName = $"user_{notification.ToUserId}_notifications";
-                await Clients.Group(groupName).SendAsync("ReceiveNotification", notification);
+                await Clients.Group(groupName).SendAsync("ReceiveNotification", response);
 
                 _logger.Information("Sent SignalR notification to group {GroupName}", groupName);
             }
