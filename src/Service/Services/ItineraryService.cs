@@ -475,10 +475,10 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                         lineId, direction, timeSlotId);
 
                     // Optional: throw exception or handle this case based on your business rules
-                    throw new AppException(
+                    /*throw new AppException(
                         ErrorCode.NotFound,
                         $"No train schedule found for line {lineId}, direction {direction}, timeSlot {timeSlotId}",
-                        StatusCodes.Status400BadRequest);
+                        StatusCodes.Status400BadRequest);*/
                 }
             }
             else
@@ -487,4 +487,70 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             }
         }
     }
+
+    // change all itineraries from this slot and date to another slot and date (isComplete = false, nearest slot from now)
+    public async Task ChangeItinerariesToNextSlotAsync(string shipmentId, DateOnly date, string currentSlotId)
+    {
+        _logger.Information("Changing itineraries for shipment {ShipmentId} to next slot on {Date} from slot {CurrentSlotId}",
+                       shipmentId, date, currentSlotId);
+
+        // Get all itineraries for the shipment
+        var itineraries = await _shipmentItineraryRepository.GetAllWithCondition(
+                       x => x.ShipmentId == shipmentId && x.Date == date 
+                       && x.TimeSlotId == currentSlotId && x.DeletedAt == null)
+            .ToListAsync();
+
+        if (!itineraries.Any())
+        {
+            _logger.Warning("No itineraries found for shipment {ShipmentId} on date {Date} with slot {CurrentSlotId}",
+                               shipmentId, date, currentSlotId);
+
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageItinerary.ITINERARY_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        // Get next time slot
+        var nextTimeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                                  x => !x.IsAbnormal && x.DeletedAt == null)
+            .ToListAsync();
+
+        if (nextTimeSlots == null || !nextTimeSlots.Any())
+        {
+            _logger.Warning("No available time slots found for changing itineraries.");
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Find the current time slot in the list
+        var currentSlot = nextTimeSlots.FirstOrDefault(x => x.Id == currentSlotId);
+        if (currentSlot == null)
+        {
+            _logger.Warning("Current time slot with ID {CurrentSlotId} not found in available time slots.",
+                                              currentSlotId);
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Get next slot
+        (date, currentSlot) = GetNextSlot(date, currentSlot, nextTimeSlots);
+
+        // Update all itineraries to the next slot and date
+        foreach (var itinerary in itineraries)
+        {
+            itinerary.TimeSlotId = currentSlot.Id;
+            itinerary.Date = date;
+            itinerary.IsCompleted = false; // Set to false as per requirement
+
+            _shipmentItineraryRepository.Update(itinerary);
+        }
+
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
 }

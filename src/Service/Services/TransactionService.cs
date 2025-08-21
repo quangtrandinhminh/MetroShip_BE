@@ -55,18 +55,23 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 "Shipment not found",
                 StatusCodes.Status404NotFound);
         }
-        
+
+        ShipmentStatusEnum[] validStatus =
+        {
+            ShipmentStatusEnum.AwaitingPayment,
+            ShipmentStatusEnum.AwaitingRefund,
+            ShipmentStatusEnum.ApplyingSurcharge,
+            ShipmentStatusEnum.CompletedWithCompensation,
+            ShipmentStatusEnum.ToCompensate
+        };
+
         // Check if the shipment is in a valid state for payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingPayment 
-            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingRefund 
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
-            && shipment.ShipmentStatus != ShipmentStatusEnum.CompletedWithCompensation
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ToCompensate
-            )
+        if (!validStatus.Contains(shipment.ShipmentStatus))
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment status must be AwaitingPayment, AwaitingRefund, or ApplyingSurcharge to create a payment link.",
+                $"Đơn hàng {shipment.TrackingCode} không thể thanh toán trong trạng thái hiện tại. " +
+                $"Các trạng thái hợp lệ: {string.Join(", ", validStatus)}",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -91,7 +96,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         var transaction = await HandleCreateTransaction(shipment, request);
 
         var paymentUrl = await _vnPayService.CreatePaymentUrl(
-            shipment.TrackingCode, shipment.TotalCostVnd);
+            transaction.Id, transaction.PaymentAmount);
         transaction.PaymentUrl = paymentUrl;
         _transactionRepository.Add(transaction);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -108,8 +113,16 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             throw new AppException("Invalid payment response");
         }
 
-        var shipment = await _shipmentRepository.GetSingleAsync(
-                       x => x.Id == vnPaymentResponse.OrderId 
+        var transaction = await _transactionRepository.GetSingleAsync(
+                       x => x.Id == vnPaymentResponse.OrderId
+                                       && x.PaymentMethod == PaymentMethodEnum.VnPay
+                                                       && x.PaymentStatus == PaymentStatusEnum.Pending,
+                                  includeProperties: x => x.Shipment);
+
+        var shipment = transaction?.Shipment;
+
+        /*var shipment = await _shipmentRepository.GetSingleAsync(
+                       x => x.Transactions.FirstOrDefault(t => t.Id == vnPaymentResponse.OrderId) 
                        || x.TrackingCode == vnPaymentResponse.OrderId, 
                        false,
                        x => x.Transactions
@@ -126,7 +139,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         // Get only the transaction that is pending for shipment cost
         var transaction = await _transactionRepository.GetSingleAsync(
                        x => (x.ShipmentId == shipment.Id || x.Shipment.TrackingCode == shipment.TrackingCode)
-                                                       && x.PaymentStatus == PaymentStatusEnum.Pending);
+                                                       && x.PaymentStatus == PaymentStatusEnum.Pending);*/
         if (transaction == null)
         {
             throw new AppException(
@@ -184,6 +197,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         _shipmentRepository.Update(shipment);
 
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        await CancelScheduledTransactionJob(transaction.Id);
         return response;
     }
 
@@ -203,7 +217,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             predicate = predicate.And(t => t.PaymentStatus == status.Value);
 
         if (!string.IsNullOrEmpty(customerId) && userRole.Contains(UserRoleEnum.Customer.ToString()))
-            predicate = predicate.And(t => t.PaidById == customerId);
+            predicate = predicate.And(t => t.PaidById == customerId || t.Shipment.SenderId == customerId);
 
         // Search keyword
         if (!string.IsNullOrWhiteSpace(searchKeyword))
@@ -451,6 +465,66 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             StatusCodes.Status400BadRequest);
         }
 
+        await ScheduleCancelTransactionJob(transaction.Id);
         return transaction;
+    }
+
+    // cancel transaction by transactionId
+    public async Task CancelTransactionAsync(string transactionId)
+    {
+        _logger.Information("Cancelling transaction with ID: {transactionId}", transactionId);
+        var transaction = await _transactionRepository.GetSingleAsync(
+                       x => x.Id == transactionId && x.PaymentStatus == PaymentStatusEnum.Pending);
+
+        if (transaction == null)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+                               "Transaction not found or already processed",
+                                              StatusCodes.Status404NotFound);
+        }
+
+        transaction.PaymentStatus = PaymentStatusEnum.Cancelled;
+        _transactionRepository.Update(transaction);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    // schedule job to cancel transaction after 15 minutes
+    private async Task ScheduleCancelTransactionJob(string transactionId)
+    {
+        _logger.Information("Scheduling job to cancel transaction with ID: {transactionId}", transactionId);
+        var jobData = new JobDataMap
+        {
+            { "CancelTransaction-for-transactionId", transactionId }
+        };
+
+        // Schedule the job to run after 15 minutes
+        var jobDetail = JobBuilder.Create<CancelTransactionJob>()
+            .WithIdentity($"CancelTransaction-{transactionId}")
+            .UsingJobData(jobData)
+            .Build();
+
+        var trigger = TriggerBuilder.Create()
+            .WithIdentity($"Trigger-CancelTransaction-{transactionId}")
+            .StartAt(CoreHelper.SystemTimeNow.AddMinutes(15))
+            .Build();
+
+        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
+    }
+
+    // cancel transaction cancellation job by transactionId
+    public async Task CancelScheduledTransactionJob(string transactionId)
+    {
+        _logger.Information("Cancelling scheduled job to cancel transaction with ID: {transactionId}", transactionId);
+        var jobKey = new JobKey($"CancelTransaction-{transactionId}");
+        var scheduler = await _schedulerFactory.GetScheduler();
+        if (await scheduler.CheckExists(jobKey))
+        {
+            await scheduler.DeleteJob(jobKey);
+            _logger.Information("Cancelled scheduled job for transaction ID: {transactionId}", transactionId);
+        }
+        else
+        {
+            _logger.Warning("No scheduled job found for transaction ID: {transactionId}", transactionId);
+        }
     }
 }

@@ -1,7 +1,10 @@
 ﻿using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +14,14 @@ namespace MetroShip.WebAPI.Controllers
     public class PricingController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [HttpGet(WebApiEndpoint.PricingEndpoint.GetAllPricing)]
+        public async Task<IActionResult> GetAllPricingAsync([FromQuery] PaginatedListRequest request)
+        {
+            var response = await _pricingService.GetPricingPaginatedList(request);
+            return Ok(response);
+        }
 
         [HttpGet(WebApiEndpoint.PricingEndpoint.CalculatePrice)]
         public async Task<IActionResult> CalculatePriceAsync([FromQuery] decimal weightKg, [FromQuery] decimal distanceKm)

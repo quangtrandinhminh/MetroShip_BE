@@ -60,6 +60,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string DestinationStationId { get; set; }
     public string? CurrentStationId { get; set; }
     public string? CurrentTrainId { get; set; }
+    public string? WaitingForTrainCode { get; set; } 
 
     // Customer fields
     public string SenderId { get; set; }

@@ -28,6 +28,8 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
+    private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+    private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
 
     public async Task<PaginatedListResponse<ParcelCategoryResponse>> GetAllAsync(
         bool? isActive,
@@ -95,21 +97,37 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
         // Pass the correctly mapped entity to the repository
         await _parcelCategoryRepository.AddAsync(entity);
-        await _unitOfWork.SaveChangeAsync();
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Return the created entity mapped to a response
         return _mapper.MapToParcelCategoryResponse(entity);
     }
 
-    public async Task<ParcelCategoryResponse> UpdateAsync(string id, ParcelCategoryUpdateRequest request)
+    public async Task<ParcelCategoryResponse> UpdateAsync(ParcelCategoryUpdateRequest request)
     {
         _logger.Information("Update parcel category {@request}", request);
 
-        var entity = await GetParcelCategoryById(Guid.Parse(id)); // Convert string to Guid
+        var entity = await GetParcelCategoryById(Guid.Parse(request.Id)); // Convert string to Guid
+
+        var oldPolicy = entity.CategoryInsurances.FirstOrDefault(ci => ci.IsActive);
+        if (oldPolicy != null && oldPolicy.InsurancePolicyId != request.InsurancePolicyId)
+        {
+            // Deactivate the old insurance policy
+            oldPolicy.IsActive = false;
+            _categoryInsuranceRepository.Update(oldPolicy);
+
+            // Add a new insurance policy
+            _categoryInsuranceRepository.Add(new CategoryInsurance
+            {
+                InsurancePolicyId = request.InsurancePolicyId,
+                ParcelCategoryId = entity.Id,
+                IsActive = true
+            });
+        }
 
         _mapper.MapParcelCategoryUpdateRequestToEntity(request, entity);
         _parcelCategoryRepository.Update(entity);
-        await _unitOfWork.SaveChangeAsync();
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Return the updated entity mapped to a response
         return _mapper.MapToParcelCategoryResponse(entity);
@@ -123,7 +141,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         entity.DeletedAt = CoreHelper.SystemTimeNow;
 
         _parcelCategoryRepository.Update(entity);
-        await _unitOfWork.SaveChangeAsync();
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
     private async Task<ParcelCategory> GetParcelCategoryById(Guid id)

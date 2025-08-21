@@ -116,6 +116,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             CurrentStationId = s.CurrentStationId,
             CurrentTrainId = s.CurrentTrainId,
             ShipmentStatus = s.ShipmentStatus,
+            WaitingForTrainCode = s.ShipmentItineraries.FirstOrDefault(i => i.IsCompleted == false)
+                .Train.TrainCode ?? s.WaitingForTrainCode,
 
             // Financial fields
             TotalCostVnd = s.TotalCostVnd,
@@ -304,13 +306,14 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             {
                 Id = tracking.Id,
                 ShipmentId = tracking.ShipmentId,
+                CurrentShipmentStatus = tracking.CurrentShipmentStatus,
                 Status = tracking.Status,
                 UpdatedBy = tracking.UpdatedBy,
                 EventTime = tracking.EventTime,
                 Note = tracking.Note,
             }).OrderByDescending(st => st.EventTime).ToList(),
             //Transactions = shipment.Transactions.ToList(),
-        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
+        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode || x.Id == trackingCode);
 
         if (shipmentDto == null)
         {

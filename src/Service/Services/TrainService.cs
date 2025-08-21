@@ -24,6 +24,8 @@ using MetroShip.Utility.Helpers;
 using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
 using RestSharp.Extensions;
+using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Jobs;
 
 namespace MetroShip.Service.Services;
 
@@ -49,6 +51,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IMemoryCache _cache =
         serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly ScheduleTrainJob _scheduleTrainJob = serviceProvider.GetRequiredService<ScheduleTrainJob>();
+    private readonly IMetroRouteRepository _metroRoute = serviceProvider.GetRequiredService<IMetroRouteRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -111,6 +115,43 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             c.ConfigKey,
             c.ConfigValue
         }).ToList()];
+    }
+
+    // create a train
+    public async Task<string> CreateTrainAsync(CreateTrainRequest request)
+    {
+        _logger.Information("Creating a new train with request: {@request}", request);
+        _trainValidator.ValidateCreateTrainRequest(request);
+
+        var metroRouteCode = await _metroRoute.GetAll()
+            .Where(l => l.DeletedAt == null && l.Id == request.LineId)
+            .Select(l => l.LineCode)
+            .FirstOrDefaultAsync();
+
+        if (metroRouteCode == null)
+        {
+            throw new AppException(ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        request.TrainCode = string.IsNullOrEmpty(request.TrainCode)
+            ? MetroCodeGenerator.GenerateTrainCode(metroRouteCode, request.TrainNumber)
+            : request.TrainCode;
+        // Check if train code already exists
+        var existingTrain = await _trainRepository.IsExistAsync(t => t.TrainCode == request.TrainCode);
+        if (existingTrain)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            ResponseMessageTrain.TRAIN_EXISTED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Map to train entity
+        var train = _mapper.MapToMetroTrainEntity(request);
+        await _trainRepository.AddAsync(train);
+        await _scheduleTrainJob.CreateTrainScheduleForNewTrain(train);
+        return ResponseMessageTrain.TRAIN_CREATE_SUCCESS;
     }
 
     public async Task<bool> IsShipmentDeliveredAsync(string trackingCode)
@@ -395,12 +436,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var currentIndex = _cache.TryGetValue(segmentKey, out int existingIndex) ? existingIndex : -1;
 
-        // ✅ Lấy direction từ cache hoặc đoán
+        // ✅ Lấy direction từ cache hoặc đoán từ station hiện tại
         var direction = _cache.TryGetValue(directionKey, out DirectionEnum cachedDirection)
             ? cachedDirection
-            : InferTrainDirectionFromCurrentStation(train, train.CurrentStationId ?? throw new AppException(ErrorCode.BadRequest, "Train has no current station", StatusCodes.Status400BadRequest));
+            : InferTrainDirectionFromCurrentStation(
+                train,
+                train.CurrentStationId ?? throw new AppException(ErrorCode.BadRequest, "Train has no current station", StatusCodes.Status400BadRequest)
+            );
 
-        // 🔁 Đổi chiều nếu train đang ở đầu chiều ngược lại
+        // 🔄 Đổi chiều nếu Completed và đang ở đầu tuyến ngược
         var reverseDirection = direction == DirectionEnum.Forward ? DirectionEnum.Backward : DirectionEnum.Forward;
         var reverseRoutes = allRoutes
             .Where(r => r.Direction == reverseDirection)
@@ -420,7 +464,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             _logger.Information("🔁 Train {TrainId} auto reversed to direction {Direction}", trainId, direction);
         }
 
-        // ✅ Lấy route theo direction
+        // ✅ Lấy tất cả route theo direction
         var routes = allRoutes
             .Where(r => r.Direction == direction)
             .OrderBy(r => r.SeqOrder)
@@ -429,11 +473,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (routes.Count == 0)
             throw new AppException(ErrorCode.NotFound, $"No routes found for direction {direction}", StatusCodes.Status404NotFound);
 
-        // ❌ Không cho phép chạy nếu đang chạy
+        // 🚫 Không cho phép chạy nếu đang chạy
         if (train.Status == TrainStatusEnum.InTransit || train.Status == TrainStatusEnum.Departed)
             throw new AppException(ErrorCode.BadRequest, "Train is already running", StatusCodes.Status400BadRequest);
 
-        // ✅ Nếu vừa completed → kiểm tra vị trí cuối tuyến
+        // ✅ Nếu Completed nhưng chưa reset index → kiểm tra đúng endpoint + tọa độ
         if (train.Status == TrainStatusEnum.Completed && currentIndex != -1)
         {
             var lastRoute = routes.Last();
@@ -450,7 +494,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             currentIndex = -1;
         }
 
-        // ✅ Nếu vừa Arrived → cập nhật lại vị trí
+        // ✅ Nếu ArrivedAtStation → cập nhật vị trí station hiện tại
         if (train.Status == TrainStatusEnum.ArrivedAtStation && existingIndex >= 0 && existingIndex < routes.Count)
         {
             var prevRoute = routes[existingIndex];
@@ -464,7 +508,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var nextIndex = currentIndex + 1;
 
-        // ✅ Nếu hết tuyến → đánh dấu completed
+        // ✅ Nếu đã hết tuyến → đánh dấu Completed
         if (nextIndex >= routes.Count)
         {
             var lastRoute = routes.Last();
@@ -504,6 +548,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             direction);
 
         // ✅ Cập nhật ShipmentStatus sang InTransit
+        var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
         /*var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
 
         var shipmentsToUpdate = rawShipments
@@ -1141,6 +1186,65 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
     }
 
+    public async Task<TrainDto> ScheduleTrainAsync(string trainIdOrCode, bool startFromEnd = false)
+    {
+        // 1. Lấy thông tin train + line + routes + station
+        var train = await _trainRepository
+            .GetAllWithCondition()
+            .Include(t => t.Line)
+                .ThenInclude(l => l.Routes)
+                    .ThenInclude(r => r.FromStation)
+            .Include(t => t.Line)
+                .ThenInclude(l => l.Routes)
+                    .ThenInclude(r => r.ToStation)
+            .FirstOrDefaultAsync(t => t.Id == trainIdOrCode || t.TrainCode == trainIdOrCode);
+
+        if (train == null)
+            throw new Exception($"Không tìm thấy đoàn tàu với Id/Code: {trainIdOrCode}");
+
+        if (train.CurrentStationId != null)
+            throw new Exception("Đoàn tàu đã có vị trí hiện tại, không thể khởi tạo xuất phát.");
+        if (train.Status != TrainStatusEnum.NotScheduled)
+            throw new Exception("Chỉ có thể khởi tạo xuất phát cho đoàn tàu ở trạng thái NotScheduled.");
+
+        // 2. Lọc routes thuộc line này & sắp xếp theo SeqOrder
+        var routes = train.Line?.Routes?
+            .Where(r => r.LineId == train.LineId && r.FromStationId != null && r.ToStationId != null)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (routes == null || routes.Count == 0)
+            throw new Exception("Không tìm thấy tuyến đường (routes) hợp lệ cho đoàn tàu.");
+
+        // 3. Xác định trạm đầu/cuối theo chiều
+        var (startStation, endStation) = ResolveEndpointsFromRoutes(routes);
+
+        // 4) Chọn trạm xuất phát theo tham số
+        var chosen = startFromEnd ? endStation : startStation;
+        if (chosen == null)
+            throw new Exception("Không tìm thấy trạm xuất phát hợp lệ.");
+
+        // 5) Cập nhật train (KHÔNG cộng/trừ offset)
+        train.CurrentStationId = chosen.Id;
+        train.Latitude = chosen.Latitude;
+        train.Longitude = chosen.Longitude;
+        train.Status = TrainStatusEnum.Completed;
+        train.LastUpdatedAt = DateTimeOffset.UtcNow;
+
+        _trainRepository.Update(train);
+        await _trainRepository.SaveChangesAsync();
+
+        // 6) Trả DTO
+        return new TrainDto
+        {
+            Id = train.Id,
+            TrainCode = train.TrainCode,
+            CurrentStationId = train.CurrentStationId,
+            CurrentStationLat = train.Latitude,
+            CurrentStationLng = train.Longitude,
+            Status = train.Status
+        };
+    }
     #region Helper Methods
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
     {
@@ -1154,12 +1258,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             .OrderBy(r => r.SeqOrder)
             .ToList();
 
+        // Lấy endpoint thật
+        var forwardStart = forwardRoutes.First().FromStationId;
+        var forwardEnd = forwardRoutes.Last().ToStationId;
+        var backwardStart = backwardRoutes.First().FromStationId;
+        var backwardEnd = backwardRoutes.Last().ToStationId;
+
+        if (stationId == forwardStart) return DirectionEnum.Forward;
+        if (stationId == forwardEnd) return DirectionEnum.Backward;
+        if (stationId == backwardStart) return DirectionEnum.Backward;
+        if (stationId == backwardEnd) return DirectionEnum.Forward;
+
+        // Nếu ở giữa tuyến → xác định theo chiều chứa station
         var inForward = forwardRoutes.Any(r => r.FromStationId == stationId || r.ToStationId == stationId);
         var inBackward = backwardRoutes.Any(r => r.FromStationId == stationId || r.ToStationId == stationId);
 
-        // Ưu tiên forward nếu thuộc cả 2
-        if (inForward) return DirectionEnum.Forward;
-        if (inBackward) return DirectionEnum.Backward;
+        if (inForward && !inBackward) return DirectionEnum.Forward;
+        if (inBackward && !inForward) return DirectionEnum.Backward;
+        if (inForward && inBackward) return DirectionEnum.Forward; // ưu tiên Forward
 
         throw new AppException(ErrorCode.BadRequest, $"Cannot determine direction from station {stationId}", StatusCodes.Status400BadRequest);
     }
@@ -1180,6 +1296,72 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             TrainStatusEnum.ArrivedAtStation => ShipmentStatusEnum.AwaitingDelivery,
             _ => ShipmentStatusEnum.AwaitingDelivery // Default case
         };
+    }
+
+    private static (Station start, Station end) ResolveEndpointsFromRoutes(IList<Route> routes)
+    {
+        // Build station lookup + adjacency (undirected)
+        var stationById = new Dictionary<string, Station>();
+        var neighbors = new Dictionary<string, HashSet<string>>();
+
+        foreach (var r in routes)
+        {
+            if (r.FromStationId == null || r.ToStationId == null) continue;
+
+            if (r.FromStation != null && !stationById.ContainsKey(r.FromStationId))
+                stationById[r.FromStationId] = r.FromStation;
+            if (r.ToStation != null && !stationById.ContainsKey(r.ToStationId))
+                stationById[r.ToStationId] = r.ToStation;
+
+            if (!neighbors.TryGetValue(r.FromStationId, out var setFrom))
+                neighbors[r.FromStationId] = setFrom = new HashSet<string>();
+            if (!neighbors.TryGetValue(r.ToStationId, out var setTo))
+                neighbors[r.ToStationId] = setTo = new HashSet<string>();
+
+            setFrom.Add(r.ToStationId);
+            setTo.Add(r.FromStationId);
+        }
+
+        // Leaf = station chỉ có 1 hàng xóm => 2 đầu mút của line
+        var leafIds = neighbors.Where(kvp => kvp.Value.Count == 1).Select(kvp => kvp.Key).ToList();
+
+        // Lấy route đầu/ cuối theo SeqOrder để xác định đầu/cuối chuẩn
+        var firstRoute = routes.First();
+        var lastRoute = routes.Last();
+
+        Station start = null!;
+        Station end = null!;
+
+        if (leafIds.Count >= 2)
+        {
+            // Start = leaf trùng với From/To của route nhỏ nhất
+            var firstLeafId = leafIds.Contains(firstRoute.FromStationId!)
+                ? firstRoute.FromStationId!
+                : (leafIds.Contains(firstRoute.ToStationId!) ? firstRoute.ToStationId! : null);
+
+            // End = leaf trùng với From/To của route lớn nhất
+            var lastLeafId = leafIds.Contains(lastRoute.ToStationId!)
+                ? lastRoute.ToStationId!
+                : (leafIds.Contains(lastRoute.FromStationId!) ? lastRoute.FromStationId! : null);
+
+            // Fallback nếu vì dữ liệu bất thường không match
+            if (firstLeafId == null) firstLeafId = leafIds.First();
+            if (lastLeafId == null) lastLeafId = leafIds.First(id => id != firstLeafId);
+
+            start = stationById[firstLeafId];
+            end = stationById[lastLeafId];
+        }
+        else
+        {
+            // Fallback: dùng min/max SeqOrder
+            start = firstRoute.FromStation ?? stationById.GetValueOrDefault(firstRoute.FromStationId!);
+            end = lastRoute.ToStation ?? stationById.GetValueOrDefault(lastRoute.ToStationId!);
+        }
+
+        if (start == null || end == null)
+            throw new Exception("Không xác định được điểm đầu/cuối của line từ routes.");
+
+        return (start, end);
     }
     #endregion
 }

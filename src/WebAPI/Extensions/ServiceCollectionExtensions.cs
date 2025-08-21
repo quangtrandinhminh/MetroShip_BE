@@ -15,6 +15,7 @@ using MapperlyMapper = MetroShip.Service.Mapper.MapperlyMapper;
 using MetroShip.Service.Jobs;
 using Quartz;
 using Microsoft.Extensions.DependencyInjection;
+using MetroShip.WebAPI.Hubs;
 
 namespace MetroShip.WebAPI.Extensions;
 public static class ServiceCollectionExtensions
@@ -205,6 +206,9 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterApplicationServices(IServiceCollection services)
     {
+        // IJob
+        services.AddScoped<ScheduleTrainJob>();
+
         // Register services
         services.AddScoped<IMapperlyMapper, MapperlyMapper>();
         services.AddScoped<IAuthService, AuthService>();
@@ -227,6 +231,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITrainStateStoreService, FirebaseTrainStateStoreService>();
         services.AddScoped<IItineraryService, ItineraryService>();
         services.AddScoped<ISupportTicketService, SupportTicketService>();
+        services.AddScoped<IInsuranceService, InsuranceService>();
+        services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<INotificationService, NotificationService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -249,6 +256,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPricingRepository, PricingRepository>();
         services.AddScoped<ITrainScheduleRepository, TrainScheduleRepository>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IInsuranceRepository, InsuranceRepository>();
+        services.AddScoped<INotificationRepository, NotificationRepository>();
+
+        // Hub
+        services.AddScoped<NotificationHub>();
     }
 
     private static string GetEnvironmentVariableOrThrow(string key)

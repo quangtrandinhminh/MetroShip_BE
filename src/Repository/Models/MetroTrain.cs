@@ -13,6 +13,8 @@ public partial class MetroTrain : BaseEntity
     public MetroTrain()
     {
         TrainCode = this.GetType().Name.ToUpperInvariant();
+        IsActive = true;
+        Status = TrainStatusEnum.NotScheduled;
     }
 
     [Required]

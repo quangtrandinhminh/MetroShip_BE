@@ -30,6 +30,13 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response, additionalData));
         }
 
+        [HttpPost(WebApiEndpoint.MetroTrainEndpoint.CreateTrain)]
+        public async Task<IActionResult> CreateTrainAsync([FromBody] CreateTrainRequest request)
+        {
+            var response = await _trainService.CreateTrainAsync(request);
+            return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+
         //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost(WebApiEndpoint.MetroTrainEndpoint.SendLocation)]
         public async Task<IActionResult> SendLocation([FromBody] TrackingLocationUpdateDto location)
@@ -118,6 +125,13 @@ namespace MetroShip.WebAPI.Controllers
         {
             await _trainService.ConfirmTrainArrivedAsync(trainId, stationId);
             return Ok(BaseResponse.OkResponseDto("Train arrival confirmed successfully", null));
+        }
+
+        [HttpPost("/api/train/schedule")]
+        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery] bool startFromEnd = false)
+        {
+            var response = await _trainService.ScheduleTrainAsync(trainIdOrCode, startFromEnd);
+            return Ok(BaseResponse.OkResponseDto(response, null));
         }
     }
 }

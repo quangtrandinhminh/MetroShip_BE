@@ -6,4 +6,6 @@ namespace MetroShip.Service.Interfaces;
 public interface IRegionService
 {
     Task<PaginatedListResponse<RegionResponse>> GetAllRegionsAsync(PaginatedListRequest request);
+
+    Task<string> CreateRegionAsync(CreateRegionRequest request);
 }

@@ -1,34 +1,40 @@
-﻿using System.Text.Json;
-using MetroShip.Repository.Extensions;
+﻿using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Insurance;
+using MetroShip.Service.ApiModels.InsurancePolicy;
 using MetroShip.Service.ApiModels.MetroLine;
+using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
-using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Parcel;
+using MetroShip.Service.ApiModels.ParcelCategory;
+using MetroShip.Service.ApiModels.Pricing;
+using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.Route;
 using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.Station;
+using MetroShip.Service.ApiModels.Train;
+using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.BusinessModels;
-using Microsoft.CodeAnalysis;
-using Riok.Mapperly.Abstractions;
-using MetroShip.Service.ApiModels.Transaction;
-using static MetroShip.Repository.Repositories.ShipmentRepository;
-using MetroShip.Service.ApiModels.Train;
-using MetroShip.Utility.Helpers;
 using MetroShip.Utility.Enums;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
 using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.SupportTicket;
+using MetroShip.Utility.Helpers;
+using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Riok.Mapperly.Abstractions;
+using System.Text.Json;
+using static MetroShip.Repository.Repositories.ShipmentRepository;
 
 namespace MetroShip.Service.Mapper;
 
@@ -61,6 +67,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
+    public partial List<ShipmentTrackingResponse> MapToParcelTrackingResponseList(ICollection<ShipmentTrackingResponse> entity);
+    public partial ShipmentTrackingResponse MapToShipmentTrackingResponse(ShipmentTracking entity);
+
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
@@ -78,10 +87,13 @@ public partial class MapperlyMapper : IMapperlyMapper
     [MapProperty(nameof(Station.Id), nameof(StationResponse.StationId))]
     public partial StationResponse MapToStationResponse(Station entity);
 
+    public partial List<StationResponse> MapToStationResponseList(ICollection<Station> entity);
+
     public partial ICollection<Station> MapToStationEntityList(IList<CreateStationRequest> requestList);
 
     public partial PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
 
+    [MapProperty(nameof(Station.Id), nameof(StationListResponse.StationId))]
     public partial StationListResponse MapToStationListResponse(Station entity);
 
     public partial StationDetailResponse MapToStationDetailResponse(Station entity);
@@ -108,10 +120,10 @@ public partial class MapperlyMapper : IMapperlyMapper
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
     public partial PaginatedListResponse<ParcelResponse> MapToParcelPaginatedList(PaginatedList<Parcel> entityList);
-
     public partial ParcelResponse MapToParcelResponse(Parcel entity);
-
     public partial void CloneToParcelRequestList(List<ParcelRequest> origin, List<ParcelRequest> clone);
+    public partial List<ParcelTrackingResponse> MapToParcelTrackingResponseList(ICollection<ParcelTracking> entity);
+    public partial ParcelTrackingResponse MapToParcelTrackingResponse(ParcelTracking entity);
 
     // parcel category
     public partial ParcelCategory MapToParcelCategoryEntity(ParcelCategoryCreateRequest request);
@@ -140,6 +152,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     public partial IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     public partial TrainResponse MapToTrainResponse(MetroTrain request);
+    public partial MetroTrain MapToMetroTrainEntity(CreateTrainRequest request);
 
     // time slot
     public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
@@ -158,15 +171,27 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // pricing config
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+    public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     public partial RegionResponse MapToRegionResponse(Region entity);
 
+    public partial Region MapToRegionEntity(CreateRegionRequest request);
+
     // support ticket
     public partial SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
     public partial PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
     public partial SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
+
+    // insurance policy
+    public partial InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
+    public partial PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
+    // notification
+    public partial NotificationDto MapNotification(Notification notification);
+    public partial Notification MapNotificationRequest(NotificationCreateRequest request);
+    public partial void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    public partial PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

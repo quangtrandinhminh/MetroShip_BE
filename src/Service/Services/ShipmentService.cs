@@ -493,7 +493,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Parcel confirmation is outside the allowed pickup time range.",
+                ResponseMessageShipment.SHIPMENT_PICKUP_OUT_OF_TIME_RANGE,
                 StatusCodes.Status400BadRequest);
         }
 
@@ -635,7 +635,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }
     }
-    public async Task CompleteShipment(ShipmentPickUpRequest request)
+    public async Task<(string message, string SenderId)> CompleteShipment(ShipmentPickUpRequest request)
     {
         _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
         //ShipmentValidator.ValidateShipmentCompleteRequest(request);
@@ -653,10 +653,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Check if the shipment is awaiting delivery
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.Arrived
-            && shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery
-            && shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge
-            )
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
         {
             throw new AppException(
             ErrorCode.BadRequest,
@@ -664,7 +661,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             StatusCodes.Status400BadRequest);
         }
 
-        if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
+        /*if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
         {
             var transaction = await _transactionRepository.GetSingleAsync(
                 x => x.ShipmentId == shipment.Id && x.TransactionType == TransactionTypeEnum.Surcharge
@@ -677,7 +674,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 "Cannot complete shipment while surcharge is pending.",
                 StatusCodes.Status400BadRequest);
             }
-        }
+        }*/
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
@@ -692,18 +689,20 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 .Where(p => p.Status == ParcelStatusEnum.Lost)
                 .ToList();
             var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
-                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id)
+                x => lostParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id),
+                x => x.ParcelCategory, _ => _.InsurancePolicy
             ).ToList();
 
             shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
                 lostParcels, categoryInsurances, _parcelRepository);
         }
 
+        var message = $"Đơn hàng {shipment.TrackingCode} đã được giao thành công tại Ga {stationName}";
         _shipmentTrackingRepository.Add(new ShipmentTracking
         {
             ShipmentId = shipment.Id,
-            CurrentShipmentStatus = ShipmentStatusEnum.Completed,
-            Status = $"Đơn hàng đã được giao thành công tại Ga {stationName}",
+            CurrentShipmentStatus = shipment.ShipmentStatus,
+            Status = message,
             EventTime = shipment.CompletedAt.Value,
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
@@ -747,11 +746,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             {
                 Email = user.Email,
                 Type = MailTypeEnum.Notification,
-                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã hoàn thành",
+                Message = message
             };
             //_emailSender.SendMail(sendMailModel);
             await _emailSender.ScheduleEmailJob(sendMailModel);
         }
+
+        return (message, shipment.SenderId);
     }
     public async Task ApplySurchargeForShipment(string shipmentId)
     {
@@ -1298,8 +1299,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Filter out null/empty paths and log them
         // Valid path: path has more than 1 vertex (path is a station list, 1 route need 2 station)
-        var validPaths = allPaths.Where(
-            r => r.Path.Count > 1).ToList();
+        var validPaths = allPaths.Where(r => r.Path?.Any() == true).ToList();
 
         if (!validPaths.Any())
         {
@@ -1320,25 +1320,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private async Task<List<dynamic>> CalculatePricingForPaths(
         List<(string StationId, List<string> Path)> pathResults, TotalPriceCalcRequest request)
     {
-        // Get pricing configuration
-        //InitializePricingTableAsync().Wait();
-
-        // Get parcel categories
-        /*var categoryIds = request.Parcels.Select(p => p.ParcelCategoryId).Distinct().ToList();
-        var categories = await _parcelCategoryRepository.GetAllWithCondition(
-            x => categoryIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null)
-            .ToListAsync();
-
-        // check if all categories are exist in categoryIds and if not, throw exception at which is not found
-        if (categories.Count() != categoryIds.Count)
-        {
-            var missingCategories = categoryIds.Except(categories.Select(c => c.Id)).ToList();
-            throw new AppException(
-            ErrorCode.NotFound,
-            $"Parcel categories not found: {string.Join(", ", missingCategories)}",
-            StatusCodes.Status404NotFound);
-        }*/
-
         // Get insurance policy base on categoryInsuranceIds
         var categoryInsuranceIds = request.Parcels
             .Select(p => p.CategoryInsuranceId)

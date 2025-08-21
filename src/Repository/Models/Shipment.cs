@@ -59,7 +59,10 @@ public partial class Shipment : BaseEntity
     // If staff load shipment to train, update this field
     // If staff unload shipment from train, update this field to null
     [StringLength(50)]
-    public string? CurrentTrainId { get; set; } 
+    public string? CurrentTrainId { get; set; }
+
+    [NotMapped]
+    public string? WaitingForTrainCode { get; set; }
 
     public ShipmentStatusEnum ShipmentStatus { get; set; }
 

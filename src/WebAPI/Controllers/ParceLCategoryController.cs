@@ -42,14 +42,9 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpPut(WebApiEndpoint.ParcelCategory.UpdateCategory)]
         [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
-        public async Task<IActionResult> Update(string id, [FromBody] ParcelCategoryUpdateRequest request)
+        public async Task<IActionResult> Update([FromBody] ParcelCategoryUpdateRequest request)
         {
-            if (id != id)
-            {
-                return BadRequest(BaseResponse.NotFoundResponseDto("Invalid ID in request body."));
-            }
-
-            await _parcelCategoryService.UpdateAsync(id,request);
+            await _parcelCategoryService.UpdateAsync(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsParcelCategory.UPDATE_SUCCESS));
         }
 
