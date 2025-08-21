@@ -150,7 +150,7 @@ namespace MetroShip.WebAPI.Controllers
         /// <summary>
         /// Gửi thông báo qua SignalR
         /// </summary>
-        public async Task SendNotificationViaSignalR(NotificationDto notification)
+        private async Task SendNotificationViaSignalR(NotificationDto notification)
         {
             try
             {
