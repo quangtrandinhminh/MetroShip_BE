@@ -1161,7 +1161,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         TrainStatusEnum.Scheduled,
         TrainStatusEnum.AwaitingDeparture,
         TrainStatusEnum.Departed,
-        TrainStatusEnum.InTransit
+        TrainStatusEnum.InTransit,
+        TrainStatusEnum.ArrivedAtStation,
     };
 
         if (!allowedStatuses.Contains(train.Status))
