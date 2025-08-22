@@ -8,6 +8,7 @@ using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
+using MetroShip.Utility.Config;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -17,6 +18,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using MetroShip.Utility.Constants;
+using MetroShip.Utility.Exceptions;
 
 namespace MetroShip.Service.Services
 {
@@ -119,5 +122,65 @@ namespace MetroShip.Service.Services
             await _unitOfWork.SaveChangeAsync();
         }
 
+        // get station near user location
+        public async Task<List<StationResponse>> GetStationsNearUsers(NearbyStationsRequest request)
+        {
+            _logger.Information("Fetching stations near user at latitude: {Latitude}, longitude: {Longitude}",
+                request.UserLatitude, request.UserLongitude);
+
+            var initialMaxDistance = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_DISTANCE_IN_METERS))); // 5000m
+            var maxCount = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_COUNT_STATION_NEAR_USER))); // 3
+            var maxAllowedDistance = initialMaxDistance * 10;
+
+            _logger.Information("Max distance in meters: {MaxDistance}, Max count: {MaxCount}",
+                               initialMaxDistance, maxCount);
+
+            var maxDistanceInMeters = initialMaxDistance;
+            var stationIds = await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude,
+                request.UserLongitude,
+                maxDistanceInMeters,
+                maxCount);
+
+            while (!stationIds.Any() && maxDistanceInMeters < maxAllowedDistance)
+            {
+                maxDistanceInMeters *= 2;
+                if (maxDistanceInMeters > maxAllowedDistance)
+                    maxDistanceInMeters = maxAllowedDistance;
+
+                stationIds = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude,
+                    request.UserLongitude,
+                    maxDistanceInMeters,
+                    maxCount);
+            }
+
+            if (!stationIds.Any())
+            {
+                _logger.Warning("No stations found near user within {MaxAllowedDistance} meters.", maxAllowedDistance);
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    ResponseMessageStation.NO_STATION_NEAR_USER + maxAllowedDistance + "m. ",
+                    StatusCodes.Status400BadRequest
+                    );
+            }
+
+            var stations = _stationRepository.GetAll()
+                .Where(s => stationIds.Select(_ => _.StationId).Contains(s.Id) && s.IsActive)
+                .ToList();
+
+            var response = _mapper.MapToStationResponseList(stations);
+            foreach (var station in response)
+            {
+                var nearbyStation = stationIds.FirstOrDefault(s => s.StationId == station.StationId);
+                if (nearbyStation != null)
+                {
+                    station.DistanceMeters = nearbyStation.DistanceMeters;
+                }
+            }
+
+            response = new List<StationResponse>(response.OrderBy(s => s.DistanceMeters));
+            return response;
+        }
     }
 }

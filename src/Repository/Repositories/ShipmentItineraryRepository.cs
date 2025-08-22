@@ -21,6 +21,7 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
         // Lấy tất cả routes, stations và metroLines một lần
         var routes = await _context.Routes
             .AsNoTracking()
+            .Where(r => r.MetroLine.IsActive)
             .Include(r => r.MetroLine)
             .Select(x => new Route
             {

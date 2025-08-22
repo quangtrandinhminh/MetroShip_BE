@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Models;
 using MetroShip.Utility.Enums;
 
@@ -6,7 +7,7 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface IStationRepository : IBaseRepository<Station>
 {
-    Task<List<string>> GetAllStationIdNearUser(double userLatitude,
+    Task<List<NearbyStationIds>> GetAllStationIdNearUser(double userLatitude,
         double userLongitude,
         int maxDistanceInMeters = 1000,
         int maxCount = 10);

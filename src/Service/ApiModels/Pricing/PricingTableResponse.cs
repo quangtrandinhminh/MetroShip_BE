@@ -1,4 +1,6 @@
-﻿namespace MetroShip.Service.ApiModels.Pricing;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace MetroShip.Service.ApiModels.Pricing;
 
 public record PricingTableResponse
 {
@@ -6,6 +8,13 @@ public record PricingTableResponse
     public DateTimeOffset? EffectiveFrom { get; set; }
     public DateTimeOffset? EffectiveTo { get; set; }
     public bool IsActive { get; set; } = true;
+    public int? FreeStoreDays { get; set; }
+    public decimal? BaseSurchargePerDayVnd { get; set; }
+
+    [Column(TypeName = "decimal(5, 2)")]
+    public decimal? RefundRate { get; set; }
+    public int? RefundForCancellationBeforeScheduledHours { get; set; }
+    public string? Description { get; set; }
     public IList<WeightTierResponse> WeightTiers { get; set; } = new List<WeightTierResponse>();
     public IList<DistanceTierResponse> DistanceTiers { get; set; } = new List<DistanceTierResponse>();
 }

@@ -80,5 +80,6 @@ app.UseCors("SignalR");
 app.UseSwaggerDocumentation(appName, "v1");
 app.UseApplicationMiddleware();
 app.MapHub<trackingHub>("/trackingHub");
+app.MapHub<NotificationHub>("/notificationHub");
 app.MapControllers();
 app.Run();

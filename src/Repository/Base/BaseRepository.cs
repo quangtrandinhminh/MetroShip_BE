@@ -63,7 +63,7 @@ namespace MetroShip.Repository.Base
             {
                 foreach (var navigationPropertyPath in includeProperties)
                 {
-                    queryable = queryable.Include(navigationPropertyPath);
+                    queryable = queryable.AsSplitQuery().Include(navigationPropertyPath);
                 }
             }
 

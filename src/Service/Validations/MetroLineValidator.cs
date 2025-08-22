@@ -43,18 +43,18 @@ public class MetroLineCreateValidator : AbstractValidator<MetroRouteRequest>
 
         RuleFor(x => x.LineCode)
             .MaximumLength(20).WithMessage("Line code must not exceed 20 characters.")
-            .Matches(@"^[A-Za-z0-9]+$").WithMessage("Line code must consist of letters and numbers only.")
+            //.Matches(@"^[A-Za-z0-9]+$").WithMessage("Line code must consist of letters and numbers only.")
             .When(x => !string.IsNullOrEmpty(x.LineCode));
 
         RuleFor(x => x.LineType)
             .MaximumLength(100).WithMessage("Line type must not exceed 100 characters.")
-            .Matches(@"^[A-Za-z\s]+$").WithMessage("Line type must consist of letters and spaces only.")
+            //.Matches(@"^[A-Za-z\s]+$").WithMessage("Line type must consist of letters and spaces only.")
             .When(x => !string.IsNullOrEmpty(x.LineType));
 
         RuleFor(x => x.LineOwner)
             .MaximumLength(100)
             .WithMessage("Line owner must not exceed 100 characters.")
-            .Matches(@"^[A-Za-z\s]+$").WithMessage("Line owner must consist of letters and spaces only.")
+            //.Matches(@"^[A-Za-z\s]+$").WithMessage("Line owner must consist of letters and spaces only.")
             .When(x => !string.IsNullOrEmpty(x.LineOwner));
 
         RuleFor(x => x.ColorHex)
@@ -88,8 +88,8 @@ public class StationCreateValidator : AbstractValidator<CreateStationRequest>
             .Must(id => string.IsNullOrEmpty(id) || Guid.TryParse(id, out var _))
             .WithMessage("Station ID must be a valid GUID when provided.");
 
-        RuleFor(x => x.IsActive)
-            .NotNull().WithMessage("IsActive must be specified when creating new station.");
+        /*RuleFor(x => x.IsActive)
+            .NotNull().WithMessage("IsActive must be specified when creating new station.");*/
 
         RuleFor(x => x.ToNextStationKm)
             .NotNull().WithMessage("ToNextStationKm is required when creating new station.")
@@ -113,9 +113,10 @@ public class StationCreateValidator : AbstractValidator<CreateStationRequest>
                 .NotNull().WithMessage("IsUnderground must be specified when creating new station.");
 
             RuleFor(x => x.RegionId)
-                .NotEmpty().WithMessage("Region ID is required when creating new station.")
+                //.NotEmpty().WithMessage("Region ID is required when creating new station.")
                 .Must(regionId => Guid.TryParse(regionId, out var _))
-                .WithMessage("Region ID must be a valid GUID when creating new station.");
+                .WithMessage("Region ID must be a valid GUID when creating new station.")
+                .When(x => !string.IsNullOrEmpty(x.RegionId));
 
             RuleFor(x => x.Latitude)
                 .NotNull().WithMessage("Latitude is required when creating new station.")

@@ -14,6 +14,7 @@ public interface ITrainService
         TrainListFilterRequest request);
 
     Task<IList<object>> GetTrainSystemConfigAsync();
+    Task<string> CreateTrainAsync(CreateTrainRequest request);
     Task<bool> IsShipmentDeliveredAsync(string trackingCode);
     Task<IList<string>> GetTrackingCodesByTrainAsync(string trainId);
     Task UpdateTrainLocationAsync(string trainId, double lat, double lng, string stationId);

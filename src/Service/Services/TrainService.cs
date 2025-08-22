@@ -24,6 +24,8 @@ using MetroShip.Utility.Helpers;
 using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
 using RestSharp.Extensions;
+using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Jobs;
 
 namespace MetroShip.Service.Services;
 
@@ -49,8 +51,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         serviceProvider.GetRequiredService<IMetroTimeSlotRepository>();
     private readonly IMemoryCache _cache =
         serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly ScheduleTrainJob _scheduleTrainJob = serviceProvider.GetRequiredService<ScheduleTrainJob>();
+    private readonly IMetroRouteRepository _metroRoute = serviceProvider.GetRequiredService<IMetroRouteRepository>();
     private readonly ITrainStateStoreService _trainStateStore =
         serviceProvider.GetRequiredService<ITrainStateStoreService>();
+    private readonly ITrainScheduleRepository _trainScheduleRepository = serviceProvider.GetRequiredService<ITrainScheduleRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -91,8 +96,19 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             request.PageNumber,
             request.PageSize,
             BuildShipmentFilterExpression(request),
-            t => t.TrainCode, true,
-            includeProperties: t => t.ShipmentItineraries);
+            t => t.TrainCode, true);
+
+        var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
+        var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
+        
+        foreach (var train in paginatedList.Items)
+        {
+            // Map train schedules to each train
+            train.TrainSchedules = trainSchedules
+                .Where(ts => ts.TrainId == train.Id)
+                .OrderBy(ts => ts.Shift)
+                .ToList();
+        }
 
         return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
     }
@@ -113,6 +129,43 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             c.ConfigKey,
             c.ConfigValue
         }).ToList()];
+    }
+
+    // create a train
+    public async Task<string> CreateTrainAsync(CreateTrainRequest request)
+    {
+        _logger.Information("Creating a new train with request: {@request}", request);
+        _trainValidator.ValidateCreateTrainRequest(request);
+
+        var metroRouteCode = await _metroRoute.GetAll()
+            .Where(l => l.DeletedAt == null && l.Id == request.LineId)
+            .Select(l => l.LineCode)
+            .FirstOrDefaultAsync();
+
+        if (metroRouteCode == null)
+        {
+            throw new AppException(ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        request.TrainCode = string.IsNullOrEmpty(request.TrainCode)
+            ? MetroCodeGenerator.GenerateTrainCode(metroRouteCode, request.TrainNumber)
+            : request.TrainCode;
+        // Check if train code already exists
+        var existingTrain = await _trainRepository.IsExistAsync(t => t.TrainCode == request.TrainCode);
+        if (existingTrain)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            ResponseMessageTrain.TRAIN_EXISTED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Map to train entity
+        var train = _mapper.MapToMetroTrainEntity(request);
+        await _trainRepository.AddAsync(train);
+        await _scheduleTrainJob.CreateTrainScheduleForNewTrain(train);
+        return ResponseMessageTrain.TRAIN_CREATE_SUCCESS;
     }
 
     public async Task<bool> IsShipmentDeliveredAsync(string trackingCode)
@@ -506,7 +559,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // ✅ Cập nhật ShipmentStatus sang InTransit
         //var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
-        var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+        /*var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
 
         var shipmentsToUpdate = rawShipments
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
@@ -533,7 +586,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             _logger.Information("📦 Updated {Count} shipments to InTransit as train {TrainId} departed.", shipmentsToUpdate.Count, train.Id);
-        }
+        }*/
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response,

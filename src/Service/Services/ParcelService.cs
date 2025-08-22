@@ -154,7 +154,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             .FirstOrDefaultAsync();
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         var shipment = parcel.Shipment;
         if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
@@ -242,7 +242,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             includeProperties: p => p.Shipment);
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         // Only allow update for parcels in PickedUp or WaitingForNextTrain status
         var shipment = parcel.Shipment;
@@ -252,14 +252,14 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment must be in 'PickedUp' or 'WaitingForNextTrain' status",
+                "Đơn hàng phải ở trạng thái 'Đã nhận hàng' hoặc 'Chờ trung chuyển' mới có thể lên tàu",
                 StatusCodes.Status400BadRequest);
         }
 
         var train = await _trainRepository.GetSingleAsync(
                        t => t.TrainCode == trainCode && t.DeletedAt == null);
         if (train == null)
-            throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageTrain.TRAIN_NOT_FOUND, StatusCodes.Status404NotFound);
 
         var validStationId = await _stationRepository.GetAllStationsCanLoadShipmentAsync(shipment.Id);
         if (!validStationId.Contains(stationId))
@@ -271,11 +271,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Parcel {parcelCode} cannot be loaded at this station. Valid stations: {string.Join(", ", validStationNames)}",
+            $"Bưu kiện {parcelCode} không thể lên hàng tại ga này. Các ga hợp lệ: {string.Join(", ", validStationNames)}",
             StatusCodes.Status400BadRequest);
         }
 
-        // retrieve the parcel tracking 
+        // retrieve the parcel tracking which for InTransit status, same station and not deleted
         var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
             pt => pt.ParcelId == parcel.Id &&
                   pt.TrackingForShipmentStatus == ShipmentStatusEnum.InTransit &&
@@ -286,7 +286,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Parcel is already loaded on a train at this station.",
+            ResponseMessageParcel.PARCEL_ALREADY_LOADED,
             StatusCodes.Status400BadRequest);
         }
 
@@ -321,7 +321,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             // Update shipment status and timestamps
             shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
-            shipment.CurrentTrainId = train.Id; // Update current train ID
+            shipment.CurrentTrainId = train.Id;
             _shipmentRepository.Update(shipment);
 
             shipment.ShipmentTrackings.Add(new ShipmentTracking
@@ -352,7 +352,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                                   includeProperties: p => p.Shipment);
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         // Only allow update for parcels in shipment status InTransit
         var shipment = parcel.Shipment;
@@ -360,14 +360,14 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment must be in 'InTransit' status",
+                "Đơn hàng phải ở trạng thái Đang vận chuyển (InTransit) để xác nhận xuống tàu",
                 StatusCodes.Status400BadRequest);
         }
 
         var train = await _trainRepository.GetSingleAsync(
                                   t => t.TrainCode == trainCode && t.DeletedAt == null);
         if (train == null)
-            throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageTrain.TRAIN_NOT_FOUND, StatusCodes.Status404NotFound);
 
         var validStationId = await _stationRepository.GetAllStationsCanUnloadShipmentAsync(shipment.Id);
         if (!validStationId.Contains(stationId))
@@ -379,7 +379,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Parcel cannot be unloaded at this station. Valid stations: {string.Join(", ", validStationNames)}",
+            $"Bưu kiện {parcelCode} không thể xuống tàu tại ga này. Các ga hợp lệ: {string.Join(", ", validStationNames)}",
             StatusCodes.Status400BadRequest);
         }
 
@@ -395,7 +395,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                $"Parcel {parcelCode} is already unloaded from a train at this station.",
+                $"Bưu kiện {parcelCode} đã được xác nhận xuống tại ga này. ",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -432,7 +432,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 // Update shipment status and timestamps
                 shipment.ShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain;
                 shipment.CurrentStationId = stationId;
-                shipment.CurrentTrainId = null; // Clear current train ID since it's unloaded
+                shipment.CurrentTrainId = null;
                 _shipmentRepository.Update(shipment);
 
                 shipment.ShipmentTrackings.Add(new ShipmentTracking
@@ -476,6 +476,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 // Update shipment status and timestamps
                 shipment.ShipmentStatus = ShipmentStatusEnum.Arrived;
                 shipment.CurrentStationId = stationId;
+                shipment.CurrentTrainId = null;
                 _shipmentRepository.Update(shipment);
 
                 shipment.ShipmentTrackings.Add(new ShipmentTracking

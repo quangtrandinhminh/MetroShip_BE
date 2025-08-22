@@ -463,6 +463,9 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<TimeOnly?>("CutOffTime")
+                        .HasColumnType("time without time zone");
+
                     b.Property<int?>("DayOfWeek")
                         .HasColumnType("integer");
 
@@ -492,6 +495,9 @@ namespace MetroShip.Repository.Migrations
                     b.Property<DateOnly?>("SpecialDate")
                         .HasColumnType("date");
 
+                    b.Property<TimeOnly?>("StartReceivingTime")
+                        .HasColumnType("time without time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
@@ -520,6 +526,10 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CurrentRouteStationId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 

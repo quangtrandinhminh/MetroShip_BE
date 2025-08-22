@@ -1,6 +1,8 @@
-﻿using MetroShip.Repository.Infrastructure;
+﻿using MetroShip.Repository.Extensions;
+using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
@@ -25,6 +27,23 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     private readonly IMemoryCache _cache = serviceProvider.GetRequiredService<IMemoryCache>();
     private const int CACHE_EXPIRY_MINUTES = 30;
     private const string CACHE_KEY = "DefaultPricingConfig";
+
+    public async Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request)
+    {
+        _logger.Information("Fetching all pricing configurations with pagination: {@Request}", request);
+
+        var pricingConfigs = await _pricingRepository.GetAllPaginatedQueryable(
+                request.PageNumber,
+                request.PageSize,
+                x => x.DeletedAt == null,
+                x => x.LastUpdatedAt, false,
+                x => x.WeightTiers, x => x.DistanceTiers
+        );
+
+        var response = _mapper.MapToPricingTablePaginatedList(pricingConfigs);
+        return response;
+    }
+
 
     private async Task<PricingConfig?> GetPricingConfigAsync(string? pricingConfigId = null)
     {

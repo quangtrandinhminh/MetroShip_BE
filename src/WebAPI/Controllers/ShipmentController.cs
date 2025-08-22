@@ -1,6 +1,7 @@
 ﻿using MetroShip.Repository.Interfaces;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
@@ -11,8 +12,10 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Services;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
+using MetroShip.WebAPI.Hubs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -24,6 +27,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly IShipmentService shipmentService = serviceProvider.GetRequiredService<IShipmentService>();
         private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
         private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+        private readonly NotificationHub _notificationHub = serviceProvider.GetRequiredService<NotificationHub>();
 
         [HttpGet("load-station")]
         public async Task<IActionResult> GetAllStationIdCanLoadShipment(string shipmentId)
@@ -40,7 +44,7 @@ namespace MetroShip.WebAPI.Controllers
             var result = await shipmentService.GetAllShipmentsAsync(
                 request, filterRequest, searchKeyword, createdFrom, createdTo, orderByRequest
             );
-            return Ok(BaseResponse.OkResponseDto(result));
+            return Ok(BaseResponse.OkResponseDto(result, _enumResponses));
         }
 
         [Authorize]
@@ -135,7 +139,13 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.CompleteShipment)]
         public async Task<IActionResult> CompleteShipment([FromBody] ShipmentPickUpRequest request)
         {
-            await shipmentService.CompleteShipment(request);
+            var response = await shipmentService.CompleteShipment(request);
+            var notification = new NotificationCreateRequest
+            {
+                ToUserId = response.SenderId,
+                Message = response.message,
+            };
+            await _notificationHub.SendNotification(notification);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.COMPLETED_SUCCESS, null));
         }
 

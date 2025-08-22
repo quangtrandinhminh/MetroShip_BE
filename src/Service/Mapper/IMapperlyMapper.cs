@@ -2,8 +2,11 @@
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Models.Identity;
 using MetroShip.Repository.Repositories;
+using MetroShip.Service.ApiModels.InsurancePolicy;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.MetroTimeSlot;
+using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Parcel;
 using MetroShip.Service.ApiModels.ParcelCategory;
@@ -46,6 +49,7 @@ public interface IMapperlyMapper
 
     // station
     StationResponse MapToStationResponse(Station entity);
+    List<StationResponse> MapToStationResponseList(ICollection<Station> entity);
     PaginatedListResponse<StationListResponse> MapToStationListResponsePaginatedList(PaginatedList<Station> entity);
     StationListResponse MapToStationListResponse(Station entity);
     StationDetailResponse MapToStationDetailResponse(Station entity);
@@ -89,6 +93,7 @@ public interface IMapperlyMapper
     IList<TrainListResponse> MapToTrainListResponse(ICollection<MetroTrain> entity);
     IList<TrainCurrentCapacityResponse> MapToTrainCurrentCapacityResponse(ICollection<MetroTrain> entity);
     TrainResponse MapToTrainResponse(MetroTrain request);
+    MetroTrain MapToMetroTrainEntity(CreateTrainRequest request);
 
     // time slot
     MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
@@ -107,13 +112,26 @@ public interface IMapperlyMapper
 
     // pricing config
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
+    PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
     RegionResponse MapToRegionResponse(Region entity);
+    Region MapToRegionEntity(CreateRegionRequest request);
 
     // support ticket
     SupportTicketResponse MapToSupportTicketResponse(SupportTicket entity);
     PaginatedListResponse<SupportTicketResponse> MapToSupportTicketPaginatedList(PaginatedList<SupportTicket> entityList);
     SupportTicket MapToSupportTicketEntity(SupportTicketRequest request);
+
+    // insurance policy
+    InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
+    PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
+
+    //notification
+    NotificationDto MapNotification(Notification notification);
+    Notification MapNotificationRequest(NotificationCreateRequest request);
+    void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
+    PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
+    
 }

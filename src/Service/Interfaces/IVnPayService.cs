@@ -7,4 +7,5 @@ public interface IVnPayService
 {
     Task<string> CreatePaymentUrl(string orderId, decimal totalAmount);
     Task<VnPaymentResponse> PaymentExecute(VnPayCallbackModel model);
+    public int GetVnPayWaitingTimeMinutes();
 }

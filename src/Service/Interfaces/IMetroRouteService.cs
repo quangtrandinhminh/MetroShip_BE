@@ -16,5 +16,6 @@ namespace MetroShip.Service.Interfaces
         Task<MetroRouteResponseDetails> GetMetroRouteById(string metroRouteId);
         Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId);
         Task<int> CreateMetroRoute(MetroRouteRequest request);
+        Task<string> ActivateMetroLine(string metroRouteId);
     }
 }

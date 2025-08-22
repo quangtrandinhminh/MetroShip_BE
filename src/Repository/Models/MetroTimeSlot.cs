@@ -18,6 +18,10 @@ public partial class MetroTimeSlot : BaseEntity
 
     public bool IsAbnormal { get; set; }
 
+    public TimeOnly? StartReceivingTime { get; set; }
+
+    public TimeOnly? CutOffTime { get; set; }
+
     public TimeOnly OpenTime { get; set; }
 
     public TimeOnly CloseTime { get; set; }

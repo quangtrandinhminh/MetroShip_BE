@@ -11,6 +11,15 @@ public class MetroCodeGenerator
         return $"{regionCode.ToUpperInvariant()}-L{lineNumber}-{order:D2}";
     }
 
+    public static string GenerateStationCode(int order, string lineCode)
+    {
+        if (string.IsNullOrWhiteSpace(lineCode))
+            throw new ArgumentException("Line code cannot be null or empty.", nameof(lineCode));
+
+        // Generate a station code based on the order, line number, and region code
+        return $"{lineCode}-{order:D2}";
+    }
+
     public static string GenerateRouteCode(string lineCode, string fromStationCode, string toStationCode)
     {
         if (string.IsNullOrWhiteSpace(fromStationCode) || string.IsNullOrWhiteSpace(toStationCode))
@@ -32,5 +41,15 @@ public class MetroCodeGenerator
 
         // Generate a code based on the region and line number, e.g., "HCM-L1"
         return $"{regionCode.ToUpperInvariant()}-L{lineNumber}";
+    }
+
+    // generate a code for train
+    public static string GenerateTrainCode(string lineCode, int trainNumber)
+    {
+        if (string.IsNullOrWhiteSpace(lineCode))
+            throw new ArgumentException("Line code cannot be null or empty.", nameof(lineCode));
+
+        // Generate a code based on the region, line number, and train number
+        return $"{lineCode}-T{trainNumber:D2}";
     }
 }

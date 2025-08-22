@@ -75,7 +75,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             SenderPhone = s.SenderPhone,
             RecipientName = s.RecipientName,
             RecipientPhone = s.RecipientPhone,
-
+            IsCompensationRequested = s.SupportTickets.Any(t => t.SupportType == SupportTypeEnum.CompensationRequired),
             ShipmentStatus = s.ShipmentStatus,
    
             TotalCostVnd = s.TotalCostVnd,
@@ -116,6 +116,9 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             CurrentStationId = s.CurrentStationId,
             CurrentTrainId = s.CurrentTrainId,
             ShipmentStatus = s.ShipmentStatus,
+            WaitingForTrainCode = s.ShipmentItineraries.FirstOrDefault(i => i.IsCompleted == false)
+                .Train.TrainCode ?? s.WaitingForTrainCode,
+            IsCompensationRequested = s.SupportTickets.Any(t => t.SupportType == SupportTypeEnum.CompensationRequired),
 
             // Financial fields
             TotalCostVnd = s.TotalCostVnd,
@@ -311,7 +314,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 Note = tracking.Note,
             }).OrderByDescending(st => st.EventTime).ToList(),
             //Transactions = shipment.Transactions.ToList(),
-        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode);
+        }).AsSplitQuery().FirstOrDefaultAsync(x => x.TrackingCode == trackingCode || x.Id == trackingCode);
 
         if (shipmentDto == null)
         {

@@ -8,11 +8,13 @@ namespace MetroShip.Service.ApiModels.Station
 {
     public class StationListResponse
     {
-        public Guid Id { get; set; }
+        public string StationId { get; set; }
         public string StationCode { get; set; }
         public string StationNameVi { get; set; }
         public string StationNameEn { get; set; }
         public bool IsActive { get; set; }
         public string RegionId { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
     }
 }

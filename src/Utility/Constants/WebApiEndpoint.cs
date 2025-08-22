@@ -97,7 +97,7 @@
 
         public static class Notification
         {
-            private const string BaseEndpoint = "/" + AreaName + "notifications";
+            private const string BaseEndpoint = "/" + AreaName + "/notifications";
 
             public const string GetNotifications = BaseEndpoint;
             public const string GetNotification = $"{BaseEndpoint}/{{id}}";
@@ -114,7 +114,7 @@
 
         public static class UserDevice
         {
-            private const string BaseEndpoint = "/" + AreaName + "user-devices";
+            private const string BaseEndpoint = "/" + AreaName + "/user-devices";
             public const string RegisterDevice = $"{BaseEndpoint}/register";
             public const string UnregisterDevice = $"{BaseEndpoint}/unregister";
             public const string GetUserDevices = BaseEndpoint;
@@ -139,6 +139,7 @@
             public const string UpdateMetroLine = BaseEndpoint;
             public const string DeleteMetroLine = BaseEndpoint + "/{id}";
             public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
+            public const string ActivateMetroLine = BaseEndpoint + "/activation/{id}";
         }
         public static class MetroTimeSlotEndpoint
         {
@@ -212,13 +213,38 @@
         public static class PricingEndpoint
         {
             private const string BaseEndpoint = "/" + AreaName + "/pricing";
-            public const string GetPricing = BaseEndpoint;
+            public const string GetAllPricing = BaseEndpoint;
             public const string GetPricingById = BaseEndpoint + "/{id}";
             public const string GetPricingTable = BaseEndpoint + "/table";
             public const string CreatePricing = BaseEndpoint;
             public const string UpdatePricing = BaseEndpoint + "/{id}";
             public const string DeletePricing = BaseEndpoint + "/{id}";
             public const string CalculatePrice = BaseEndpoint + "/calculation";
+        }
+
+        public static class InsurancePolicyEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/insurance-policies";
+            public const string GetAllPolicies = BaseEndpoint;
+            public const string GetPolicyById = BaseEndpoint + "/{id}";
+            public const string CreatePolicy = BaseEndpoint;
+            public const string UpdatePolicy = BaseEndpoint + "/{id}";
+            public const string DeletePolicy = BaseEndpoint + "/{id}";
+        }
+
+        public static class SupportTicketEndpoint
+        {
+            private const string BaseEndpoint = "/" + AreaName + "/support-tickets";
+            public const string GetAllTickets = BaseEndpoint;
+            public const string GetTicketById = BaseEndpoint + "/{ticketId}";
+            public const string CreateTicket = BaseEndpoint;
+            public const string UpdateTicket = BaseEndpoint + "/{id}";
+            public const string DeleteTicket = BaseEndpoint + "/{id}";
+            public const string GetTicketsByUserId = BaseEndpoint + "/user/{userId}";
+            public const string GetTicketStatusEnum = BaseEndpoint + "/status";
+            public const string GetSupportTypeEnum = BaseEndpoint + "/type";
+            public const string ResolveTicket = BaseEndpoint + "/resolve";
+            public const string CloseTicket = BaseEndpoint + "/close/{ticketId}";
         }
     }
 }
