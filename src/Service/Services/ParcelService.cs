@@ -252,7 +252,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment must be in 'PickedUp' or 'WaitingForNextTrain' status",
+                "Đơn hàng phải ở trạng thái 'Đã nhận hàng' hoặc 'Chờ trung chuyển' mới có thể lên tàu",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -360,7 +360,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "Shipment must be in 'InTransit' status",
+                "Đơn hàng phải ở trạng thái Đang vận chuyển (InTransit) để xác nhận xuống tàu",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -395,7 +395,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                $"Parcel {parcelCode} is already unloaded from a train at this station.",
+                $"Bưu kiện {parcelCode} đã được xác nhận xuống tại ga này. ",
                 StatusCodes.Status400BadRequest);
         }
 

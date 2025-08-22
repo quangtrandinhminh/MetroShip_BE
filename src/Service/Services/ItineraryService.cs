@@ -1,16 +1,21 @@
-﻿using MetroShip.Repository.Infrastructure;
+﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Shipment;
+using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
+using MetroShip.Service.Validations;
 using MetroShip.Utility.Config;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -27,6 +32,13 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
+    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+    private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    private MetroGraph _metroGraph;
+    private const string CACHE_KEY = nameof(MetroGraph);
+    private const int CACHE_EXPIRY_MINUTES = 30;
 
     public async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
@@ -551,6 +563,171 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         }
 
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)
+    {
+        // Get station options
+        var stationIds = await GetNearUserStations(request);
+
+        // Find paths
+        var pathResults = await FindOptimalPaths(stationIds.ToList(), request.DestinationStationId);
+
+        // Calculate pricing
+        var bestPathResponses = await CalculatePricingForPaths(pathResults, request);
+
+        // Build response
+        return BuildTotalPriceResponse(bestPathResponses, stationIds.ToList());
+    }
+
+    private async Task InitializeGraphAsync()
+    {
+        var cacheKey = CACHE_KEY;
+        if (_memoryCache.TryGetValue(cacheKey, out MetroGraph? cachedGraph))
+        {
+            _logger.Information("Retrieved metro graph from cache.");
+            _metroGraph = cachedGraph;
+            return;
+        }
+
+        var (routes, stations, metroLines) =
+            await _shipmentItineraryRepository.GetRoutesAndStationsAsync();
+
+        // Khởi tạo đồ thị metro
+        _metroGraph = new MetroGraph(routes, stations, metroLines);
+        // save into memory cache
+        _memoryCache.Set(cacheKey, _metroGraph, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
+    }
+
+    private async Task<List<string>> GetNearUserStations(TotalPriceCalcRequest request)
+    {
+        var maxDistanceInMeters = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
+        var maxStationCount = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
+
+        var result = new List<string> { request.DepartureStationId };
+
+        if (request is { UserLongitude: not null, UserLatitude: not null })
+        {
+            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+                request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+
+            // Remove departure station if present (to avoid duplication)
+            nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
+
+            // Ensure at least 2 stations are available (including departure)
+            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
+            {
+                // Extend distance by 1000 meters
+                maxDistanceInMeters += 2000;
+                nearStations = await _stationRepository.GetAllStationIdNearUser(
+                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+                nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
+            }
+
+            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+            result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
+        }
+
+        return result;
+    }
+
+    private async Task<List<(string StationId, List<string> Path)>> FindOptimalPaths(
+        List<string> stationIdList, string destinationStationId)
+    {
+        InitializeGraphAsync().Wait();
+
+        var pathTasks = stationIdList.Select(async departureStationId => {
+            List<string> path = _stationRepository.AreStationsInSameMetroLine(
+            departureStationId, destinationStationId)
+                ? _metroGraph.FindShortestPathByBFS(departureStationId, destinationStationId)
+                : _metroGraph.FindShortestPathByDijkstra(departureStationId, destinationStationId);
+            return (StationId: departureStationId, Path: path);
+        }).ToList();
+
+        var allPaths = await Task.WhenAll(pathTasks);
+
+        // Filter out null/empty paths and log them
+        // Valid path: path has more than 1 vertex (path is a station list, 1 route need 2 station)
+        var validPaths = allPaths.Where(r => r.Path?.Any() == true).ToList();
+
+        if (!validPaths.Any())
+        {
+            _logger.Information("No valid paths found from any station {StationIds} to {DestinationId}",
+                string.Join(", ", stationIdList), destinationStationId);
+            throw new AppException(
+                ErrorCode.NotFound,
+                ResponseMessageShipment.PATH_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+        }
+
+        _logger.Information("Found {ValidPathCount} valid paths out of {TotalPathCount} attempted",
+            validPaths.Count, allPaths.Length);
+
+        return validPaths;
+    }
+
+    private async Task<List<dynamic>> CalculatePricingForPaths(
+        List<(string StationId, List<string> Path)> pathResults, TotalPriceCalcRequest request)
+    {
+        // Get insurance policy base on categoryInsuranceIds
+        var categoryInsuranceIds = request.Parcels
+            .Select(p => p.CategoryInsuranceId)
+            .Distinct()
+            .ToList();
+        var categoryInsurance = await _categoryInsuranceRepository
+            .GetAllWithCondition(x => categoryInsuranceIds.Contains(x.Id) && x.IsActive && x.DeletedAt == null
+            , x => x.InsurancePolicy, x => x.ParcelCategory
+            )
+        .ToListAsync();
+
+        return pathResults.Select(r =>
+        {
+            var pathResponse = _metroGraph.CreateResponseFromPath(r.Path, _mapperlyMapper);
+            _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
+
+            // Calculate pricing for each parcel
+            /*ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
+
+            ParcelPriceCalculator.CalculateParcelPricing(
+                pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
+
+            // Check est arrival time
+            var date = new DateOnly(request.ScheduledDateTime.Year,
+                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
+
+            return new
+            {
+                StationId = r.StationId,
+                Response = pathResponse
+            };
+        }).ToList<dynamic>();
+    }
+
+    private TotalPriceResponse BuildTotalPriceResponse(List<dynamic> bestPathResponses, List<string> stationIdList)
+    {
+        var response = new TotalPriceResponse();
+
+        response.Standard = bestPathResponses
+            .FirstOrDefault(r => r.StationId == stationIdList[0])?.Response;
+
+        response.Nearest = bestPathResponses.Count > 1
+            ? bestPathResponses.FirstOrDefault(r => r.StationId == stationIdList[1])?.Response
+            : null;
+
+        response.Shortest = bestPathResponses.Count > 1
+            ? bestPathResponses
+                .OrderBy(r => r.Response.TotalCostVnd)
+                .FirstOrDefault()?.Response
+            : null;
+
+        var maxDistanceInMeters = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS)));
+        response.StationsInDistanceMeter = maxDistanceInMeters;
+        return response;
     }
 
 }

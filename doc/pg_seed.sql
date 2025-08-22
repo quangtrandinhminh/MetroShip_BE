@@ -2596,6 +2596,8 @@ VALUES
      TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL);
 
 -- ───────────────────────────────────────────────────────────────
+-- 22/08/2025: Add new metro lines, update metro time slots
+-- ───────────────────────────────────────────────────────────────
 -- Insert Metro Line 2A: Cát Linh - Hà Đông
 insert into public."MetroLines" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
 values
@@ -2766,3 +2768,20 @@ values
     ('2694a5e9-0e06-4eaf-b2be-dbae23c8a085', 'HN-L3-04-03', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'adc9893f-6bd5-41a1-999e-f68901ec6d17', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'Cầu Diễn – Phú Diễn', 'Cau Dien – Phu Dien', 9, null, 1, 0.90, null, null, null, NOW(), NOW(), null),
     ('074fa169-e4b8-4c50-b362-42597a7e40b7', 'HN-L3-03-02', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', '967369be-6913-4f60-9997-3589f2482f30', 'Phú Diễn – Minh Khai', 'Phu Dien – Minh Khai', 10, null, 1, 1.10, null, null, null, NOW(), NOW(), null),
     ('e3b404e8-df25-4aee-8aca-658b6998a826', 'HN-L3-02-01', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '967369be-6913-4f60-9997-3589f2482f30', '0af65903-2de3-4ce2-a13b-89eb6b7fb3f0', 'Minh Khai – Nhổn', 'Minh Khai – Nhon', 11, null, 1, 0.90, null, null, null, NOW(), NOW(), null);
+
+-- ───────────────────────────────────────────────────────────────
+UPDATE public."MetroTimeSlots"
+SET "StartReceivingTime" = '05:30:00', "CutOffTime" = '07:30:00'
+WHERE "Id" = 'a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6';
+
+UPDATE public."MetroTimeSlots"
+SET "StartReceivingTime" = '08:30:00', "CutOffTime" = '12:30:00'
+WHERE "Id" = 'b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7';
+
+UPDATE public."MetroTimeSlots"
+SET "StartReceivingTime" = '13:30:00', "CutOffTime" = '17:30:00'
+WHERE "Id" = 'c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8';
+
+UPDATE public."MetroTimeSlots"
+SET "StartReceivingTime" = '18:30:00', "CutOffTime" = '22:30:00'
+WHERE "Id" = 'd4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9';

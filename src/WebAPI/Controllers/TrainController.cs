@@ -94,7 +94,7 @@ namespace MetroShip.WebAPI.Controllers
         /// </summary>
         /// <param name="trackingCode"></param>
         /// <returns></returns>
-        [HttpGet("{trackingCode}/position")]
+        [HttpGet("api/{trackingCode}/position")]
         public async Task<IActionResult> GetPositionByTrackingCode(string trackingCode)
         {
             var result = await _trainService.GetTrainPositionByTrackingCodeAsync(trackingCode);

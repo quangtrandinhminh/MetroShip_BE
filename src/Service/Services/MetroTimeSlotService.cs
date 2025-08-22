@@ -48,8 +48,8 @@ namespace MetroShip.Service.Services
                     CloseTime = slot.CloseTime,
                     Shift = slot.Shift,
                     IsAbnormal = slot.IsAbnormal,
-                    ScheduleBeforeShiftMinutes = minShiftConfig,
-                    //MaxScheduleBeforeShiftMinutes = maxShiftConfig
+                    StartReceivingTime = slot.StartReceivingTime,
+                    CutOffTime = slot.CutOffTime,
                 }
                 ).ToListAsync();
             return timeSlots;

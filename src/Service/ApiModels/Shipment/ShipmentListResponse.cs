@@ -16,6 +16,8 @@ public record ShipmentListResponse
     public string RecipientName { get; set; }
     public string RecipientPhone { get; set; }
     public decimal TotalCostVnd { get; set; }
+    public bool IsCompensationRequested { get; set; }
+    public bool IsReturnShipment { get; set; }
     public byte? Rating { get; set; }
     public string? Feedback { get; set; }
     public DateTimeOffset? StartReceiveAt { get; set; } 
