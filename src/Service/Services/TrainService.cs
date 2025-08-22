@@ -1195,12 +1195,20 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (train == null)
             throw new Exception($"Không tìm thấy đoàn tàu với Id/Code: {trainIdOrCode}");
 
-        if (train.CurrentStationId != null)
-            throw new Exception("Đoàn tàu đã có vị trí hiện tại, không thể khởi tạo xuất phát.");
-        if (train.Status != TrainStatusEnum.NotScheduled)
-            throw new Exception("Chỉ có thể khởi tạo xuất phát cho đoàn tàu ở trạng thái NotScheduled.");
+        // 2. Check trạng thái được phép reschedule
+        var allowedStatuses = new[]
+        {
+        TrainStatusEnum.NotScheduled,
+        TrainStatusEnum.Scheduled,
+        TrainStatusEnum.AwaitingDeparture,
+        TrainStatusEnum.Departed,
+        TrainStatusEnum.InTransit
+    };
 
-        // 2. Lọc routes thuộc line này & sắp xếp theo SeqOrder
+        if (!allowedStatuses.Contains(train.Status))
+            throw new Exception($"Không thể schedule lại train {train.TrainCode} khi đang ở trạng thái {train.Status}");
+
+        // 3. Lọc routes thuộc line này & sắp xếp theo SeqOrder
         var routes = train.Line?.Routes?
             .Where(r => r.LineId == train.LineId && r.FromStationId != null && r.ToStationId != null)
             .OrderBy(r => r.SeqOrder)
@@ -1209,25 +1217,64 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (routes == null || routes.Count == 0)
             throw new Exception("Không tìm thấy tuyến đường (routes) hợp lệ cho đoàn tàu.");
 
-        // 3. Xác định trạm đầu/cuối theo chiều
+        // 4. Lấy endpoints (đầu/cuối line)
         var (startStation, endStation) = ResolveEndpointsFromRoutes(routes);
 
-        // 4) Chọn trạm xuất phát theo tham số
+        // 5. Chọn trạm xuất phát
         var chosen = startFromEnd ? endStation : startStation;
         if (chosen == null)
             throw new Exception("Không tìm thấy trạm xuất phát hợp lệ.");
 
-        // 5) Cập nhật train (KHÔNG cộng/trừ offset)
+        // 5.1 Kiểm tra endpoint đã có train khác chiếm chưa
+        var otherTrainAtSameStation = await _trainRepository
+         .GetAllWithCondition()
+         .Where(t => t.LineId == train.LineId
+                  && t.Id != train.Id
+                  && t.CurrentStationId == chosen.Id)
+         .AnyAsync();
+
+        if (otherTrainAtSameStation)
+        {
+            throw new Exception(
+                "Không thể schedule: đã có đoàn tàu khác đang ở đầu tuyến này, vui lòng chọn hướng ngược lại.");
+        }
+
+        _logger.Information(
+            "🚆 Train {TrainId} scheduled to start at station {StationId}.",
+            train.Id, chosen.Id);
+
+        // 6. Reset trạng thái trong DB
         train.CurrentStationId = chosen.Id;
         train.Latitude = chosen.Latitude;
         train.Longitude = chosen.Longitude;
-        train.Status = TrainStatusEnum.Completed;
+        train.Status = TrainStatusEnum.Completed;   // reset về trạng thái Complete
         train.LastUpdatedAt = DateTimeOffset.UtcNow;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // 6) Trả DTO
+        // 7. Reset state trong Firebase
+        await _trainStateStore.RemoveAllTrainStateAsync(train.Id);
+
+        var direction = InferTrainDirectionFromCurrentStation(train, train.CurrentStationId!);
+        await _trainStateStore.SetDirectionAsync(train.Id, direction);
+        await _trainStateStore.SetSegmentIndexAsync(train.Id, -1);
+
+        var position = new TrainPositionResult
+        {
+            TrainId = train.Id,
+            Latitude = train.Latitude ?? 0,
+            Longitude = train.Longitude ?? 0,
+            Status = train.Status.ToString(),
+            StartTime = DateTimeOffset.UtcNow,
+            ProgressPercent = 0
+        };
+        await _trainStateStore.SetPositionResultAsync(train.Id, position);
+
+        _logger.Information("🚆 Train {TrainId} rescheduled at station {StationId} and state reset in Firebase",
+            train.Id, train.CurrentStationId);
+
+        // 8. Trả DTO
         return new TrainDto
         {
             Id = train.Id,
@@ -1291,70 +1338,98 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
     }
 
-    private static (Station start, Station end) ResolveEndpointsFromRoutes(IList<Route> routes)
+    private (Station? start, Station? end) ResolveEndpointsFromRoutes(IReadOnlyList<Route> allRoutes)
     {
-        // Build station lookup + adjacency (undirected)
-        var stationById = new Dictionary<string, Station>();
-        var neighbors = new Dictionary<string, HashSet<string>>();
+        if (allRoutes == null || allRoutes.Count == 0)
+            return (null, null);
 
-        foreach (var r in routes)
+        // 1) Thử theo Direction = Forward (nếu có)
+        var forward = allRoutes
+            .Where(r => r.Direction == DirectionEnum.Forward
+                        && r.FromStation != null && r.ToStation != null)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (forward.Count > 0 &&
+            forward.First().FromStation != null &&
+            forward.Last().ToStation != null)
         {
-            if (r.FromStationId == null || r.ToStationId == null) continue;
-
-            if (r.FromStation != null && !stationById.ContainsKey(r.FromStationId))
-                stationById[r.FromStationId] = r.FromStation;
-            if (r.ToStation != null && !stationById.ContainsKey(r.ToStationId))
-                stationById[r.ToStationId] = r.ToStation;
-
-            if (!neighbors.TryGetValue(r.FromStationId, out var setFrom))
-                neighbors[r.FromStationId] = setFrom = new HashSet<string>();
-            if (!neighbors.TryGetValue(r.ToStationId, out var setTo))
-                neighbors[r.ToStationId] = setTo = new HashSet<string>();
-
-            setFrom.Add(r.ToStationId);
-            setTo.Add(r.FromStationId);
+            return (forward.First().FromStation, forward.Last().ToStation);
         }
 
-        // Leaf = station chỉ có 1 hàng xóm => 2 đầu mút của line
-        var leafIds = neighbors.Where(kvp => kvp.Value.Count == 1).Select(kvp => kvp.Key).ToList();
+        // 2) Fallback: tính endpoints bằng degree trong đồ thị vô hướng
+        // Chuẩn hoá cạnh (a,b) => (min(a,b), max(a,b)) rồi Distinct để không đếm đôi 01-02 & 02-01
+        var undirectedEdges = allRoutes
+            .Where(r => r.FromStationId != null && r.ToStationId != null)
+            .Select(r =>
+            {
+                var a = r.FromStationId!;
+                var b = r.ToStationId!;
+                return string.CompareOrdinal(a, b) <= 0 ? (a, b) : (b, a);
+            })
+            .Distinct()
+            .ToList();
 
-        // Lấy route đầu/ cuối theo SeqOrder để xác định đầu/cuối chuẩn
-        var firstRoute = routes.First();
-        var lastRoute = routes.Last();
-
-        Station start = null!;
-        Station end = null!;
-
-        if (leafIds.Count >= 2)
+        // Xây adjacency
+        var adj = new Dictionary<string, HashSet<string>>();
+        void Add(string u, string v)
         {
-            // Start = leaf trùng với From/To của route nhỏ nhất
-            var firstLeafId = leafIds.Contains(firstRoute.FromStationId!)
-                ? firstRoute.FromStationId!
-                : (leafIds.Contains(firstRoute.ToStationId!) ? firstRoute.ToStationId! : null);
-
-            // End = leaf trùng với From/To của route lớn nhất
-            var lastLeafId = leafIds.Contains(lastRoute.ToStationId!)
-                ? lastRoute.ToStationId!
-                : (leafIds.Contains(lastRoute.FromStationId!) ? lastRoute.FromStationId! : null);
-
-            // Fallback nếu vì dữ liệu bất thường không match
-            if (firstLeafId == null) firstLeafId = leafIds.First();
-            if (lastLeafId == null) lastLeafId = leafIds.First(id => id != firstLeafId);
-
-            start = stationById[firstLeafId];
-            end = stationById[lastLeafId];
-        }
-        else
-        {
-            // Fallback: dùng min/max SeqOrder
-            start = firstRoute.FromStation ?? stationById.GetValueOrDefault(firstRoute.FromStationId!);
-            end = lastRoute.ToStation ?? stationById.GetValueOrDefault(lastRoute.ToStationId!);
+            if (!adj.TryGetValue(u, out var set))
+            {
+                set = new HashSet<string>();
+                adj[u] = set;
+            }
+            set.Add(v);
         }
 
-        if (start == null || end == null)
-            throw new Exception("Không xác định được điểm đầu/cuối của line từ routes.");
+        foreach (var (a, b) in undirectedEdges)
+        {
+            Add(a, b);
+            Add(b, a);
+        }
 
-        return (start, end);
+        // Tìm 2 đầu mút: degree == 1
+        var endpointIds = adj
+            .Where(kvp => kvp.Value.Count == 1)
+            .Select(kvp => kvp.Key)
+            .Take(2)
+            .ToList();
+
+        if (endpointIds.Count == 2)
+        {
+            // Map về Station
+            Station? FindStation(string id) =>
+                allRoutes.SelectMany(r => new[] { r.FromStation, r.ToStation })
+                         .FirstOrDefault(s => s != null && s.Id == id);
+
+            var s1 = FindStation(endpointIds[0]);
+            var s2 = FindStation(endpointIds[1]);
+
+            // Nếu có SeqOrder, cố gắng phân định "đầu nhỏ" – "đầu lớn" để nhất quán
+            int MinSeqOf(string stationId) =>
+                allRoutes.Where(r => r.FromStationId == stationId || r.ToStationId == stationId)
+                         .Select(r => r.SeqOrder)
+                         .DefaultIfEmpty(int.MaxValue)
+                         .Min();
+
+            var (start, end) = MinSeqOf(endpointIds[0]) <= MinSeqOf(endpointIds[1])
+                ? (s1, s2)
+                : (s2, s1);
+
+            return (start, end);
+        }
+
+        // 3) Nếu là vòng khép kín (degree != 1 cho mọi node) → chọn theo min/max SeqOrder
+        var ordered = allRoutes
+            .Where(r => r.FromStation != null && r.ToStation != null)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (ordered.Count > 0)
+            return (ordered.First().FromStation, ordered.Last().ToStation);
+
+        return (null, null);
     }
+
     #endregion
 }

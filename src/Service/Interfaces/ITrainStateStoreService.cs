@@ -29,6 +29,7 @@ namespace MetroShip.Service.Interfaces
         Task RemoveSegmentIndexAsync(string trainId);
         Task RemoveStartTimeAsync(string trainId);
         Task RemovePositionResultAsync(string trainId);
+        Task RemoveAllTrainStateAsync(string trainId);
         #endregion
 
         #region has methods
