@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using MetroShip.Utility.Constants;
@@ -19,7 +20,7 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         _context = context;
     }
 
-    public async Task<List<string>> GetAllStationIdNearUser(double userLatitude,
+    public async Task<List<NearbyStationIds>> GetAllStationIdNearUser(double userLatitude,
         double userLongitude,
         int maxDistanceInMeters = 1000,
         int maxCount = 10)
@@ -30,7 +31,7 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         // Convert latitude and longitude from decimal degrees to radians for sine and cosine calculations
         var results = await _context.Stations
             .Where(s => s.Latitude != null && s.Longitude != null && s.IsActive && s.DeletedAt == null)
-            .Select(s => new
+            .Select(s => new 
             {
                 Station = s,
                 Distance = earthRadius * 2 * Math.Asin(
@@ -45,7 +46,11 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
             .Where(x => x.Distance <= maxDistanceInMeters)
             .OrderBy(x => x.Distance)
             .Take(maxCount)
-            .Select(x => x.Station.Id)
+            .Select(x => new NearbyStationIds
+            {
+                StationId = x.Station.Id,
+                DistanceMeters = x.Distance,
+            })
             .ToListAsync();
 
         return results;

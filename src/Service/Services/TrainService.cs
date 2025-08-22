@@ -547,7 +547,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // ✅ Cập nhật ShipmentStatus sang InTransit
         //var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
-        var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+        /*var rawShipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
 
         var shipmentsToUpdate = rawShipments
             .Where(s => s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro)
@@ -574,7 +574,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             _logger.Information("📦 Updated {Count} shipments to InTransit as train {TrainId} departed.", shipmentsToUpdate.Count, train.Id);
-        }
+        }*/
     }
 
     private async Task CalculateCurrentCapacity(IList<MetroTrain> metroTrains, IList<TrainCurrentCapacityResponse> response,

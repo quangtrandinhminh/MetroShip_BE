@@ -148,18 +148,11 @@ namespace MetroShip.Service.Services
                 if (maxDistanceInMeters > maxAllowedDistance)
                     maxDistanceInMeters = maxAllowedDistance;
 
-                var additionalStationIds = await _stationRepository.GetAllStationIdNearUser(
+                stationIds = await _stationRepository.GetAllStationIdNearUser(
                     request.UserLatitude,
                     request.UserLongitude,
                     maxDistanceInMeters,
                     maxCount);
-
-                // ensure we only add new station IDs
-                foreach (var id in additionalStationIds)
-                {
-                    if (!stationIds.Contains(id))
-                        stationIds.Add(id);
-                }
             }
 
             if (!stationIds.Any())
@@ -167,16 +160,27 @@ namespace MetroShip.Service.Services
                 _logger.Warning("No stations found near user within {MaxAllowedDistance} meters.", maxAllowedDistance);
                 throw new AppException(
                     ErrorCode.BadRequest,
-                    "No stations found near your location. Please try again later.",
+                    ResponseMessageStation.NO_STATION_NEAR_USER + maxAllowedDistance + "m. ",
                     StatusCodes.Status400BadRequest
                     );
             }
 
             var stations = _stationRepository.GetAll()
-                .Where(s => stationIds.Contains(s.Id) && s.IsActive)
+                .Where(s => stationIds.Select(_ => _.StationId).Contains(s.Id) && s.IsActive)
                 .ToList();
 
-            return _mapper.MapToStationResponseList(stations).ToList();
+            var response = _mapper.MapToStationResponseList(stations);
+            foreach (var station in response)
+            {
+                var nearbyStation = stationIds.FirstOrDefault(s => s.StationId == station.StationId);
+                if (nearbyStation != null)
+                {
+                    station.DistanceMeters = nearbyStation.DistanceMeters;
+                }
+            }
+
+            response = new List<StationResponse>(response.OrderBy(s => s.DistanceMeters));
+            return response;
         }
     }
 }
