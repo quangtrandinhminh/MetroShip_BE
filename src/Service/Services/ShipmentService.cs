@@ -47,11 +47,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IParcelRepository _parcelRepository = serviceProvider.GetRequiredService<IParcelRepository>();
     private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private readonly IBaseRepository<ShipmentMedia> _shipmentMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentMedia>>();
-    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
+    private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -364,7 +364,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.PricingConfigId = pricingTable.Id;
         shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
         shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
-        await ScheduleUnpaidJob(shipment.Id, shipment.PaymentDealine.Value);
+        await _backgroundJobService.ScheduleUnpaidJob(shipment.Id, shipment.PaymentDealine.Value);
 
         shipment.ShipmentTrackings.Add(new ShipmentTracking
         {
@@ -517,7 +517,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
             });
         }
-        await CancelUpdateNoDropOffJob(shipment.Id);
+        await _backgroundJobService.CancelUpdateNoDropOffJob(shipment.Id);
 
         foreach (var media in request.PickedUpMedias)
         {
@@ -1025,46 +1025,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // Save changes to the database
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-    }
-
-
-    public async Task CancelUpdateNoDropOffJob(string shipmentId)
-    {
-        _logger.Information("Cancelling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
-        var jobKey = new JobKey($"UpdateShipmentToNoDropOff-{shipmentId}");
-        var scheduler = await _schedulerFactory.GetScheduler();
-        if (await scheduler.CheckExists(jobKey))
-        {
-            await scheduler.DeleteJob(jobKey);
-            _logger.Information("Cancelled job for shipment ID: {@shipmentId}", shipmentId);
-        }
-        else
-        {
-            _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
-        }
-    }
-
-    private async Task ScheduleUnpaidJob(string shipmentId, DateTimeOffset paymentDeadline)
-    {
-        _logger.Information("Scheduling job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
-        var jobData = new JobDataMap
-        {
-            { "Unpaid-for-shipmentId", shipmentId }
-        };
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<UpdateShipmentToUnpaid>()
-            .WithIdentity($"UpdateShipmentToUnpaid-{shipmentId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-UpdateShipmentToUnpaid-{shipmentId}")
-            .StartAt(paymentDeadline)
-            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
     }
 
     private void CheckShipmentDate(DateTimeOffset scheduledDateTime)

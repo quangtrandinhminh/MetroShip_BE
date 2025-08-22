@@ -1873,7 +1873,7 @@ VALUES
  NULL),
 
 -- L4-11-12: Cau Kieu to Cong Vien Le Van Tam
-('b4c5d6e7-f8a9-b890-4567-123f012345678','HCMC-L4-11-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('30f3412e-e69a-4a86-a72c-5dd46594047b','HCMC-L4-11-12','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'e7c5d8a3-9f8b-4e7c-d8a3-9f8be7c5d8a3','f6d4e9b2-8a9c-4f6d-e9b2-8a9cf6d4e9b2',
  'Cầu Kiệu – Công Viên Lê Văn Tám','Cau Kieu – Le Van Tam Park',0,11,2,0.85,
  NULL,NULL,NULL,NOW(),NOW(),
@@ -1887,133 +1887,133 @@ VALUES
  NULL),
 
 -- L4-13-14: Ho Con Rua to Ben Thanh (interchange with HCMC-L1, L2, L3A)
-('d6e7f8a9-b0c1-d012-6789-345f01234567890','HCMC-L4-13-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('ef3b9d7d-b2aa-4884-80cd-3944391e3095','HCMC-L4-13-14','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c3f6a9e8-8d4b-4c3f-a9e8-8d4bc3f6a9e8','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
  'Hồ Con Rùa – Bến Thành','Ho Con Rua – Ben Thanh',0,13,1,0.68,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-14-15: Ben Thanh to Hoang Dieu
-('e7f8a9b0-c1d2-e123-789a-456f012345678901','HCMC-L4-14-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('8d419a07-71d3-4ede-947e-238e5138d55a','HCMC-L4-14-15','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0','a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1',
  'Bến Thành – Hoàng Diệu','Ben Thanh – Hoang Dieu',0,14,2,0.83,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-15-16: Hoang Dieu to Ton Dan
-('f8a9b0c1-d2e3-f234-89ab-567f0123456789012','HCMC-L4-15-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('8d9741cd-7bb7-4e09-841a-e6c981a287be','HCMC-L4-15-16','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'a5e3f8c1-9b6d-4a5e-f8c1-9b6da5e3f8c1','b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2',
  'Hoàng Diệu – Tôn Đản','Hoang Dieu – Ton Dan',0,15,1,0.72,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-16-17: Ton Dan to Nguyen Thi Thap
-('a9b0c1d2-e3f4-a345-9abc-678f01234567890123','HCMC-L4-16-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('443926b3-18c7-4510-8db0-db6138f14ee4','HCMC-L4-16-17','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'b6f4a9d2-8c7e-4b6f-a9d2-8c7eb6f4a9d2','c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3',
  'Tôn Đản – Nguyễn Thị Thập','Ton Dan – Nguyen Thi Thap',0,16,2,1.38,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-17-18: Nguyen Thi Thap to Nguyen Van Linh
-('b0c1d2e3-f4a5-b456-abcd-789f012345678901234','HCMC-L4-17-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('00c014c0-63b4-4a03-9196-be9e46efcde8','HCMC-L4-17-18','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c7a5b8e3-9d8f-4c7a-b8e3-9d8fc7a5b8e3','572e6743-c3de-4374-a70f-52ae566c64b2',
  'Nguyễn Thị Thập – Nguyễn Văn Linh','Nguyen Thi Thap – Nguyen Van Linh',0,17,2,1.25,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-18-19: Nguyen Van Linh to Phuoc Kieng
-('c1d2e3f4-a5b6-c567-bcde-89af0123456789012345','HCMC-L4-18-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('d076c20b-7a87-4879-925d-e1cd34e412ff','HCMC-L4-18-19','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  '572e6743-c3de-4374-a70f-52ae566c64b2','e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5',
  'Nguyễn Văn Linh – Phước Kiểng','Nguyen Van Linh – Phuoc Kieng',0,18,2,1.42,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-19-20: Phuoc Kieng to Vinh Phuoc
-('d2e3f4a5-b6c7-d678-cdef-9abf01234567890123456','HCMC-L4-19-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('d092a22c-c9f8-40c5-abde-7ce42673327a','HCMC-L4-19-20','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'e9c7d8a5-9f8b-4e9c-d8a5-9f8be9c7d8a5','f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4',
  'Phước Kiểng – Vĩnh Phước','Phuoc Kieng – Vinh Phuoc',0,19,2,0.98,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-20-21: Vinh Phuoc to Pham Huu Lau
-('e3f4a5b6-c7d8-e789-def0-abcf012345678901234567','HCMC-L4-20-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('0287374c-ca81-4464-bb3a-3b7df97da045','HCMC-L4-20-21','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'f8d6e9b4-8a9c-4f8d-e9b4-8a9cf8d6e9b4','a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3',
  'Vĩnh Phước – Phạm Hữu Lầu','Vinh Phuoc – Pham Huu Lau',0,20,2,1.68,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-21-22: Pham Huu Lau to Kho B
-('f4a5b6c7-d8e9-f890-ef01-bcdf0123456789012345678','HCMC-L4-21-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('bdb3173b-41a2-458d-8c4e-932a4a810101','HCMC-L4-21-22','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'a9e5f8c3-9b7d-4a9e-f8c3-9b7da9e5f8c3','b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6',
  'Phạm Hữu Lầu – Kho B','Pham Huu Lau – Kho B',0,21,2,1.25,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-22-23: Kho B to Long Kieng
-('a5b6c7d8-e9f0-a901-f012-cdef01234567890123456789','HCMC-L4-22-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('fd32203a-dbb7-4f98-b7d1-7111be4d0c86','HCMC-L4-22-23','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'b8f4a9d6-8c9e-4b8f-a9d6-8c9eb8f4a9d6','c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5',
  'Kho B – Long Kiểng','Kho B – Long Kieng',0,22,2,1.15,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-23-24: Long Kieng to Ba Chiem
-('b6c7d8e9-f0a1-b012-0123-def0123456789012345678a','HCMC-L4-23-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('beea03dd-ca5a-4104-b35e-03e3d6cc788b','HCMC-L4-23-24','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c7a3b8e5-9d8f-4c7a-b8e5-9d8fc7a3b8e5','d6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4',
  'Long Kiểng – Bà Chiêm','Long Kieng – Ba Chiem',0,23,2,1.32,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-24-25: Ba Chiem to Long Thoi
-('c7d8e9f0-a1b2-c123-1234-ef012345678901234567890ab','HCMC-L4-24-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('4b8af339-25f8-4b45-9ba0-65f31904bad5','HCMC-L4-24-25','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'd6b2c9f4-8e9a-4d6b-c9f4-8e9ad6b2c9f4','e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3',
  'Bà Chiêm – Long Thới','Ba Chiem – Long Thoi',0,24,2,0.95,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-25-26: Long Thoi to Rach Doi
-('d8e9f0a1-b2c3-d234-2345-f01234567890123456789abc','HCMC-L4-25-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('142bc207-72da-4415-8c27-19dbaff2081f','HCMC-L4-25-26','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'e5c1d8a3-9f8b-4e5c-d8a3-9f8be5c1d8a3','f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2',
  'Long Thới – Rạch Dơi','Long Thoi – Rach Doi',0,25,2,0.92,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-26-27: Rach Doi to Hiep Phuoc
-('e9f0a1b2-c3d4-e345-3456-0123456789012345678abcd','HCMC-L4-26-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('6c43d7fc-6387-4580-a3c4-9eaa5862c8a4','HCMC-L4-26-27','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'f4d8e9b2-8a9c-4f4d-e9b2-8a9cf4d8e9b2','a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1',
  'Rạch Dơi – Hiệp Phước','Rach Doi – Hiep Phuoc',0,26,2,1.18,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-27-28: Hiep Phuoc to Cong Vien The Thao
-('f0a1b2c3-d4e5-f456-4567-123456789012345678bcde','HCMC-L4-27-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('0d0a7cd2-48fc-409d-8e1b-ff55c6cad8ff','HCMC-L4-27-28','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'a3e7f8c1-9b6d-4a3e-f8c1-9b6da3e7f8c1','b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8',
  'Hiệp Phước – Công Viên Thể Thao','Hiep Phuoc – Sports Park',0,27,2,1.05,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-28-29: Cong Vien The Thao to Benh Vien Quoc Te
-('a1b2c3d4-e5f6-a567-5678-23456789012345678cdef','HCMC-L4-28-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('b79adc0e-e7d9-4dec-b277-60846016db15','HCMC-L4-28-29','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'b2f6a9d8-8c7e-4b2f-a9d8-8c7eb2f6a9d8','c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7',
  'Công Viên Thể Thao – Bệnh Viện Quốc Tế','Sports Park – International Hospital',0,28,2,0.88,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-29-30: Benh Vien Quoc Te to Thi Tran Hiep Phuoc
-('b2c3d4e5-f6a7-b678-6789-3456789012345678def0','HCMC-L4-29-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('e196f3e5-b7af-4002-981a-273139f4b17d','HCMC-L4-29-30','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'c1a5b8e7-9d8f-4c1a-b8e7-9d8fc1a5b8e7','d8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6',
  'Bệnh Viện Quốc Tế – Thị Trấn Hiệp Phước','International Hospital – Hiep Phuoc Town',0,29,2,0.93,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-30-31: Thi Tran Hiep Phuoc to Cong Vien Cay Xanh
-('c3d4e5f6-a7b8-c789-789a-456789012345678ef01','HCMC-L4-30-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('7779be78-57c1-4e0f-b1e6-64d5bdfae0c8','HCMC-L4-30-31','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'd8b4c9f6-8e9a-4d8b-c9f6-8e9ad8b4c9f6','e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5',
  'Thị Trấn Hiệp Phước – Công Viên Cây Xanh','Hiep Phuoc Town – Green Park',0,30,2,0.89,
  NULL,NULL,NULL,NOW(),NOW(),
  NULL),
 
 -- L4-31-32: Cong Vien Cay Xanh to Ben Tau Hiep Phuoc
-('d4e5f6a7-b8c9-d890-89ab-56789012345678f012','HCMC-L4-31-32','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
+('f5918bc5-8d72-4c6d-bbab-c46549300410','HCMC-L4-31-32','f2a8d5c9-3e7b-4f2a-d5c9-3e7bf2a8d5c9',
  'e7c3d8a5-9f8b-4e7c-d8a5-9f8be7c3d8a5','f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4',
  'Công Viên Cây Xanh – Bến Tàu Hiệp Phước','Green Park – Ben Tau Hiep Phuoc',0,31,2,1.15,
  NULL,NULL,NULL,NOW(),NOW(),

@@ -20,7 +20,6 @@ public interface IShipmentService
 
     //Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(string shipmentId, int maxAttempt);
     Task UpdateShipmentStatusNoDropOff(string shipmentId);
-    Task CancelUpdateNoDropOffJob(string shipmentId);
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
     Task CancelShipment(ShipmentRejectRequest request);

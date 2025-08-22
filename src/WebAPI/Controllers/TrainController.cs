@@ -6,11 +6,14 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.WebAPI.Hubs;
+using MetroShip.WebAPI.Jobs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
+using ILogger = Serilog.ILogger;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -18,7 +21,9 @@ namespace MetroShip.WebAPI.Controllers
     public class TrainController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
-        private readonly IHubContext<trackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<trackingHub>>();
+        private readonly IHubContext<TrackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<TrackingHub>>();
+        private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
 
         [Authorize]
         [HttpGet]
@@ -132,6 +137,31 @@ namespace MetroShip.WebAPI.Controllers
         {
             var response = await _trainService.ScheduleTrainAsync(trainIdOrCode, startFromEnd);
             return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+
+        // call by start train simulation
+        private async Task ScheduleSimulateTrainJob(string trainId, int intervalInSeconds)
+        {
+            _logger.Information("Scheduling simulator train job for train ID: {TrainId}", trainId);
+            var jobData = new JobDataMap
+            {
+                { "Simulate-for-trainId", trainId }
+            };
+
+            var jobDetail = JobBuilder.Create<SimulateTrainJob>()
+                .WithIdentity($"SimulatorTrainJob-{trainId}")
+                .UsingJobData(jobData)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"Trigger-SimulatorTrainJob-{trainId}")
+                .StartNow()
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInSeconds(intervalInSeconds)
+                    .RepeatForever())
+                .Build();
+
+            await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
         }
     }
 }
