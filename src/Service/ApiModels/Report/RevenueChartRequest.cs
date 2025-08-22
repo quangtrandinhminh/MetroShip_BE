@@ -9,6 +9,7 @@ namespace MetroShip.Service.ApiModels.Report
     public enum RevenueFilterType
     {
         Default,
+        day,
         Year,
         Quarter,
         MonthRange
@@ -22,5 +23,6 @@ namespace MetroShip.Service.ApiModels.Report
         public int? StartMonth { get; set; }
         public int? EndYear { get; set; }
         public int? EndMonth { get; set; }
+        public DateTime? Day { get; set; }
     }
 }
