@@ -1184,6 +1184,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (chosen == null)
             throw new Exception("Không tìm thấy trạm xuất phát hợp lệ.");
 
+        // 5.1 Kiểm tra endpoint đã có train khác chiếm chưa
+        var otherTrainAtSameStation = await _trainRepository
+         .GetAllWithCondition()
+         .Where(t => t.LineId == train.LineId
+                  && t.Id != train.Id
+                  && t.CurrentStationId == chosen.Id)
+         .AnyAsync();
+
+        if (otherTrainAtSameStation)
+        {
+            throw new Exception(
+                "Không thể schedule: đã có đoàn tàu khác đang ở đầu tuyến này, vui lòng chọn hướng ngược lại.");
+        }
+
+        _logger.Information(
+            "🚆 Train {TrainId} scheduled to start at station {StationId}.",
+            train.Id, chosen.Id);
+
         // 6. Reset trạng thái trong DB
         train.CurrentStationId = chosen.Id;
         train.Latitude = chosen.Latitude;
