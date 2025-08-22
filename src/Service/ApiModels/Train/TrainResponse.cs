@@ -12,11 +12,11 @@ public record TrainListResponse
     public string LineId { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public string? CurrentStationId { get; set; }
+    public string? CurrentRouteStationId { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public TrainStatusEnum Status { get; set; }
     public string StatusName => Status.ToString();
-
     public IList<TrainScheduleResponse> TrainSchedules { get; set; } = new List<TrainScheduleResponse>();
 }
 
