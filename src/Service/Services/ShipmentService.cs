@@ -53,6 +53,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
+    private readonly IStationService _stationService = serviceProvider.GetRequiredService<IStationService>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -1263,7 +1264,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
 
             // Remove departure station if present (to avoid duplication)
-            nearStations.Remove(request.DepartureStationId);
+            nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
 
             // Ensure at least 2 stations are available (including departure)
             while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
@@ -1272,11 +1273,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 maxDistanceInMeters += 2000;
                 nearStations = await _stationRepository.GetAllStationIdNearUser(
                     request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
-                nearStations.Remove(request.DepartureStationId);
+                nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
             }
 
             // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
-            result.AddRange(nearStations.Take(maxStationCount));
+            result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
         }
 
         return result;

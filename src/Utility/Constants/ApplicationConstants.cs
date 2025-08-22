@@ -233,6 +233,7 @@
         public const string STATION_UPDATE_SUCCESS = "Cập nhật ga thành công.";
         public const string STATION_DELETE_SUCCESS = "Xóa ga thành công.";
         public const string STATION_CREATE_SUCCESS = "Tạo ga thành công.";
+        public const string NO_STATION_NEAR_USER = "Không có ga nào gần người dùng trong bán kính "; 
     }
 
     public class ResponseMessageRoute

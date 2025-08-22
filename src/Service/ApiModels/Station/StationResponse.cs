@@ -8,4 +8,5 @@ public sealed record StationResponse
     public bool IsUnderground { get; set; }
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
+    public double DistanceMeters { get; set; }
 }
