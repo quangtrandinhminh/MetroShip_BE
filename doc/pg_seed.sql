@@ -2338,7 +2338,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = '5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0'
 AND public."MetroTrains"."Id" IN (
@@ -2353,7 +2354,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'd6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1'
 AND public."MetroTrains"."Id" IN (
@@ -2365,7 +2367,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = '8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d'
   AND public."MetroTrains"."Id" IN (
@@ -2377,7 +2380,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'd0a40d5f-1e84-459e-bfeb-3f2105db3e0b'
   AND public."MetroTrains"."Id" IN (
@@ -2389,7 +2393,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b'
   AND public."MetroTrains"."Id" IN (
@@ -2401,7 +2406,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2'
   AND public."MetroTrains"."Id" IN (
@@ -2413,7 +2419,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4'
   AND public."MetroTrains"."Id" IN (
@@ -2441,7 +2448,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'd6e7f8a9-b0c1-d2e3-f4a5-b6c7d8e9f0a1'
 AND public."MetroTrains"."Id" IN (
@@ -2453,7 +2461,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = '8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d'
   AND public."MetroTrains"."Id" IN (
@@ -2465,7 +2474,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'd0a40d5f-1e84-459e-bfeb-3f2105db3e0b'
   AND public."MetroTrains"."Id" IN (
@@ -2477,7 +2487,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b'
   AND public."MetroTrains"."Id" IN (
@@ -2489,7 +2500,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'c9f8a6e2-8d9b-4c9f-a6e2-8d9bc9f8a6e2'
   AND public."MetroTrains"."Id" IN (
@@ -2501,7 +2513,8 @@ UPDATE public."MetroTrains"
 SET
     "Latitude" = s."Latitude",
     "Longitude" = s."Longitude",
-    "CurrentStationId" = s."Id"
+    "CurrentStationId" = s."Id",
+    "Status" = 0
 FROM public."Stations" s
 WHERE s."Id" = 'f6d2e9b4-8a9c-4f6d-e9b4-8a9cf6d2e9b4'
   AND public."MetroTrains"."Id" IN (
@@ -2582,4 +2595,174 @@ VALUES
      '9c50210e-5670-4608-b58a-c54d0b3cc249', '5f55489c-c92a-4329-b848-b37dae74c252',
      TRUE, NULL, NULL, NULL, NOW(), NOW(), NULL);
 
+-- ───────────────────────────────────────────────────────────────
+-- Insert Metro Line 2A: Cát Linh - Hà Đông
+insert into public."MetroLines" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
+values
+    ('3522435d-fb6b-4715-852b-acc1d0640a19', 'd75d6e5a-34b5-4396-b0b9-2947250ed138',
+     'Tuyến 2A: Cát Linh - Hà Đông', 'Line 2A: Cat Linh - Ha Dong',
+     'HN-L2A', 'Đường sắt đô thị Hà Nội', 'Công ty Đường sắt Hà Nội (Hanoi Metro Company)',
+     12.60, 12, null, 30, '#00B359', true,
+     null, null, null, NOW(), NOW(), null,
+     '[{"StationId":"58af215d-ba4f-4bde-b7d9-bc077b85c2ac","StationCode":"HN-L2-01"},{"StationId":"ae60c0a1-a1ec-4911-9aed-590c0b7be1d1","StationCode":"HN-L2-02"},{"StationId":"b759bf6c-508f-4942-987a-9a93c5d7e7e3","StationCode":"HN-L2-03"},{"StationId":"ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9","StationCode":"HN-L2-04"},{"StationId":"1d4928f4-626f-4a38-a37f-81067cb0ea06","StationCode":"HN-L2-05"},{"StationId":"831f9dba-c13a-4ceb-9023-0bfc3d265ffe","StationCode":"HN-L2-06"},{"StationId":"68b2db41-6db5-4312-ad27-33069adc7f81","StationCode":"HN-L2-07"},{"StationId":"62760ed0-f472-43af-a277-acaa9d7bb2fb","StationCode":"HN-L2-08"},{"StationId":"10c48ba9-8e39-4691-91ee-fc81b045c343","StationCode":"HN-L2-09"},{"StationId":"0d424042-4e45-4b18-ba8c-d58eb71fd42d","StationCode":"HN-L2-10"},{"StationId":"42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37","StationCode":"HN-L2-11"},{"StationId":"03c5c444-a368-4b86-bcd9-8f889552d98a","StationCode":"HN-L2-12"}]', 2);
 
+insert into public."Stations" ("Id", "StationCode", "StationNameVi", "StationNameEn", "Address", "IsUnderground", "IsActive", "RegionId", "Latitude", "Longitude", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "IsMultiLine", "StationCodeListJSON")
+values
+    ('58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'HN-L2-01', 'Cát Linh', 'Cat Linh',
+     'Số 168 Hào Nam, phường Cát Linh, quận Đống Đa, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0286, 105.8239,
+     null, null, null, NOW(), NOW(), null, true, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-01"},{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-10"}]'),
+    ('ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'HN-L2-02', 'La Thành', 'La Thanh',
+     'Ngã tư Giảng Võ - La Thành, phường Cát Linh, quận Đống Đa, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0219, 105.8197,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-02"}]'),
+    ('b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'HN-L2-03', 'Thái Hà', 'Thai Ha',
+     'Ngã tư Hoàng Cầu - Thái Hà - Yên Lãng, quận Đống Đa, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0135, 105.8159,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-03"}]'),
+    ('ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9', 'HN-L2-04', 'Láng', 'Lang',
+     'Gần Ngã Tư Sở, phường Thịnh Quang, quận Đống Đa, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0044, 105.8094,
+     null, null, null,NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-04"}]'),
+    ('1d4928f4-626f-4a38-a37f-81067cb0ea06', 'HN-L2-05', 'Thượng Đình', 'Thuong Dinh',
+     'Đường Nguyễn Trãi, gần cầu Thượng Đình, quận Thanh Xuân, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9959, 105.8028,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-05"}]'),
+    ('831f9dba-c13a-4ceb-9023-0bfc3d265ffe', 'HN-L2-06', 'Vành đai 3', 'Ring Road 3',
+     'Ngã tư Nguyễn Trãi - Khuất Duy Tiến, quận Thanh Xuân, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9886, 105.7947,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-06"}]'),
+    ('68b2db41-6db5-4312-ad27-33069adc7f81', 'HN-L2-07', 'Phùng Khoang', 'Phung Khoang',
+     'Đường Nguyễn Trãi, phường Trung Văn, quận Nam Từ Liêm, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9803, 105.7828,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-07"}]'),
+    ('62760ed0-f472-43af-a277-acaa9d7bb2fb', 'HN-L2-08', 'Văn Quán', 'Van Quan',
+     'Đối diện Học viện An ninh Nhân dân, đường Trần Phú, quận Hà Đông, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9754, 105.7741,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-08"}]'),
+    ('10c48ba9-8e39-4691-91ee-fc81b045c343', 'HN-L2-09', 'Hà Đông', 'Ha Dong',
+     'Trung tâm quận Hà Đông, gần Bưu điện Hà Đông, quận Hà Đông, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9691, 105.7663,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-09"}]'),
+    ('0d424042-4e45-4b18-ba8c-d58eb71fd42d', 'HN-L2-10', 'La Khê', 'La Khe',
+     'Đường Quang Trung, phường La Khê, quận Hà Đông, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9631, 105.7558,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-10"}]'),
+    ('42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', 'HN-L2-11', 'Văn Khê', 'Van Khe',
+     'Ngã tư Quang Trung - Lê Trọng Tấn, quận Hà Đông, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9579, 105.7468,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-11"}]'),
+    ('03c5c444-a368-4b86-bcd9-8f889552d98a', 'HN-L2-12', 'Yên Nghĩa', 'Yen Nghia',
+     'Bến xe Yên Nghĩa, Quốc lộ 6, phường Yên Nghĩa, quận Hà Đông, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9536, 105.7348,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-12"}]');
+
+insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+values
+    ('590d9716-49ef-489e-9e6e-969968c13615', 'HN-L2A-01-02', '3522435d-fb6b-4715-852b-acc1d0640a19', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'Cát Linh – La Thành', 'Cat Linh – La Thanh', 1, null, 0, 0.90, null, null, null, NOW(),NOW(), null),
+    ('3ff0b341-4a53-4a07-8602-da1eada6614a', 'HN-L2A-02-03', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'La Thành – Thái Hà', 'La Thanh – Thai Ha', 2, null, 0, 1.00, null, null, null, NOW(),NOW(), null),
+    ('69645e86-671e-4882-b8cb-f23c238b58b9', 'HN-L2A-03-04', '3522435d-fb6b-4715-852b-acc1d0640a19', 'b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9', 'Thái Hà – Láng', 'Thai Ha – Lang', 3, null, 0, 1.20, null, null, null, NOW(),NOW(), null),
+    ('5413a973-9595-4d0f-89a5-2056ad49a9aa', 'HN-L2A-04-05', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9', '1d4928f4-626f-4a38-a37f-81067cb0ea06', 'Láng – Thượng Đình', 'Lang – Thuong Dinh', 4, null, 0, 1.20, null, null, null, NOW(),NOW(), null),
+    ('cc9710dd-9679-4a23-bc94-779c13204d03', 'HN-L2A-05-06', '3522435d-fb6b-4715-852b-acc1d0640a19', '1d4928f4-626f-4a38-a37f-81067cb0ea06', '831f9dba-c13a-4ceb-9023-0bfc3d265ffe', 'Thượng Đình – Vành đai 3', 'Thuong Dinh – Ring Road 3', 5, null, 0, 1.00, null, null, null, NOW(),NOW(), null),
+    ('123c247f-b314-43b8-91f4-b287440ed73b', 'HN-L2A-06-07', '3522435d-fb6b-4715-852b-acc1d0640a19', '831f9dba-c13a-4ceb-9023-0bfc3d265ffe', '68b2db41-6db5-4312-ad27-33069adc7f81', 'Vành đai 3 – Phùng Khoang', 'Ring Road 3 – Phung Khoang', 6, null, 0, 1.60, null, null, null, NOW(),NOW(), null),
+    ('97225fda-9556-4812-aeb6-d9338eb245cc', 'HN-L2A-07-08', '3522435d-fb6b-4715-852b-acc1d0640a19', '68b2db41-6db5-4312-ad27-33069adc7f81', '62760ed0-f472-43af-a277-acaa9d7bb2fb', 'Phùng Khoang – Văn Quán', 'Phung Khoang – Van Quan', 7, null, 0, 1.10, null, null, null, NOW(),NOW(), null),
+    ('07a42654-9ede-4169-a235-75416c2d69ce', 'HN-L2A-08-09', '3522435d-fb6b-4715-852b-acc1d0640a19', '62760ed0-f472-43af-a277-acaa9d7bb2fb', '10c48ba9-8e39-4691-91ee-fc81b045c343', 'Văn Quán – Hà Đông', 'Van Quan – Ha Dong', 8, null, 0, 1.00, null, null, null, NOW(),NOW(), null),
+    ('e3b1fb13-02c3-40b8-b252-e1ac57c3fcc0', 'HN-L2A-09-10', '3522435d-fb6b-4715-852b-acc1d0640a19', '10c48ba9-8e39-4691-91ee-fc81b045c343', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', 'Hà Đông – La Khê', 'Ha Dong – La Khe', 9, null, 0, 1.20, null, null, null, NOW(),NOW(), null),
+    ('65497ead-b3d6-48cd-8a46-c6d6fcb1864c', 'HN-L2A-10-11', '3522435d-fb6b-4715-852b-acc1d0640a19', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', 'La Khê – Văn Khê', 'La Khe – Van Khe', 10, null, 0, 1.10, null, null, null, NOW(),NOW(), null),
+    ('be7482fe-5440-4355-9f43-aa4f1f9cfd83', 'HN-L2A-11-12', '3522435d-fb6b-4715-852b-acc1d0640a19', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', '03c5c444-a368-4b86-bcd9-8f889552d98a', 'Văn Khê – Yên Nghĩa', 'Van Khe – Yen Nghia', 11, null, 0, 1.30, null, null, null, NOW(),NOW(), null);
+
+insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+values
+    ('37f25d79-57f6-4a2d-9dc2-a227bd2e2cd0', 'HN-L2A-12-11', '3522435d-fb6b-4715-852b-acc1d0640a19', '03c5c444-a368-4b86-bcd9-8f889552d98a', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', 'Yên Nghĩa – Văn Khê', 'Yen Nghia – Van Khe', 1, null, 1, 1.30, null, null, null, NOW(),NOW(), null),
+    ('3bf2cb57-a8a3-4157-9ebd-88b367ce8f98', 'HN-L2A-11-10', '3522435d-fb6b-4715-852b-acc1d0640a19', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', 'Văn Khê – La Khê', 'Van Khe – La Khe', 2, null, 1, 1.10, null, null, null, NOW(),NOW(), null),
+    ('ecb4e4b3-f5d5-4092-8ab8-587cf237812b', 'HN-L2A-10-09', '3522435d-fb6b-4715-852b-acc1d0640a19', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', '10c48ba9-8e39-4691-91ee-fc81b045c343', 'La Khê – Hà Đông', 'La Khe – Ha Dong', 3, null, 1, 1.20, null, null, null, NOW(),NOW(), null),
+    ('16ad3ab2-0148-4538-a01b-5b46debc4ecf', 'HN-L2A-09-08', '3522435d-fb6b-4715-852b-acc1d0640a19', '10c48ba9-8e39-4691-91ee-fc81b045c343', '62760ed0-f472-43af-a277-acaa9d7bb2fb', 'Hà Đông – Văn Quán', 'Ha Dong – Van Quan', 4, null, 1, 1.00, null, null, null, NOW(),NOW(), null),
+    ('bad139ad-b082-4596-9a6b-db99c1498740', 'HN-L2A-08-07', '3522435d-fb6b-4715-852b-acc1d0640a19', '62760ed0-f472-43af-a277-acaa9d7bb2fb', '68b2db41-6db5-4312-ad27-33069adc7f81', 'Văn Quán – Phùng Khoang', 'Van Quan – Phung Khoang', 5, null, 1, 1.10, null, null, null, NOW(),NOW(), null),
+    ('44e4d3eb-363e-4aa6-b1c6-4accd01e96f7', 'HN-L2A-07-06', '3522435d-fb6b-4715-852b-acc1d0640a19', '68b2db41-6db5-4312-ad27-33069adc7f81', '831f9dba-c13a-4ceb-9023-0bfc3d265ffe', 'Phùng Khoang – Vành đai 3', 'Phung Khoang – Ring Road 3', 6, null, 1, 1.60, null, null, null, NOW(),NOW(), null),
+    ('7fc861c1-0b31-4fff-826e-a0cdda4c587a', 'HN-L2A-06-05', '3522435d-fb6b-4715-852b-acc1d0640a19', '831f9dba-c13a-4ceb-9023-0bfc3d265ffe', '1d4928f4-626f-4a38-a37f-81067cb0ea06', 'Vành đai 3 – Thượng Đình', 'Ring Road 3 – Thuong Dinh', 7, null, 1, 1.00, null, null, null, NOW(),NOW(), null),
+    ('8ebda071-63f3-42e2-9773-97fd02d222f8', 'HN-L2A-05-04', '3522435d-fb6b-4715-852b-acc1d0640a19', '1d4928f4-626f-4a38-a37f-81067cb0ea06', 'ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9', 'Thượng Đình – Láng', 'Thuong Dinh – Lang', 8, null, 1, 1.20, null, null, null, NOW(),NOW(), null),
+    ('6822dc77-b750-4558-91d1-aa0f1be30106', 'HN-L2A-04-03', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ddc7200f-6e09-4fae-ad5f-2c97d2e4c0b9', 'b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'Láng – Thái Hà', 'Lang – Thai Ha', 9, null, 1, 1.20, null, null, null, NOW(),NOW(), null),
+    ('75765af6-b499-44e4-9af8-3703b6c66a75', 'HN-L2A-03-02', '3522435d-fb6b-4715-852b-acc1d0640a19', 'b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'Thái Hà – La Thành', 'Thai Ha – La Thanh', 10, null, 1, 1.00, null, null, null, NOW(),NOW(), null),
+    ('4712eefb-312e-44e0-98ab-5a6e8c8b23fb', 'HN-L2A-02-01', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'La Thành – Cát Linh', 'La Thanh – Cat Linh', 11, null, 1, 0.90, null, null, null, NOW(),NOW(), null);
+
+-- Insert Metro Line 3: Nhon - Hanoi Station
+insert into public."MetroLines" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
+values
+    ('f97526e3-fc53-411f-86e1-8bd313fe7f45', 'd75d6e5a-34b5-4396-b0b9-2947250ed138',
+     'Tuyến 3: Nhổn - Ga Hà Nội', 'Line 3: Nhon - Hanoi Station',
+     'HN-L3', 'Đường sắt đô thị Hà Nội', 'Công ty Đường sắt Hà Nội (Hanoi Metro Company)',
+     11.20, 12, null, 30, '#00B359', true,
+     null, null, null, NOW(), NOW(),null,
+     '[{"StationId":"0af65903-2de3-4ce2-a13b-89eb6b7fb3f0","StationCode":"HN-L3-01"},{"StationId":"967369be-6913-4f60-9997-3589f2482f30","StationCode":"HN-L3-02"},{"StationId":"04ecc0e8-959f-4e0b-aa63-272d6d35d842","StationCode":"HN-L3-03"},{"StationId":"adc9893f-6bd5-41a1-999e-f68901ec6d17","StationCode":"HN-L3-04"},{"StationId":"5ec42759-06f8-4ec7-8920-3e9c6ace1cb7","StationCode":"HN-L3-05"},{"StationId":"38093f04-ecaa-494a-b998-8bbc1fd2761e","StationCode":"HN-L3-06"},{"StationId":"77e186d1-49ee-421a-898d-b53f7ac1d8fe","StationCode":"HN-L3-07"},{"StationId":"3f2a6e65-8389-4d20-ab0b-e82d1591c92a","StationCode":"HN-L3-08"},{"StationId":"b82e0c19-ae9c-4bfe-9672-300d9774411d","StationCode":"HN-L3-09"},{"StationId":"58af215d-ba4f-4bde-b7d9-bc077b85c2ac","StationCode":"HN-L2-01"},{"StationId":"dfc56068-0782-443c-acb3-d9a06507c0e0","StationCode":"HN-L3-11"},{"StationId":"eaef3dd6-7ca7-496e-aaf8-148356d184cd","StationCode":"HN-L3-12"}]', 3);
+
+insert into public."Stations" ("Id", "StationCode", "StationNameVi", "StationNameEn", "Address", "IsUnderground", "IsActive", "RegionId", "Latitude", "Longitude", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "IsMultiLine", "StationCodeListJSON")
+values
+    ('0af65903-2de3-4ce2-a13b-89eb6b7fb3f0', 'HN-L3-01', 'Nhổn', 'Nhon',
+     'Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0456, 105.7423,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-01"}]'),
+    ('967369be-6913-4f60-9997-3589f2482f30', 'HN-L3-02', 'Minh Khai', 'Minh Khai',
+     'Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0431, 105.7505,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-02"}]'),
+    ('04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'HN-L3-03', 'Phú Diễn', 'Phu Dien',
+     'Đường Cầu Diễn, phường Phúc Diễn, quận Bắc Từ Liêm, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0392, 105.7597,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-03"}]'),
+    ('adc9893f-6bd5-41a1-999e-f68901ec6d17', 'HN-L3-04', 'Cầu Diễn', 'Cau Dien',
+     'Đường Hồ Tùng Mậu, phường Cầu Diễn, quận Nam Từ Liêm, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0361, 105.7675,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-04"}]'),
+    ('5ec42759-06f8-4ec7-8920-3e9c6ace1cb7', 'HN-L3-05', 'Lê Đức Thọ', 'Le Duc Tho',
+     'Đường Hồ Tùng Mậu, phường Mai Dịch, quận Cầu Giấy, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0321, 105.7788,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-05"}]'),
+    ('38093f04-ecaa-494a-b998-8bbc1fd2761e', 'HN-L3-06', 'Đại học Quốc gia', 'Vietnam National University', 'Đường Xuân Thủy, phường Dịch Vọng Hậu, quận Cầu Giấy, Hà Nội', false, true, 'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0322, 105.7891, null, null, null, NOW(), NOW(),null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-06"}]'),
+    ('77e186d1-49ee-421a-898d-b53f7ac1d8fe', 'HN-L3-07', 'Chùa Hà', 'Chua Ha',
+     'Đường Cầu Giấy, phường Dịch Vọng, quận Cầu Giấy, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0315, 105.7984,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-07"}]'),
+    ('3f2a6e65-8389-4d20-ab0b-e82d1591c92a', 'HN-L3-08', 'Cầu Giấy', 'Cau Giay',
+     'Đường Cầu Giấy, phường Ngọc Khánh, quận Ba Đình, Hà Nội', false, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0298, 105.8087,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-08"}]'),
+    ('b82e0c19-ae9c-4bfe-9672-300d9774411d', 'HN-L3-09', 'Kim Mã', 'Kim Ma',
+     'Đường Kim Mã, phường Kim Mã, quận Ba Đình, Hà Nội', true, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0305, 105.8201,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-09"}]'),
+    ('dfc56068-0782-443c-acb3-d9a06507c0e0', 'HN-L3-11', 'Văn Miếu', 'Van Mieu',
+     'Phố Quốc Tử Giám, phường Văn Miếu, quận Đống Đa, Hà Nội', true, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.027, 105.8354,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-11"}]'),
+    ('eaef3dd6-7ca7-496e-aaf8-148356d184cd', 'HN-L3-12', 'Ga Hà Nội', 'Hanoi Station',
+     'Đường Trần Hưng Đạo, phường Cửa Nam, quận Hoàn Kiếm, Hà Nội', true, true,
+     'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0242, 105.8412,
+     null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-12"}]');
+
+insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+values
+    ('a9fd5d25-5f0a-49d3-bc92-89d1f033dedd', 'HN-L3-01-02', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '0af65903-2de3-4ce2-a13b-89eb6b7fb3f0', '967369be-6913-4f60-9997-3589f2482f30', 'Nhổn – Minh Khai', 'Nhon – Minh Khai', 1, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
+    ('5d37ed58-ee59-4e3b-b189-6be47738c445', 'HN-L3-02-03', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '967369be-6913-4f60-9997-3589f2482f30', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'Minh Khai – Phú Diễn', 'Minh Khai – Phu Dien', 2, null, 0, 1.10, null, null, null, NOW(), NOW(), null),
+    ('3d12844c-62c1-424f-8804-58978f4c9b17', 'HN-L3-03-04', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'adc9893f-6bd5-41a1-999e-f68901ec6d17', 'Phú Diễn – Cầu Diễn', 'Phu Dien – Cau Dien', 3, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
+    ('15b3fe29-287f-430d-815d-839c61c1d775', 'HN-L3-04-05', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'adc9893f-6bd5-41a1-999e-f68901ec6d17', '5ec42759-06f8-4ec7-8920-3e9c6ace1cb7', 'Cầu Diễn – Lê Đức Thọ', 'Cau Dien – Le Duc Tho', 4, null, 0, 1.30, null, null, null, NOW(), NOW(), null),
+    ('165d4531-6ebc-4d1c-b938-c96cc7a1b26f', 'HN-L3-05-06', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '5ec42759-06f8-4ec7-8920-3e9c6ace1cb7', '38093f04-ecaa-494a-b998-8bbc1fd2761e', 'Lê Đức Thọ – Đại học Quốc gia', 'Le Duc Tho – Vietnam National University', 5, null, 0, 1.10, null, null, null, NOW(), NOW(), null),
+    ('eda073a3-674f-4be6-a7a0-ea75511718bc', 'HN-L3-06-07', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '38093f04-ecaa-494a-b998-8bbc1fd2761e', '77e186d1-49ee-421a-898d-b53f7ac1d8fe', 'Đại học Quốc gia – Chùa Hà', 'Vietnam National University – Chua Ha', 6, null, 0, 1.00, null, null, null, NOW(), NOW(), null),
+    ('7851d772-cf4e-491f-8ad8-7cf157400b40', 'HN-L3-07-08', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '77e186d1-49ee-421a-898d-b53f7ac1d8fe', '3f2a6e65-8389-4d20-ab0b-e82d1591c92a', 'Chùa Hà – Cầu Giấy', 'Chua Ha – Cau Giay', 7, null, 0, 1.20, null, null, null, NOW(), NOW(), null),
+    ('7e136b25-39b8-47d2-aec0-558884b48d53', 'HN-L3-08-09', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '3f2a6e65-8389-4d20-ab0b-e82d1591c92a', 'b82e0c19-ae9c-4bfe-9672-300d9774411d', 'Cầu Giấy – Kim Mã', 'Cau Giay – Kim Ma', 8, null, 0, 1.10, null, null, null, NOW(), NOW(), null),
+    ('e661b718-f6d8-4dd3-8289-d10547894fbc', 'HN-L3-09-01', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'b82e0c19-ae9c-4bfe-9672-300d9774411d', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'Kim Mã – Cát Linh', 'Kim Ma – Cat Linh', 9, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
+    ('a93b3f1a-a5e8-44a2-b896-3dee57ebfc23', 'HN-L3-01-11', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'Cát Linh – Văn Miếu', 'Cat Linh – Van Mieu', 10, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
+    ('1320ae48-4fe6-482f-9d93-cf9fa957ad8e', 'HN-L3-11-12', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'eaef3dd6-7ca7-496e-aaf8-148356d184cd', 'Văn Miếu – Ga Hà Nội', 'Van Mieu – Hanoi Station', 11, null, 0, 0.80, null, null, null, NOW(), NOW(), null);
+
+insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+values
+    ('48076f66-57b0-4ca9-a75e-08338f14e04c', 'HN-L3-12-11', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'eaef3dd6-7ca7-496e-aaf8-148356d184cd', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'Ga Hà Nội – Văn Miếu', 'Hanoi Station – Van Mieu', 1, null, 1, 0.80, null, null, null, NOW(), NOW(), null),
+    ('a64b23a9-4055-48b0-8ff2-74b60d22485f', 'HN-L3-11-01', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'dfc56068-0782-443c-acb3-d9a06507c0e0', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'Văn Miếu – Cát Linh', 'Van Mieu – Cat Linh', 2, null, 1, 0.90, null, null, null, NOW(), NOW(), null),
+    ('386a2eff-5078-4a2b-ab23-d2e4ea22f246', 'HN-L3-01-09', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'b82e0c19-ae9c-4bfe-9672-300d9774411d', 'Cát Linh – Kim Mã', 'Cat Linh – Kim Ma', 3, null, 1, 0.90, null, null, null, NOW(), NOW(), null),
+    ('e8ac6ba2-93b6-444e-bb0a-f7a4134dab04', 'HN-L3-09-08', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'b82e0c19-ae9c-4bfe-9672-300d9774411d', '3f2a6e65-8389-4d20-ab0b-e82d1591c92a', 'Kim Mã – Cầu Giấy', 'Kim Ma – Cau Giay', 4, null, 1, 1.10, null, null, null, NOW(), NOW(), null),
+    ('ca472509-227f-425d-804f-595d19fd7fd1', 'HN-L3-08-07', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '3f2a6e65-8389-4d20-ab0b-e82d1591c92a', '77e186d1-49ee-421a-898d-b53f7ac1d8fe', 'Cầu Giấy – Chùa Hà', 'Cau Giay – Chua Ha', 5, null, 1, 1.20, null, null, null, NOW(), NOW(), null),
+    ('c9de1cfe-228e-41f3-b0e2-0bfef82a4d3a', 'HN-L3-07-06', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '77e186d1-49ee-421a-898d-b53f7ac1d8fe', '38093f04-ecaa-494a-b998-8bbc1fd2761e', 'Chùa Hà – Đại học Quốc gia', 'Chua Ha – Vietnam National University', 6, null, 1, 1.00, null, null, null, NOW(), NOW(), null),
+    ('ac47f001-163a-48c3-940c-e724b310e8e6', 'HN-L3-06-05', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '38093f04-ecaa-494a-b998-8bbc1fd2761e', '5ec42759-06f8-4ec7-8920-3e9c6ace1cb7', 'Đại học Quốc gia – Lê Đức Thọ', 'Vietnam National University – Le Duc Tho', 7, null, 1, 1.10, null, null, null, NOW(), NOW(), null),
+    ('c0b82722-f9c2-4c66-b47f-f74a580c78d8', 'HN-L3-05-04', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '5ec42759-06f8-4ec7-8920-3e9c6ace1cb7', 'adc9893f-6bd5-41a1-999e-f68901ec6d17', 'Lê Đức Thọ – Cầu Diễn', 'Le Duc Tho – Cau Dien', 8, null, 1, 1.30, null, null, null, NOW(), NOW(), null),
+    ('2694a5e9-0e06-4eaf-b2be-dbae23c8a085', 'HN-L3-04-03', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'adc9893f-6bd5-41a1-999e-f68901ec6d17', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'Cầu Diễn – Phú Diễn', 'Cau Dien – Phu Dien', 9, null, 1, 0.90, null, null, null, NOW(), NOW(), null),
+    ('074fa169-e4b8-4c50-b362-42597a7e40b7', 'HN-L3-03-02', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', '967369be-6913-4f60-9997-3589f2482f30', 'Phú Diễn – Minh Khai', 'Phu Dien – Minh Khai', 10, null, 1, 1.10, null, null, null, NOW(), NOW(), null),
+    ('e3b404e8-df25-4aee-8aca-658b6998a826', 'HN-L3-02-01', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '967369be-6913-4f60-9997-3589f2482f30', '0af65903-2de3-4ce2-a13b-89eb6b7fb3f0', 'Minh Khai – Nhổn', 'Minh Khai – Nhon', 11, null, 1, 0.90, null, null, null, NOW(), NOW(), null);
