@@ -15,4 +15,34 @@ public class TrainScheduleRepository : BaseRepository<TrainSchedule>, ITrainSche
         _context = context;
     }
 
+    public async Task<IList<TrainSchedule>> GetTrainSchedulesByTrainListAsync(IList<string> trainIds)
+    {
+        if (trainIds == null || !trainIds.Any())
+        {
+            return new List<TrainSchedule>();
+        }
+
+        return await _context.TrainSchedule
+            .Where(ts => trainIds.Contains(ts.TrainId))
+            .Select(ts => new TrainSchedule
+            {
+                Id = ts.Id,
+                TrainId = ts.TrainId,
+                TimeSlotId = ts.TimeSlotId,
+                LineId = ts.LineId,
+                LineName = ts.Train.Line.LineNameVi,
+                DepartureStationId = ts.DepartureStationId,
+                DepartureStationName = ts.Train.Line.Routes
+                    .FirstOrDefault(r => r.FromStationId == ts.DepartureStationId).FromStation.StationNameVi,
+                DestinationStationId = ts.DestinationStationId,
+                DestinationStationName = ts.Train.Line.Routes
+                    .FirstOrDefault(r => r.FromStationId == ts.DestinationStationId).FromStation.StationNameVi,
+                Direction = ts.Direction,
+                ArrivalTime = ts.ArrivalTime,
+                DepartureTime = ts.DepartureTime,
+                Date = ts.Date,
+                Shift = ts.TimeSlot.Shift,
+            })
+            .ToListAsync();
+    }
 }

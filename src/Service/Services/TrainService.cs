@@ -55,6 +55,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     private readonly IMetroRouteRepository _metroRoute = serviceProvider.GetRequiredService<IMetroRouteRepository>();
     private readonly ITrainStateStoreService _trainStateStore =
         serviceProvider.GetRequiredService<ITrainStateStoreService>();
+    private readonly ITrainScheduleRepository _trainScheduleRepository = serviceProvider.GetRequiredService<ITrainScheduleRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -95,8 +96,19 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             request.PageNumber,
             request.PageSize,
             BuildShipmentFilterExpression(request),
-            t => t.TrainCode, true,
-            includeProperties: t => t.ShipmentItineraries);
+            t => t.TrainCode, true);
+
+        var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
+        var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
+        
+        foreach (var train in paginatedList.Items)
+        {
+            // Map train schedules to each train
+            train.TrainSchedules = trainSchedules
+                .Where(ts => ts.TrainId == train.Id)
+                .OrderBy(ts => ts.Shift)
+                .ToList();
+        }
 
         return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
     }
