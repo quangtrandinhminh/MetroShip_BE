@@ -1152,40 +1152,49 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             .FirstOrDefaultAsync(t => t.Id == trainIdOrCode || t.TrainCode == trainIdOrCode);
 
         if (train == null)
-            throw new Exception($"Not found Id/Code: {trainIdOrCode}");
+            throw new Exception($"Không tìm thấy đoàn tàu với Id/Code: {trainIdOrCode}");
 
-        if (train.CurrentStationId != null)
-            throw new Exception("Train has currentStationId could not hard reset");
-        if (train.Status != TrainStatusEnum.NotScheduled)
-            throw new Exception("Chỉ có thể khởi tạo xuất phát cho đoàn tàu ở trạng thái NotScheduled.");
+        // 2. Check trạng thái được phép reschedule
+        var allowedStatuses = new[]
+        {
+        TrainStatusEnum.NotScheduled,
+        TrainStatusEnum.Scheduled,
+        TrainStatusEnum.AwaitingDeparture,
+        TrainStatusEnum.Departed,
+        TrainStatusEnum.InTransit
+    };
 
-        // 2. Lọc routes thuộc line này & sắp xếp theo SeqOrder
+        if (!allowedStatuses.Contains(train.Status))
+            throw new Exception($"Không thể schedule lại train {train.TrainCode} khi đang ở trạng thái {train.Status}");
+
+        // 3. Lọc routes thuộc line này & sắp xếp theo SeqOrder
         var routes = train.Line?.Routes?
-        .Where(r => r.LineId == train.LineId && r.FromStationId != null && r.ToStationId != null)
-        .ToList();
+            .Where(r => r.LineId == train.LineId && r.FromStationId != null && r.ToStationId != null)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
 
         if (routes == null || routes.Count == 0)
             throw new Exception("Không tìm thấy tuyến đường (routes) hợp lệ cho đoàn tàu.");
 
-        // 3. Lấy endpoints an toàn
+        // 4. Lấy endpoints (đầu/cuối line)
         var (startStation, endStation) = ResolveEndpointsFromRoutes(routes);
 
-        // 4) Chọn trạm xuất phát
+        // 5. Chọn trạm xuất phát
         var chosen = startFromEnd ? endStation : startStation;
         if (chosen == null)
             throw new Exception("Không tìm thấy trạm xuất phát hợp lệ.");
 
-        // 5) Cập nhật train (KHÔNG cộng/trừ offset)
+        // 6. Reset trạng thái trong DB
         train.CurrentStationId = chosen.Id;
         train.Latitude = chosen.Latitude;
         train.Longitude = chosen.Longitude;
-        train.Status = TrainStatusEnum.Completed;
+        train.Status = TrainStatusEnum.Scheduled;   // reset về trạng thái Scheduled
         train.LastUpdatedAt = DateTimeOffset.UtcNow;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
 
-        // 6. Reset state trong Firebase theo DB
+        // 7. Reset state trong Firebase
         await _trainStateStore.RemoveAllTrainStateAsync(train.Id);
 
         var direction = InferTrainDirectionFromCurrentStation(train, train.CurrentStationId!);
@@ -1203,10 +1212,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
         await _trainStateStore.SetPositionResultAsync(train.Id, position);
 
-        _logger.Information("🚆 Train {TrainId} scheduled at station {StationId} and state reset in Firebase",
+        _logger.Information("🚆 Train {TrainId} rescheduled at station {StationId} and state reset in Firebase",
             train.Id, train.CurrentStationId);
 
-        // 7. Trả DTO
+        // 8. Trả DTO
         return new TrainDto
         {
             Id = train.Id,
