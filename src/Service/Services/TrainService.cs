@@ -684,7 +684,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode)
     {
-        // 🔹 Tìm shipment theo tracking code
+        // 🔹 1. Lấy shipment + itinerary
         var shipment = await _trainRepository.GetShipmentWithTrainAsync(trackingCode)
             ?? throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
 
@@ -700,24 +700,26 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var trainId = itinerary.TrainId;
 
-        // ✅ Check train đã bắt đầu simulation chưa (dùng Firebase thay vì cache)
+        // 🔹 2. Check train đã chạy chưa
         var hasSegmentIndex = await _trainStateStore.HasSegmentIndexAsync(trainId);
         if (!hasSegmentIndex)
-            throw new AppException(ErrorCode.BadRequest, "Train has not started simulation.", StatusCodes.Status400BadRequest);
+            throw new AppException(ErrorCode.BadRequest, "Train has not started simulation", StatusCodes.Status400BadRequest);
 
-        // ❌ Không tracking nếu shipment chưa nằm trên tàu
+        // 🔹 3. Shipment chưa load thì không track
         if (shipment.ShipmentStatus != ShipmentStatusEnum.LoadOnMetro &&
             shipment.ShipmentStatus != ShipmentStatusEnum.InTransit)
         {
             throw new AppException(ErrorCode.BadRequest, "Shipment not ready for tracking", StatusCodes.Status400BadRequest);
         }
 
-        // ✅ Lấy trạng thái hiện tại của tàu
-        var position = await GetTrainPositionAsync(trainId);
+        // 🔹 4. Lấy position hiện tại của tàu
+        var position = await _trainStateStore.GetPositionResultAsync(trainId)
+            ?? throw new AppException(ErrorCode.NotFound, "Train position not found", StatusCodes.Status404NotFound);
+
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
         var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
 
-        // ✅ Gán leg hiện tại (chưa hoàn thành)
+        // 🔹 5. Xử lý shipment itinerary
         var currentLeg = shipment.ShipmentItineraries
             .OrderBy(i => i.LegOrder)
             .FirstOrDefault(i => !i.IsCompleted);
@@ -727,17 +729,14 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             var fromStation = currentLeg.Route?.FromStation?.StationNameVi;
             var toStation = currentLeg.Route?.ToStation?.StationNameVi;
 
-            // ✅ So khớp hướng đi của leg với hướng của tàu hiện tại
-            if (currentLeg.Route?.FromStation?.StationNameVi != position.FromStation ||
-                currentLeg.Route?.ToStation?.StationNameVi != position.ToStation)
+            // 🚨 Cảnh báo nếu tàu không đi đúng route của shipment
+            if (fromStation != position.FromStation || toStation != position.ToStation)
             {
-                _logger.Warning("🚨 Shipment {TrackingCode} leg is not aligned with train segment: Shipment {From}->{To}, Train {From}->{To}",
-                    trackingCode,
-                    fromStation, toStation,
-                    position.FromStation, position.ToStation);
+                _logger.Warning("🚨 Shipment {TrackingCode} leg not aligned: Shipment {From}->{To}, Train {From}->{To}",
+                    trackingCode, fromStation, toStation, position.FromStation, position.ToStation);
             }
 
-            // ✅ Nếu tàu đến đích → hoàn thành leg
+            // ✅ Nếu tàu tới đích → hoàn thành leg
             if (rawTrainStatus == TrainStatusEnum.ArrivedAtStation)
             {
                 currentLeg.IsCompleted = true;
@@ -752,8 +751,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
         }
 
-        // ✅ Nếu shipment status thay đổi → cập nhật DB
-        /*if (shipment.ShipmentStatus != mappedShipmentStatus)
+        // 🔹 6. Cập nhật shipment status nếu cần
+        if (shipment.ShipmentStatus != mappedShipmentStatus)
         {
             shipment.ShipmentStatus = mappedShipmentStatus;
 
@@ -770,7 +769,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
 
-        // ✅ Nếu tất cả leg hoàn tất → shipment hoàn tất
+        // 🔹 7. Nếu tất cả leg hoàn tất → shipment delivered
         if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.Delivered;
@@ -786,9 +785,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
             _shipmentRepository.Update(shipment);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        }*/
+        }
 
-        // ✅ Gộp ShipmentItineraries + Polyline thành 1 array
+        // 🔹 8. Chuẩn bị polyline cho UI
         const int steps = 10;
         var fullPath = shipment.ShipmentItineraries
             .OrderBy(x => x.LegOrder)
@@ -812,25 +811,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 return new
                 {
                     x.LegOrder,
-                    From = new
-                    {
-                        Name = from.StationNameVi,
-                        Latitude = from.Latitude,
-                        Longitude = from.Longitude
-                    },
-                    To = new
-                    {
-                        Name = to.StationNameVi,
-                        Latitude = to.Latitude,
-                        Longitude = to.Longitude
-                    },
+                    From = new { Name = from.StationNameVi, from.Latitude, from.Longitude },
+                    To = new { Name = to.StationNameVi, to.Latitude, to.Longitude },
                     x.IsCompleted,
                     x.Message,
                     Polyline = polyline
                 };
             }).ToList();
 
-        // ✅ Trả kết quả cuối cùng
+        // 🔹 9. Đóng gói kết quả
         position.Status = mappedShipmentStatus.ToString();
         position.AdditionalData = new
         {
@@ -848,6 +837,13 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 FullPath = fullPath
             }
         };
+
+        // 🔹 10. Đồng bộ Firebase shipment_tracking
+        await _trainStateStore.SetShipmentTrackingAsync(
+            shipment.TrackingCode!,
+            trainId!,
+            position
+        );
 
         return position;
     }

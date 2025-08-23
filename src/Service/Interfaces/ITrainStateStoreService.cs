@@ -38,5 +38,12 @@ namespace MetroShip.Service.Interfaces
         Task<bool> HasStartTimeAsync(string trainId);
         Task<bool> HasPositionResultAsync(string trainId);
         #endregion
+
+        #region Shipment Tracking
+        Task SetShipmentTrackingAsync(string trackingCode, string trainId, TrainPositionResult position);
+        Task<dynamic?> GetShipmentTrackingAsync(string trackingCode);
+        Task RemoveShipmentTrackingAsync(string trackingCode);
+        Task<bool> HasShipmentTrackingAsync(string trackingCode);
+        #endregion
     }
 }
