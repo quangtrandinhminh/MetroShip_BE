@@ -304,19 +304,36 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
 
         if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment)
         {
-            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
-            shipment.PaidAt = CoreHelper.SystemTimeNow;
-            _shipmentTrackingRepository.Add(new ShipmentTracking
+            if (!shipment.IsReturnShipment)
             {
-                ShipmentId = shipment.Id,
-                CurrentShipmentStatus = shipment.ShipmentStatus,
-                Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = userId,
-            });
+                shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+                shipment.PaidAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
 
-            await _backgroundJobService.CancelScheduledUnpaidJob(shipment.Id);
-            await _backgroundJobService.ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+                await _backgroundJobService.CancelScheduledUnpaidJob(shipment.Id);
+                await _backgroundJobService.ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+            }
+            else
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
+                shipment.PaidAt = CoreHelper.SystemTimeNow;
+
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+            }
         }
         else if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingRefund)
         {

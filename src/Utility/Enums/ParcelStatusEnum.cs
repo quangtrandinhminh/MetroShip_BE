@@ -7,5 +7,6 @@ public enum ParcelStatusEnum
     Damaged = 3,
     Lost = 4,
     Canceled = 5,
+    Returned = 6,
 }
 
