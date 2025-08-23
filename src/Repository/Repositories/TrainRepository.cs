@@ -119,4 +119,15 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
                      s.ShipmentStatus == ShipmentStatusEnum.InTransit))
             .ToListAsync();
     }
+    public async Task<Shipment> GetShipmentWithItinerariesAndRoutesAsync(string trackingCode)
+    {
+        return await _context.Shipments
+            .Include(s => s.ShipmentItineraries)
+                .ThenInclude(i => i.Route)
+                    .ThenInclude(r => r.FromStation)
+            .Include(s => s.ShipmentItineraries)
+                .ThenInclude(i => i.Route)
+                    .ThenInclude(r => r.ToStation)
+            .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode);
+    }
 }
