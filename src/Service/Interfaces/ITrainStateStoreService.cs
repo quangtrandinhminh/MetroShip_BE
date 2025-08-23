@@ -45,5 +45,9 @@ namespace MetroShip.Service.Interfaces
         Task RemoveShipmentTrackingAsync(string trackingCode);
         Task<bool> HasShipmentTrackingAsync(string trackingCode);
         #endregion
+
+        #region List methods
+        Task<List<string>> GetAllActiveTrainIdsAsync();
+        #endregion
     }
 }

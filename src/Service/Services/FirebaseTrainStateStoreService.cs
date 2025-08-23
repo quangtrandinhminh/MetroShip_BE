@@ -144,5 +144,26 @@ namespace MetroShip.Service.Services
         public async Task<bool> HasShipmentTrackingAsync(string trackingCode)
             => await GetShipmentTrackingAsync(trackingCode) != null;
         #endregion
+
+        #region List methods
+        public async Task<List<string>> GetAllActiveTrainIdsAsync()
+        {
+            var trains = new List<string>();
+
+            var allStates = await _firebase
+                .Child("train_state")
+                .OnceAsync<object>();
+
+            foreach (var state in allStates)
+            {
+                var trainId = state.Key;
+
+                if (await HasStartTimeAsync(trainId) && await HasSegmentIndexAsync(trainId))
+                    trains.Add(trainId);
+            }
+
+            return trains;
+        }
+        #endregion
     }
 }
