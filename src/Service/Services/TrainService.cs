@@ -1,31 +1,32 @@
-﻿using System.Linq.Expressions;
-using System.Net;
-using MetroShip.Repository.Base;
+﻿using MetroShip.Repository.Base;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Train;
+using MetroShip.Service.BusinessModels;
+using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Jobs;
 using MetroShip.Service.Mapper;
 using MetroShip.Service.Utils;
 using MetroShip.Service.Validations;
 using MetroShip.Utility.Config;
-using MetroShip.Utility.Enums;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
 using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using MetroShip.Utility.Helpers;
-using SkiaSharp;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using RestSharp.Extensions;
-using MetroShip.Service.BusinessModels;
-using MetroShip.Service.Jobs;
+using Serilog;
+using SkiaSharp;
+using System.Linq.Expressions;
+using System.Net;
 
 namespace MetroShip.Service.Services;
 
@@ -1298,6 +1299,97 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             Status = train.Status
         };
     }
+
+    public async Task<TrainPositionResult> GetTrainPositionAsync1(string trainId)
+    {
+        var direction = await _trainStateStore.GetDirectionAsync(trainId)
+            ?? throw new AppException(ErrorCode.BadRequest, "Train direction not initialized.", StatusCodes.Status400BadRequest);
+
+        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction);
+        var segmentIndex = await _trainStateStore.GetSegmentIndexAsync(trainId);
+        var startTime = await _trainStateStore.GetStartTimeAsync(trainId);
+
+        if (segmentIndex == null || startTime == null)
+            throw new AppException(ErrorCode.BadRequest, "Train state not found");
+
+        var routes = train.Line.Routes
+            .Where(r => r.Direction == direction)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        var routePolylines = BuildRoutePolylines(routes, new Dictionary<string, List<GeoPoint>>());
+        double avgSpeedKmH = train.TopSpeedKmH ?? 100;
+
+        var result = TrainPositionCalculator.CalculatePosition(
+            train,
+            routePolylines,
+            startTime.Value,
+            segmentIndex.Value,
+            direction,
+            avgSpeedKmH
+        );
+
+        // Path = danh sách station points
+        result.Path = routes.Select(r => new GeoPoint
+        {
+            Latitude = r.FromStation.Latitude ?? 0,
+            Longitude = r.FromStation.Longitude ?? 0
+        }).ToList();
+
+        result.AdditionalData = null;
+        return result;
+    }
+
+    public async Task<object> GetTrainAdditionalDataAsync(string trainId)
+    {
+        var direction = await _trainStateStore.GetDirectionAsync(trainId)
+            ?? throw new AppException(ErrorCode.BadRequest, "Train direction not initialized.", StatusCodes.Status400BadRequest);
+
+        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction);
+        var segmentIndex = await _trainStateStore.GetSegmentIndexAsync(trainId);
+        var startTime = await _trainStateStore.GetStartTimeAsync(trainId);
+
+        if (segmentIndex == null || startTime == null)
+            throw new AppException(ErrorCode.BadRequest, "Train state not found");
+
+        // Lấy routes theo direction
+        var routes = train.Line.Routes
+            .Where(r => r.Direction == direction)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        // Build polyline cho từng đoạn tuyến
+        var routePolylines = BuildRoutePolylines(routes, new Dictionary<string, List<GeoPoint>>());
+        var fullPath = TrainPositionCalculator.BuildFullPath(routes, routePolylines);
+
+        // Shipments
+        var shipments = await _trainRepository.GetLoadedShipmentsByTrainAsync(train.Id);
+
+        // Trả về đúng AdditionalData
+        var additionalData = new
+        {
+            FullPath = fullPath,
+            Shipments = shipments.Select(s => new
+            {
+                s.Id,
+                s.TrackingCode,
+                s.TotalWeightKg,
+                s.TotalVolumeM3,
+                s.ShipmentStatus,
+                Parcels = s.Parcels.Select(p => new
+                {
+                    p.Id,
+                    p.ParcelCode,
+                    p.Status
+                }).ToList()
+            }).ToList(),
+            Parcels = shipments.SelectMany(s => s.Parcels)
+                               .Select(p => new { p.Id, p.ParcelCode, p.Status })
+                               .ToList()
+        };
+
+        return additionalData;
+    }
     #region Helper Methods
     private DirectionEnum InferTrainDirectionFromCurrentStation(MetroTrain train, string stationId)
     {
@@ -1442,6 +1534,48 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             return (ordered.First().FromStation, ordered.Last().ToStation);
 
         return (null, null);
+    }
+
+    private List<RoutePolylineDto> BuildRoutePolylines(
+    List<Route> routes,
+    Dictionary<string, List<GeoPoint>> polylineData)
+    {
+        const int steps = 10; // số bước nội suy
+        var list = new List<RoutePolylineDto>();
+
+        foreach (var r in routes)
+        {
+            var key = $"{r.FromStation.StationNameVi}-{r.ToStation.StationNameVi}-{r.Direction}";
+
+            var dto = new RoutePolylineDto
+            {
+                FromStation = r.FromStation.StationNameVi,
+                ToStation = r.ToStation.StationNameVi,
+                SeqOrder = r.SeqOrder,
+                Direction = r.Direction,
+                Polyline = polylineData.ContainsKey(key)
+                    ? polylineData[key]
+                    : Enumerable.Range(0, steps + 1).Select(s =>
+                    {
+                        var p = s / (double)steps;
+                        var (lat, lng) = GeoUtils.Interpolate(
+                            r.FromStation?.Latitude ?? 0,
+                            r.FromStation?.Longitude ?? 0,
+                            r.ToStation?.Latitude ?? 0,
+                            r.ToStation?.Longitude ?? 0,
+                            p);
+                        return new GeoPoint
+                        {
+                            Latitude = lat,
+                            Longitude = lng
+                        };
+                    }).ToList()
+            };
+
+            list.Add(dto);
+        }
+
+        return list;
     }
 
     #endregion
