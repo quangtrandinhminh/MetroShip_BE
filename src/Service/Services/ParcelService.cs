@@ -46,12 +46,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
     private readonly IBaseRepository<ParcelTracking> _parcelTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelTracking>>();
     private readonly ITrainRepository _trainRepository = serviceProvider.GetRequiredService<ITrainRepository>();
-    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
-    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
-    private readonly IMemoryCache _parcelCache = serviceProvider.GetRequiredService<IMemoryCache>();
     private readonly IShipmentTrackingRepository _shipmentTrackingRepository = serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
-
+    private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
 
     /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
@@ -584,7 +581,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             // Schedule job to apply surcharge after delivery
-            await ScheduleApplySurchargeJob(parcel.ShipmentId, shipment.PricingConfigId);
+            await _backgroundJobService.ScheduleApplySurchargeJob(parcel.ShipmentId, shipment.PricingConfigId);
         }
 
         return result;
@@ -781,34 +778,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
     }
 
-    private async Task ScheduleApplySurchargeJob(string shipmentId, string pricingConfigId)
-    {
-        _logger.Information("Scheduling job to apply surcharge for shipment ID: {@shipmentId}", shipmentId);
-        var jobData = new JobDataMap
-        {
-            { "ApplySurcharge-for-shipmentId", shipmentId }
-        };
-
-        var freeStoreDays = await _pricingService.GetFreeStoreDaysAsync(pricingConfigId);
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<ApplySurchargeJob>()
-            .WithIdentity($"ApplySurchargeJob-{shipmentId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-ApplySurchargeJob-{shipmentId}")
-            .StartAt(DateTimeOffset.UtcNow.AddDays(freeStoreDays))
-            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            // Repeat every 24 hours
-            .WithSimpleSchedule(x => x
-                .WithIntervalInHours(24)
-            .RepeatForever())
-        .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
-    }
+    
 }
 
 
