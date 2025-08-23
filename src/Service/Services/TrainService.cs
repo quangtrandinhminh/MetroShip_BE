@@ -684,12 +684,14 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
     public async Task<TrainPositionResult> GetTrainPositionByTrackingCodeAsync(string trackingCode)
     {
+        // 🔹 Tìm shipment theo tracking code
         var shipment = await _trainRepository.GetShipmentWithTrainAsync(trackingCode)
             ?? throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
 
         if (shipment.ShipmentItineraries == null || shipment.ShipmentItineraries.Count == 0)
             throw new AppException(ErrorCode.BadRequest, "Shipment has no itinerary", StatusCodes.Status400BadRequest);
 
+        // 🔹 Lấy itinerary gắn với train
         var itinerary = shipment.ShipmentItineraries
             .FirstOrDefault(i => i.TrainId != null && i.ShipmentId == shipment.Id);
 
@@ -698,14 +700,14 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var trainId = itinerary.TrainId;
 
-        // ✅ Check train đã bắt đầu simulation chưa
-        if (!_cache.TryGetValue($"{trainId}-SegmentIndex", out int _))
+        // ✅ Check train đã bắt đầu simulation chưa (dùng Firebase thay vì cache)
+        var hasSegmentIndex = await _trainStateStore.HasSegmentIndexAsync(trainId);
+        if (!hasSegmentIndex)
             throw new AppException(ErrorCode.BadRequest, "Train has not started simulation.", StatusCodes.Status400BadRequest);
 
         // ❌ Không tracking nếu shipment chưa nằm trên tàu
         if (shipment.ShipmentStatus != ShipmentStatusEnum.LoadOnMetro &&
-            shipment.ShipmentStatus != ShipmentStatusEnum.InTransit 
-            /*&& shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery*/)
+            shipment.ShipmentStatus != ShipmentStatusEnum.InTransit)
         {
             throw new AppException(ErrorCode.BadRequest, "Shipment not ready for tracking", StatusCodes.Status400BadRequest);
         }
@@ -849,6 +851,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         return position;
     }
+
     // for getting train position based on trainId
     public async Task<TrainPositionResult> GetTrainPositionAsync(string trainId)
     {
