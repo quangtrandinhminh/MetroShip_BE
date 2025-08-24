@@ -33,5 +33,12 @@ namespace MetroShip.Utility.Helpers
         {
             return degrees * Math.PI / 180.0;
         }
+
+        public static bool IsNear(double lat1, double lon1, double lat2, double lon2, double thresholdMeters = 50)
+        {
+            // Calculate distance using Haversine formula
+            double distance = Haversine(lat1, lon1, lat2, lon2) * 1000; // Convert km to meters
+            return distance <= thresholdMeters;
+        }
     }
 }
