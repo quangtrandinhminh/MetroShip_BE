@@ -35,13 +35,13 @@ namespace MetroShip.WebAPI.Controllers
             _userService = serviceProvider.GetRequiredService<IUserService>();
         }
 
-        /*[HttpGet]
+        [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotifications)]
         public async Task<IActionResult> GetNotifications([FromQuery] PaginatedListRequest request)
         {
             var notifications = await _notificationService.GetNotificationsByUserIdAsync(request.PageNumber, request.PageSize);
             return Ok(BaseResponse.OkResponseDto(notifications));
-        }*/
+        }
 
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetNotification)]

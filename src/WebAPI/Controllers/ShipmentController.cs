@@ -190,5 +190,24 @@ namespace MetroShip.WebAPI.Controllers
             await shipmentService.CancelShipment(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.CANCELLED_SUCCESS, null));
         }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.ReturnForShipment)]
+        public async Task<IActionResult> ReturnForShipment([FromRoute] string shipmentId)
+        {
+            var (returnShipment, message) = await shipmentService.ReturnForShipment(shipmentId);
+            var notification = new NotificationCreateRequest
+            {
+                ToUserId = returnShipment.SenderId,
+                Message = message,
+            };
+            await _notificationHub.SendNotification(notification);
+            return Ok(BaseResponse.OkResponseDto(message, new 
+            { 
+                ForShipmentId = returnShipment.ReturnForShipmentId, 
+                ReturnShipmentId = returnShipment.Id,
+                ReturnShipmentTrackingCode = returnShipment.TrackingCode 
+            }));
+        }
     }
 }

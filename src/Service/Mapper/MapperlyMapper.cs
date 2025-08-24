@@ -70,6 +70,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial List<ShipmentTrackingResponse> MapToParcelTrackingResponseList(ICollection<ShipmentTrackingResponse> entity);
     public partial ShipmentTrackingResponse MapToShipmentTrackingResponse(ShipmentTracking entity);
 
+    public partial void MapToShipmentEntity(Shipment entity, Shipment request);
+
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
     /*[MapProperty("Item1", "StartDate")]
     [MapProperty("Item2", "Date")]
