@@ -115,8 +115,7 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
                     .ThenInclude(r => r.ToStation)
             .Include(s => s.Parcels)
              .Where(s => s.ShipmentItineraries.Any(si => si.TrainId == trainId) &&
-                    (s.ShipmentStatus == ShipmentStatusEnum.LoadOnMetro ||
-                     s.ShipmentStatus == ShipmentStatusEnum.InTransit))
+                    (s.ShipmentStatus == ShipmentStatusEnum.InTransit))
             .ToListAsync();
     }
     public async Task<Shipment> GetShipmentWithItinerariesAndRoutesAsync(string trackingCode)

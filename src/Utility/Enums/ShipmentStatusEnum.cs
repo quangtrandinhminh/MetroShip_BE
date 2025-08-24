@@ -20,7 +20,6 @@ public enum ShipmentStatusEnum
     // In-transit flows
     AwaitingDropOff,                 // payment received
     PickedUp,             // parcels scanned at origin station
-    LoadOnMetro,
     InTransit,            // en-route on metro
     AwaitingDelivery,  // all parcels at delivery station
     ApplyingSurcharge,    // parcels overdue → surcharge period

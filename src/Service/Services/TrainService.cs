@@ -724,7 +724,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }).ToList();
 
         // 🔹 3. Cho phép tracking từ khi pickup
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.LoadOnMetro &&
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge &&
             shipment.ShipmentStatus != ShipmentStatusEnum.InTransit &&
             shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery)
         {
