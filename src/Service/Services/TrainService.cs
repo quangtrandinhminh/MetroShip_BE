@@ -813,6 +813,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         if (currentLeg != null)
         {
+            var fromStationId = currentLeg.Route?.FromStationId;
+            var toStationId = currentLeg.Route?.ToStationId;
             var fromStation = currentLeg.Route?.FromStation?.StationNameVi;
             var toStation = currentLeg.Route?.ToStation?.StationNameVi;
 
@@ -823,8 +825,28 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     trackingCode, fromStation, toStation, position.FromStation, position.ToStation);
             }
 
-            // ✅ Nếu tàu tới đích → hoàn thành leg
-            if (rawTrainStatus == TrainStatusEnum.ArrivedAtStation)
+            // ✅ Nếu tàu đang ở ga xuất phát → Shipment bắt đầu InTransit
+            if (itinerary?.Train?.CurrentStationId == toStationId &&
+                shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDelivery)
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
+
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = ShipmentStatusEnum.InTransit,
+                    Status = "InTransit",
+                    EventTime = DateTimeOffset.UtcNow,
+                    Note = $"Shipment departed from {fromStation}"
+                });
+
+                _shipmentRepository.Update(shipment);
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            }
+
+            // ✅ Nếu tàu tới ga đích của leg hiện tại → hoàn thành leg
+            if (itinerary?.Train?.CurrentStationId == toStationId &&
+                rawTrainStatus == TrainStatusEnum.ArrivedAtStation)
             {
                 currentLeg.IsCompleted = true;
 
