@@ -133,8 +133,11 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost("/api/train/schedule")]
-        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery] bool startFromEnd = false)
+        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery(Name = "startFromEnd")] int startFromEndValue = 0)
         {
+            // ép về bool: 1 => true, còn lại => false
+            bool startFromEnd = startFromEndValue == 1;
+
             var response = await _trainService.ScheduleTrainAsync(trainIdOrCode, startFromEnd);
             return Ok(BaseResponse.OkResponseDto(response, null));
         }
