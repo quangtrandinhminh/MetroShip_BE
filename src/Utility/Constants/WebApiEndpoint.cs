@@ -141,6 +141,8 @@
             public const string DeleteMetroLine = BaseEndpoint + "/{id}";
             public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
             public const string ActivateMetroLine = BaseEndpoint + "/activation/{id}";
+            public const string GetMetroLineWithStationsById = BaseEndpoint + "/{id}/with-stations";
+            public const string GetAllActiveMetroLines = BaseEndpoint + "/active-lines";
         }
         public static class MetroTimeSlotEndpoint
         {

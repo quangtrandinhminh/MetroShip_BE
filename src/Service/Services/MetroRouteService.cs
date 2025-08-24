@@ -1,29 +1,30 @@
 ﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.ApiModels.MetroLine;
+using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Mapper;
+using MetroShip.Service.Validations;
+using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
+using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using MetroShip.Repository.Infrastructure;
-using MetroShip.Service.BusinessModels;
-using MetroShip.Service.Mapper;
-using MetroShip.Service.Validations;
-using MetroShip.Utility.Enums;
-using MetroShip.Utility.Exceptions;
-using MetroShip.Utility.Constants;
-using Microsoft.AspNetCore.Http;
-using MetroShip.Utility.Helpers;
-using MetroShip.Service.ApiModels.PaginatedList;
-using System.Linq.Expressions;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services
 {
@@ -454,6 +455,137 @@ namespace MetroShip.Service.Services
             }
 
             return MetroRouteMessageConstants.METROROUTE_ACTIVATE_SUCCESS;
+        }
+
+        public async Task<List<MetroLineDto>> GetAllMetroLinesWithStationsAsync()
+        {
+            var metroLines = await _metroRouteRepository.GetAll()
+                .Include(ml => ml.Routes)
+                    .ThenInclude(r => r.FromStation)
+                .Include(ml => ml.Routes)
+                    .ThenInclude(r => r.ToStation)
+                .Where(ml => ml.IsActive)
+                .OrderBy(ml => ml.LineNumber)
+                .ToListAsync();
+
+            var result = new List<MetroLineDto>();
+
+            foreach (var metroLine in metroLines)
+            {
+                var metroLineDto = await MapToMetroLineDtoAsync(metroLine);
+                result.Add(metroLineDto);
+            }
+
+            return result;
+        }
+
+        public async Task<MetroLineDto> GetMetroLineByIdAsync(string lineId)
+        {
+            var metroLine = await _metroRouteRepository.GetAll()
+                .Include(ml => ml.Routes)
+                    .ThenInclude(r => r.FromStation)
+                .Include(ml => ml.Routes)
+                    .ThenInclude(r => r.ToStation)
+                .FirstOrDefaultAsync(ml => ml.Id == lineId && ml.IsActive);
+
+            if (metroLine == null)
+                return null;
+
+            return await MapToMetroLineDtoAsync(metroLine);
+        }
+
+        private async Task<MetroLineDto> MapToMetroLineDtoAsync(MetroLine metroLine)
+        {
+            var dto = new MetroLineDto
+            {
+                Id = metroLine.Id,
+                RegionId = metroLine.RegionId,
+                LineNameVi = metroLine.LineNameVi,
+                LineNameEn = metroLine.LineNameEn,
+                LineCode = metroLine.LineCode,
+                LineNumber = metroLine.LineNumber,
+                LineType = metroLine.LineType,
+                LineOwner = metroLine.LineOwner,
+                TotalKm = metroLine.TotalKm,
+                TotalStations = metroLine.TotalStations,
+                RouteTimeMin = metroLine.RouteTimeMin,
+                DwellTimeMin = metroLine.DwellTimeMin,
+                ColorHex = metroLine.ColorHex,
+                IsActive = metroLine.IsActive
+            };
+
+            // Get all stations for this metro line
+            var stationIds = metroLine.StationList
+                .Select(s => s.StationId)
+                .ToList();
+
+            var stations = await _stationRepository.GetAll()
+                .Where(s => stationIds.Contains(s.Id))
+                .ToListAsync();
+
+            // Map stations with sequence order
+            foreach (var stationItem in metroLine.StationList)
+            {
+                var station = stations.FirstOrDefault(s => s.Id == stationItem.StationId);
+                if (station != null)
+                {
+                    dto.Stations.Add(new StationDto
+                    {
+                        Id = station.Id,
+                        StationCode = stationItem.StationCode,
+                        StationNameVi = station.StationNameVi,
+                        StationNameEn = station.StationNameEn,
+                        Latitude = station.Latitude.HasValue ? (decimal?)station.Latitude.Value : null,
+                        Longitude = station.Longitude.HasValue ? (decimal?)station.Longitude.Value : null,
+                        SeqOrder = metroLine.StationList.IndexOf(stationItem) + 1
+                    });
+                }
+            }
+
+            // Order stations by sequence
+            dto.Stations = dto.Stations.OrderBy(s => s.SeqOrder).ToList();
+
+            // Generate interpolated paths for all routes
+            dto.RoutePaths = GenerateRoutePaths(metroLine.Routes.ToList());
+
+            return dto;
+        }
+
+        private List<RoutePathDto> GenerateRoutePaths(List<Route> routes)
+        {
+            const int steps = 10;
+            var routePaths = new List<RoutePathDto>();
+
+            foreach (var route in routes.OrderBy(r => r.SeqOrder))
+            {
+                if (route.FromStation?.Latitude == null || route.FromStation?.Longitude == null ||
+                    route.ToStation?.Latitude == null || route.ToStation?.Longitude == null)
+                {
+                    continue;
+                }
+
+                var interpolatedPoints = Enumerable.Range(0, steps + 1).Select(s =>
+                {
+                    var progress = s / (double)steps;
+                    var (latStep, lngStep) = GeoUtils.Interpolate(
+                        (double)route.FromStation.Latitude.Value,
+                        (double)route.FromStation.Longitude.Value,
+                        (double)route.ToStation.Latitude.Value,
+                        (double)route.ToStation.Longitude.Value,
+                        progress
+                    );
+                    return new GeoPoint { Latitude = latStep, Longitude = lngStep };
+                }).ToList();
+
+                routePaths.Add(new RoutePathDto
+                {
+                    FromStationId = route.FromStationId,
+                    ToStationId = route.ToStationId,
+                    InterpolatedPoints = interpolatedPoints
+                });
+            }
+
+            return routePaths;
         }
     }
 }

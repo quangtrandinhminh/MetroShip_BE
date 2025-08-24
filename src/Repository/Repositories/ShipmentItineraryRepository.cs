@@ -61,29 +61,45 @@ public class ShipmentItineraryRepository : BaseRepository<ShipmentItinerary>, IS
 
     public async Task<List<ShipmentItinerary>> AssignTrainIdToEmptyLegsAsync(string shipmentTrackingCode, string trainId)
     {
-        // Lấy shipment và các leg chưa có train
+        if (string.IsNullOrWhiteSpace(shipmentTrackingCode))
+            throw new ArgumentException("Tracking code is required.", nameof(shipmentTrackingCode));
+        if (string.IsNullOrWhiteSpace(trainId))
+            throw new ArgumentException("TrainId is required.", nameof(trainId));
+
+        // Tìm shipment + các leg
         var shipment = await _context.Shipments
-            .Include(s => s.ShipmentItineraries.Where(it => string.IsNullOrEmpty(it.TrainId)))
+            .Include(s => s.ShipmentItineraries)
             .FirstOrDefaultAsync(s => s.TrackingCode == shipmentTrackingCode);
 
         if (shipment == null)
-            throw new Exception($"Shipment with tracking code '{shipmentTrackingCode}' not found.");
+            throw new InvalidOperationException($"Shipment with tracking code '{shipmentTrackingCode}' not found.");
 
-        if (!shipment.ShipmentItineraries.Any())
-            return new List<ShipmentItinerary>(); // Không có leg để cập nhật
+        // Lấy legs chưa có TrainId
+        var itinerariesToUpdate = shipment.ShipmentItineraries
+            .Where(it => string.IsNullOrEmpty(it.TrainId))
+            .ToList();
 
-        // Gán trainId
-        foreach (var itinerary in shipment.ShipmentItineraries)
+        if (!itinerariesToUpdate.Any())
+            return new List<ShipmentItinerary>();
+
+        // Gán đúng trainId bạn truyền vào
+        foreach (var itinerary in itinerariesToUpdate)
         {
             itinerary.TrainId = trainId;
         }
 
+        // Lưu
         await _context.SaveChangesAsync();
 
-        // Lấy lại toàn bộ leg để trả ra (kèm TrainCode)
+        // Clear cache để chắc chắn lấy từ DB mới nhất
+        _context.ChangeTracker.Clear();
+
+        // Trả ra đúng dữ liệu mới
         var updatedItineraries = await _context.ShipmentItineraries
             .Where(it => it.ShipmentId == shipment.Id)
             .Include(it => it.Train)
+            .AsNoTracking()
+            .OrderBy(it => it.LegOrder)
             .ToListAsync();
 
         return updatedItineraries;

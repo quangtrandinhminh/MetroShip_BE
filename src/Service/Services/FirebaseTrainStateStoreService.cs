@@ -106,5 +106,64 @@ namespace MetroShip.Service.Services
         public async Task<bool> HasPositionResultAsync(string trainId)
             => await GetPositionResultAsync(trainId) != null;
         #endregion
+
+        #region Shipment Tracking
+        public async Task SetShipmentTrackingAsync(string trackingCode, string trainId, TrainPositionResult position)
+        {
+            var data = new
+            {
+                TrainId = trainId,
+                LastPosition = position,
+                LastUpdate = DateTimeOffset.UtcNow
+            };
+
+            await _firebase
+                .Child("shipment_tracking")
+                .Child(trackingCode)
+                .PutAsync(data);
+        }
+
+        public async Task<dynamic?> GetShipmentTrackingAsync(string trackingCode)
+        {
+            try
+            {
+                return await _firebase
+                    .Child("shipment_tracking")
+                    .Child(trackingCode)
+                    .OnceSingleAsync<dynamic>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task RemoveShipmentTrackingAsync(string trackingCode)
+            => await _firebase.Child("shipment_tracking").Child(trackingCode).DeleteAsync();
+
+        public async Task<bool> HasShipmentTrackingAsync(string trackingCode)
+            => await GetShipmentTrackingAsync(trackingCode) != null;
+        #endregion
+
+        #region List methods
+        public async Task<List<string>> GetAllActiveTrainIdsAsync()
+        {
+            var trains = new List<string>();
+
+            var allStates = await _firebase
+                .Child("train_state")
+                .OnceAsync<object>();
+
+            foreach (var state in allStates)
+            {
+                var trainId = state.Key;
+
+                if (await HasStartTimeAsync(trainId) && await HasSegmentIndexAsync(trainId))
+                    trains.Add(trainId);
+            }
+
+            return trains;
+        }
+        #endregion
     }
 }

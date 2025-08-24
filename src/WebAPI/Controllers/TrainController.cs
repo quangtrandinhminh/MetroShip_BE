@@ -133,12 +133,56 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost("/api/train/schedule")]
-        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery] bool startFromEnd = false)
+        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery(Name = "startFromEnd")] int startFromEndValue = 0)
         {
+            // ép về bool: 1 => true, còn lại => false
+            bool startFromEnd = startFromEndValue == 1;
+
             var response = await _trainService.ScheduleTrainAsync(trainIdOrCode, startFromEnd);
             return Ok(BaseResponse.OkResponseDto(response, null));
         }
 
+        // for test
+        [HttpGet("{trainId}/position")]
+        public async Task<IActionResult> GetTrainPosition(string trainId)
+        {
+                var result = await _trainService.GetTrainPositionAsync1(trainId);
+                return Ok(BaseResponse.OkResponseDto(result));
+            
+        }
+
+        /// <summary>
+        /// Lấy thêm dữ liệu bổ sung (FullPath, Shipments, Parcels).
+        /// </summary>
+        [HttpGet("{trainId}/additional")]
+        public async Task<IActionResult> GetTrainAdditionalData(string trainId)
+        {
+                var result = await _trainService.GetTrainAdditionalDataAsync(trainId);
+                return Ok(BaseResponse.OkResponseDto(result));
+            
+        }
+
+        /// <summary>
+        /// Gửi cập nhật vị trí đến tất cả client đang theo dõi qua SignalR Hub.
+        /// </summary>
+        [HttpPost("{trainId}/broadcast")]
+        public async Task<IActionResult> BroadcastTrainPosition(string trainId)
+        {
+            try
+            {
+                var result = await _trainService.GetTrainPositionAsync1(trainId);
+
+                // Phát đi room có tên = trainId
+                await _hub.Clients.Group(trainId).SendAsync("ReceiveLocationUpdate", result);
+
+
+                return Ok(new { Message = "Broadcast thành công", TrainId = trainId });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
         // call by start train simulation
         private async Task ScheduleSimulateTrainJob(string trainId, int intervalInSeconds)
         {
