@@ -229,6 +229,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 TimeSlotId = itinerary.TimeSlotId,
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
+                Message = itinerary.Message,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
 
             Parcels = s.Parcels

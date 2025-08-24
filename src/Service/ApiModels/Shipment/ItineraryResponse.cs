@@ -13,4 +13,5 @@ public sealed record ItineraryResponse
     public string? TimeSlotId { get; set; } = null;
     public DateOnly? Date { get; set; } = null;
     public bool IsCompleted { get; set; }
+    public string? Message { get; set; }
 }
