@@ -80,6 +80,10 @@ public class MetroGraph
                 StatusCodes.Status404NotFound
                 );
 
+        // Nếu 2 ga trùng nhau
+        if (fromStationId == toStationId)
+            return new List<string>();
+
         /*// Khởi tạo queue và dictionaries cho BFS
         var queue = new Queue<string>();
         var visited = new HashSet<string>();
@@ -177,10 +181,15 @@ public class MetroGraph
                 StatusCodes.Status404NotFound
             );
 
+        // Nếu 2 ga trùng nhau
+        if (fromStationId == toStationId)
+            return new List<string>();
+
         Expression<Func<Route, object>>[] weights =
         {
             //x => x.BasePriceVndPerKm * x.LengthKm, // Ưu tiên giá
-            x => x.TravelTimeMin // Ưu tiên thời gian
+            //x => x.TravelTimeMin, // Ưu tiên thời gian
+            x => x.LengthKm // Ưu tiên khoảng cách
         };
 
 
