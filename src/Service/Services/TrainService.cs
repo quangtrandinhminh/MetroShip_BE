@@ -853,7 +853,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
 
             // ✅ Nếu tàu đang ở ga xuất phát → Shipment bắt đầu InTransit
-            if (itinerary?.Train?.CurrentStationId == toStationId &&
+            /*if (itinerary?.Train?.CurrentStationId == toStationId &&
                 shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingDelivery)
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
@@ -869,7 +869,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
                 _shipmentRepository.Update(shipment);
                 await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-            }
+            }*/
 
             // ✅ Nếu tàu tới ga đích của leg hiện tại → hoàn thành leg
             if (itinerary?.Train?.CurrentStationId == toStationId &&
@@ -928,8 +928,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var lng = 0.0;
 
         if (shipment.ShipmentStatus is ShipmentStatusEnum.ApplyingSurcharge
-            or ShipmentStatusEnum.StorageInWarehouse
-            or ShipmentStatusEnum.Delivered
+            or ShipmentStatusEnum.AwaitingDelivery
+            or ShipmentStatusEnum.Arrived
             or ShipmentStatusEnum.Completed)
         {
             // 🚩 Điểm cuối: ToStation
