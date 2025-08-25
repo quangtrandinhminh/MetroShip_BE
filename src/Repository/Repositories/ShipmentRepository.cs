@@ -126,6 +126,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TotalInsuranceFeeVnd = s.TotalInsuranceFeeVnd,
             TotalSurchargeFeeVnd = s.TotalSurchargeFeeVnd,
             TotalOverdueSurchargeFee = s.TotalOverdueSurchargeFee,
+            TotalRefundedFeeVnd = s.TotalRefundedFeeVnd,
+            TotalCompensationFeeVnd = s.TotalCompensationFeeVnd,
 
             // Measurement fields
             TotalKm = s.TotalKm,
