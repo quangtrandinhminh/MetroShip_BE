@@ -32,14 +32,14 @@ namespace MetroShip.Service.Services;
 
 public class TrainService(IServiceProvider serviceProvider) : ITrainService
 {
-    private readonly ITrainRepository _trainRepository = 
+    private readonly ITrainRepository _trainRepository =
         serviceProvider.GetRequiredService<ITrainRepository>();
     private readonly IShipmentTrackingRepository _shipmentTrackingRepository =
         serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-    private readonly ISystemConfigRepository _systemConfigRepository = 
+    private readonly ISystemConfigRepository _systemConfigRepository =
         serviceProvider.GetRequiredService<ISystemConfigRepository>();
     private readonly IShipmentRepository _shipmentRepository =
         serviceProvider.GetRequiredService<IShipmentRepository>();
@@ -101,7 +101,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
-        
+
         foreach (var train in paginatedList.Items)
         {
             // Map train schedules to each train
@@ -247,7 +247,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             if (!string.IsNullOrEmpty(request.ModelName))
             {
                 // search string in postgres
-                expression = expression.And(x => 
+                expression = expression.And(x =>
                 EF.Functions.ILike(x.ModelName, $"%{request.ModelName}%"));
             }
             if (!string.IsNullOrEmpty(request.TimeSlotId))
@@ -1315,12 +1315,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // 1. Lấy thông tin train + line + routes + station
         var train = await _trainRepository
             .GetAllWithCondition()
-            .Include(t => t.Line)
-                .ThenInclude(l => l.Routes)
-                    .ThenInclude(r => r.FromStation)
-            .Include(t => t.Line)
-                .ThenInclude(l => l.Routes)
-                    .ThenInclude(r => r.ToStation)
+            .Include(t => t.Line).ThenInclude(l => l.Routes).ThenInclude(r => r.FromStation)
+            .Include(t => t.Line).ThenInclude(l => l.Routes).ThenInclude(r => r.ToStation)
             .FirstOrDefaultAsync(t => t.Id == trainIdOrCode || t.TrainCode == trainIdOrCode);
 
         if (train == null)
@@ -1383,24 +1379,28 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // 7. Reset state trong Firebase
         await _trainStateStore.RemoveAllTrainStateAsync(train.Id);
 
+        // Set lại Direction (để Confirm/Start có hướng đúng)
         var direction = InferTrainDirectionFromCurrentStation(train, train.CurrentStationId!);
         await _trainStateStore.SetDirectionAsync(train.Id, direction);
-        await _trainStateStore.SetSegmentIndexAsync(train.Id, 0);
 
-        // ❌ Không set StartTime khi schedule
+        // ❗ KHÔNG set SegmentIndex = 0 khi reset — phải bỏ/clear
+        await _trainStateStore.RemoveSegmentIndexAsync(train.Id);
+
+        // ❗ KHÔNG set StartTime — phải bỏ/clear
         await _trainStateStore.RemoveStartTimeAsync(train.Id);
 
-        // ✅ Lưu lại position hiện tại để client đọc được ngay
+        // ✅ Lưu PositionResult để client đọc ngay ở trạng thái Scheduled
         var position = new TrainPositionResult
         {
             TrainId = train.Id,
             Latitude = train.Latitude ?? 0,
             Longitude = train.Longitude ?? 0,
-            Status = train.Status.ToString(),
+            Status = train.Status.ToString(), // "Scheduled"
             ProgressPercent = 0,
             FromStation = chosen.StationNameVi,
             ToStation = null,
             Path = new List<GeoPoint>()
+            // StartTime intentionally omitted/empty in reset
         };
         await _trainStateStore.SetPositionResultAsync(train.Id, position);
 
@@ -1550,7 +1550,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                Math.Abs(lat1.Value - lat2.Value) < threshold &&
                Math.Abs(lng1.Value - lng2.Value) < threshold;
     }
-    
+
     private ShipmentStatusEnum MapTrainStatusToShipmentStatus(TrainStatusEnum trainStatus)
     {
         return trainStatus switch
