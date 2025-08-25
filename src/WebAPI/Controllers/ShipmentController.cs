@@ -157,7 +157,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(data);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        /*[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPut(WebApiEndpoint.ShipmentEndpoint.UnloadingAtStation)]
         public async Task<IActionResult> UpdateStatusUnload([FromBody] UpdateShipmentStatusRequest request)
         {
@@ -173,7 +173,7 @@ namespace MetroShip.WebAPI.Controllers
             var staffId = User?.Identity?.Name ?? "unknown";
             var result = await shipmentService.UpdateShipmentStatusAsync(request, ShipmentStatusEnum.StorageInWarehouse, staffId);
             return Ok(result);
-        }
+        }*/
 
         //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.AssignTrainToShipment)]
