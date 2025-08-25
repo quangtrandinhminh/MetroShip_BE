@@ -821,9 +821,35 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             // 🚨 Nếu tàu không đi đúng route của shipment → không cho tracking nữa
             if (fromStationId != position.FromStation || toStationId != position.ToStation)
             {
-                throw new AppException(ErrorCode.BadRequest,
-                    $"Train route mismatch. Shipment expects {fromStation}->{toStation}, but train is on {position.FromStation}->{position.ToStation}",
-                    StatusCodes.Status400BadRequest);
+                _logger.Warning(
+                    "Train route mismatch for Shipment {TrackingCode}. Expected {From}->{To}, but train is on {TrainFrom}->{TrainTo}",
+                    shipment.TrackingCode, fromStation, toStation, position.FromStation, position.ToStation);
+
+                // ✅ Không throw nữa, vẫn trả về kết quả với fullPath
+                return new TrainPositionResult
+                {
+                    TrainId = trainId,
+                    Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
+                    Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
+                    Status = shipment.ShipmentStatus.ToString(),
+                    Path = fullPath.SelectMany(p => p.Polyline).ToList(),
+                    AdditionalData = new
+                    {
+                        RawTrainStatus = "RouteMismatch",
+                        Shipment = new
+                        {
+                            shipment.Id,
+                            shipment.TrackingCode,
+                            shipment.SenderName,
+                            shipment.DestinationStationId,
+                            shipment.ShipmentStatus,
+                            shipment.TotalWeightKg,
+                            shipment.TotalVolumeM3,
+                            shipment.CreatedAt,
+                            FullPath = fullPath
+                        }
+                    }
+                };
             }
 
             // ✅ Nếu tàu đang ở ga xuất phát → Shipment bắt đầu InTransit
