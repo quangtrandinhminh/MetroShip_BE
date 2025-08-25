@@ -77,5 +77,15 @@ namespace MetroShip.WebAPI.Controllers
             var result = await _reportService.GetCategoryStatisticsAsync(request);
             return Ok(result);
         }
+
+        /// <summary>
+        /// Báo cáo thống kê feedback shipments (theo filter: day, year, quarter, month range)
+        /// </summary>
+        [HttpPost("shipments/feedback-chart")]
+        public async Task<IActionResult> GetShipmentFeedbackChart([FromBody] RevenueChartRequest request)
+        {
+            var result = await _reportService.GetShipmentFeedbackChartAsync(request);
+            return Ok(result);
+        }
     }
 }
