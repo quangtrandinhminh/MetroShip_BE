@@ -735,7 +735,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var itinerary = shipment.ShipmentItineraries
             .FirstOrDefault(i => i.TrainId != null);
 
-        // Nếu chưa có train → vẫn trả InTransit
+        // Nếu chưa có train assigned, vẫn trả về thông tin itinerary
         if (itinerary?.TrainId == null)
         {
             // Trả về thông tin cơ bản với fullPath
@@ -744,7 +744,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 TrainId = "not-assigned-yet",
                 Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
                 Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
-                Status = ShipmentStatusEnum.InTransit.ToString(), // ✅ luôn InTransit
+                Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -778,7 +778,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 TrainId = trainId,
                 Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
                 Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
-                Status = ShipmentStatusEnum.InTransit.ToString(), // ✅ luôn InTransit
+                Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -804,7 +804,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             ?? throw new AppException(ErrorCode.NotFound, "Train position not found", StatusCodes.Status404NotFound);
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
-        var mappedShipmentStatus = ShipmentStatusEnum.InTransit; // ✅ luôn InTransit
+        var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
 
         // 🔹 7. Xử lý shipment itinerary
         var currentLeg = shipment.ShipmentItineraries
@@ -818,38 +818,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             var fromStation = currentLeg.Route?.FromStation?.StationNameVi;
             var toStation = currentLeg.Route?.ToStation?.StationNameVi;
 
-            // 🚨 Nếu tàu không đi đúng route của shipment → không cho tracking nữa
-            if (fromStationId != position.FromStation || toStationId != position.ToStation)
+            // 🚨 Cảnh báo nếu tàu không đi đúng route của shipment
+            if (fromStation != position.FromStation || toStation != position.ToStation)
             {
-                _logger.Warning(
-                    "Train route mismatch for Shipment {TrackingCode}. Expected {From}->{To}, but train is on {TrainFrom}->{TrainTo}",
-                    shipment.TrackingCode, fromStation, toStation, position.FromStation, position.ToStation);
-
-                // ✅ Không throw nữa, vẫn trả về kết quả với fullPath
-                return new TrainPositionResult
-                {
-                    TrainId = trainId,
-                    Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
-                    Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
-                    Status = shipment.ShipmentStatus.ToString(),
-                    Path = fullPath.SelectMany(p => p.Polyline).ToList(),
-                    AdditionalData = new
-                    {
-                        RawTrainStatus = "RouteMismatch",
-                        Shipment = new
-                        {
-                            shipment.Id,
-                            shipment.TrackingCode,
-                            shipment.SenderName,
-                            shipment.DestinationStationId,
-                            shipment.ShipmentStatus,
-                            shipment.TotalWeightKg,
-                            shipment.TotalVolumeM3,
-                            shipment.CreatedAt,
-                            FullPath = fullPath
-                        }
-                    }
-                };
+                _logger.Warning("🚨 Shipment {TrackingCode} leg not aligned: Shipment {From}->{To}, Train {From}->{To}",
+                    trackingCode, fromStation, toStation, position.FromStation, position.ToStation);
             }
 
             // ✅ Nếu tàu đang ở ga xuất phát → Shipment bắt đầu InTransit
@@ -891,7 +864,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         //if (shipment.ShipmentStatus != mappedShipmentStatus)
         //{
         //    shipment.ShipmentStatus = mappedShipmentStatus;
-        //
+
         //    _shipmentTrackingRepository.Add(new ShipmentTracking
         //    {
         //        ShipmentId = shipment.Id,
@@ -900,7 +873,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         //        EventTime = DateTimeOffset.UtcNow,
         //        Note = $"Shipment moved to status: {mappedShipmentStatus}"
         //    });
-        //
+
         //    _shipmentRepository.Update(shipment);
         //    await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         //}
@@ -909,7 +882,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         //if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
         //{
         //    shipment.ShipmentStatus = ShipmentStatusEnum.Delivered;
-        //
+
         //    _shipmentTrackingRepository.Add(new ShipmentTracking
         //    {
         //        ShipmentId = shipment.Id,
@@ -918,55 +891,38 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         //        EventTime = DateTimeOffset.UtcNow,
         //        Note = "All legs completed. Shipment delivered."
         //    });
-        //
+
         //    _shipmentRepository.Update(shipment);
         //    await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         //}
 
-        // 🔹 8. Đóng gói kết quả với fullPath (⚡️ trả lat/lng tùy theo trạng thái shipment)
-        var lat = 0.0;
-        var lng = 0.0;
-
-        if (shipment.ShipmentStatus is ShipmentStatusEnum.ApplyingSurcharge
-            or ShipmentStatusEnum.StorageInWarehouse
-            or ShipmentStatusEnum.Delivered
-            or ShipmentStatusEnum.Completed)
+        // 🔹 8. Đóng gói kết quả với fullPath
+        position.Status = mappedShipmentStatus.ToString();
+        position.AdditionalData = new
         {
-            // 🚩 Điểm cuối: ToStation
-            lat = fullPath.LastOrDefault()?.To.Latitude ?? 0;
-            lng = fullPath.LastOrDefault()?.To.Longitude ?? 0;
-        }
-        else if (shipment.ShipmentStatus is ShipmentStatusEnum.PickedUp)
-        {
-            // 🚩 Điểm đầu: FromStation
-            lat = fullPath.FirstOrDefault()?.From.Latitude ?? 0;
-            lng = fullPath.FirstOrDefault()?.From.Longitude ?? 0;
-        }
-
-        return new TrainPositionResult
-        {
-            TrainId = trainId,
-            Latitude = lat,
-            Longitude = lng,
-            Status = mappedShipmentStatus.ToString(),
-            Path = fullPath.SelectMany(p => p.Polyline).ToList(),
-            AdditionalData = new
+            RawTrainStatus = rawTrainStatus.ToString(),
+            Shipment = new
             {
-                RawTrainStatus = rawTrainStatus.ToString(),
-                Shipment = new
-                {
-                    shipment.Id,
-                    shipment.TrackingCode,
-                    shipment.SenderName,
-                    shipment.DestinationStationId,
-                    shipment.ShipmentStatus,
-                    shipment.TotalWeightKg,
-                    shipment.TotalVolumeM3,
-                    shipment.CreatedAt,
-                    FullPath = fullPath
-                }
+                shipment.Id,
+                shipment.TrackingCode,
+                shipment.SenderName,
+                shipment.DestinationStationId,
+                shipment.ShipmentStatus,
+                shipment.TotalWeightKg,
+                shipment.TotalVolumeM3,
+                shipment.CreatedAt,
+                FullPath = fullPath
             }
         };
+
+        // 🔹 9. Đồng bộ Firebase shipment_tracking
+        await _trainStateStore.SetShipmentTrackingAsync(
+            shipment.TrackingCode!,
+            trainId!,
+            position
+        );
+
+        return position;
     }
 
     // for getting train position based on trainId
