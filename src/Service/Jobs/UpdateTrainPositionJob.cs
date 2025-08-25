@@ -136,7 +136,7 @@ namespace MetroShip.Service.Jobs
             }
 
             // Nếu tất cả legs xong -> Delivered
-            if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
+            /*if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
             {
                 shipment.ShipmentStatus = ShipmentStatusEnum.Delivered;
 
@@ -150,7 +150,7 @@ namespace MetroShip.Service.Jobs
                 });
 
                 _shipmentRepository.Update(shipment);
-            }
+            }*/
 
             await _unitOfWork.SaveChangeAsync();
 

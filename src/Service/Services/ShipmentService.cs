@@ -1118,7 +1118,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 ParcelId = parcel.Id,
                 CurrentShipmentStatus = shipment.ShipmentStatus,
                 CurrentParcelStatus = parcel.Status,
-                TrackingForShipmentStatus = ShipmentStatusEnum.ToReturn,
+                TrackingForShipmentStatus = shipment.ShipmentStatus,
                 Status = $"Kiện hàng {parcel.ParcelCode} đã được yêu cầu hoàn bởi người gửi",
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = customerId
@@ -1397,7 +1397,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         };
     }
 
-    public async Task<UpdateShipmentStatusResponse> UpdateShipmentStatusAsync(UpdateShipmentStatusRequest request, ShipmentStatusEnum targetStatus, string staffId)
+    /*public async Task<UpdateShipmentStatusResponse> UpdateShipmentStatusAsync(UpdateShipmentStatusRequest request, ShipmentStatusEnum targetStatus, string staffId)
     {
         var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(request.TrackingCode)
                        ?? throw new Exception($"Không tìm thấy shipment với mã {request.TrackingCode}");
@@ -1415,7 +1415,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipment.ShipmentStatus = targetStatus;
 
         // Tạo message tùy theo trạng thái
-        string message = targetStatus switch
+        /*string message = targetStatus switch
         {
             ShipmentStatusEnum.UnloadingAtStation =>
                 $"🚉 Đơn hàng đã được dỡ xuống tại trạm **{stationName}** sau khi giao hàng.",
@@ -1434,7 +1434,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 : $"Đã lưu kho tại {stationName}";
 
             await _shipmentRepository.AddParcelTrackingAsync(parcel.Id, note, currentStationId, staffId);
-        }
+        }#1#
 
         _shipmentRepository.Update(shipment);
 
@@ -1453,7 +1453,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         return new UpdateShipmentStatusResponse
         {
-            Message = message,
+            //Message = message,
             TrackingCode = shipment.TrackingCode,
             ShipmentStatus = targetStatus.ToString(),
             CurrentStationId = currentStationId,
@@ -1466,7 +1466,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     {
         return (current == ShipmentStatusEnum.Completed && target == ShipmentStatusEnum.UnloadingAtStation)
             || (current == ShipmentStatusEnum.UnloadingAtStation && target == ShipmentStatusEnum.StorageInWarehouse);
-    }
+    }*/
 
     public async Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId)
     {

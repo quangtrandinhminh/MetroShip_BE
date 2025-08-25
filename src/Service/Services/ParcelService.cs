@@ -136,7 +136,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         if (parcel == null)
         {
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status400BadRequest);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status400BadRequest);
         }
 
         return _mapper.MapToParcelResponse(parcel);
@@ -279,16 +279,16 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                   pt.StationId == stationId &&
                   pt.DeletedAt == null);
 
+        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (isParcelTrackingExists)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            ResponseMessageParcel.PARCEL_ALREADY_LOADED,
+            $"Bưu kiện {parcel.ParcelCode} đã được báo lên hàng tại ga {stationName}",
             StatusCodes.Status400BadRequest);
         }
 
         string result;
-        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (isLost)
         {
             result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.InTransit);
@@ -313,8 +313,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
         }
 
-        // Check if the shipment is ready for the next status: all parcels confirmed for InTransit
-        if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.InTransit))
+        // Check if the shipment is ready for the next status: all parcels confirmed for InTransit at THIS STATION
+        // This status can be repeated at different stations
+        if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.InTransit, stationId))
         {
             // Update shipment status and timestamps
             shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
@@ -388,19 +389,20 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                   pt.StationId == stationId &&
                   pt.DeletedAt == null);
 
+        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (isParcelTrackingExists)
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                $"Bưu kiện {parcelCode} đã được xác nhận xuống tại ga này. ",
+                $"Bưu kiện {parcelCode} đã được xác nhận xuống tại ga {stationName}.",
                 StatusCodes.Status400BadRequest);
         }
 
         // Update parcel status to WaitingForNextTrain or Arrived
         string result;
-        var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         if (!stationId.Equals(shipment.DestinationStationId))
         {
+            // This station is not the destination station, so update to WaitingForNextTrain
             if (isLost)
             {
                 result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.WaitingForNextTrain);
@@ -423,8 +425,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
             }
 
-            // Check if the shipment is ready for the next status: all parcels confirmed for WaitingForNextTrain
-            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.WaitingForNextTrain))
+            // Check if the shipment is ready for the next status: all parcels confirmed for WaitingForNextTrain at THIS STATION
+            // This status can be repeated at different stations
+            if (IsReadyForNextShipmentStatus(parcel.ShipmentId, ShipmentStatusEnum.WaitingForNextTrain, stationId))
             {
                 // Update shipment status and timestamps
                 shipment.ShipmentStatus = ShipmentStatusEnum.WaitingForNextTrain;
@@ -445,6 +448,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
         else
         {
+            // This station is the destination station, so update to Arrived
             if (isLost)
             {
                 result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.Arrived);
@@ -506,7 +510,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             includeProperties: p => p.Shipment);
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         // Only allow update for parcels in shipment status Stored
         var shipment = parcel.Shipment;
@@ -602,7 +606,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             includeProperties: p => p.Shipment);
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         // Check if the parcel is already reported as Lost
         var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
@@ -647,7 +651,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             .FirstOrDefaultAsync(p => p.Id == request.ParcelId.ToString());
 
         if (parcel == null)
-            throw new AppException(ErrorCode.NotFound, "Parcel not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         if (parcel.ParcelStatus != ParcelStatusEnum.AwaitingConfirmation)
             throw new AppException(ErrorCode.BadRequest, "Parcel is not in AwaitingConfirmation status", StatusCodes.Status400BadRequest);
@@ -701,6 +705,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         }
     }*/
 
+    // check if all parcels in shipment was updated to nextShipmentStatus
     private bool IsReadyForNextShipmentStatus(string shipmentId, ShipmentStatusEnum nextShipmentStatus)
     {
         _logger.Information("Checking if shipment {ShipmentId} is ready for status {NextStatus}",
@@ -735,7 +740,42 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         return false;
     }
 
-    // check if all parcels in shipment was lost, end the shipment 
+    // for status repeat many times at different stations, e.g. InTransit, WaitingForNextTrain
+    private bool IsReadyForNextShipmentStatus(string shipmentId, ShipmentStatusEnum nextShipmentStatus, string stationId)
+    {
+        _logger.Information("Checking if shipment {ShipmentId} is ready for status {NextStatus} at station {StationId}",
+            shipmentId, nextShipmentStatus, stationId);
+
+        // Count parcels in the shipment
+        var normalParcelCount = _shipmentRepository
+            .GetAll()
+            .Where(x => x.Id == shipmentId && x.DeletedAt == null)
+            .SelectMany(x => x.Parcels)
+            .Count(x => x.DeletedAt == null && x.Status == ParcelStatusEnum.Normal);
+
+        // count parcelTracking have TrackingForShipmentStatus == nextShipmentStatus
+        var parcelTrackingCount = _parcelRepository.GetAll()
+            .Where(x => x.ShipmentId == shipmentId && x.DeletedAt == null && x.Status == ParcelStatusEnum.Normal)
+            .SelectMany(p => p.ParcelTrackings)
+            .Count(pt => pt.TrackingForShipmentStatus == nextShipmentStatus && pt.StationId == stationId && pt.DeletedAt == null);
+
+        _logger.Information("Normal parcel count: {ParcelCount}, Tracking count for status {NextStatus}: {TrackingCount}",
+            normalParcelCount, nextShipmentStatus, parcelTrackingCount);
+
+        // Check if all parcels have the next status
+        if (normalParcelCount == parcelTrackingCount)
+        {
+            _logger.Information("Shipment {ShipmentId} is ready for status {NextStatus}  at station {StationId}",
+                shipmentId, nextShipmentStatus, stationId);
+            return true;
+        }
+
+        _logger.Information("Shipment {ShipmentId} is NOT ready for status {NextStatus}  at station {StationId}",
+            shipmentId, nextShipmentStatus, stationId);
+        return false;
+    }
+
+    // check if all parcels in shipment was lost, end the shipment by ToCompensate status
     private async Task CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
     {
         _logger.Information("Checking shipment {ShipmentId} for lost parcels", shipmentId);
@@ -745,7 +785,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         if (shipment == null)
         {
-            throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
+            throw new AppException(ErrorCode.NotFound, ResponseMessageShipment.SHIPMENT_NOT_FOUND, StatusCodes.Status404NotFound);
         }
 
         // Check if all parcels are lost
@@ -777,8 +817,6 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             _logger.Information("Shipment {ShipmentId} marked as ToCompensate - all parcels lost", shipmentId);
         }
     }
-
-    
 }
 
 
