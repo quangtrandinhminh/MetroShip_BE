@@ -46,7 +46,7 @@ public static class TrackingCodeGenerator
     {
         // 2) Build tracking code via interpolation
         return $"{shipmentCode}" + "-" +                      // e.g. "MS"
-               $"{++seqInShipment:D2}";                       // zero-padded 2-digit sequence
+               $"{seqInShipment:D2}";                       // zero-padded 2-digit sequence
     }
 
     // Gnerate QR code
