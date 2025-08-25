@@ -1359,27 +1359,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // 5.1 Kiểm tra endpoint đã có train khác chiếm chưa
         var otherTrainAtSameStation = await _trainRepository
-         .GetAllWithCondition()
-         .Where(t => t.LineId == train.LineId
-                  && t.Id != train.Id
-                  && t.CurrentStationId == chosen.Id)
-         .AnyAsync();
+            .GetAllWithCondition()
+            .Where(t => t.LineId == train.LineId
+                     && t.Id != train.Id
+                     && t.CurrentStationId == chosen.Id)
+            .AnyAsync();
 
         if (otherTrainAtSameStation)
-        {
-            throw new Exception(
-                "Không thể schedule: đã có đoàn tàu khác đang ở đầu tuyến này, vui lòng chọn hướng ngược lại.");
-        }
+            throw new Exception("Không thể schedule: đã có đoàn tàu khác đang ở đầu tuyến này, vui lòng chọn hướng ngược lại.");
 
-        _logger.Information(
-            "🚆 Train {TrainId} scheduled to start at station {StationId}.",
-            train.Id, chosen.Id);
+        _logger.Information("🚆 Train {TrainId} scheduled to start at station {StationId}.", train.Id, chosen.Id);
 
         // 6. Reset trạng thái trong DB
         train.CurrentStationId = chosen.Id;
         train.Latitude = chosen.Latitude;
         train.Longitude = chosen.Longitude;
-        train.Status = TrainStatusEnum.Scheduled;   // reset về trạng thái Complete
+        train.Status = TrainStatusEnum.Scheduled;   // chỉ schedule, chưa chạy
         train.LastUpdatedAt = DateTimeOffset.UtcNow;
 
         _trainRepository.Update(train);
@@ -1390,16 +1385,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var direction = InferTrainDirectionFromCurrentStation(train, train.CurrentStationId!);
         await _trainStateStore.SetDirectionAsync(train.Id, direction);
-        await _trainStateStore.SetSegmentIndexAsync(train.Id, -1);
+        await _trainStateStore.SetSegmentIndexAsync(train.Id, 0);
 
+        // ❌ Không set StartTime khi schedule
+        await _trainStateStore.RemoveStartTimeAsync(train.Id);
+
+        // ✅ Lưu lại position hiện tại để client đọc được ngay
         var position = new TrainPositionResult
         {
             TrainId = train.Id,
             Latitude = train.Latitude ?? 0,
             Longitude = train.Longitude ?? 0,
             Status = train.Status.ToString(),
-            StartTime = DateTimeOffset.UtcNow,
-            ProgressPercent = 0
+            ProgressPercent = 0,
+            FromStation = chosen.StationNameVi,
+            ToStation = null,
+            Path = new List<GeoPoint>()
         };
         await _trainStateStore.SetPositionResultAsync(train.Id, position);
 
