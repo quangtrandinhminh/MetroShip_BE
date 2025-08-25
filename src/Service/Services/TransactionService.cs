@@ -50,7 +50,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         if (shipment == null)
         {
             throw new AppException(ErrorCode.BadRequest,
-                "Shipment not found",
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
                 StatusCodes.Status404NotFound);
         }
 
@@ -270,7 +270,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         if (shipment == null)
         {
             throw new AppException(ErrorCode.BadRequest,
-                               "Shipment not found",
+                               ResponseMessageShipment.SHIPMENT_NOT_FOUND,
                                               StatusCodes.Status404NotFound);
         }
 

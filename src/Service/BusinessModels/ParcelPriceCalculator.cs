@@ -48,8 +48,8 @@ public static class ParcelPriceCalculator
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                $"Category '{categoryInsurance.ParcelCategory.CategoryName}' has required insurance " +
-                $"and requires ValueVnd of the parcel for insurance calculation.",
+                $"Loại hàng '{categoryInsurance.ParcelCategory.CategoryName}' yêu cầu bắt buộc mua bảo hiểm" +
+                $"và cần giá trị hàng hóa của bưu kiện để tính phí bảo hiểm",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -75,7 +75,7 @@ public static class ParcelPriceCalculator
     {
         if (policy.InsuranceFeeRateOnValue != null && parcel.ValueVnd > 0)
         {
-            return parcel.ValueVnd * policy.InsuranceFeeRateOnValue;
+            return Math.Max((decimal)(parcel.ValueVnd * policy.InsuranceFeeRateOnValue), (decimal) policy.BaseFeeVnd!);
         }
 
         return policy.BaseFeeVnd;

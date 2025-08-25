@@ -686,7 +686,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     {
         // 🔹 1. Lấy shipment + itinerary với đầy đủ thông tin route và stations
         var shipment = await _trainRepository.GetShipmentWithItinerariesAndRoutesAsync(trackingCode)
-            ?? throw new AppException(ErrorCode.NotFound, "Shipment not found", StatusCodes.Status404NotFound);
+            ?? throw new AppException(ErrorCode.NotFound, ResponseMessageShipment.SHIPMENT_NOT_FOUND, StatusCodes.Status404NotFound);
 
         if (shipment.ShipmentItineraries == null || shipment.ShipmentItineraries.Count == 0)
             throw new AppException(ErrorCode.BadRequest, "Shipment has no itinerary", StatusCodes.Status400BadRequest);
