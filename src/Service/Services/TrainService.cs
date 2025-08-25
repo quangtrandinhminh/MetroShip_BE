@@ -735,7 +735,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var itinerary = shipment.ShipmentItineraries
             .FirstOrDefault(i => i.TrainId != null);
 
-        // Nếu chưa có train assigned, vẫn trả về thông tin itinerary
+        // Nếu chưa có train → vẫn trả InTransit
         if (itinerary?.TrainId == null)
         {
             // Trả về thông tin cơ bản với fullPath
@@ -744,7 +744,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 TrainId = "not-assigned-yet",
                 Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
                 Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
-                Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                Status = ShipmentStatusEnum.InTransit.ToString(), // ✅ luôn InTransit
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -778,7 +778,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 TrainId = trainId,
                 Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
                 Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
-                Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                Status = ShipmentStatusEnum.InTransit.ToString(), // ✅ luôn InTransit
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -804,7 +804,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             ?? throw new AppException(ErrorCode.NotFound, "Train position not found", StatusCodes.Status404NotFound);
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
-        var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
+        var mappedShipmentStatus = ShipmentStatusEnum.InTransit; // ✅ luôn InTransit
 
         // 🔹 7. Xử lý shipment itinerary
         var currentLeg = shipment.ShipmentItineraries
