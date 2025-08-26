@@ -467,6 +467,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     // from staff, need tracking parcel
     public async Task PickUpShipment (ShipmentPickUpRequest request)
     {
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
         _logger.Information("Confirm shipment with ID: {@shipmentId}", request.ShipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
                        x => x.Id == request.ShipmentId, false,
@@ -511,7 +512,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         {
             ShipmentId = shipment.Id,
             CurrentShipmentStatus = ShipmentStatusEnum.PickedUp,
-            Status = $"Đơn hàng đã được nhận tại Ga {stationName}",
+            Status = $"Nhân viên đã nhận đơn hàng {shipment.TrackingCode} tại Ga {stationName} từ người gửi.",
             EventTime = shipment.PickedUpAt.Value,
             UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
         });
@@ -526,8 +527,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
                 ParcelId = parcel.Id,
                 CurrentShipmentStatus = shipment.ShipmentStatus,
                 CurrentParcelStatus = parcel.Status,
+                StationId = stationId,
                 TrackingForShipmentStatus = ShipmentStatusEnum.PickedUp,
-                Status = $"Kiện hàng đã được nhận tại Ga {stationName}",
+                Status = $"Nhân viên đã nhận kiện hàng {parcel.ParcelCode} tại Ga {stationName} từ người gửi.",
                 EventTime = shipment.PickedUpAt.Value,
                 UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
             });
