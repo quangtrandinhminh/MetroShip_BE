@@ -117,8 +117,8 @@ public static class ParcelPriceCalculator
             return (decimal)(policy.MaxCompensationRateOnShippingFee * shippingFeeVnd.Value);
         }
 
-        return policy.InsuranceFeeRateOnValue != null
-            ? valueVnd.Value * policy.InsuranceFeeRateOnValue.Value
+        return policy.MaxCompensationRateOnValue != null
+            ? valueVnd.Value * policy.MaxCompensationRateOnValue.Value
             : valueVnd.Value;
     }
 
