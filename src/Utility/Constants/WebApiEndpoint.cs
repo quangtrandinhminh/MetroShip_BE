@@ -105,6 +105,7 @@
             public const string CreateNotification = BaseEndpoint;
             public const string UpdateNotification = BaseEndpoint;
             public const string DeleteNotification = $"{BaseEndpoint}/{{id}}";
+            public const string DeleteAllNotifications = $"{BaseEndpoint}/delete-all";
             public const string GetUnreadCount = $"{BaseEndpoint}/unread-count";
             public const string MarkAsRead = $"{BaseEndpoint}/{{id}}/read";
             public const string MarkAllAsRead = $"{BaseEndpoint}/read-all";
