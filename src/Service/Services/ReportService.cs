@@ -55,7 +55,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             ? Math.Round((double)newShipmentsCount / totalShipments * 100, 2)
             : 0;
 
-        var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed);
+        var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Compensated);
         var newCompleteShipmentsCount = await query.CountAsync(
             s => s.ShipmentStatus == ShipmentStatusEnum.Completed && s.CreatedAt >= todayUtc);
         var percentageNewCompleteShipments = totalCompleteShipments > 0
