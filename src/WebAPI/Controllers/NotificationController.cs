@@ -121,6 +121,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpDelete]
         [Route(WebApiEndpoint.Notification.DeleteAllNotifications)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin) + "," + nameof(UserRoleEnum.Customer))]
         public async Task<IActionResult> DeleteAllNotifications()
         {
             var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
