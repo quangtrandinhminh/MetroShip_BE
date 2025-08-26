@@ -1,4 +1,5 @@
-﻿using MetroShip.Service.ApiModels.Graph;
+﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Utility.Enums;
@@ -20,15 +21,16 @@ public interface IShipmentService
 
     //Task<List<ItineraryResponse>> CheckAvailableTimeSlotsAsync(string shipmentId, int maxAttempt);
     Task UpdateShipmentStatusNoDropOff(string shipmentId);
-    Task CancelUpdateNoDropOffJob(string shipmentId);
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
     Task CancelShipment(ShipmentRejectRequest request);
     Task FeedbackShipment(ShipmentFeedbackRequest request);
     Task UpdateShipmentStatusUnpaid(string shipmentId);
     Task ApplySurchargeForShipment(string shipmentId);
+    Task<(Shipment returnShipment, string message)> ReturnForShipment(string shipmentId,
+        CancellationToken cancellationToken = default);
     Task<(string message, string SenderId)> CompleteShipment(ShipmentPickUpRequest request);
     Task<ShipmentLocationResponse> GetShipmentLocationAsync(string trackingCode);
-    Task<UpdateShipmentStatusResponse> UpdateShipmentStatusAsync(UpdateShipmentStatusRequest request, ShipmentStatusEnum targetStatus, string staffId);
+    //Task<UpdateShipmentStatusResponse> UpdateShipmentStatusAsync(UpdateShipmentStatusRequest request, ShipmentStatusEnum targetStatus, string staffId);
     Task<List<ShipmentItineraryResponseDto>> AssignTrainToShipmentAsync(string trackingCode, string trainId);
 }

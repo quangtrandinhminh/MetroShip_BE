@@ -179,16 +179,27 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         query = ApplyDateFilter(query, finalFilterType, request, s => s.CreatedAt);
 
         var data = await query
-            .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
-            .Select(g => new ShipmentDataItem
-            {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
-                TotalShipments = g.Count(),
-                CompletedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed)
-            })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
-            .ToListAsync();
+    .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+    .Select(g => new ShipmentDataItem
+    {
+        Year = g.Key.Year,
+        Month = g.Key.Month,
+        TotalShipments = g.Count(),
+        CompletedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed),
+        ReturnedShipments = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Returned),
+        OnTimeDeliveryRate = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed) > 0
+            ? Math.Round(
+                g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed &&
+                             s.CompletedAt <= s.StartReceiveAt) * 100.0 /
+                Math.Max(1, g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed)), 2)
+            : 0,
+        SatisfactionRate = g.Any(s => s.Rating != null)
+            ? Math.Round(g.Average(s => (double)s.Rating.Value) * 20, 2)
+            : 0
+    })
+    .OrderBy(x => x.Year)
+    .ThenBy(x => x.Month)
+    .ToListAsync();
 
         return new RevenueChartResponse<ShipmentDataItem>
         {
@@ -326,18 +337,70 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         };
     }
 
+    public async Task<RevenueChartResponse<ShipmentFeedbackDataItem>> GetShipmentFeedbackChartAsync(RevenueChartRequest request)
+    {
+        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+
+        var query = _shipmentRepository.GetAllWithCondition()
+            .Where(s => s.FeedbackAt != null); // chỉ lấy shipment có feedback
+
+        query = ApplyDateFilter(query, finalFilterType, request, s => s.FeedbackAt.Value);
+
+        var data = await query
+            .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
+            .Select(g => new ShipmentFeedbackDataItem
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                TotalFeedbacks = g.Count(),
+                AverageRating = g.Any(s => s.Rating != null)
+                    ? Math.Round(g.Average(s => (double)s.Rating.Value), 2)
+                    : 0,
+                PositiveFeedbackRate = g.Any(s => s.Rating != null)
+                    ? Math.Round(g.Count(s => s.Rating >= 4) * 100.0 / g.Count(s => s.Rating != null), 2)
+                    : 0,
+                ResponseRate = g.Count(s => s.FeedbackResponse != null) > 0
+                    ? Math.Round(g.Count(s => s.FeedbackResponse != null) * 100.0 / g.Count(), 2)
+                    : 0,
+                AvgResponseTimeHours = g.Count(s => s.FeedbackResponse != null) > 0
+                    ? Math.Round(
+                        g.Where(s => s.FeedbackRespondedAt != null)
+                         .Average(s => (s.FeedbackRespondedAt.Value - s.FeedbackAt.Value).TotalHours), 2)
+                    : 0
+            })
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToListAsync();
+
+        return new RevenueChartResponse<ShipmentFeedbackDataItem>
+        {
+            FilterType = finalFilterType,
+            Year = request.Year,
+            Quarter = request.Quarter,
+            StartYear = request.StartYear,
+            StartMonth = request.StartMonth,
+            EndYear = request.EndYear,
+            EndMonth = request.EndMonth,
+            Data = data
+        };
+    }
+
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
-        IQueryable<T> query,
-        RevenueFilterType filterType,
-        RevenueChartRequest request,
-        Expression<Func<T, DateTimeOffset>> dateSelector)
+    IQueryable<T> query,
+    RevenueFilterType filterType,
+    RevenueChartRequest request,
+    Expression<Func<T, DateTimeOffset>> dateSelector)
     {
+        var propertyName = GetPropertyName(dateSelector);
+
         switch (filterType)
         {
             case RevenueFilterType.Year:
                 if (request.Year.HasValue)
-                    query = query.Where(x => EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value);
+                {
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value);
+                }
                 break;
 
             case RevenueFilterType.Quarter:
@@ -345,10 +408,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 {
                     var startMonth = (request.Quarter.Value - 1) * 3 + 1;
                     var endMonth = startMonth + 2;
+
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Year == request.Year.Value &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month >= startMonth &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)).Month <= endMonth);
+                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value &&
+                        EF.Property<DateTimeOffset>(x, propertyName).Month >= startMonth &&
+                        EF.Property<DateTimeOffset>(x, propertyName).Month <= endMonth);
                 }
                 break;
 
@@ -356,18 +420,39 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 if (request.StartYear.HasValue && request.StartMonth.HasValue &&
                     request.EndYear.HasValue && request.EndMonth.HasValue)
                 {
-                    var start = new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero);
-                    var end = new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
-                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero);
+                    var start = new DateTimeOffset(
+                        request.StartYear.Value,
+                        request.StartMonth.Value,
+                        1, 0, 0, 0, TimeSpan.Zero);
+
+                    var end = new DateTimeOffset(
+                        request.EndYear.Value,
+                        request.EndMonth.Value,
+                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value),
+                        23, 59, 59, TimeSpan.Zero);
+
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) >= start &&
-                        EF.Property<DateTimeOffset>(x, GetPropertyName(dateSelector)) <= end);
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
+                }
+                break;
+
+            case RevenueFilterType.day: // ✅ thêm lọc theo ngày cụ thể
+                if (request.Day.HasValue)
+                {
+                    var targetDate = request.Day.Value.Date;
+                    var start = new DateTimeOffset(targetDate, TimeSpan.Zero);
+                    var end = start.AddDays(1).AddTicks(-1);
+
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
                 }
                 break;
 
             case RevenueFilterType.Default:
             default:
-                // Không filter gì đặc biệt cho Default
+                // Không filter gì cho Default
                 break;
         }
 

@@ -5,5 +5,5 @@ namespace MetroShip.Repository.Interfaces;
 
 public interface ITrainScheduleRepository : IBaseRepository<TrainSchedule>
 {
-    
+    Task<IList<TrainSchedule>> GetTrainSchedulesByTrainListAsync(IList<string> trainIds);
 }

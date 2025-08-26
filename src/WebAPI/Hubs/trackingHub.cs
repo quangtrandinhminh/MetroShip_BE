@@ -9,13 +9,13 @@ using ILogger = Serilog.ILogger;
 namespace MetroShip.WebAPI.Hubs;
 
 //[Authorize]
-public class trackingHub : Hub
+public class TrackingHub : Hub
 {
     public static readonly Dictionary<int, string> _userConnectionMap = new();
     private readonly ILogger _logger;
     private readonly ITrainService _trainService;
 
-    public trackingHub(IServiceProvider serviceProvider)
+    public TrackingHub(IServiceProvider serviceProvider)
     {
         _logger = serviceProvider.GetRequiredService<ILogger>();
         _trainService = serviceProvider.GetRequiredService<ITrainService>();

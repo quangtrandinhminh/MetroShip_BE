@@ -2,6 +2,7 @@
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -41,6 +42,15 @@ namespace MetroShip.WebAPI.Controllers
         {
             var stations = await _stationService.GetStationsNearUsers(request);
             return Ok(BaseResponse.OkResponseDto(stations));
+        }
+
+        [HttpPost("distance")]
+        public async Task<IActionResult> CalculateDistance([FromBody] DistanceRequest request)
+        {
+            var distance = CalculateHelper.CalculateDistanceBetweenTwoCoordinatesByHaversine(
+                               request.FromLatitude, request.FromLongitude,
+                                              request.ToLatitude, request.ToLongitude);
+            return Ok(BaseResponse.OkResponseDto(distance));
         }
 
         [HttpPost]

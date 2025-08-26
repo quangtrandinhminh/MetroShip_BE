@@ -72,8 +72,6 @@ namespace MetroShip.Service.Services
             _logger.Information($"Creating notification for user {request.ToUserId}");
 
             var notification = _mapper.MapNotificationRequest(request);
-            notification.CreatedAt = DateTime.UtcNow.AddHours(7);
-            notification.IsRead = false;
 
             await _notificationRepository.AddAsync(notification);
             await _notificationRepository.SaveChangesAsync();

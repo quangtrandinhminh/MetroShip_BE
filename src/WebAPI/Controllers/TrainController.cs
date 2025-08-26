@@ -6,11 +6,14 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using MetroShip.WebAPI.Hubs;
+using MetroShip.WebAPI.Jobs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
+using ILogger = Serilog.ILogger;
 
 namespace MetroShip.WebAPI.Controllers
 {
@@ -18,7 +21,9 @@ namespace MetroShip.WebAPI.Controllers
     public class TrainController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly ITrainService _trainService = serviceProvider.GetRequiredService<ITrainService>();
-        private readonly IHubContext<trackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<trackingHub>>();
+        private readonly IHubContext<TrackingHub> _hub = serviceProvider.GetRequiredService<IHubContext<TrackingHub>>();
+        private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
+        private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
 
         [Authorize]
         [HttpGet]
@@ -94,7 +99,7 @@ namespace MetroShip.WebAPI.Controllers
         /// </summary>
         /// <param name="trackingCode"></param>
         /// <returns></returns>
-        [HttpGet("{trackingCode}/position")]
+        [HttpGet("api/{trackingCode}/position")]
         public async Task<IActionResult> GetPositionByTrackingCode(string trackingCode)
         {
             var result = await _trainService.GetTrainPositionByTrackingCodeAsync(trackingCode);
@@ -128,10 +133,79 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost("/api/train/schedule")]
-        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery] bool startFromEnd = false)
+        public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery(Name = "startFromEnd")] int startFromEndValue = 0)
         {
+            // ép về bool: 1 => true, còn lại => false
+            bool startFromEnd = startFromEndValue == 1;
+
             var response = await _trainService.ScheduleTrainAsync(trainIdOrCode, startFromEnd);
             return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+
+        // for test
+        [HttpGet("{trainId}/position")]
+        public async Task<IActionResult> GetTrainPosition(string trainId)
+        {
+                var result = await _trainService.GetTrainPositionAsync1(trainId);
+                return Ok(BaseResponse.OkResponseDto(result));
+            
+        }
+
+        /// <summary>
+        /// Lấy thêm dữ liệu bổ sung (FullPath, Shipments, Parcels).
+        /// </summary>
+        [HttpGet("{trainId}/additional")]
+        public async Task<IActionResult> GetTrainAdditionalData(string trainId)
+        {
+                var result = await _trainService.GetTrainAdditionalDataAsync(trainId);
+                return Ok(BaseResponse.OkResponseDto(result));
+            
+        }
+
+        /// <summary>
+        /// Gửi cập nhật vị trí đến tất cả client đang theo dõi qua SignalR Hub.
+        /// </summary>
+        [HttpPost("{trainId}/broadcast")]
+        public async Task<IActionResult> BroadcastTrainPosition(string trainId)
+        {
+            try
+            {
+                var result = await _trainService.GetTrainPositionAsync1(trainId);
+
+                // Phát đi room có tên = trainId
+                await _hub.Clients.Group(trainId).SendAsync("ReceiveLocationUpdate", result);
+
+
+                return Ok(new { Message = "Broadcast thành công", TrainId = trainId });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Message = ex.Message });
+            }
+        }
+        // call by start train simulation
+        private async Task ScheduleSimulateTrainJob(string trainId, int intervalInSeconds)
+        {
+            _logger.Information("Scheduling simulator train job for train ID: {TrainId}", trainId);
+            var jobData = new JobDataMap
+            {
+                { "Simulate-for-trainId", trainId }
+            };
+
+            var jobDetail = JobBuilder.Create<SimulateTrainJob>()
+                .WithIdentity($"SimulatorTrainJob-{trainId}")
+                .UsingJobData(jobData)
+                .Build();
+
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity($"Trigger-SimulatorTrainJob-{trainId}")
+                .StartNow()
+                .WithSimpleSchedule(x => x
+                    .WithIntervalInSeconds(intervalInSeconds)
+                    .RepeatForever())
+                .Build();
+
+            await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
         }
     }
 }

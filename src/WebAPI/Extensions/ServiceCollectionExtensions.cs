@@ -234,6 +234,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInsuranceService, InsuranceService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IBackgroundJobService, BackgroundJobService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();

@@ -157,7 +157,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(data);
         }
 
-        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        /*[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPut(WebApiEndpoint.ShipmentEndpoint.UnloadingAtStation)]
         public async Task<IActionResult> UpdateStatusUnload([FromBody] UpdateShipmentStatusRequest request)
         {
@@ -173,7 +173,7 @@ namespace MetroShip.WebAPI.Controllers
             var staffId = User?.Identity?.Name ?? "unknown";
             var result = await shipmentService.UpdateShipmentStatusAsync(request, ShipmentStatusEnum.StorageInWarehouse, staffId);
             return Ok(result);
-        }
+        }*/
 
         //[Authorize(Roles = nameof(UserRoleEnum.Staff))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.AssignTrainToShipment)]
@@ -189,6 +189,25 @@ namespace MetroShip.WebAPI.Controllers
         {
             await shipmentService.CancelShipment(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.CANCELLED_SUCCESS, null));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Customer))]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.ReturnForShipment)]
+        public async Task<IActionResult> ReturnForShipment([FromRoute] string shipmentId)
+        {
+            var (returnShipment, message) = await shipmentService.ReturnForShipment(shipmentId);
+            var notification = new NotificationCreateRequest
+            {
+                ToUserId = returnShipment.SenderId,
+                Message = message,
+            };
+            await _notificationHub.SendNotification(notification);
+            return Ok(BaseResponse.OkResponseDto(message, new 
+            { 
+                ForShipmentId = returnShipment.ReturnForShipmentId, 
+                ReturnShipmentId = returnShipment.Id,
+                ReturnShipmentTrackingCode = returnShipment.TrackingCode 
+            }));
         }
     }
 }

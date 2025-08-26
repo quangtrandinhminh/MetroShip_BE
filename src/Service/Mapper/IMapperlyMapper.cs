@@ -46,6 +46,7 @@ public interface IMapperlyMapper
     /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
+    void MapToShipmentEntity(Shipment entity, Shipment request);
 
     // station
     StationResponse MapToStationResponse(Station entity);

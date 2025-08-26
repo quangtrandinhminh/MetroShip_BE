@@ -75,7 +75,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             SenderPhone = s.SenderPhone,
             RecipientName = s.RecipientName,
             RecipientPhone = s.RecipientPhone,
-
+            IsCompensationRequested = s.SupportTickets.Any(t => t.SupportType == SupportTypeEnum.CompensationRequired),
             ShipmentStatus = s.ShipmentStatus,
    
             TotalCostVnd = s.TotalCostVnd,
@@ -118,6 +118,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             ShipmentStatus = s.ShipmentStatus,
             WaitingForTrainCode = s.ShipmentItineraries.FirstOrDefault(i => i.IsCompleted == false)
                 .Train.TrainCode ?? s.WaitingForTrainCode,
+            IsCompensationRequested = s.SupportTickets.Any(t => t.SupportType == SupportTypeEnum.CompensationRequired),
 
             // Financial fields
             TotalCostVnd = s.TotalCostVnd,
@@ -125,6 +126,8 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             TotalInsuranceFeeVnd = s.TotalInsuranceFeeVnd,
             TotalSurchargeFeeVnd = s.TotalSurchargeFeeVnd,
             TotalOverdueSurchargeFee = s.TotalOverdueSurchargeFee,
+            TotalRefundedFeeVnd = s.TotalRefundedFeeVnd,
+            TotalCompensationFeeVnd = s.TotalCompensationFeeVnd,
 
             // Measurement fields
             TotalKm = s.TotalKm,
@@ -228,6 +231,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 TimeSlotId = itinerary.TimeSlotId,
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
+                Message = itinerary.Message,
             }).OrderBy(itinerary => itinerary.LegOrder).ToList(),
 
             Parcels = s.Parcels

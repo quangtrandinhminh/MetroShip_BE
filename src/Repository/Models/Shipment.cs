@@ -56,6 +56,12 @@ public partial class Shipment : BaseEntity
     [NotMapped]
     public string? CurrentStationAddress { get; set; } // Optional, if not provided
 
+    [NotMapped]
+    public bool IsReturnShipment => !string.IsNullOrEmpty(ReturnForShipmentId);
+
+    [NotMapped]
+    public bool IsCompensationRequested { get; set; } = false;
+
     // If staff load shipment to train, update this field
     // If staff unload shipment from train, update this field to null
     [StringLength(50)]

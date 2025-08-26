@@ -178,6 +178,8 @@
         public const string COMPLETED_SUCCESS = "Hoàn thành đơn hàng thành công.";
         public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Đơn hàng không ở trạng thái 'Chờ giao hàng'.";
         public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";
+        public const string SHIPMENT_CANNOT_BE_RETURNED = "Đơn hàng ở trạng thái chờ giao hàng hoặc đang tính phụ phí mới có thể yêu cầu trả hàng. ";
+        public const string SHIPMENT_ALREADY_TO_RETURN = "Đơn hàng đã được lên lịch trả hàng. ";
     }
 
     public class ResponseMessageItinerary
@@ -233,6 +235,7 @@
         public const string STATION_UPDATE_SUCCESS = "Cập nhật ga thành công.";
         public const string STATION_DELETE_SUCCESS = "Xóa ga thành công.";
         public const string STATION_CREATE_SUCCESS = "Tạo ga thành công.";
+        public const string NO_STATION_NEAR_USER = "Không có ga nào gần người dùng trong bán kính "; 
     }
 
     public class ResponseMessageRoute

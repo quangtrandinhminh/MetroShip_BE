@@ -34,11 +34,9 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-    private readonly IBaseRepository<Parcel> _parcelRepository = serviceProvider.GetRequiredService<IBaseRepository<Parcel>>();
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
-    private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
-    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+    private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
@@ -52,7 +50,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         if (shipment == null)
         {
             throw new AppException(ErrorCode.BadRequest,
-                "Shipment not found",
+                ResponseMessageShipment.SHIPMENT_NOT_FOUND,
                 StatusCodes.Status404NotFound);
         }
 
@@ -197,7 +195,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         _shipmentRepository.Update(shipment);
 
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        await CancelScheduledTransactionJob(transaction.Id);
+        await _backgroundJobService.CancelScheduleCancelTransactionJob(transaction.Id);
         return response;
     }
 
@@ -272,7 +270,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         if (shipment == null)
         {
             throw new AppException(ErrorCode.BadRequest,
-                               "Shipment not found",
+                               ResponseMessageShipment.SHIPMENT_NOT_FOUND,
                                               StatusCodes.Status404NotFound);
         }
 
@@ -300,58 +298,42 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    // cancel ScheduleUnpaidJob
-    public async Task CancelScheduledUnpaidJob(string shipmentId)
-    {
-        _logger.Information("Cancelling scheduled job to update shipment status to unpaid for ID: {@shipmentId}", shipmentId);
-        var jobKey = new JobKey($"UpdateShipmentToUnpaid-{shipmentId}");
-        var scheduler = await _schedulerFactory.GetScheduler();
-        if (await scheduler.CheckExists(jobKey))
-        {
-            await scheduler.DeleteJob(jobKey);
-            _logger.Information("Cancelled scheduled job for shipment ID: {@shipmentId}", shipmentId);
-        }
-        else
-        {
-            _logger.Warning("No scheduled job found for shipment ID: {@shipmentId}", shipmentId);
-        }
-    }
-
-    // cancel apply surcharge job
-    private async Task CancelApplySurchargeJob(string shipmentId)
-    {
-        _logger.Information("Canceling apply surcharge job for shipment ID: {@shipmentId}", shipmentId);
-        var jobKey = new JobKey($"ApplySurchargeJob-{shipmentId}");
-        if (await _schedulerFactory.GetScheduler().Result.CheckExists(jobKey))
-        {
-            await _schedulerFactory.GetScheduler().Result.DeleteJob(jobKey);
-            _logger.Information("Apply surcharge job canceled for shipment ID: {@shipmentId}", shipmentId);
-        }
-        else
-        {
-            _logger.Warning("No apply surcharge job found for shipment ID: {@shipmentId}", shipmentId);
-        }
-    }
-
     private async Task HandlePaymentForShipment(Shipment shipment, string userId)
     {
         _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
 
         if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingPayment)
         {
-            shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
-            shipment.PaidAt = CoreHelper.SystemTimeNow;
-            _shipmentTrackingRepository.Add(new ShipmentTracking
+            if (!shipment.IsReturnShipment)
             {
-                ShipmentId = shipment.Id,
-                CurrentShipmentStatus = shipment.ShipmentStatus,
-                Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
-                EventTime = CoreHelper.SystemTimeNow,
-                UpdatedBy = userId,
-            });
+                shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+                shipment.PaidAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
 
-            await CancelScheduledUnpaidJob(shipment.Id);
-            await ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+                await _backgroundJobService.CancelScheduledUnpaidJob(shipment.Id);
+                await _backgroundJobService.ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+            }
+            else
+            {
+                shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
+                shipment.PaidAt = CoreHelper.SystemTimeNow;
+
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+            }
         }
         else if (shipment.ShipmentStatus == ShipmentStatusEnum.AwaitingRefund)
         {
@@ -365,8 +347,6 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = userId,
             });
-
-            await CancelApplySurchargeJob(shipment.Id);
         }
         else if (shipment.ShipmentStatus == ShipmentStatusEnum.ApplyingSurcharge)
         {
@@ -379,7 +359,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 EventTime = CoreHelper.SystemTimeNow,
                 UpdatedBy = userId,
             });
-            await CancelApplySurchargeJob(shipment.Id);
+            await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
         }
         else if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation
             || shipment.ShipmentStatus == ShipmentStatusEnum.ToCompensate)
@@ -404,29 +384,6 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         }
 
         _shipmentRepository.Update(shipment);
-    }
-
-    private async Task ScheduleUpdateNoDropOffJob(string shipmentId, DateTimeOffset scheduledDateTime)
-    {
-        _logger.Information("Scheduling job to update shipment status to NoDropOff for ID: {@shipmentId}", shipmentId);
-        var jobData = new JobDataMap
-        {
-            { "NoDropOff-for-shipmentId", shipmentId }
-        };
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<UpdateShipmentToNoDropOff>()
-            .WithIdentity($"UpdateShipmentToNoDropOff-{shipmentId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-UpdateShipmentToNoDropOff-{shipmentId}")
-            .StartAt(scheduledDateTime.AddMinutes(5))
-            //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
-            .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
     }
 
     private async Task<Transaction> HandleCreateTransaction(Shipment shipment, TransactionRequest request)
@@ -465,7 +422,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             StatusCodes.Status400BadRequest);
         }
 
-        await ScheduleCancelTransactionJob(transaction.Id);
+        await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id);
         return transaction;
     }
 
@@ -486,45 +443,5 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         transaction.PaymentStatus = PaymentStatusEnum.Cancelled;
         _transactionRepository.Update(transaction);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-    }
-
-    // schedule job to cancel transaction after 15 minutes
-    private async Task ScheduleCancelTransactionJob(string transactionId)
-    {
-        _logger.Information("Scheduling job to cancel transaction with ID: {transactionId}", transactionId);
-        var jobData = new JobDataMap
-        {
-            { "CancelTransaction-for-transactionId", transactionId }
-        };
-
-        // Schedule the job to run after 15 minutes
-        var jobDetail = JobBuilder.Create<CancelTransactionJob>()
-            .WithIdentity($"CancelTransaction-{transactionId}")
-            .UsingJobData(jobData)
-            .Build();
-
-        var trigger = TriggerBuilder.Create()
-            .WithIdentity($"Trigger-CancelTransaction-{transactionId}")
-            .StartAt(CoreHelper.SystemTimeNow.AddMinutes(15))
-            .Build();
-
-        await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);
-    }
-
-    // cancel transaction cancellation job by transactionId
-    public async Task CancelScheduledTransactionJob(string transactionId)
-    {
-        _logger.Information("Cancelling scheduled job to cancel transaction with ID: {transactionId}", transactionId);
-        var jobKey = new JobKey($"CancelTransaction-{transactionId}");
-        var scheduler = await _schedulerFactory.GetScheduler();
-        if (await scheduler.CheckExists(jobKey))
-        {
-            await scheduler.DeleteJob(jobKey);
-            _logger.Information("Cancelled scheduled job for transaction ID: {transactionId}", transactionId);
-        }
-        else
-        {
-            _logger.Warning("No scheduled job found for transaction ID: {transactionId}", transactionId);
-        }
     }
 }

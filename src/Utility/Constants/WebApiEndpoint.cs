@@ -81,6 +81,7 @@
             public const string CancelShipment = BaseEndpoint + "/cancel";
             public const string FeedbackShipment = BaseEndpoint + "/feedback";
             public const string CompleteShipment = BaseEndpoint + "/complete";
+            public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
         }
 
         public static class TransactionEndpoint
@@ -140,6 +141,8 @@
             public const string DeleteMetroLine = BaseEndpoint + "/{id}";
             public const string GetMetroLinesByRegion = BaseEndpoint + "/region";
             public const string ActivateMetroLine = BaseEndpoint + "/activation/{id}";
+            public const string GetMetroLineWithStationsById = BaseEndpoint + "/{id}/with-stations";
+            public const string GetAllActiveMetroLines = BaseEndpoint + "/active-lines";
         }
         public static class MetroTimeSlotEndpoint
         {
