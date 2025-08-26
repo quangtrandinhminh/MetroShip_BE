@@ -898,6 +898,18 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         returnShipment.TotalInsuranceFeeVnd = returnShipment.Parcels.Sum(x => x.InsuranceFeeVnd);
         returnShipment.TotalShippingFeeVnd = returnShipment.Parcels.Sum(x => x.ShippingFeeVnd.Value);
 
+        // add other parcels (if any) from old shipment to new shipment with status = normal
+        var otherParcels = primaryShipment.Parcels
+            .Where(x => x.Status != ParcelStatusEnum.Normal)
+            .ToList();
+
+        if (otherParcels.Any())
+        {
+            newParcels = null;
+            CloneToNewParcels(otherParcels, newParcels);
+            ((List<Parcel>)returnShipment.Parcels).AddRange(newParcels);
+        }
+
         if (returnShipment.TotalSurchargeFeeVnd > 0)
         {
             returnShipment.TotalCostVnd += returnShipment.TotalSurchargeFeeVnd.Value;
@@ -921,7 +933,6 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         {
             var newParcel = new Parcel
             {
-                Id = Guid.NewGuid().ToString(),
                 ShipmentId = parcel.ShipmentId,
                 WeightKg = parcel.WeightKg,
                 PriceVnd = parcel.PriceVnd,
@@ -932,7 +943,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                 CategoryInsuranceId = parcel.CategoryInsuranceId,
                 CategoryInsurance = parcel.CategoryInsurance,
                 OverdueSurchangeFeeVnd = parcel.OverdueSurchangeFeeVnd,
-                Status = ParcelStatusEnum.Normal,
+                Status = parcel.Status,
                 ValueVnd = parcel.ValueVnd,
                 DescriptionImageUrl = parcel.DescriptionImageUrl,
                 Description = parcel.Description,
