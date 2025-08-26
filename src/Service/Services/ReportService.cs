@@ -57,10 +57,14 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed);
         var totalCompensatedShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Compensated);
+        var totalCompletedWithCompensationShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
+
         var newCompleteShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed && s.CreatedAt >= todayUtc);
         var newCompensatedShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Compensated && s.CreatedAt >= todayUtc);
-        var percentageNewCompleteShipments = totalCompleteShipments + totalCompensatedShipments > 0
-            ? Math.Round((double)(newCompleteShipmentsCount + newCompensatedShipmentsCount) / (totalCompleteShipments + totalCompensatedShipments) * 100, 2)
+        var newCompletedWithCompensationShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation && s.CreatedAt >= todayUtc);
+
+        var percentageNewCompleteShipments = totalCompleteShipments + totalCompensatedShipments + totalCompletedWithCompensationShipments > 0
+            ? Math.Round((double)(newCompleteShipmentsCount + newCompensatedShipmentsCount + newCompletedWithCompensationShipmentsCount) / (totalCompleteShipments + totalCompensatedShipments + totalCompletedWithCompensationShipments) * 100, 2)
             : 0;
 
         return new ShipmentListWithStatsResponse
