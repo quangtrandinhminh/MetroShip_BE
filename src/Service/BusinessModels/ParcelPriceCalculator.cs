@@ -112,7 +112,7 @@ public static class ParcelPriceCalculator
                       InsurancePolicy policy,
                              decimal? insuranceFeeVnd, decimal? shippingFeeVnd)
     {
-        if (valueVnd is not > 0 || insuranceFeeVnd is not > 0)
+        if (valueVnd is not > 0)
         {
             return (decimal)(policy.MaxCompensationRateOnShippingFee * shippingFeeVnd.Value);
         }

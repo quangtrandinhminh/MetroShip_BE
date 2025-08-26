@@ -232,7 +232,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
         var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         if (string.IsNullOrEmpty(stationId))
-            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+            throw new AppException(ErrorCode.UnAuthorized, ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status401Unauthorized);
 
         var parcel = await _parcelRepository.GetSingleAsync(
             p => p.ParcelCode == parcelCode,
@@ -284,14 +284,18 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Bưu kiện {parcel.ParcelCode} đã được báo lên hàng tại ga {stationName}",
+            $"Bưu kiện {parcel.ParcelCode} đã được xác nhận cho quá trình lên hàng tại ga {stationName}",
             StatusCodes.Status400BadRequest);
         }
 
         string result;
         if (isLost)
         {
-            result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.InTransit);
+            bool isUpdateToCompensate = false;
+            (result, isUpdateToCompensate) = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.InTransit);
+
+            if (isUpdateToCompensate)
+                return result;
         }
         else
         {
@@ -343,7 +347,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
         var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         if (string.IsNullOrEmpty(stationId))
-            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+            throw new AppException(ErrorCode.UnAuthorized, ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status401Unauthorized);
 
         var parcel = await _parcelRepository.GetSingleAsync(
                        p => p.ParcelCode == parcelCode,
@@ -394,7 +398,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                $"Bưu kiện {parcelCode} đã được xác nhận xuống tại ga {stationName}.",
+                $"Bưu kiện {parcelCode} đã được xác nhận cho quá trình xuống hàng tại ga {stationName}.",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -405,7 +409,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             // This station is not the destination station, so update to WaitingForNextTrain
             if (isLost)
             {
-                result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.WaitingForNextTrain);
+                bool isUpdateToCompensate = false;
+                (result, isUpdateToCompensate) = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.WaitingForNextTrain);
+
+                if (isUpdateToCompensate)
+                    return result;
             }
             else
             {
@@ -451,7 +459,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             // This station is the destination station, so update to Arrived
             if (isLost)
             {
-                result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.Arrived);
+                bool isUpdateToCompensate = false;
+                (result, isUpdateToCompensate) = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.Arrived);
+
+                if (isUpdateToCompensate)
+                    return result;
             }
             else
             {
@@ -503,7 +515,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
         if (string.IsNullOrEmpty(stationId))
-            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+            throw new AppException(ErrorCode.UnAuthorized, ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status401Unauthorized);
 
         var parcel = await _parcelRepository.GetSingleAsync(
             p => p.ParcelCode == parcelCode,
@@ -512,13 +524,13 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (parcel == null)
             throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
-        // Only allow update for parcels in shipment status Stored
+        // Only allow update for parcels in shipment status Arrived
         var shipment = parcel.Shipment;
         if (shipment.ShipmentStatus != ShipmentStatusEnum.Arrived)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Shipment must be in 'Arrived' status",
+            "Đơn hàng phải ở trạng thái Đã đến trạm cuối để bắt đầu xác nhận Lưu kho chờ giao hàng",
             StatusCodes.Status400BadRequest);
         }
 
@@ -526,7 +538,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         if (!stationId.Equals(shipment.DestinationStationId))
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Parcel must be at the destination station to update for AwaitingDelivery: Ga {stationName}",
+            $"Kiện hàng phải ở ga cuối để được xác nhận lưu kho chờ giao hàng: Ga {stationName}",
             StatusCodes.Status400BadRequest);
 
         // Check if the parcel is already confirmed for AwaitingDelivery
@@ -540,7 +552,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Parcel {parcelCode} has already been updated for AwaitingDelivery.",
+            $"Kiện hàng {parcelCode} đã được xác nhận cho quá trình Lưu kho chờ giao hàng của đơn ở Ga {stationName}",
                 StatusCodes.Status400BadRequest);
         }
 
@@ -548,11 +560,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         string result;
         if (isLost)
         {
-            result = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.AwaitingDelivery);
+            bool isUpdateToCompensate = false;
+            (result, isUpdateToCompensate) = await ReportLostParcelAsync(parcelCode, ShipmentStatusEnum.AwaitingDelivery);
+
+            if (isUpdateToCompensate)
+                return result;
         }
         else
         {
-            result = $"Kiện hàng {parcelCode} đã xuất kho để chờ giao hàng ở Ga {stationName}";
+            result = $"Kiện hàng {parcelCode} đã lưu kho để chờ giao hàng ở Ga {stationName}";
             var parcelTracking = new ParcelTracking
             {
                 ParcelId = parcel.Id,
@@ -592,14 +608,14 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     }
 
     // lost report parcel
-    private async Task<string> ReportLostParcelAsync(string parcelCode, ShipmentStatusEnum trackingForShipmentStatus)
+    private async Task<(string result, bool isUpdateToCompensate)> ReportLostParcelAsync(string parcelCode, ShipmentStatusEnum trackingForShipmentStatus)
     {
         _logger.Information("Reporting lost parcel {ParcelCode}", parcelCode);
         var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
         var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
 
         if (string.IsNullOrEmpty(stationId))
-            throw new AppException(ErrorCode.UnAuthorized, "User's station not found", StatusCodes.Status401Unauthorized);
+            throw new AppException(ErrorCode.UnAuthorized, ResponseMessageConstantsUser.USER_NOT_FOUND, StatusCodes.Status401Unauthorized);
 
         var parcel = await _parcelRepository.GetSingleAsync(
             p => p.ParcelCode == parcelCode,
@@ -609,16 +625,15 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             throw new AppException(ErrorCode.NotFound, ResponseMessageParcel.PARCEL_NOT_FOUND, StatusCodes.Status404NotFound);
 
         // Check if the parcel is already reported as Lost
-        var isParcelTrackingExists = await _parcelTrackingRepository.IsExistAsync(
+        var isParcelTrackingExists = await _parcelTrackingRepository.GetSingleAsync(
                 pt => pt.ParcelId == parcel.Id &&
-                pt.CurrentParcelStatus == ParcelStatusEnum.Lost &&
-                pt.StationId == stationId &&
-                    pt.DeletedAt == null);
-        if (isParcelTrackingExists)
+                pt.CurrentParcelStatus == ParcelStatusEnum.Lost);
+        if (isParcelTrackingExists != null)
         {
+            var lostStationName = await _stationRepository.GetStationNameByIdAsync(isParcelTrackingExists.StationId);
             throw new AppException(
             ErrorCode.BadRequest,
-            $"Parcel {parcelCode} has already been reported as Lost.",
+            $"Kiện hàng {parcelCode} đã được báo mất tại Ga {lostStationName}.",
             StatusCodes.Status400BadRequest);
         }
 
@@ -626,6 +641,27 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         var stationName = await _stationRepository.GetStationNameByIdAsync(stationId);
         parcel.Status = ParcelStatusEnum.Lost;
         var result = $"Kiện hàng {parcelCode} đã được báo mất tại Ga {stationName}";
+
+        switch (trackingForShipmentStatus)
+        {
+            case ShipmentStatusEnum.InTransit:
+                result += " trong quá trình lên hàng";
+                break;
+            case ShipmentStatusEnum.WaitingForNextTrain:
+                result += " trong quá trình xuống hàng chờ trung chuyển";
+                break;
+            case ShipmentStatusEnum.Arrived:
+                result += " trong quá trình xuống hàng tại trạm đích";
+                break;
+            case ShipmentStatusEnum.AwaitingDelivery:
+                result += " trong quá trình lưu kho chờ giao hàng";
+                break;
+            default:
+                _logger.Error("Invalid trackingForShipmentStatus {Status} for lost parcel {ParcelCode}",
+                                       trackingForShipmentStatus, parcelCode);
+                break;
+        }
+
         var parcelTracking = new ParcelTracking
         {
             ParcelId = parcel.Id,
@@ -640,8 +676,8 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         _parcelTrackingRepository.Add(parcelTracking);
         _parcelRepository.Update(parcel);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
-        await CheckShipmentForLostParcelsAsync(parcel.ShipmentId, staffId);
-        return result;
+        var isUpdateToCompensate = await CheckShipmentForLostParcelsAsync(parcel.ShipmentId, staffId);
+        return (result, isUpdateToCompensate);
     }
 
     /*public async Task RejectParcelAsync(ParcelRejectRequest request)
@@ -776,7 +812,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     }
 
     // check if all parcels in shipment was lost, end the shipment by ToCompensate status
-    private async Task CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
+    private async Task<bool> CheckShipmentForLostParcelsAsync(string shipmentId, string userId)
     {
         _logger.Information("Checking shipment {ShipmentId} for lost parcels", shipmentId);
         var shipment = await _shipmentRepository.GetSingleAsync(
@@ -790,7 +826,10 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
         // Check if all parcels are lost
         var nonDeletedParcels = shipment.Parcels.Where(p => p.DeletedAt == null).ToList();
+        _logger.Information("Total parcels in shipment: {TotalParcels}, Non-deleted parcels: {NonDeletedParcels}",
+                       shipment.Parcels.Count, nonDeletedParcels.Count);
         var allParcelsLost = nonDeletedParcels.Any() && nonDeletedParcels.All(p => p.Status == ParcelStatusEnum.Lost);
+        _logger.Information("All parcels lost: {AllParcelsLost}", allParcelsLost);
 
         if (allParcelsLost)
         {
@@ -805,9 +844,10 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             });
 
             // calculate compensation amount
-            var categoryInsurances = await _categoryInsuranceRepository.GetAll()
-                .Where(ci => nonDeletedParcels.Select(p => p.CategoryInsuranceId).Contains(ci.Id))
-                .ToListAsync();
+            var categoryInsurances = _categoryInsuranceRepository.GetAllWithCondition(
+                x => nonDeletedParcels.Select(p => p.CategoryInsuranceId).Contains(x.Id),
+                x => x.ParcelCategory, _ => _.InsurancePolicy
+            ).ToList();
 
             shipment.TotalCompensationFeeVnd = ParcelPriceCalculator.CalculateParcelCompensation(
                 nonDeletedParcels, categoryInsurances, _parcelRepository);
@@ -815,7 +855,11 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
 
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
             _logger.Information("Shipment {ShipmentId} marked as ToCompensate - all parcels lost", shipmentId);
+
+            return true;
         }
+
+        return false;
     }
 }
 
