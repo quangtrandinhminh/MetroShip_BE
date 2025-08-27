@@ -344,48 +344,62 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<ShipmentFeedbackDataItem>> GetShipmentFeedbackChartAsync(RevenueChartRequest request)
     {
-        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+        var finalFilterType = RevenueFilterType.Year;
+        var year = request.Year ?? DateTime.UtcNow.Year;
 
         var query = _shipmentRepository.GetAllWithCondition()
-            .Where(s => s.FeedbackAt != null); // chỉ lấy shipment có feedback
+            .Where(s => s.FeedbackAt.Value.Year == year);
 
-        query = ApplyDateFilter(query, finalFilterType, request, s => s.FeedbackAt.Value);
-
-        var data = await query
+        var rawData = await query
             .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
             .Select(g => new ShipmentFeedbackDataItem
             {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
-                TotalFeedbacks = g.Count(),
-                AverageRating = g.Any(s => s.Rating != null)
-                    ? Math.Round(g.Average(s => (double)s.Rating.Value), 2)
-                    : 0,
-                PositiveFeedbackRate = g.Any(s => s.Rating != null)
-                    ? Math.Round(g.Count(s => s.Rating >= 4) * 100.0 / g.Count(s => s.Rating != null), 2)
-                    : 0,
-                ResponseRate = g.Count(s => s.FeedbackResponse != null) > 0
-                    ? Math.Round(g.Count(s => s.FeedbackResponse != null) * 100.0 / g.Count(), 2)
-                    : 0,
-                AvgResponseTimeHours = g.Count(s => s.FeedbackResponse != null) > 0
-                    ? Math.Round(
-                        g.Where(s => s.FeedbackRespondedAt != null)
-                         .Average(s => (s.FeedbackRespondedAt.Value - s.FeedbackAt.Value).TotalHours), 2)
-                    : 0
+
+                TotalShipments = g.Count(),
+                CompleteAndCompensatedCount = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed || s.ShipmentStatus == ShipmentStatusEnum.Compensated),
+                CompletedWithCompensationCount = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+
+                TotalFeedbacks = g.Count(s => s.Rating != null),
+                FiveStarFeedbacks = g.Count(s => s.Rating == 5)
             })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
+
+        // Fill đủ 12 tháng & tính %
+        var fullData = Enumerable.Range(1, 12)
+            .Select(m =>
+            {
+                var item = rawData.FirstOrDefault(x => x.Month == m);
+                int totalShipments = item?.TotalShipments ?? 0;
+                int totalFeedbacks = item?.TotalFeedbacks ?? 0;
+
+                return new ShipmentFeedbackDataItem
+                {
+                    Year = year,
+                    Month = m,
+
+                    TotalShipments = totalShipments,
+                    CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
+                    CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
+                    CompleteAndCompensatedPercent = totalShipments > 0
+                        ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+                    CompletedWithCompensationPercent = totalShipments > 0
+                        ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+
+                    TotalFeedbacks = totalFeedbacks,
+                    FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
+                    FiveStarPercent = totalFeedbacks > 0
+                        ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
+                };
+            })
+            .ToList();
 
         return new RevenueChartResponse<ShipmentFeedbackDataItem>
         {
             FilterType = finalFilterType,
-            Year = request.Year,
-            Quarter = request.Quarter,
-            StartYear = request.StartYear,
-            StartMonth = request.StartMonth,
-            EndYear = request.EndYear,
-            EndMonth = request.EndMonth,
-            Data = data
+            Year = year,
+            Data = fullData
         };
     }
 

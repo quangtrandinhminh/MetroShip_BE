@@ -38,4 +38,22 @@ namespace MetroShip.Service.ApiModels.Report
         public decimal TotalPaidAmount { get; set; }
         public decimal PaidAmountGrowthPercent { get; set; }
     }
+
+    public class ShipmentFeedbackDataItem
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+
+        // Shipment
+        public int TotalShipments { get; set; }
+        public int CompleteAndCompensatedCount { get; set; }
+        public int CompletedWithCompensationCount { get; set; }
+        public double CompleteAndCompensatedPercent { get; set; }
+        public double CompletedWithCompensationPercent { get; set; }
+
+        // Feedback
+        public int TotalFeedbacks { get; set; }
+        public int FiveStarFeedbacks { get; set; }
+        public double FiveStarPercent { get; set; }
+    }
 }
