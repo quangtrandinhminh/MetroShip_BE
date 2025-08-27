@@ -684,11 +684,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
-            ? ShipmentStatusEnum.CompletedWithCompensation
+            ? ShipmentStatusEnum.DeliveredPartially
             : ShipmentStatusEnum.Completed;
         shipment.CompletedAt = CoreHelper.SystemTimeNow;
         var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
-        if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation)
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.DeliveredPartially)
         {
             // If there are lost parcels, calculate compensation
             var lostParcels = shipment.Parcels

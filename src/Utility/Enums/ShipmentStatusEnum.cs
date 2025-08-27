@@ -44,4 +44,5 @@ public enum ShipmentStatusEnum
     CompletedWithCompensation = 24, // parcels delivered with compensation
     ToCompensate = 25,
     Compensated = 26,          // compensation processed
+    DeliveredPartially = 27, // some parcels delivered, some lost
 }

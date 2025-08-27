@@ -59,7 +59,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             ShipmentStatusEnum.AwaitingPayment,
             ShipmentStatusEnum.AwaitingRefund,
             ShipmentStatusEnum.ApplyingSurcharge,
-            ShipmentStatusEnum.CompletedWithCompensation,
+            ShipmentStatusEnum.DeliveredPartially,
             ShipmentStatusEnum.ToCompensate
         };
 
@@ -298,7 +298,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    private async Task HandlePaymentForShipment(Shipment shipment, string userId)
+    /*private async Task HandlePaymentForShipment(Shipment shipment, string userId)
     {
         _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
 
@@ -361,8 +361,20 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             });
             await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
         }
-        else if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation
-            || shipment.ShipmentStatus == ShipmentStatusEnum.ToCompensate)
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.DeliveredPartially)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.CompletedWithCompensation;
+            shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = userId,
+            });
+        }
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.ToCompensate)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.Compensated;
             shipment.CompensatedAt = CoreHelper.SystemTimeNow;
@@ -421,6 +433,135 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             "Invalid transaction type for creating a transaction.",
             StatusCodes.Status400BadRequest);
         }
+
+        await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id);
+        return transaction;
+    }*/
+
+    private async Task HandlePaymentForShipment(Shipment shipment, string userId)
+    {
+        _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
+
+        switch (shipment.ShipmentStatus)
+        {
+            case ShipmentStatusEnum.AwaitingPayment:
+                if (!shipment.IsReturnShipment)
+                {
+                    shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+                    shipment.PaidAt = CoreHelper.SystemTimeNow;
+                    _shipmentTrackingRepository.Add(new ShipmentTracking
+                    {
+                        ShipmentId = shipment.Id,
+                        CurrentShipmentStatus = shipment.ShipmentStatus,
+                        Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                        EventTime = CoreHelper.SystemTimeNow,
+                        UpdatedBy = userId,
+                    });
+
+                    await _backgroundJobService.CancelScheduledUnpaidJob(shipment.Id);
+                    await _backgroundJobService.ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+                }
+                else
+                {
+                    shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
+                    shipment.PaidAt = CoreHelper.SystemTimeNow;
+
+                    _shipmentTrackingRepository.Add(new ShipmentTracking
+                    {
+                        ShipmentId = shipment.Id,
+                        CurrentShipmentStatus = shipment.ShipmentStatus,
+                        Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                        EventTime = CoreHelper.SystemTimeNow,
+                        UpdatedBy = userId,
+                    });
+                }
+                break;
+
+            case ShipmentStatusEnum.AwaitingRefund:
+                shipment.ShipmentStatus = ShipmentStatusEnum.Refunded;
+                shipment.RefundedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã hoàn tiền cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            case ShipmentStatusEnum.ApplyingSurcharge:
+                shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDelivery;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người nhận đã thanh toán phụ phí cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
+                break;
+
+            case ShipmentStatusEnum.DeliveredPartially:
+                shipment.ShipmentStatus = ShipmentStatusEnum.CompletedWithCompensation;
+                shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            case ShipmentStatusEnum.ToCompensate:
+                shipment.ShipmentStatus = ShipmentStatusEnum.Compensated;
+                shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            default:
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    "Trạng thái đơn hàng không hợp lệ để xử lý thanh toán.",
+                    StatusCodes.Status400BadRequest);
+        }
+
+        _shipmentRepository.Update(shipment);
+    }
+
+    private async Task<Transaction> HandleCreateTransaction(Shipment shipment, TransactionRequest request)
+    {
+        _logger.Information("Handling creation of transaction for shipment: {shipmentId}", shipment.Id);
+
+        var transaction = _mapper.MapToTransactionEntity(request);
+        transaction.ShipmentId = shipment.Id;
+        transaction.PaidById = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        transaction.PaymentMethod = PaymentMethodEnum.VnPay;
+        transaction.PaymentStatus = PaymentStatusEnum.Pending;
+        transaction.TransactionType = request.TransactionType.Value;
+        transaction.Description = request.ToJsonString();
+
+        transaction.PaymentAmount = request.TransactionType switch
+        {
+            TransactionTypeEnum.ShipmentCost => shipment.TotalCostVnd,
+            TransactionTypeEnum.Refund => shipment.TotalRefundedFeeVnd.Value,
+            TransactionTypeEnum.Surcharge => shipment.TotalSurchargeFeeVnd.Value,
+            TransactionTypeEnum.Compensation => shipment.TotalCompensationFeeVnd.Value,
+            _ => throw new AppException(
+                ErrorCode.BadRequest,
+                "Loại giao dịch không hợp lệ để tạo giao dịch.",
+                StatusCodes.Status400BadRequest)
+        };
 
         await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id);
         return transaction;
