@@ -1,4 +1,5 @@
-﻿using MetroShip.Repository.Base;
+﻿using CloudinaryDotNet;
+using MetroShip.Repository.Base;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
@@ -25,6 +26,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RestSharp.Extensions;
 using Serilog;
 using SkiaSharp;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 
@@ -102,11 +104,30 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
 
+        
         foreach (var train in paginatedList.Items)
         {
+            if (trainSchedules == null || !trainSchedules.Any())
+            {
+                train.TrainSchedules = new List<TrainSchedule>();
+                continue;
+            }
+
+            Expression<Func<TrainSchedule, bool>> trainScheduleFilter = ts => ts.TrainId == train.Id;
+            if (!string.IsNullOrEmpty(request.TimeSlotId))
+            {
+                trainScheduleFilter = trainScheduleFilter.And(ts => ts.TimeSlotId == request.TimeSlotId);
+            }
+
+            if (request.Direction.HasValue)
+            {
+                trainScheduleFilter = trainScheduleFilter.And(ts => ts.Direction == request.Direction);
+            }
+
             // Map train schedules to each train
             train.TrainSchedules = trainSchedules
-                .Where(ts => ts.TrainId == train.Id)
+                .AsQueryable()
+                .Where(trainScheduleFilter)
                 .OrderBy(ts => ts.Shift)
                 .ToList();
         }
@@ -252,18 +273,34 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
             if (!string.IsNullOrEmpty(request.TimeSlotId))
             {
-                expression = expression.And(x => x.ShipmentItineraries.Any(si => si.TimeSlotId == request.TimeSlotId));
+                //expression = expression.And(x => x.ShipmentItineraries.Any(si => si.TimeSlotId == request.TimeSlotId));
+
+                expression = expression.And(x => x.TrainSchedules.Any(
+                    si => si.TimeSlotId == request.TimeSlotId));
             }
             if (request.Date.HasValue)
             {
                 var targetDate = request.Date.Value;
                 expression = expression.And(x => x.ShipmentItineraries.Any(
                     si => si.Date.HasValue && si.Date.Value.Equals(targetDate)));
+
+                /*expression = expression.And(x => x.TrainSchedules.Any(
+                    si => si.Date.HasValue && si.Date.Value.Equals(targetDate)));*/
             }
             if (request.Direction.HasValue)
             {
-                expression = expression.And(x => x.ShipmentItineraries.Any(
-                    si => si.Route.Direction == request.Direction));
+                /*expression = expression.And(x => x.ShipmentItineraries.Any(
+                    si => si.Route.Direction == request.Direction));*/
+
+                expression = expression.And(x => x.TrainSchedules.Any(
+                    si => si.Direction == request.Direction));
+
+                if (!string.IsNullOrEmpty(request.TimeSlotId))
+                {
+                    expression = expression.And(x => x.TrainSchedules.Any(
+                                               si => si.Direction == request.Direction &&
+                                                                      si.TimeSlotId == request.TimeSlotId));
+                }
             }
             if (!string.IsNullOrEmpty(request.StationId))
             {
