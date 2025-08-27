@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Report;
 using MetroShip.Service.ApiModels.Shipment;
@@ -405,53 +406,26 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
     {
-        // 1) build date range từ request (mặc định = today)
-        DateTime start, end;
+        IQueryable<Shipment> q;
+
         if (request?.FilterType == null || request.FilterType == RevenueFilterType.Default)
         {
+            // ✅ Default = Today
             var today = DateTime.UtcNow.Date;
-            start = today;
-            end = today.AddDays(1);
+            var tomorrow = today.AddDays(1);
+
+            q = _shipmentRepository.GetAllWithCondition()
+                 .Where(s => s.CreatedAt >= today && s.CreatedAt < tomorrow);
         }
         else
         {
-            switch (request.FilterType)
-            {
-                case RevenueFilterType.day:
-                    var d = request.Day?.Date ?? DateTime.UtcNow.Date;
-                    start = d;
-                    end = d.AddDays(1);
-                    break;
-                case RevenueFilterType.Year:
-                    var y = request.Year ?? DateTime.UtcNow.Year;
-                    start = new DateTime(y, 1, 1);
-                    end = start.AddYears(1);
-                    break;
-                case RevenueFilterType.Quarter:
-                    var quarterValue = Math.Clamp(request.Quarter ?? 1, 1, 4);
-                    int startMonth = (quarterValue - 1) * 3 + 1;
-                    int qYear = request.Year ?? DateTime.UtcNow.Year;
-                    start = new DateTime(qYear, startMonth, 1);
-                    end = start.AddMonths(3);
-                    break;
-                case RevenueFilterType.MonthRange:
-                    var sy = request.StartYear ?? DateTime.UtcNow.Year;
-                    var sm = request.StartMonth ?? 1;
-                    var ey = request.EndYear ?? sy;
-                    var em = request.EndMonth ?? sm;
-                    start = new DateTime(sy, sm, 1);
-                    end = new DateTime(ey, em, 1).AddMonths(1);
-                    break;
-                default:
-                    // fallback to today
-                    var t = DateTime.UtcNow.Date;
-                    start = t;
-                    end = t.AddDays(1);
-                    break;
-            }
+            // ✅ ApplyDateFilter
+            q = _shipmentRepository.GetAllWithCondition();
+            var filterType = request.FilterType ?? RevenueFilterType.Default;
+            q = ApplyDateFilter(q, filterType, request, s => s.CreatedAt);
         }
 
-        // 2) define status groups (tùy chỉnh danh sách này theo business)
+        // nhóm status
         var successfulStatuses = new[]
         {
         ShipmentStatusEnum.Completed,
@@ -470,14 +444,13 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         ShipmentStatusEnum.Expired
     };
 
-        // 3) single aggregate query
-        var q = _shipmentRepository.GetAllWithCondition()
-                 .Where(s => s.CreatedAt >= start && s.CreatedAt < end); // dùng CreatedAt làm baseline; nếu bạn muốn khác thì đổi trường
-
+        // aggregate query
         var agg = await q
-            .GroupBy(x => 1)
+            .GroupBy(_ => 1)
             .Select(g => new
             {
+                PeriodStart = g.Min(s => s.CreatedAt),
+                PeriodEnd = g.Max(s => s.CreatedAt),
                 TotalOrders = g.Count(),
                 SuccessfulOrders = g.Count(s => successfulStatuses.Contains(s.ShipmentStatus)),
                 UnsuccessfulOrders = g.Count(s => unsuccessfulStatuses.Contains(s.ShipmentStatus)),
@@ -486,11 +459,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .FirstOrDefaultAsync();
 
-        // nếu không có bản ghi nào trong khoảng -> trả về zeros
-        var dto = new ActivityMetricsDto
+        // map DTO
+        return new ActivityMetricsDto
         {
-            PeriodStart = start,
-            PeriodEnd = end,
+            PeriodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date,
+            PeriodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date,
             TotalOrders = agg?.TotalOrders ?? 0,
             SuccessfulOrders = agg?.SuccessfulOrders ?? 0,
             UnsuccessfulOrders = agg?.UnsuccessfulOrders ?? 0,
@@ -499,10 +472,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             SatisfactionPercent = (agg != null && agg.TotalFeedbacks > 0)
                 ? Math.Round(100.0 * agg.GoodFeedbacks / agg.TotalFeedbacks, 2)
                 : 0,
-            IndexValue = 0 // nếu bạn có công thức index riêng, tính ở đây
+            IndexValue = 0
         };
-
-        return dto;
     }
 
     #region Helper Methods
