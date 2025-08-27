@@ -403,6 +403,108 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         };
     }
 
+    public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
+    {
+        // 1) build date range từ request (mặc định = today)
+        DateTime start, end;
+        if (request?.FilterType == null || request.FilterType == RevenueFilterType.Default)
+        {
+            var today = DateTime.UtcNow.Date;
+            start = today;
+            end = today.AddDays(1);
+        }
+        else
+        {
+            switch (request.FilterType)
+            {
+                case RevenueFilterType.day:
+                    var d = request.Day?.Date ?? DateTime.UtcNow.Date;
+                    start = d;
+                    end = d.AddDays(1);
+                    break;
+                case RevenueFilterType.Year:
+                    var y = request.Year ?? DateTime.UtcNow.Year;
+                    start = new DateTime(y, 1, 1);
+                    end = start.AddYears(1);
+                    break;
+                case RevenueFilterType.Quarter:
+                    var quarterValue = Math.Clamp(request.Quarter ?? 1, 1, 4);
+                    int startMonth = (quarterValue - 1) * 3 + 1;
+                    int qYear = request.Year ?? DateTime.UtcNow.Year;
+                    start = new DateTime(qYear, startMonth, 1);
+                    end = start.AddMonths(3);
+                    break;
+                case RevenueFilterType.MonthRange:
+                    var sy = request.StartYear ?? DateTime.UtcNow.Year;
+                    var sm = request.StartMonth ?? 1;
+                    var ey = request.EndYear ?? sy;
+                    var em = request.EndMonth ?? sm;
+                    start = new DateTime(sy, sm, 1);
+                    end = new DateTime(ey, em, 1).AddMonths(1);
+                    break;
+                default:
+                    // fallback to today
+                    var t = DateTime.UtcNow.Date;
+                    start = t;
+                    end = t.AddDays(1);
+                    break;
+            }
+        }
+
+        // 2) define status groups (tùy chỉnh danh sách này theo business)
+        var successfulStatuses = new[]
+        {
+        ShipmentStatusEnum.Completed,
+        ShipmentStatusEnum.CompletedWithCompensation,
+        ShipmentStatusEnum.Compensated
+    };
+
+        var unsuccessfulStatuses = new[]
+        {
+        ShipmentStatusEnum.Cancelled,
+        ShipmentStatusEnum.Rejected,
+        ShipmentStatusEnum.Unpaid,
+        ShipmentStatusEnum.Refunded,
+        ShipmentStatusEnum.NoDropOff,
+        ShipmentStatusEnum.Returned,
+        ShipmentStatusEnum.Expired
+    };
+
+        // 3) single aggregate query
+        var q = _shipmentRepository.GetAllWithCondition()
+                 .Where(s => s.CreatedAt >= start && s.CreatedAt < end); // dùng CreatedAt làm baseline; nếu bạn muốn khác thì đổi trường
+
+        var agg = await q
+            .GroupBy(x => 1)
+            .Select(g => new
+            {
+                TotalOrders = g.Count(),
+                SuccessfulOrders = g.Count(s => successfulStatuses.Contains(s.ShipmentStatus)),
+                UnsuccessfulOrders = g.Count(s => unsuccessfulStatuses.Contains(s.ShipmentStatus)),
+                TotalFeedbacks = g.Count(s => s.Rating != null),
+                GoodFeedbacks = g.Count(s => s.Rating != null && s.Rating >= 4)
+            })
+            .FirstOrDefaultAsync();
+
+        // nếu không có bản ghi nào trong khoảng -> trả về zeros
+        var dto = new ActivityMetricsDto
+        {
+            PeriodStart = start,
+            PeriodEnd = end,
+            TotalOrders = agg?.TotalOrders ?? 0,
+            SuccessfulOrders = agg?.SuccessfulOrders ?? 0,
+            UnsuccessfulOrders = agg?.UnsuccessfulOrders ?? 0,
+            TotalFeedbacks = agg?.TotalFeedbacks ?? 0,
+            GoodFeedbacks = agg?.GoodFeedbacks ?? 0,
+            SatisfactionPercent = (agg != null && agg.TotalFeedbacks > 0)
+                ? Math.Round(100.0 * agg.GoodFeedbacks / agg.TotalFeedbacks, 2)
+                : 0,
+            IndexValue = 0 // nếu bạn có công thức index riêng, tính ở đây
+        };
+
+        return dto;
+    }
+
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
     IQueryable<T> query,
