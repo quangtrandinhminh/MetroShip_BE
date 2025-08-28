@@ -134,5 +134,5 @@ public interface IMapperlyMapper
     Notification MapNotificationRequest(NotificationCreateRequest request);
     void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
     PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
-    
+
 }

@@ -89,12 +89,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     }
 
     public async Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
-               TrainListFilterRequest request)
+           TrainListFilterRequest request)
     {
         _logger.Information("Get paginated list of trains with page number: {pageNumber}, page size: {pageSize}",
             request.PageNumber, request.PageSize);
 
-        // Get paginated trains with shipment itineraries
+        // Lấy danh sách MetroTrain từ DB (entity)
         var paginatedList = await _trainRepository.GetAllPaginatedQueryable(
             request.PageNumber,
             request.PageSize,
@@ -104,35 +104,39 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
 
-        
-        foreach (var train in paginatedList.Items)
+        // 👉 Map entity -> DTO
+        var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
+
+        foreach (var train in response.Items) // train bây giờ là TrainListResponse
         {
-            if (trainSchedules == null || !trainSchedules.Any())
-            {
-                train.TrainSchedules = new List<TrainSchedule>();
-                continue;
-            }
-
-            Expression<Func<TrainSchedule, bool>> trainScheduleFilter = ts => ts.TrainId == train.Id;
-            if (!string.IsNullOrEmpty(request.TimeSlotId))
-            {
-                trainScheduleFilter = trainScheduleFilter.And(ts => ts.TimeSlotId == request.TimeSlotId);
-            }
-
-            if (request.Direction.HasValue)
-            {
-                trainScheduleFilter = trainScheduleFilter.And(ts => ts.Direction == request.Direction);
-            }
-
-            // Map train schedules to each train
+            // Gán train schedules
             train.TrainSchedules = trainSchedules
-                .AsQueryable()
-                .Where(trainScheduleFilter)
-                .OrderBy(ts => ts.Shift)
-                .ToList();
+            .Where(ts => ts.TrainId == train.Id)
+            .OrderBy(ts => ts.Shift)
+            .Select(ts => new TrainScheduleResponse
+            {
+                Id = ts.Id,
+                TrainId = ts.TrainId,
+                TimeSlotId = ts.TimeSlotId,
+                Shift = ts.Shift,
+                LineId = ts.LineId,
+                LineName = ts.LineName,
+                DepartureStationId = ts.DepartureStationId,
+                DepartureStationName = ts.DepartureStationName,
+                DestinationStationId = ts.DestinationStationId,
+                DestinationStationName = ts.DestinationStationName,
+                Direction = ts.Direction
+            })
+            .ToList();
+            // Gán direction
+            var direction = await _trainScheduleRepository.GetTrainDirectionByTrainIdAsync(train.Id);
+            if (direction.HasValue)
+            {
+                train.Direction = direction.Value;
+            }
         }
 
-        return _mapper.MapToTrainListResponsePaginatedList(paginatedList);
+        return response;
     }
 
     // get system config related to train

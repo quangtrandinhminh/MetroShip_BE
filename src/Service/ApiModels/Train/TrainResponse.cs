@@ -16,6 +16,7 @@ public record TrainListResponse
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public TrainStatusEnum Status { get; set; }
+    public DirectionEnum? Direction { get; set; }
     public string StatusName => Status.ToString();
     public IList<TrainScheduleResponse> TrainSchedules { get; set; } = new List<TrainScheduleResponse>();
 }

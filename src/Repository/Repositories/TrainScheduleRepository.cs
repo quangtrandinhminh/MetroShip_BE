@@ -45,4 +45,16 @@ public class TrainScheduleRepository : BaseRepository<TrainSchedule>, ITrainSche
             })
             .ToListAsync();
     }
+
+    public async Task<DirectionEnum?> GetTrainDirectionByTrainIdAsync(string trainId)
+    {
+        if (string.IsNullOrWhiteSpace(trainId))
+            return null;
+
+        return await _context.TrainSchedule
+            .Where(x => x.TrainId == trainId)
+            .OrderByDescending(x => x.Date) // lấy chuyến mới nhất
+            .Select(x => (DirectionEnum?)x.Direction)
+            .FirstOrDefaultAsync();
+    }
 }
