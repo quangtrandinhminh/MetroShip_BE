@@ -346,4 +346,23 @@
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
     }
+
+    public class ResponseMessageSystemConfig
+    {
+        public const string CONFIG_KEY_REQUIRED = "Yêu cầu ConfigKey.";
+        public const string CONFIG_KEY_INVALID = "ConfigKey không hợp lệ.";
+        public const string CONFIG_NOT_FOUND = "Không tìm thấy cấu hình hệ thống.";
+        public const string CONFIG_EXISTED = "Cấu hình hệ thống đã tồn tại.";
+        public const string CONFIG_UPDATE_SUCCESS = "Cập nhật cấu hình hệ thống thành công.";
+        public const string CONFIG_DELETE_SUCCESS = "Xóa cấu hình hệ thống thành công.";
+        public const string CONFIG_CREATE_SUCCESS = "Tạo cấu hình hệ thống thành công.";
+        public const string DESCRIPTION_REQUIRED = "Yêu cầu mô tả.";
+        public const string CONFIG_TYPE_INVALID = "Loại cấu hình không hợp lệ.";
+        public const string MAX_DISTANCE_INVALID = "Khoảng cách tối đa phải là một số nguyên dương.";
+        public const string MAX_CAPACITY_INVALID = "Sức chứa tối đa phải là một số nguyên dương ";
+        public const string MAX_COUNT_STATION_INVALID = "Số lượng ga tối đa phải là một số nguyên dương.";
+        public const string MAX_SCHEDULE_DAY_INVALID = "Số ngày lên lịch tối đa phải là một số nguyên dương.";
+        public const string CONFIG_VALUE_SAME = "Giá trị cấu hình không thay đổi.";
+        public const string MAX_SHIFT_ATTEMPTS_INVALID = "Số lần thử ca làm việc tối đa phải là một số nguyên dương.";
+    }
 }

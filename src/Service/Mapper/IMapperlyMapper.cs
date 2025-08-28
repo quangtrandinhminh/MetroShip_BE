@@ -17,6 +17,7 @@ using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.ApiModels.SupportTicket;
+using MetroShip.Service.ApiModels.SystemConfig;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
@@ -135,4 +136,9 @@ public interface IMapperlyMapper
     void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
     PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
 
+    // config
+    SystemConfig MapToSystemConfigEntity(SystemConfigRequest request);
+    SystemConfigResponse MapToSystemConfigResponse(SystemConfig entity);
+    PaginatedListResponse<SystemConfigResponse> MapToSystemConfigPaginatedList(PaginatedList<SystemConfig> entityList);
+    void MapToSystemConfigEntity(SystemConfigRequest request, SystemConfig entity);
 }

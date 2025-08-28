@@ -197,10 +197,9 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/system-configs";
             public const string GetSystemConfigs = BaseEndpoint;
-            public const string GetSystemConfigById = BaseEndpoint + "/{id}";
             public const string CreateSystemConfig = BaseEndpoint;
-            public const string UpdateSystemConfig = BaseEndpoint + "/{id}";
-            public const string DeleteSystemConfig = BaseEndpoint + "/{id}";
+            public const string ChangeConfigValue = BaseEndpoint + "/config-value";
+            public const string UpdateSystemConfig = BaseEndpoint;
         }
 
         public static class RegionEndpoint
