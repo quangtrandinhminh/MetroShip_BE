@@ -347,50 +347,12 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = _shipmentRepository.GetAllWithCondition().AsQueryable();
-
-        switch (filterType)
-        {
-            case RevenueFilterType.day:
-            case RevenueFilterType.Default:   // 👉 default = Day
-                var day = request.Day?.Date ?? DateTime.UtcNow.Date;
-                query = query.Where(s => s.FeedbackAt.HasValue && s.FeedbackAt.Value.Date == day);
-                break;
-
-            case RevenueFilterType.Year:
-                if (request.Year.HasValue)
-                {
-                    query = query.Where(s => s.FeedbackAt.HasValue && s.FeedbackAt.Value.Year == request.Year.Value);
-                }
-                break;
-
-            case RevenueFilterType.Quarter:
-                if (request.Year.HasValue && request.Quarter.HasValue)
-                {
-                    int startMonth = (request.Quarter.Value - 1) * 3 + 1;
-                    int endMonth = startMonth + 2;
-
-                    query = query.Where(s => s.FeedbackAt.HasValue
-                        && s.FeedbackAt.Value.Year == request.Year.Value
-                        && s.FeedbackAt.Value.Month >= startMonth
-                        && s.FeedbackAt.Value.Month <= endMonth);
-                }
-                break;
-
-            case RevenueFilterType.MonthRange:
-                if (request.StartYear.HasValue && request.StartMonth.HasValue
-                    && request.EndYear.HasValue && request.EndMonth.HasValue)
-                {
-                    var startDate = new DateTime(request.StartYear.Value, request.StartMonth.Value, 1);
-                    var endDate = new DateTime(request.EndYear.Value, request.EndMonth.Value,
-                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value));
-
-                    query = query.Where(s => s.FeedbackAt.HasValue
-                        && s.FeedbackAt.Value >= startDate
-                        && s.FeedbackAt.Value <= endDate);
-                }
-                break;
-        }
+        // ✅ Áp dụng filter qua hàm ApplyDateFilter
+        var query = ApplyDateFilter(
+            _shipmentRepository.GetAllWithCondition(),
+            filterType,
+            request,
+            s => s.FeedbackAt.Value);
 
         var rawData = await query
             .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
