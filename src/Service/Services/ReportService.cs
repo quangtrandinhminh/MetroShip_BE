@@ -345,11 +345,52 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<ShipmentFeedbackDataItem>> GetShipmentFeedbackChartAsync(RevenueChartRequest request)
     {
-        var finalFilterType = RevenueFilterType.Year;
-        var year = request.Year ?? DateTime.UtcNow.Year;
+        var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = _shipmentRepository.GetAllWithCondition()
-            .Where(s => s.FeedbackAt.Value.Year == year);
+        var query = _shipmentRepository.GetAllWithCondition().AsQueryable();
+
+        switch (filterType)
+        {
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default:   // 👉 default = Day
+                var day = request.Day?.Date ?? DateTime.UtcNow.Date;
+                query = query.Where(s => s.FeedbackAt.HasValue && s.FeedbackAt.Value.Date == day);
+                break;
+
+            case RevenueFilterType.Year:
+                if (request.Year.HasValue)
+                {
+                    query = query.Where(s => s.FeedbackAt.HasValue && s.FeedbackAt.Value.Year == request.Year.Value);
+                }
+                break;
+
+            case RevenueFilterType.Quarter:
+                if (request.Year.HasValue && request.Quarter.HasValue)
+                {
+                    int startMonth = (request.Quarter.Value - 1) * 3 + 1;
+                    int endMonth = startMonth + 2;
+
+                    query = query.Where(s => s.FeedbackAt.HasValue
+                        && s.FeedbackAt.Value.Year == request.Year.Value
+                        && s.FeedbackAt.Value.Month >= startMonth
+                        && s.FeedbackAt.Value.Month <= endMonth);
+                }
+                break;
+
+            case RevenueFilterType.MonthRange:
+                if (request.StartYear.HasValue && request.StartMonth.HasValue
+                    && request.EndYear.HasValue && request.EndMonth.HasValue)
+                {
+                    var startDate = new DateTime(request.StartYear.Value, request.StartMonth.Value, 1);
+                    var endDate = new DateTime(request.EndYear.Value, request.EndMonth.Value,
+                        DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value));
+
+                    query = query.Where(s => s.FeedbackAt.HasValue
+                        && s.FeedbackAt.Value >= startDate
+                        && s.FeedbackAt.Value <= endDate);
+                }
+                break;
+        }
 
         var rawData = await query
             .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
@@ -367,39 +408,59 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .ToListAsync();
 
-        // Fill đủ 12 tháng & tính %
-        var fullData = Enumerable.Range(1, 12)
-            .Select(m =>
-            {
-                var item = rawData.FirstOrDefault(x => x.Month == m);
-                int totalShipments = item?.TotalShipments ?? 0;
-                int totalFeedbacks = item?.TotalFeedbacks ?? 0;
+        // Fill dữ liệu tuỳ filter
+        List<ShipmentFeedbackDataItem> fullData;
 
-                return new ShipmentFeedbackDataItem
-                {
-                    Year = year,
-                    Month = m,
+        switch (filterType)
+        {
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default:
+                // Day -> không fill 12 tháng, trả về dữ liệu đúng ngày
+                fullData = rawData;
+                break;
 
-                    TotalShipments = totalShipments,
-                    CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
-                    CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
-                    CompleteAndCompensatedPercent = totalShipments > 0
-                        ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
-                    CompletedWithCompensationPercent = totalShipments > 0
-                        ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+            case RevenueFilterType.Quarter:
+            case RevenueFilterType.MonthRange:
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                fullData = Enumerable.Range(1, 12)
+                    .Select(m =>
+                    {
+                        var item = rawData.FirstOrDefault(x => x.Month == m);
+                        int totalShipments = item?.TotalShipments ?? 0;
+                        int totalFeedbacks = item?.TotalFeedbacks ?? 0;
 
-                    TotalFeedbacks = totalFeedbacks,
-                    FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
-                    FiveStarPercent = totalFeedbacks > 0
-                        ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
-                };
-            })
-            .ToList();
+                        return new ShipmentFeedbackDataItem
+                        {
+                            Year = year,
+                            Month = m,
+
+                            TotalShipments = totalShipments,
+                            CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
+                            CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
+                            CompleteAndCompensatedPercent = totalShipments > 0
+                                ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+                            CompletedWithCompensationPercent = totalShipments > 0
+                                ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+
+                            TotalFeedbacks = totalFeedbacks,
+                            FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
+                            FiveStarPercent = totalFeedbacks > 0
+                                ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
+                        };
+                    })
+                    .ToList();
+                break;
+
+            default:
+                fullData = rawData;
+                break;
+        }
 
         return new RevenueChartResponse<ShipmentFeedbackDataItem>
         {
-            FilterType = finalFilterType,
-            Year = year,
+            FilterType = filterType,
+            Year = request.Year ?? DateTime.UtcNow.Year,
             Data = fullData
         };
     }
@@ -529,22 +590,16 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 }
                 break;
 
-            case RevenueFilterType.day: // ✅ thêm lọc theo ngày cụ thể
-                if (request.Day.HasValue)
-                {
-                    var targetDate = request.Day.Value.Date;
-                    var start = new DateTimeOffset(targetDate, TimeSpan.Zero);
-                    var end = start.AddDays(1).AddTicks(-1);
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default: // ✅ Default = Day
+                var targetDate = request.Day?.Date ?? DateTime.UtcNow.Date;
 
-                    query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
-                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
-                }
-                break;
+                var dayStart = new DateTimeOffset(targetDate, TimeSpan.Zero);
+                var dayEnd = dayStart.AddDays(1).AddTicks(-1);
 
-            case RevenueFilterType.Default:
-            default:
-                // Không filter gì cho Default
+                query = query.Where(x =>
+                    EF.Property<DateTimeOffset>(x, propertyName) >= dayStart &&
+                    EF.Property<DateTimeOffset>(x, propertyName) <= dayEnd);
                 break;
         }
 
