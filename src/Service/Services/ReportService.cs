@@ -578,21 +578,26 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             case RevenueFilterType.Year:
                 if (request.Year.HasValue)
                 {
+                    var yearStart = new DateTimeOffset(request.Year.Value, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                    var yearEnd = yearStart.AddYears(1).AddTicks(-1);
+
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value);
+                        EF.Property<DateTimeOffset>(x, propertyName) >= yearStart &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= yearEnd);
                 }
                 break;
 
             case RevenueFilterType.Quarter:
                 if (request.Year.HasValue && request.Quarter.HasValue)
                 {
+                    var qYear = request.Year.Value;
                     var startMonth = (request.Quarter.Value - 1) * 3 + 1;
-                    var endMonth = startMonth + 2;
+                    var start = new DateTimeOffset(qYear, startMonth, 1, 0, 0, 0, TimeSpan.Zero);
+                    var end = start.AddMonths(3).AddTicks(-1);
 
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value &&
-                        EF.Property<DateTimeOffset>(x, propertyName).Month >= startMonth &&
-                        EF.Property<DateTimeOffset>(x, propertyName).Month <= endMonth);
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
                 }
                 break;
 
@@ -600,11 +605,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 if (request.StartYear.HasValue && request.StartMonth.HasValue &&
                     request.EndYear.HasValue && request.EndMonth.HasValue)
                 {
-                    var start = new DateTimeOffset(
-                        request.StartYear.Value,
-                        request.StartMonth.Value,
-                        1, 0, 0, 0, TimeSpan.Zero);
-
+                    var start = new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero);
                     var end = new DateTimeOffset(
                         request.EndYear.Value,
                         request.EndMonth.Value,
@@ -632,6 +633,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         return query;
     }
+
 
     private ShipmentFeedbackDataItem BuildItem(List<ShipmentFeedbackDataItem> rawData, int year, int month)
     {
