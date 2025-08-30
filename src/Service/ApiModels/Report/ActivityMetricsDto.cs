@@ -8,6 +8,9 @@ namespace MetroShip.Service.ApiModels.Report
 {
     public class ActivityMetricsDto
     {
+        public RevenueFilterType FilterType { get; set; }
+        public string FilterTypeName { get; set; }
+
         public DateTime PeriodStart { get; set; }
         public DateTime PeriodEnd { get; set; }
 
@@ -19,8 +22,6 @@ namespace MetroShip.Service.ApiModels.Report
         public int GoodFeedbacks { get; set; }         // feedback 4★ or 5★ (rating >= 4)
         public double SatisfactionPercent { get; set; } // = GoodFeedbacks / TotalFeedbacks * 100
 
-        // Optional: hiển thị chỉ số tổng (nếu bạn có công thức riêng)
-        public int IndexValue { get; set; } // nếu bạn muốn hiển thị "Chỉ số" (ở ảnh)
     }
 
 }

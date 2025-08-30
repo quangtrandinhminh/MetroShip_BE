@@ -442,6 +442,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             Data = fullData
         };
     }
+
     public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
     {
         IQueryable<Shipment> q;
@@ -482,6 +483,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         ShipmentStatusEnum.Expired
     };
 
+        var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
+
         // aggregate query
         var agg = await q
             .GroupBy(_ => 1)
@@ -500,6 +503,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         // map DTO
         return new ActivityMetricsDto
         {
+            FilterType = finalFilterType,
+            FilterTypeName = finalFilterType.ToString(),
             PeriodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date,
             PeriodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date,
             TotalOrders = agg?.TotalOrders ?? 0,
@@ -510,7 +515,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             SatisfactionPercent = (agg != null && agg.TotalFeedbacks > 0)
                 ? Math.Round(100.0 * agg.GoodFeedbacks / agg.TotalFeedbacks, 2)
                 : 0,
-            IndexValue = 0
         };
     }
 
