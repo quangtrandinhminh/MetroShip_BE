@@ -447,7 +447,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         IQueryable<Shipment> q;
 
-        if (request?.FilterType == null || request.FilterType == RevenueFilterType.Default)
+        // Lấy filterType từ request, nếu null thì mặc định = Day (Default)
+        var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
+
+        if (finalFilterType == RevenueFilterType.Default || finalFilterType == RevenueFilterType.day)
         {
             // ✅ Default = Today
             var today = DateTime.UtcNow.Date;
@@ -460,8 +463,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         {
             // ✅ ApplyDateFilter
             q = _shipmentRepository.GetAllWithCondition();
-            var filterType = request.FilterType ?? RevenueFilterType.Default;
-            q = ApplyDateFilter(q, filterType, request, s => s.CreatedAt);
+            q = ApplyDateFilter(q, finalFilterType, request, s => s.CreatedAt);
         }
 
         // nhóm status
@@ -483,9 +485,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         ShipmentStatusEnum.Expired
     };
 
-        var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
-
-        // aggregate query
+        // aggregate query (theo filter đã áp)
         var agg = await q
             .GroupBy(_ => 1)
             .Select(g => new
@@ -500,13 +500,59 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .FirstOrDefaultAsync();
 
+        // ✅ Xác định khoảng thời gian theo FilterType (không phụ thuộc dữ liệu trong DB)
+        DateTime periodStart;
+        DateTime periodEnd;
+
+        switch (finalFilterType)
+        {
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default:
+                var today = DateTime.UtcNow.Date;
+                periodStart = today;
+                periodEnd = today.AddDays(1).AddTicks(-1);
+                break;
+
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? DateTime.UtcNow.Month;
+                periodStart = new DateTime(startYear, startMonth, 1);
+
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? startMonth;
+                // Lấy ngày cuối cùng của endMonth
+                var endMonthLastDay = DateTime.DaysInMonth(endYear, endMonth);
+                periodEnd = new DateTime(endYear, endMonth, endMonthLastDay, 23, 59, 59);
+                break;
+
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var quarter = request.Quarter ?? ((DateTime.UtcNow.Month - 1) / 3 + 1);
+                var qStartMonth = (quarter - 1) * 3 + 1;
+                periodStart = new DateTime(qYear, qStartMonth, 1);
+                periodEnd = periodStart.AddMonths(3).AddTicks(-1);
+                break;
+
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                periodStart = new DateTime(year, 1, 1);
+                periodEnd = new DateTime(year, 12, 31, 23, 59, 59);
+                break;
+
+            default:
+                // fallback theo dữ liệu
+                periodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date;
+                periodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date;
+                break;
+        }
+
         // map DTO
         return new ActivityMetricsDto
         {
             FilterType = finalFilterType,
             FilterTypeName = finalFilterType.ToString(),
-            PeriodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date,
-            PeriodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date,
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd,
             TotalOrders = agg?.TotalOrders ?? 0,
             SuccessfulOrders = agg?.SuccessfulOrders ?? 0,
             UnsuccessfulOrders = agg?.UnsuccessfulOrders ?? 0,
@@ -619,34 +665,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
             return memberExpr.Member.Name;
         throw new InvalidOperationException("Invalid expression");
-    }
-
-    private (DateTimeOffset start, DateTimeOffset end) GetDateRangeFromRequest(RevenueChartRequest request, RevenueFilterType filterType)
-    {
-        switch (filterType)
-        {
-            case RevenueFilterType.Year:
-                return (new DateTimeOffset(request.Year.Value, 1, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.Year.Value, 12, 31, 23, 59, 59, TimeSpan.Zero));
-
-            case RevenueFilterType.Quarter:
-                var startMonth = (request.Quarter.Value - 1) * 3 + 1;
-                var endMonth = startMonth + 2;
-                return (new DateTimeOffset(request.Year.Value, startMonth, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.Year.Value, endMonth,
-                            DateTime.DaysInMonth(request.Year.Value, endMonth), 23, 59, 59, TimeSpan.Zero));
-
-            case RevenueFilterType.MonthRange:
-                return (new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
-                            DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero));
-
-            default:
-                var now = DateTimeOffset.UtcNow;
-                return (new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(now.Year, now.Month,
-                            DateTime.DaysInMonth(now.Year, now.Month), 23, 59, 59, TimeSpan.Zero));
-        }
     }
 
     private (DateTimeOffset startDate, DateTimeOffset endDate) CalculateDateRange(CategoryStatisticsRequest request)
