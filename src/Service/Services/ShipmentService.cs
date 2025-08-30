@@ -52,6 +52,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -543,6 +544,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
             mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
             _shipmentMediaRepository.Add(mediaEntity);
+        }
+
+        foreach (var media in request.parcelMediaRequests)
+        {
+            var parcel = shipment.Parcels.FirstOrDefault(p => p.Id == media.ParcelId);
+            if (parcel == null) continue;
+
+            var mediaEntity = _mapperlyMapper.MapToParcelMediaEntity(media);
+            mediaEntity.ParcelId = parcel.Id;
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
+            _parcelMediaRepository.Add(mediaEntity);
         }
 
         // Save changes to the database
