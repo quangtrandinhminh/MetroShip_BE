@@ -37,6 +37,7 @@ public interface IMapperlyMapper
     IQueryable<UserResponse> MapToUserResponseList(IQueryable<UserEntity> entity);
     PaginatedListResponse<UserResponse> MapToUserResponsePaginatedList(PaginatedList<UserEntity> entity);
     UserResponse MapToUserResponse(UserEntity entity);
+    void MapBankInfoRequestToEntity(BankInfoRequest request, UserEntity entity);
 
     // shipment
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
@@ -115,6 +116,7 @@ public interface IMapperlyMapper
     // pricing config
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
+    PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);

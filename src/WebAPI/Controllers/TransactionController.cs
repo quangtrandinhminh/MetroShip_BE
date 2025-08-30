@@ -5,12 +5,14 @@ using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
+    [Authorize]
     public class TransactionController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
@@ -40,6 +42,22 @@ namespace MetroShip.WebAPI.Controllers
         {
             var transactionTypes = EnumHelper.GetEnumList<TransactionTypeEnum>();
             return Ok(BaseResponse.OkResponseDto(transactionTypes));
+        }
+
+        // get banks from vietqr
+        [HttpGet(WebApiEndpoint.TransactionEndpoint.GetBanksFromVietQr)]
+        public async Task<IActionResult> GetBanksFromVietQr()
+        {
+            var result = await _transactionService.GetBanksFromVietQr();
+            return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        // generate bank qr link
+        [HttpGet(WebApiEndpoint.TransactionEndpoint.GenerateBankQrLink)]
+        public async Task<IActionResult> GenerateBankQrLink([FromRoute] int bankId, [FromRoute] string accountNo, [FromQuery] decimal? amount)
+        {
+            var result = await _transactionService.GenerateBankQrLink(bankId, accountNo, amount);
+            return Ok(BaseResponse.OkResponseDto(result));
         }
     }
 }

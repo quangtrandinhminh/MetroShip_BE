@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.Jobs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
 
@@ -37,6 +38,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
@@ -584,5 +586,51 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         transaction.PaymentStatus = PaymentStatusEnum.Cancelled;
         _transactionRepository.Update(transaction);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task<List<VietQrBankDetail>> GetBanksFromVietQr()
+    {
+        _logger.Information("Fetching banks from VietQr");
+
+        // get from cache
+        var cacheKey = "VietQrBanks";
+        if (_memoryCache.TryGetValue(cacheKey, out List<VietQrBankDetail> cachedBanks))
+        {
+            _logger.Information("Returning cached banks from VietQr");
+            return cachedBanks;
+        }
+
+        HttpClient client = new HttpClient();
+        var baseUrl = " https://api.vietqr.io/v2/banks";
+        var response = await client.GetAsync(baseUrl);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            "Failed to fetch banks from VietQr",
+            StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        // convert to VietQrBankResponse
+        var banks = JsonConvert.DeserializeObject<VietQrBankResponse>(responseContent).Data;
+        _memoryCache.Set(cacheKey, banks, TimeSpan.FromHours(12));
+        return banks;
+    }
+
+    public async Task<string> GenerateBankQrLink (int bankId, string accountNo, decimal? amount)
+    {
+        _logger.Information("Generating bank QR link for bankId: {bankId}, AccountNo: {AccountNo}", bankId, accountNo);
+
+        var bankShortName = GetBanksFromVietQr().Result.FirstOrDefault(b => b.Id == bankId).ShortName;
+        var qrLink = $"https://img.vietqr.io/image/{bankShortName}-{accountNo}-compact2.png";
+
+        if (amount.HasValue && amount > 0)
+        {
+            var roundedAmount = Math.Round(amount.Value, 0);
+            qrLink = $"{qrLink}?amount={roundedAmount}";
+        }
+        return qrLink;
     }
 }

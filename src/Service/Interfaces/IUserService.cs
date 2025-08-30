@@ -12,4 +12,6 @@ public interface IUserService
     Task UpdateUserAsync(UserUpdateRequest request);
     Task<UserResponse> GetByIdAsync(object id);
     Task BanUserAsync(object id);
+
+    Task UpdateUserAsync(BankInfoRequest request);
 }

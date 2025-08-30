@@ -309,4 +309,16 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
         return user;
     }
+
+    public async Task UpdateUserAsync(BankInfoRequest request)
+    {
+        var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        _logger.Information("Update user {@request} for user {userId}", request, userId);
+        _userValidator.ValidateBankInfoRequest(request);
+        var user = await GetUserById(userId);
+
+        _mapper.MapBankInfoRequestToEntity(request, user);
+        await _userRepository.UpdateAsync(user);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
 }

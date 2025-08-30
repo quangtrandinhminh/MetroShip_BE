@@ -25,6 +25,12 @@ public class UserValidator
     {
         _userUpdateRequestValidator.ValidateApiModel(request);
     }
+
+    public void ValidateBankInfoRequest(BankInfoRequest request)
+    {
+        var bankInfoValidator = new BankInfoRequestValidator();
+        bankInfoValidator.ValidateApiModel(request);
+    }
 }
 
 public sealed class UserCreateRequestValidator : AbstractValidator<UserCreateRequest>
@@ -96,5 +102,45 @@ public sealed class UserUpdateRequestValidator : AbstractValidator<UserUpdateReq
         RuleFor(x => x.BirthDate)
             .LessThanOrEqualTo(DateTimeOffset.Now).WithMessage(ResponseMessageIdentity.BIRTHDATE_INVALID)
             .When(x => x.BirthDate.HasValue);
+
+        RuleFor(x => x.BankId)
+            .GreaterThan(0).WithMessage(ResponseMessageIdentity.BANKID_INVALID)
+            .When(x => x.BankId.HasValue);
+
+        RuleFor(x => x.AccountNo)
+            .NotEmpty().WithMessage(ResponseMessageIdentity.ACCOUNTNO_REQUIRED)
+            .MinimumLength(10).WithMessage(ResponseMessageIdentity.ACCOUNTNO_LENGTH_INVALID)
+            .MaximumLength(19).WithMessage(ResponseMessageIdentity.ACCOUNTNO_LENGTH_INVALID)
+            .Matches(@"^\d{1,19}$").WithMessage(ResponseMessageIdentity.ACCOUNTNO_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.AccountNo));
+
+        RuleFor(x => x.AccountName)
+            .NotEmpty().WithMessage(ResponseMessageIdentity.ACCOUNTNAME_REQUIRED)
+            .MaximumLength(255).WithMessage(ResponseMessageIdentity.ACCOUNTNAME_LENGTH_INVALID)
+            .Matches(@"^[A-Z ]+$").WithMessage(ResponseMessageIdentity.ACCOUNTNAME_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.AccountName));
+    }
+}
+
+public sealed class BankInfoRequestValidator : AbstractValidator<BankInfoRequest>
+{
+    public BankInfoRequestValidator()
+    {
+        RuleFor(x => x.BankId)
+            .GreaterThan(0).WithMessage(ResponseMessageIdentity.BANKID_INVALID)
+            .When(x => x.BankId.HasValue);
+
+        RuleFor(x => x.AccountNo)
+            .NotEmpty().WithMessage(ResponseMessageIdentity.ACCOUNTNO_REQUIRED)
+            .MinimumLength(10).WithMessage(ResponseMessageIdentity.ACCOUNTNO_LENGTH_INVALID)
+            .MaximumLength(19).WithMessage(ResponseMessageIdentity.ACCOUNTNO_LENGTH_INVALID)
+            .Matches(@"^\d{1,19}$").WithMessage(ResponseMessageIdentity.ACCOUNTNO_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.AccountNo));
+
+        RuleFor(x => x.AccountName)
+            .NotEmpty().WithMessage(ResponseMessageIdentity.ACCOUNTNAME_REQUIRED)
+            .MaximumLength(255).WithMessage(ResponseMessageIdentity.ACCOUNTNAME_LENGTH_INVALID)
+            .Matches(@"^[A-Z ]+$").WithMessage(ResponseMessageIdentity.ACCOUNTNAME_INVALID)
+            .When(x => !string.IsNullOrEmpty(x.AccountName));
     }
 }

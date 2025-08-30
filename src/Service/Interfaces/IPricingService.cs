@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Pricing;
 
@@ -13,4 +14,6 @@ public interface IPricingService
     Task CalculateOverdueSurcharge(Shipment shipment);
     Task<int> GetFreeStoreDaysAsync(string pricingConfigId);
     Task<int> GetRefundForCancellationBeforeScheduledHours(string pricingConfigId);
+    Task<string> ChangePricingConfigAsync(PricingConfigRequest request);
+    Task<string> ActivatePricingConfigAsync(string pricingConfigId);
 }

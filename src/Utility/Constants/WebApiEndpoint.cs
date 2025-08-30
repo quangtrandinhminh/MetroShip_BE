@@ -25,6 +25,8 @@
             public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
             public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
             public const string CreateStaff = BaseEndpoint + "/staff-account";
+            public const string UpdateBankInfo = BaseEndpoint + "/bank-info";
+            public const string GetBankInfoAndQrCode = BaseEndpoint + "/bank-info";
         }
 
         public static class ParcelCategory
@@ -94,6 +96,8 @@
             public const string DeleteTransaction = BaseEndpoint + "/{id}";
             public const string GetTransactionsByShipmentId = BaseEndpoint + "/shipment/{shipmentId}";
             public const string GetTransactionType = BaseEndpoint + "/types";
+            public const string GetBanksFromVietQr = BaseEndpoint + "/vietqr/banks";
+            public const string GenerateBankQrLink = BaseEndpoint + "/vietqr/{bankId}/{accountNo}";
         }
 
         public static class Notification
@@ -219,7 +223,7 @@
             public const string GetPricingById = BaseEndpoint + "/{id}";
             public const string GetPricingTable = BaseEndpoint + "/table";
             public const string CreatePricing = BaseEndpoint;
-            public const string UpdatePricing = BaseEndpoint + "/{id}";
+            public const string UpdatePricing = BaseEndpoint + "/activation/{pricingConfigId}";
             public const string DeletePricing = BaseEndpoint + "/{id}";
             public const string CalculatePrice = BaseEndpoint + "/calculation";
         }

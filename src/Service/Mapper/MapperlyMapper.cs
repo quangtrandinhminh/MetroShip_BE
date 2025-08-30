@@ -59,6 +59,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<UserResponse> MapToUserResponsePaginatedList(PaginatedList<UserEntity> entity);
     public partial UserResponse MapToUserResponse(UserEntity entity);
     public partial void MapRegisterRequestToEntity(RegisterRequest request, UserEntity entity);
+    public partial void MapBankInfoRequestToEntity(BankInfoRequest request, UserEntity entity);
 
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
@@ -175,6 +176,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // pricing config
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
+    public partial PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
