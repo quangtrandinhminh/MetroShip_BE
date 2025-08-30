@@ -347,30 +347,39 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        // ✅ Áp dụng filter qua hàm ApplyDateFilter
+        // ⚡ Không dùng .Value (gây lỗi dịch SQL), để nguyên nullable
         var query = ApplyDateFilter(
             _shipmentRepository.GetAllWithCondition(),
             filterType,
             request,
-            s => s.FeedbackAt.Value);
+            s => s.FeedbackAt
+        );
 
+        // ⚡ GroupBy bằng DATE_PART (PostgreSQL)
         var rawData = await query
-            .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
+            .Where(s => s.FeedbackAt.HasValue)
+            .GroupBy(s => new
+            {
+                Year = s.FeedbackAt.Value.Year,
+                Month = s.FeedbackAt.Value.Month
+            })
             .Select(g => new ShipmentFeedbackDataItem
             {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
+                Year = (int)g.Key.Year,
+                Month = (int)g.Key.Month,
 
                 TotalShipments = g.Count(),
-                CompleteAndCompensatedCount = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.Completed || s.ShipmentStatus == ShipmentStatusEnum.Compensated),
-                CompletedWithCompensationCount = g.Count(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+                CompleteAndCompensatedCount = g.Count(s =>
+                    s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+                    s.ShipmentStatus == ShipmentStatusEnum.Compensated),
+                CompletedWithCompensationCount = g.Count(s =>
+                    s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
 
                 TotalFeedbacks = g.Count(s => s.Rating != null),
                 FiveStarFeedbacks = g.Count(s => s.Rating == 5)
             })
             .ToListAsync();
 
-        // Fill dữ liệu tuỳ filter
         List<ShipmentFeedbackDataItem> fullData;
 
         switch (filterType)
@@ -381,36 +390,38 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 fullData = rawData;
                 break;
 
-            case RevenueFilterType.Quarter:
-            case RevenueFilterType.MonthRange:
             case RevenueFilterType.Year:
                 var year = request.Year ?? DateTime.UtcNow.Year;
                 fullData = Enumerable.Range(1, 12)
-                    .Select(m =>
-                    {
-                        var item = rawData.FirstOrDefault(x => x.Month == m);
-                        int totalShipments = item?.TotalShipments ?? 0;
-                        int totalFeedbacks = item?.TotalFeedbacks ?? 0;
+                    .Select(m => BuildItem(rawData, year, m))
+                    .ToList();
+                break;
 
-                        return new ShipmentFeedbackDataItem
-                        {
-                            Year = year,
-                            Month = m,
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var q = request.Quarter ?? 1;
+                var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
+                fullData = monthsInQuarter
+                    .Select(m => BuildItem(rawData, qYear, m))
+                    .ToList();
+                break;
 
-                            TotalShipments = totalShipments,
-                            CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
-                            CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
-                            CompleteAndCompensatedPercent = totalShipments > 0
-                                ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
-                            CompletedWithCompensationPercent = totalShipments > 0
-                                ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? 1;
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? 12;
 
-                            TotalFeedbacks = totalFeedbacks,
-                            FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
-                            FiveStarPercent = totalFeedbacks > 0
-                                ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
-                        };
-                    })
+                var months = Enumerable.Range(startYear * 12 + startMonth,
+                (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                 .Select(x => new
+                 {
+                     Year = (x - 1) / 12,
+                     Month = (x - 1) % 12 + 1
+                 });
+
+                fullData = months
+                    .Select(m => BuildItem(rawData, m.Year, m.Month))
                     .ToList();
                 break;
 
@@ -422,11 +433,15 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         return new RevenueChartResponse<ShipmentFeedbackDataItem>
         {
             FilterType = filterType,
-            Year = request.Year ?? DateTime.UtcNow.Year,
+            Year = request.Year,
+            Quarter = request.Quarter,
+            StartYear = request.StartYear,
+            StartMonth = request.StartMonth,
+            EndYear = request.EndYear,
+            EndMonth = request.EndMonth,
             Data = fullData
         };
     }
-
     public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
     {
         IQueryable<Shipment> q;
@@ -504,7 +519,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     IQueryable<T> query,
     RevenueFilterType filterType,
     RevenueChartRequest request,
-    Expression<Func<T, DateTimeOffset>> dateSelector)
+    Expression<Func<T, DateTimeOffset?>> dateSelector)
     {
         var propertyName = GetPropertyName(dateSelector);
 
@@ -566,6 +581,31 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         }
 
         return query;
+    }
+
+    private ShipmentFeedbackDataItem BuildItem(List<ShipmentFeedbackDataItem> rawData, int year, int month)
+    {
+        var item = rawData.FirstOrDefault(x => x.Month == month && x.Year == year);
+        int totalShipments = item?.TotalShipments ?? 0;
+        int totalFeedbacks = item?.TotalFeedbacks ?? 0;
+
+        return new ShipmentFeedbackDataItem
+        {
+            Year = year,
+            Month = month,
+            TotalShipments = totalShipments,
+            CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
+            CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
+            CompleteAndCompensatedPercent = totalShipments > 0
+                ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+            CompletedWithCompensationPercent = totalShipments > 0
+                ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+
+            TotalFeedbacks = totalFeedbacks,
+            FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
+            FiveStarPercent = totalFeedbacks > 0
+                ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
+        };
     }
 
     private string GetPropertyName<T, TProp>(Expression<Func<T, TProp>> expression)
