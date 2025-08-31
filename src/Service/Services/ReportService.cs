@@ -222,14 +222,18 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request)
     {
-        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+        var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = _transactionRepository.GetAllWithCondition()
-            .Where(t => t.DeletedAt == null);
-        query = ApplyDateFilter(query, finalFilterType, request, t => t.CreatedAt);
+        var query = ApplyDateFilter(
+            _transactionRepository.GetAllWithCondition().Where(t => t.DeletedAt == null),
+            filterType,
+            request,
+            t => t.CreatedAt
+        );
 
-        var data = await query
-            .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+        // ⚡ GroupBy theo Year/Month
+        var rawData = await query
+            .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
             .Select(g => new TransactionDataItem
             {
                 Year = g.Key.Year,
@@ -239,17 +243,66 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                     .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
                     .Sum(t => t.PaymentAmount)
             })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
-        // === Thêm tính Growth % ===
-        for (int i = 0; i < data.Count; i++)
+        List<TransactionDataItem> fullData;
+
+        switch (filterType)
         {
-            var current = data[i];
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default:
+                // Day hoặc Default (coi như Year) -> chỉ lấy rawData
+                fullData = rawData;
+                break;
+
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                fullData = Enumerable.Range(1, 12)
+                    .Select(m => BuildTransactionItem(rawData, year, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var q = request.Quarter ?? 1;
+                var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
+                fullData = monthsInQuarter
+                    .Select(m => BuildTransactionItem(rawData, qYear, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? 1;
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? 12;
+
+                var months = Enumerable.Range(startYear * 12 + startMonth,
+                    (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                    .Select(x => new
+                    {
+                        Year = (x - 1) / 12,
+                        Month = (x - 1) % 12 + 1
+                    });
+
+                fullData = months
+                    .Select(m => BuildTransactionItem(rawData, m.Year, m.Month))
+                    .ToList();
+                break;
+
+            default:
+                fullData = rawData;
+                break;
+        }
+
+        // === Thêm tính Growth % ===
+        for (int i = 0; i < fullData.Count; i++)
+        {
+            var current = fullData[i];
             var prevYear = current.Month == 1 ? current.Year - 1 : current.Year;
             var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
 
-            var prev = data.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
+            var prev = fullData.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
             if (prev != null && prev.TotalPaidAmount != 0)
             {
                 current.PaidAmountGrowthPercent = Math.Round(
@@ -263,14 +316,14 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         return new RevenueChartResponse<TransactionDataItem>
         {
-            FilterType = finalFilterType,
+            FilterType = filterType,
             Year = request.Year,
             Quarter = request.Quarter,
             StartYear = request.StartYear,
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
-            Data = data
+            Data = fullData
         };
     }
 
@@ -634,6 +687,18 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         return query;
     }
 
+    private TransactionDataItem BuildTransactionItem(List<TransactionDataItem> rawData, int year, int month)
+    {
+        var item = rawData.FirstOrDefault(d => d.Year == year && d.Month == month);
+        return item ?? new TransactionDataItem
+        {
+            Year = year,
+            Month = month,
+            TotalTransactions = 0,
+            TotalPaidAmount = 0,
+            PaidAmountGrowthPercent = 0
+        };
+    }
 
     private ShipmentFeedbackDataItem BuildItem(List<ShipmentFeedbackDataItem> rawData, int year, int month)
     {
