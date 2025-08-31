@@ -250,11 +250,17 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         switch (filterType)
         {
             case RevenueFilterType.day:
-            case RevenueFilterType.Default:
-                // Day hoặc Default (coi như Year) -> chỉ lấy rawData
-                fullData = rawData;
+                var targetYear = request.Year ?? DateTime.UtcNow.Year;
+                var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
+                var targetDay = request.Day?.Day ?? DateTime.UtcNow.Day;
+
+                // Day -> chỉ lấy đúng ngày
+                fullData = rawData
+                    .Where(d => d.Year == targetYear && d.Month == targetMonth)
+                    .ToList();
                 break;
 
+            case RevenueFilterType.Default: // ✅ Default = Year
             case RevenueFilterType.Year:
                 var year = request.Year ?? DateTime.UtcNow.Year;
                 fullData = Enumerable.Range(1, 12)
@@ -400,7 +406,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        // ⚡ Không dùng .Value (gây lỗi dịch SQL), để nguyên nullable
         var query = ApplyDateFilter(
             _shipmentRepository.GetAllWithCondition(),
             filterType,
@@ -408,7 +413,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             s => s.FeedbackAt
         );
 
-        // ⚡ GroupBy bằng DATE_PART (PostgreSQL)
+        // ⚡ GroupBy theo Year/Month
         var rawData = await query
             .Where(s => s.FeedbackAt.HasValue)
             .GroupBy(s => new
@@ -438,11 +443,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         switch (filterType)
         {
             case RevenueFilterType.day:
-            case RevenueFilterType.Default:
-                // Day -> không fill 12 tháng, trả về dữ liệu đúng ngày
+                // Day -> chỉ lấy đúng ngày, không fill đủ 12 tháng
                 fullData = rawData;
                 break;
 
+            case RevenueFilterType.Default: // ✅ Default = Year
             case RevenueFilterType.Year:
                 var year = request.Year ?? DateTime.UtcNow.Year;
                 fullData = Enumerable.Range(1, 12)
@@ -466,7 +471,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 var endMonth = request.EndMonth ?? 12;
 
                 var months = Enumerable.Range(startYear * 12 + startMonth,
-                (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                    (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
                  .Select(x => new
                  {
                      Year = (x - 1) / 12,
@@ -619,25 +624,24 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
-    IQueryable<T> query,
-    RevenueFilterType filterType,
-    RevenueChartRequest request,
-    Expression<Func<T, DateTimeOffset?>> dateSelector)
+     IQueryable<T> query,
+     RevenueFilterType filterType,
+     RevenueChartRequest request,
+     Expression<Func<T, DateTimeOffset?>> dateSelector)
     {
         var propertyName = GetPropertyName(dateSelector);
 
         switch (filterType)
         {
             case RevenueFilterType.Year:
-                if (request.Year.HasValue)
-                {
-                    var yearStart = new DateTimeOffset(request.Year.Value, 1, 1, 0, 0, 0, TimeSpan.Zero);
-                    var yearEnd = yearStart.AddYears(1).AddTicks(-1);
+            case RevenueFilterType.Default: // ✅ Default = Year
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                var yearStart = new DateTimeOffset(year, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                var yearEnd = yearStart.AddYears(1).AddTicks(-1);
 
-                    query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName) >= yearStart &&
-                        EF.Property<DateTimeOffset>(x, propertyName) <= yearEnd);
-                }
+                query = query.Where(x =>
+                    EF.Property<DateTimeOffset>(x, propertyName) >= yearStart &&
+                    EF.Property<DateTimeOffset>(x, propertyName) <= yearEnd);
                 break;
 
             case RevenueFilterType.Quarter:
@@ -658,7 +662,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 if (request.StartYear.HasValue && request.StartMonth.HasValue &&
                     request.EndYear.HasValue && request.EndMonth.HasValue)
                 {
-                    var start = new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero);
+                    var start = new DateTimeOffset(
+                        request.StartYear.Value,
+                        request.StartMonth.Value,
+                        1, 0, 0, 0, TimeSpan.Zero);
+
                     var end = new DateTimeOffset(
                         request.EndYear.Value,
                         request.EndMonth.Value,
@@ -672,9 +680,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
 
             case RevenueFilterType.day:
-            case RevenueFilterType.Default: // ✅ Default = Day
                 var targetDate = request.Day?.Date ?? DateTime.UtcNow.Date;
-
                 var dayStart = new DateTimeOffset(targetDate, TimeSpan.Zero);
                 var dayEnd = dayStart.AddDays(1).AddTicks(-1);
 
