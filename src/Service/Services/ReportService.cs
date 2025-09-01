@@ -239,9 +239,22 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 TotalTransactions = g.Count(),
-                TotalPaidAmount = g
-                    .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
-                    .Sum(t => t.PaymentAmount)
+
+                ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                         && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
+
+                Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                       && t.PaymentStatus == PaymentStatusEnum.Paid)
+                             .Sum(t => t.PaymentAmount),
+
+                Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                    && t.PaymentStatus == PaymentStatusEnum.Paid)
+                          .Sum(t => t.PaymentAmount),
+
+                Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                          && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
             })
             .ToListAsync();
 
@@ -252,9 +265,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             case RevenueFilterType.day:
                 var targetYear = request.Year ?? DateTime.UtcNow.Year;
                 var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
-                var targetDay = request.Day?.Day ?? DateTime.UtcNow.Day;
-
-                // Day -> chỉ lấy đúng ngày
+                // Day -> chỉ lấy đúng tháng đó
                 fullData = rawData
                     .Where(d => d.Year == targetYear && d.Month == targetMonth)
                     .ToList();
@@ -301,7 +312,15 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
         }
 
-        // === Thêm tính Growth % ===
+        // === Tính Income, Outcome, NetAmount ===
+        foreach (var item in fullData)
+        {
+            item.TotalIncome = item.ShipmentCost + item.Surcharge;
+            item.TotalOutcome = item.Refund + item.Compensation;
+            item.NetAmount = item.TotalIncome - item.TotalOutcome;
+        }
+
+        // === Tính Growth % theo NetAmount ===
         for (int i = 0; i < fullData.Count; i++)
         {
             var current = fullData[i];
@@ -309,14 +328,14 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
 
             var prev = fullData.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
-            if (prev != null && prev.TotalPaidAmount != 0)
+            if (prev != null && prev.NetAmount != 0)
             {
-                current.PaidAmountGrowthPercent = Math.Round(
-                    ((current.TotalPaidAmount - prev.TotalPaidAmount) / prev.TotalPaidAmount) * 100m, 2);
+                current.NetGrowthPercent = Math.Round(
+                    ((current.NetAmount - prev.NetAmount) / prev.NetAmount) * 100m, 2);
             }
             else
             {
-                current.PaidAmountGrowthPercent = 0;
+                current.NetGrowthPercent = 0;
             }
         }
 
@@ -695,14 +714,22 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     private TransactionDataItem BuildTransactionItem(List<TransactionDataItem> rawData, int year, int month)
     {
-        var item = rawData.FirstOrDefault(d => d.Year == year && d.Month == month);
-        return item ?? new TransactionDataItem
+        var found = rawData.FirstOrDefault(d => d.Year == year && d.Month == month);
+        if (found != null) return found;
+
+        return new TransactionDataItem
         {
             Year = year,
             Month = month,
             TotalTransactions = 0,
-            TotalPaidAmount = 0,
-            PaidAmountGrowthPercent = 0
+            ShipmentCost = 0,
+            Surcharge = 0,
+            Refund = 0,
+            Compensation = 0,
+            TotalIncome = 0,
+            TotalOutcome = 0,
+            NetAmount = 0,
+            NetGrowthPercent = 0
         };
     }
 
