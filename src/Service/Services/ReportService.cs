@@ -45,34 +45,47 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<ShipmentListWithStatsResponse> GetShipmentStatsAsync()
     {
+        var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7));
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
+
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
+
         var query = _shipmentRepository.GetAllWithCondition();
-        var totalShipments = await query.CountAsync();
 
-        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
-        var todayUtc = todayVietnamTime.ToUniversalTime();
+        // === Tháng hiện tại ===
+        var thisMonthQuery = query.Where(s => s.CreatedAt >= startOfThisMonth.UtcDateTime && s.CreatedAt < startOfNextMonth.UtcDateTime);
+        var totalShipmentsThisMonth = await thisMonthQuery.CountAsync();
 
-        var newShipmentsCount = await query.CountAsync(s => s.CreatedAt >= todayUtc);
-        var percentageNewShipments = totalShipments > 0
-            ? Math.Round((double)newShipmentsCount / totalShipments * 100, 2)
+        var totalCompleteThisMonth = await thisMonthQuery.CountAsync(s =>
+            s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+            s.ShipmentStatus == ShipmentStatusEnum.Compensated ||
+            s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
+
+        // === Tháng trước ===
+        var lastMonthQuery = query.Where(s => s.CreatedAt >= startOfLastMonth.UtcDateTime && s.CreatedAt <= endOfLastMonth.UtcDateTime);
+        var totalShipmentsLastMonth = await lastMonthQuery.CountAsync();
+
+        var totalCompleteLastMonth = await lastMonthQuery.CountAsync(s =>
+            s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+            s.ShipmentStatus == ShipmentStatusEnum.Compensated ||
+            s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
+
+        // === % tăng trưởng ===
+        var percentageNewShipments = totalShipmentsLastMonth > 0
+            ? Math.Round((double)(totalShipmentsThisMonth - totalShipmentsLastMonth) / totalShipmentsLastMonth * 100, 2)
             : 0;
 
-        var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed);
-        var totalCompensatedShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Compensated);
-        var totalCompletedWithCompensationShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
-
-        var newCompleteShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed && s.CreatedAt >= todayUtc);
-        var newCompensatedShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Compensated && s.CreatedAt >= todayUtc);
-        var newCompletedWithCompensationShipmentsCount = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation && s.CreatedAt >= todayUtc);
-
-        var percentageNewCompleteShipments = totalCompleteShipments + totalCompensatedShipments + totalCompletedWithCompensationShipments > 0
-            ? Math.Round((double)(newCompleteShipmentsCount + newCompensatedShipmentsCount + newCompletedWithCompensationShipmentsCount) / (totalCompleteShipments + totalCompensatedShipments + totalCompletedWithCompensationShipments) * 100, 2)
+        var percentageNewCompleteShipments = totalCompleteLastMonth > 0
+            ? Math.Round((double)(totalCompleteThisMonth - totalCompleteLastMonth) / totalCompleteLastMonth * 100, 2)
             : 0;
 
         return new ShipmentListWithStatsResponse
         {
-            TotalShipments = totalShipments,
+            TotalShipments = totalShipmentsThisMonth,
             PercentageNewShipments = percentageNewShipments,
-            TotalCompleteShipments = totalCompleteShipments,
+            TotalCompleteShipments = totalCompleteThisMonth,
             PercentageNewCompleteShipments = percentageNewCompleteShipments
         };
     }
@@ -83,17 +96,29 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .Where(v => v.DeletedTime == null &&
                         v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()));
 
-        var totalUsersWithRoleUser = await query.CountAsync();
+        var now = DateTimeOffset.UtcNow;
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
 
-        var firstDayOfMonth = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var newUsersCount = await query.CountAsync(u => u.CreatedTime >= firstDayOfMonth);
-        var percentageNewUsers = totalUsersWithRoleUser > 0
-            ? Math.Round((double)newUsersCount / totalUsersWithRoleUser * 100, 2)
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
+
+        // === Tháng này ===
+        var thisMonthUsers = await query.CountAsync(u =>
+            u.CreatedTime >= startOfThisMonth && u.CreatedTime < startOfNextMonth);
+
+        // === Tháng trước ===
+        var lastMonthUsers = await query.CountAsync(u =>
+            u.CreatedTime >= startOfLastMonth && u.CreatedTime <= endOfLastMonth);
+
+        // === % tăng trưởng ===
+        var percentageNewUsers = lastMonthUsers > 0
+            ? Math.Round((double)(thisMonthUsers - lastMonthUsers) / lastMonthUsers * 100, 2)
             : 0;
 
         return new UserListWithStatsResponse
         {
-            TotalUsersWithRoleUser = totalUsersWithRoleUser,
+            TotalUsersWithRoleUser = thisMonthUsers,
             PercentageNewUsers = percentageNewUsers
         };
     }
@@ -103,77 +128,92 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         var query = _transactionRepository.GetAllWithCondition()
             .Where(t => t.DeletedAt == null);
 
-        var totalTransactions = await query.CountAsync();
+        var now = DateTimeOffset.UtcNow;
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
 
-        var firstDayOfMonth = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var newTransactionsCount = await query.CountAsync(t => t.CreatedAt >= firstDayOfMonth);
-        var percentageNewTransactions = totalTransactions > 0
-            ? Math.Round((double)newTransactionsCount / totalTransactions * 100, 2)
-            : 0;
-
-        var totalPaidTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Paid);
-        var totalPaidAmount = await query
-            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
-            .SumAsync(t => t.PaymentAmount);
-
-        var newPaidTransactionsCount = await query.CountAsync(
-            t => t.PaymentStatus == PaymentStatusEnum.Paid && t.CreatedAt >= firstDayOfMonth);
-        var percentageNewPaidTransactions = totalPaidTransactions > 0
-            ? Math.Round((double)newPaidTransactionsCount / totalPaidTransactions * 100, 2)
-            : 0;
-
-        var totalUnpaidTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Failed);
-        var percentageUnpaidTransactions = totalTransactions > 0
-            ? Math.Round((double)totalUnpaidTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        var totalPendingTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Pending);
-        var percentagePendingTransactions = totalTransactions > 0
-            ? Math.Round((double)totalPendingTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        var totalCancelledTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Cancelled);
-        var percentageCancelledTransactions = totalTransactions > 0
-            ? Math.Round((double)totalCancelledTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        // ===== Thêm phần tính Growth so với tháng trước =====
-        var prevMonthStart = firstDayOfMonth.AddMonths(-1);
-        var prevMonthEnd = firstDayOfMonth.AddTicks(-1);
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
 
         decimal CalcGrowth(decimal current, decimal prev) =>
             prev > 0 ? Math.Round(((current - prev) / prev) * 100m, 2) : 0;
 
-        var prevTotalTransactions = await query.CountAsync(t => t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd);
-        var prevTotalPaidAmount = await query
+        // ===== Tháng này =====
+        var thisMonthTransactions = await query.CountAsync(t =>
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Paid &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPaidAmount = await query
             .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
-                        t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd)
+                        t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth)
             .SumAsync(t => t.PaymentAmount);
 
-        var growthTotalTransactions = CalcGrowth(newTransactionsCount, prevTotalTransactions);
-        var growthPaidAmount = CalcGrowth(totalPaidAmount, prevTotalPaidAmount);
+        var thisMonthUnpaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Failed &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPendingTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Pending &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthCancelledTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Cancelled &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        // ===== Tháng trước =====
+        var prevMonthTransactions = await query.CountAsync(t =>
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Paid &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPaidAmount = await query
+            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
+                        t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth)
+            .SumAsync(t => t.PaymentAmount);
+
+        var prevMonthUnpaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Failed &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPendingTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Pending &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthCancelledTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Cancelled &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        // ===== Tính % tăng trưởng =====
+        var growthTotalTransactions = CalcGrowth(thisMonthTransactions, prevMonthTransactions);
+        var growthPaidTransactions = CalcGrowth(thisMonthPaidTransactions, prevMonthPaidTransactions);
+        var growthPaidAmount = CalcGrowth(thisMonthPaidAmount, prevMonthPaidAmount);
+        var growthUnpaidTransactions = CalcGrowth(thisMonthUnpaidTransactions, prevMonthUnpaidTransactions);
+        var growthPendingTransactions = CalcGrowth(thisMonthPendingTransactions, prevMonthPendingTransactions);
+        var growthCancelledTransactions = CalcGrowth(thisMonthCancelledTransactions, prevMonthCancelledTransactions);
 
         return new TransactionListWithStatsResponse
         {
-            // Giữ nguyên trường cũ
-            TotalTransactions = totalTransactions,
-            PercentageNewTransactions = percentageNewTransactions,
+            TotalTransactions = thisMonthTransactions,
+            PercentageNewTransactions = (double)growthTotalTransactions,
 
-            TotalPaidTransactions = totalPaidTransactions,
-            PercentageNewPaidTransactions = percentageNewPaidTransactions,
-            TotalPaidAmount = totalPaidAmount,
+            TotalPaidTransactions = thisMonthPaidTransactions,
+            PercentageNewPaidTransactions = (double)growthPaidTransactions,
+            TotalPaidAmount = thisMonthPaidAmount,
+            GrowthPaidAmount = growthPaidAmount,
 
-            TotalUnpaidTransactions = totalUnpaidTransactions,
-            PercentageUnpaidTransactions = percentageUnpaidTransactions,
+            TotalUnpaidTransactions = thisMonthUnpaidTransactions,
+            PercentageUnpaidTransactions = (double)growthUnpaidTransactions,
 
-            TotalPendingTransactions = totalPendingTransactions,
-            PercentagePendingTransactions = percentagePendingTransactions,
+            TotalPendingTransactions = thisMonthPendingTransactions,
+            PercentagePendingTransactions = (double)growthPendingTransactions,
 
-            TotalCancelledTransactions = totalCancelledTransactions,
-            PercentageCancelledTransactions = percentageCancelledTransactions,
-
-            GrowthTotalTransactions = growthTotalTransactions,
-            GrowthPaidAmount = growthPaidAmount
+            TotalCancelledTransactions = thisMonthCancelledTransactions,
+            PercentageCancelledTransactions = (double)growthCancelledTransactions
         };
     }
 
