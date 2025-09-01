@@ -593,13 +593,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         var unsuccessfulStatuses = new[]
         {
-        ShipmentStatusEnum.Cancelled,
-        ShipmentStatusEnum.Rejected,
-        ShipmentStatusEnum.Unpaid,
-        ShipmentStatusEnum.Refunded,
-        ShipmentStatusEnum.NoDropOff,
+        ShipmentStatusEnum.Refunded,    
         ShipmentStatusEnum.Returned,
-        ShipmentStatusEnum.Expired
     };
 
         // aggregate query (theo filter đã áp)
