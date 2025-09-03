@@ -89,7 +89,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     }
 
     public async Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
-           TrainListFilterRequest request)
+    TrainListFilterRequest request)
     {
         _logger.Information("Get paginated list of trains with page number: {pageNumber}, page size: {pageSize}",
             request.PageNumber, request.PageSize);
@@ -111,28 +111,43 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         {
             // Gán train schedules
             train.TrainSchedules = trainSchedules
-            .Where(ts => ts.TrainId == train.Id)
-            .OrderBy(ts => ts.Shift)
-            .Select(ts => new TrainScheduleResponse
+                .Where(ts => ts.TrainId == train.Id)
+                .OrderBy(ts => ts.Shift)
+                .Select(ts => new TrainScheduleResponse
+                {
+                    Id = ts.Id,
+                    TrainId = ts.TrainId,
+                    TimeSlotId = ts.TimeSlotId,
+                    Shift = ts.Shift,
+                    LineId = ts.LineId,
+                    LineName = ts.LineName,
+                    DepartureStationId = ts.DepartureStationId,
+                    DepartureStationName = ts.DepartureStationName,
+                    DestinationStationId = ts.DestinationStationId,
+                    DestinationStationName = ts.DestinationStationName,
+                    Direction = ts.Direction
+                })
+                .ToList();
+
+            //Lấy direction hiện tại từ Firebase
+            var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
+            var segmentIndex = await _trainStateStore.GetSegmentIndexAsync(train.Id);
+
+            if (firebaseDirection.HasValue && segmentIndex.HasValue)
             {
-                Id = ts.Id,
-                TrainId = ts.TrainId,
-                TimeSlotId = ts.TimeSlotId,
-                Shift = ts.Shift,
-                LineId = ts.LineId,
-                LineName = ts.LineName,
-                DepartureStationId = ts.DepartureStationId,
-                DepartureStationName = ts.DepartureStationName,
-                DestinationStationId = ts.DestinationStationId,
-                DestinationStationName = ts.DestinationStationName,
-                Direction = ts.Direction
-            })
-            .ToList();
-            // Gán direction
-            var direction = await _trainScheduleRepository.GetTrainDirectionByTrainIdAsync(train.Id);
-            if (direction.HasValue)
-            {
-                train.Direction = direction.Value;
+                //Lấy direction thực tế theo route hiện tại
+                var currentDirection = await _trainScheduleRepository
+                    .GetTrainDirectionByTrainAndSegmentAsync(train.Id, segmentIndex.Value, firebaseDirection.Value);
+
+                if (currentDirection.HasValue)
+                {
+                    train.Direction = currentDirection.Value;
+                }
+                else
+                {
+                    //fallback: nếu DB không tìm thấy route, gán theo Firebase
+                    train.Direction = firebaseDirection.Value;
+                }
             }
         }
 

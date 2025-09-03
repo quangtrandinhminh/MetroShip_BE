@@ -7,5 +7,5 @@ namespace MetroShip.Repository.Interfaces;
 public interface ITrainScheduleRepository : IBaseRepository<TrainSchedule>
 {
     Task<IList<TrainSchedule>> GetTrainSchedulesByTrainListAsync(IList<string> trainIds);
-    Task<DirectionEnum?> GetTrainDirectionByTrainIdAsync(string trainId);
+    Task<DirectionEnum?> GetTrainDirectionByTrainAndSegmentAsync(string trainId, int segmentIndex, DirectionEnum direction);
 }
