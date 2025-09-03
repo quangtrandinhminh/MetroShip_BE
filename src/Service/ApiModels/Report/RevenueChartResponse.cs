@@ -35,7 +35,37 @@ namespace MetroShip.Service.ApiModels.Report
         public int Year { get; set; }
         public int Month { get; set; }
         public int TotalTransactions { get; set; }
-        public decimal TotalPaidAmount { get; set; }
-        public decimal PaidAmountGrowthPercent { get; set; }
+
+        // Chi tiết theo loại transaction
+        public decimal ShipmentCost { get; set; }
+        public decimal Surcharge { get; set; }
+        public decimal Refund { get; set; }
+        public decimal Compensation { get; set; }
+
+        // Tổng hợp
+        public decimal TotalIncome { get; set; }   // ShipmentCost + Surcharge
+        public decimal TotalOutcome { get; set; }  // Refund + Compensation
+        public decimal NetAmount { get; set; }     // Income - Outcome
+
+        // Growth %
+        public decimal NetGrowthPercent { get; set; }
+    }
+
+    public class ShipmentFeedbackDataItem
+    {
+        public int Year { get; set; }
+        public int Month { get; set; }
+
+        // Shipment
+        public int TotalShipments { get; set; }
+        public int CompleteAndCompensatedCount { get; set; }
+        public int CompletedWithCompensationCount { get; set; }
+        public double CompleteAndCompensatedPercent { get; set; }
+        public double CompletedWithCompensationPercent { get; set; }
+
+        // Feedback
+        public int TotalFeedbacks { get; set; }
+        public int FiveStarFeedbacks { get; set; }
+        public double FiveStarPercent { get; set; }
     }
 }

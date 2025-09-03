@@ -20,5 +20,6 @@ namespace MetroShip.Service.Interfaces
         Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request);
         Task<CategoryStatisticsResponse> GetCategoryStatisticsAsync(CategoryStatisticsRequest request);
         Task<RevenueChartResponse<ShipmentFeedbackDataItem>> GetShipmentFeedbackChartAsync(RevenueChartRequest request);
+        Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request);
     }
 }
