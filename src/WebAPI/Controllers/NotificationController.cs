@@ -119,6 +119,16 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(result));
         }
 
+        [HttpDelete]
+        [Route(WebApiEndpoint.Notification.DeleteAllNotifications)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin) + "," + nameof(UserRoleEnum.Customer))]
+        public async Task<IActionResult> DeleteAllNotifications()
+        {
+            var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+            var result = await _notificationService.DeleteAllNotificationsAsync(currentUserId);
+            return Ok(BaseResponse.OkResponseDto(result));
+        }
+
         [HttpGet]
         [Route(WebApiEndpoint.Notification.GetUnreadCount)]
         public async Task<IActionResult> GetUnreadCount()
