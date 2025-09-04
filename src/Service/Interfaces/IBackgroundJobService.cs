@@ -6,7 +6,7 @@ public interface IBackgroundJobService
     Task CancelUpdateNoDropOffJob(string shipmentId);
     Task ScheduleUnpaidJob(string shipmentId, DateTimeOffset paymentDeadline);
     Task CancelScheduledUnpaidJob(string shipmentId);
-    Task ScheduleCancelTransactionJob(string transactionId);
+    Task ScheduleCancelTransactionJob(string transactionId, DateTimeOffset paymentDeadline);
     Task CancelScheduleCancelTransactionJob(string transactionId);
     Task ScheduleApplySurchargeJob(string shipmentId, string pricingConfigId);
     Task CancelScheduleApplySurchargeJob(string shipmentId);

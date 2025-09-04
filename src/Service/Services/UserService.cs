@@ -19,6 +19,7 @@ using MetroShip.Service.Validations;
 using Microsoft.EntityFrameworkCore;
 using Twilio.Rest.Api.V2010.Account;
 using MetroShip.Service.Utils;
+using CloudinaryDotNet;
 
 namespace MetroShip.Service.Services;
 
@@ -124,9 +125,14 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             // get roles of user
             var userEntity = users.Items.FirstOrDefault(u => u.Id == user.Id);
             var userRole = userEntity != null
-                ? userEntity.UserRoles.Select(ur => ur.Role).Where(r => r != null).ToList()
+                ? userEntity.UserRoles.Select(ur => ur.Role).ToList()
                 : new List<RoleEntity>();
             user.Role = _mapper.MapRoleToRoleName(userRole);
+
+            if (!user.Role.Any())
+            {
+                user.Role = await _userManager.GetRolesAsync(userEntity);
+            }
 
             if (user.StaffAssignments != null && user.StaffAssignments.Any())
             {

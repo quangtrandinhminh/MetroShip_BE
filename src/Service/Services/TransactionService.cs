@@ -565,7 +565,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 StatusCodes.Status400BadRequest)
         };
 
-        await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id);
+        await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id, shipment.PaymentDealine.Value);
         return transaction;
     }
 
