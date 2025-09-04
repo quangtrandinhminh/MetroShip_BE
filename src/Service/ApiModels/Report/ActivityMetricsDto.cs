@@ -14,9 +14,10 @@ namespace MetroShip.Service.ApiModels.Report
         public DateTime PeriodStart { get; set; }
         public DateTime PeriodEnd { get; set; }
 
-        public int TotalOrders { get; set; }           // tổng đơn trong khoảng
-        public int SuccessfulOrders { get; set; }      // đơn thành công (Completed / Compensated / ...)
-        public int UnsuccessfulOrders { get; set; }    // đơn huỷ / không thành công
+        public int TotalOrders { get; set; }       // tổng đơn trong khoảng
+        public int CompletedOrders { get; set; }   // Đơn hoàn thành
+        public int CompensatedOrders { get; set; } // Đơn bồi thường
+        public int RefundedOrders { get; set; }    // Đơn hoàn (huỷ / trả)
 
         public int TotalFeedbacks { get; set; }        // tổng feedback (rating != null)
         public int GoodFeedbacks { get; set; }         // feedback 4★ or 5★ (rating >= 4)

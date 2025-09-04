@@ -584,20 +584,24 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         }
 
         // nhóm status
-        var successfulStatuses = new[]
+        var completedStatuses = new[]
         {
-        ShipmentStatusEnum.Completed,
-        ShipmentStatusEnum.CompletedWithCompensation,
-        ShipmentStatusEnum.Compensated
+        ShipmentStatusEnum.Completed
     };
 
-        var unsuccessfulStatuses = new[]
+        var compensatedStatuses = new[]
         {
-        ShipmentStatusEnum.Refunded,    
-        ShipmentStatusEnum.Returned,
+        ShipmentStatusEnum.Compensated,
+        ShipmentStatusEnum.CompletedWithCompensation
     };
 
-        // aggregate query (theo filter đã áp)
+        var refundedStatuses = new[]
+        {
+        ShipmentStatusEnum.Refunded,
+        ShipmentStatusEnum.Returned
+    };
+
+        // aggregate query
         var agg = await q
             .GroupBy(_ => 1)
             .Select(g => new
@@ -605,14 +609,15 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 PeriodStart = g.Min(s => s.CreatedAt),
                 PeriodEnd = g.Max(s => s.CreatedAt),
                 TotalOrders = g.Count(),
-                SuccessfulOrders = g.Count(s => successfulStatuses.Contains(s.ShipmentStatus)),
-                UnsuccessfulOrders = g.Count(s => unsuccessfulStatuses.Contains(s.ShipmentStatus)),
+                CompletedOrders = g.Count(s => completedStatuses.Contains(s.ShipmentStatus)),
+                CompensatedOrders = g.Count(s => compensatedStatuses.Contains(s.ShipmentStatus)),
+                RefundedOrders = g.Count(s => refundedStatuses.Contains(s.ShipmentStatus)),
                 TotalFeedbacks = g.Count(s => s.Rating != null),
                 GoodFeedbacks = g.Count(s => s.Rating != null && s.Rating >= 4)
             })
             .FirstOrDefaultAsync();
 
-        // ✅ Xác định khoảng thời gian theo FilterType (không phụ thuộc dữ liệu trong DB)
+        // ✅ Xác định khoảng thời gian
         DateTime periodStart;
         DateTime periodEnd;
 
@@ -666,8 +671,9 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
             TotalOrders = agg?.TotalOrders ?? 0,
-            SuccessfulOrders = agg?.SuccessfulOrders ?? 0,
-            UnsuccessfulOrders = agg?.UnsuccessfulOrders ?? 0,
+            CompletedOrders = agg?.CompletedOrders ?? 0,
+            CompensatedOrders = agg?.CompensatedOrders ?? 0,
+            RefundedOrders = agg?.RefundedOrders ?? 0,
             TotalFeedbacks = agg?.TotalFeedbacks ?? 0,
             GoodFeedbacks = agg?.GoodFeedbacks ?? 0,
             SatisfactionPercent = (agg != null && agg.TotalFeedbacks > 0)
