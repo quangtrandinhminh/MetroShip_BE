@@ -146,6 +146,8 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
+    public partial InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
+
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
     public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);

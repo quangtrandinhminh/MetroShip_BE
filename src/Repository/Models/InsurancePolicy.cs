@@ -32,9 +32,9 @@ public class InsurancePolicy : BaseEntity
     [Column(TypeName = "decimal(8, 6)")]
     public decimal? MinCompensationRateOnValue { get; set; }
 
-    // Nếu không mua bảo hiểm, đền tối đa là x lần ShippingFeeVnd
+    // Nếu không mua bảo hiểm, đền tối thiểu là x lần ShippingFeeVnd
     [Column(TypeName = "decimal(8, 6)")]
-    public decimal? MaxCompensationRateOnShippingFee { get; set; }
+    public decimal? MinCompensationRateOnShippingFee { get; set; }
 
     [Column(TypeName = "date")]
     public DateOnly ValidFrom { get; set; }

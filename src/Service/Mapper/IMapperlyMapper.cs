@@ -131,6 +131,7 @@ public interface IMapperlyMapper
     // insurance policy
     InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
     PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
+    InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
 
     //notification
     NotificationDto MapNotification(Notification notification);

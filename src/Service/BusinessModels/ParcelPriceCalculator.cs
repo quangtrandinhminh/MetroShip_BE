@@ -114,7 +114,7 @@ public static class ParcelPriceCalculator
     {
         if (valueVnd is not > 0)
         {
-            return (decimal)(policy.MaxCompensationRateOnShippingFee * shippingFeeVnd.Value);
+            return (decimal)(policy.MinCompensationRateOnShippingFee * shippingFeeVnd.Value);
         }
 
         return policy.MaxCompensationRateOnValue != null

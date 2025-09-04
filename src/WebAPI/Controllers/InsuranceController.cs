@@ -1,4 +1,7 @@
-﻿using MetroShip.Service.ApiModels.PaginatedList;
+﻿using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels;
+using MetroShip.Service.ApiModels.InsurancePolicy;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using Microsoft.AspNetCore.Authorization;
@@ -24,6 +27,27 @@ namespace MetroShip.WebAPI.Controllers
         {
             var response = await _insuranceService.GetPolicyById(id);
             return Ok(response);
+        }
+
+        [HttpPost(WebApiEndpoint.InsurancePolicyEndpoint.CreatePolicy)]
+        public async Task<IActionResult> CreatePolicy([FromBody] InsurancePolicyRequest request)
+        {
+            var response = await _insuranceService.CreatePolicy(request);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
+
+        [HttpPut(WebApiEndpoint.InsurancePolicyEndpoint.ActivatePolicy)]
+        public async Task<IActionResult> ActivatePolicy([FromRoute] string id)
+        {
+            var response = await _insuranceService.ActivatePolicy(id);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
+
+        [HttpPut(WebApiEndpoint.InsurancePolicyEndpoint.DeactivatePolicy)]
+        public async Task<IActionResult> DeactivatePolicy([FromRoute] string id)
+        {
+            var response = await _insuranceService.DeactivatePolicy(id);
+            return Ok(BaseResponse.OkResponseDto(response));
         }
     }
 }

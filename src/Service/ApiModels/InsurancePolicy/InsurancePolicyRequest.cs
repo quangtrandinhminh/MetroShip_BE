@@ -1,8 +1,7 @@
 ﻿namespace MetroShip.Service.ApiModels.InsurancePolicy;
 
-public record InsurancePolicyResponse
+public record InsurancePolicyRequest
 {
-    public string Id { get; set; }
     public string? Name { get; set; }
 
     public string? Description { get; set; }
@@ -21,12 +20,8 @@ public record InsurancePolicyResponse
     // Nếu mua bảo hiểm, hư hại 1 phần, đền tối đa là MaxInsuranceRate * giá trị hàng hóa
     public decimal? MinCompensationRateOnValue { get; set; }
 
-    // Nếu không mua bảo hiểm, đền tối thiểu là x lần ShippingFeeVnd
+    // Nếu không mua bảo hiểm, đền tối đa là x lần ShippingFeeVnd
     public decimal? MinCompensationRateOnShippingFee { get; set; }
-
-    public DateOnly ValidFrom { get; set; }
-
-    public DateOnly? ValidTo { get; set; }
 
     public bool IsActive { get; set; }
 }
