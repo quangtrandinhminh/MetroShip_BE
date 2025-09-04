@@ -2,11 +2,13 @@
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
+using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.BusinessModels;
 using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
+using MetroShip.Service.Validations;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
 using MetroShip.Utility.Helpers;
@@ -41,9 +43,14 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         );
 
         var response = _mapper.MapToPricingTablePaginatedList(pricingConfigs);
+        foreach (var item in response.Items)
+        {
+            // order the tiers by tier order ascending
+            item.WeightTiers = item.WeightTiers.OrderBy(t => t.TierOrder).ToList();
+            item.DistanceTiers = item.DistanceTiers.OrderBy(t => t.TierOrder).ToList();
+        }
         return response;
     }
-
 
     private async Task<PricingConfig?> GetPricingConfigAsync(string? pricingConfigId = null)
     {
@@ -51,23 +58,25 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         if (!string.IsNullOrEmpty(pricingConfigId))
         {
             pricingConfig = await _pricingRepository.GetSingleAsync(
-                x => x.Id == pricingConfigId && x.IsActive,
+                x => x.Id == pricingConfigId,
                 false,
                 x => x.WeightTiers, x => x.DistanceTiers
                 );
             if (pricingConfig == null)
             {
                 throw new AppException(
-                ErrorCode.BadRequest,
-                "The specified pricing configuration is not found or is inactive.",
-                StatusCodes.Status400BadRequest
+                    ErrorCode.BadRequest,
+                    ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+                    StatusCodes.Status400BadRequest
                 );
             }
+
+            pricingConfig.WeightTiers = pricingConfig.WeightTiers.OrderBy(t => t.TierOrder).ToList();
+            pricingConfig.DistanceTiers = pricingConfig.DistanceTiers.OrderBy(t => t.TierOrder).ToList();
             return pricingConfig;
         }
 
-        var cacheKey = CACHE_KEY;
-        if (_cache.TryGetValue(cacheKey, out PricingConfig? cachedTable))
+        if (_cache.TryGetValue(CACHE_KEY, out PricingConfig? cachedTable))
         {
             _logger.Information("Retrieved pricing configuration from cache.");
             return cachedTable;
@@ -79,37 +88,23 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         );
         if (pricingConfig == null)
         {
-            throw new AppException("No active pricing configuration found.");
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+                StatusCodes.Status400BadRequest
+            );
         }
 
-        _cache.Set(cacheKey, pricingConfig, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
+        pricingConfig.WeightTiers = pricingConfig.WeightTiers.OrderBy(t => t.TierOrder).ToList();
+        pricingConfig.DistanceTiers = pricingConfig.DistanceTiers.OrderBy(t => t.TierOrder).ToList();
+        _cache.Set(CACHE_KEY, pricingConfig, TimeSpan.FromMinutes(CACHE_EXPIRY_MINUTES));
+
         return pricingConfig;
     }
 
     public async Task<PricingTableResponse> GetPricingTableAsync(string? pricingConfigId)
     {
-        var pricingConfig = new PricingConfig();
-        if (!string.IsNullOrEmpty(pricingConfigId))
-        {
-            pricingConfig = await _pricingRepository.GetSingleAsync(
-                    x => x.Id == pricingConfigId,
-                    false,
-                    x => x.WeightTiers, x => x.DistanceTiers
-            );
-            if (pricingConfig == null)
-            {
-                throw new AppException(
-                    ErrorCode.BadRequest,
-                    "The specified pricing configuration is not found or is inactive.",
-                StatusCodes.Status400BadRequest
-                    );
-            }
-        }
-        else
-        {
-            pricingConfig = await GetPricingConfigAsync();
-        }
-        
+        var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
         var response = _mapper.MapToPricingTableResponse(pricingConfig);
         return response;
     }
@@ -127,17 +122,22 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
 
         var pricingConfig = await GetPricingConfigAsync();
 
-        // Find the applicable weight tier
-        var weightTier = pricingConfig.WeightTiers
-            .FirstOrDefault(t => t.IsWeightInRange(weightKg));
-        if (weightTier == null)
+        // Get min and max weights first
+        var minWeight = pricingConfig.WeightTiers.MinBy(t => t.MinWeightKg)?.MinWeightKg ?? 0;
+        var maxWeight = pricingConfig.WeightTiers.MaxBy(t => t.MaxWeightKg)?.MaxWeightKg ?? 0;
+
+        // Check if weight is within bounds before searching for tier
+        if (weightKg < minWeight || weightKg > maxWeight)
         {
             throw new AppException(
                 ErrorCode.BadRequest,
-                "No applicable weight tier found for the given weight.",
+                $"Trọng lượng {weightKg}kg nằm ngoài mức cho phép. Giới hạn: {minWeight}kg - {maxWeight}kg",
                 StatusCodes.Status400BadRequest
                 );
         }
+
+        var weightTier = pricingConfig.WeightTiers
+            .FirstOrDefault(t => t.IsWeightInRange(weightKg));
 
         // Find the applicable distance tier
         var distanceTier = pricingConfig.DistanceTiers
@@ -171,24 +171,84 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         return weightTier.BasePriceVnd ?? 0;
     }
 
-    /*public async Task<PricingConfig> CreateOrUpdatePricingConfigAsync(PricingConfigRequest request)
+    public async Task<string> ChangePricingConfigAsync(PricingConfigRequest request)
     {
-        if (request == null)
+        _logger.Information("Creating or updating pricing configuration: {@Request}", request);
+        PricingConfigValidator.ValidatePricingConfigRequest(request);
+
+        var activeConfig = _pricingRepository.GetAllWithCondition(x => x.IsActive 
+        && x.DeletedAt == null);
+
+        if (activeConfig.Any() && request.IsActive)
+        {
+            foreach (var config in activeConfig)
+            {
+                config.IsActive = false;
+                config.EffectiveTo = CoreHelper.SystemTimeNow;
+                _pricingRepository.Update(config);
+            }
+
+            _cache.Remove(CACHE_KEY); // Clear cache after update
+        }
+
+        var pricingConfig = _mapper.MapToPricingConfigEntity(request);
+        if (request.IsActive)
+        {
+            pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
+        }
+
+        _pricingRepository.Add(pricingConfig);
+        await _unitOfWork.SaveChangeAsync();
+       
+        return ResponseMessagePricingConfig.PRICING_CONFIG_CREATE_SUCCESS;
+    }
+
+    // activate config
+    public async Task<string> ActivatePricingConfigAsync(string pricingConfigId)
+    {
+        var pricingConfig = await _pricingRepository.GetSingleAsync(
+                       x => x.Id == pricingConfigId && x.DeletedAt == null);
+        if (pricingConfig == null)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Pricing configuration request cannot be null.",
+            ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
             StatusCodes.Status400BadRequest
             );
         }
 
-        var pricingConfig = _mapper.MapToPricingConfig(request);
-        await _pricingRepository.AddAsync(pricingConfig);
-        await _unitOfWork.SaveChangeAsync();
-        _cache.Remove(CACHE_KEY); // Clear cache after update
+        if (pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_ALREADY_ACTIVATED,
+            StatusCodes.Status400BadRequest
+            );
+        }   
 
-        return pricingConfig;
-    }*/
+        // ensure only one active config
+        var activeConfigs = _pricingRepository.GetAllWithCondition(x => x.IsActive
+            && x.DeletedAt == null);
+        if (activeConfigs.Any())
+        {
+            foreach (var config in activeConfigs)
+            {
+                config.IsActive = false;
+                config.EffectiveTo = CoreHelper.SystemTimeNow;
+                _pricingRepository.Update(config);
+            }
+
+            _cache.Remove(CACHE_KEY); // Clear cache after update
+        }
+
+        pricingConfig.IsActive = true;
+        pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
+        pricingConfig.EffectiveTo = null;
+        _pricingRepository.Update(pricingConfig);
+       
+        await _unitOfWork.SaveChangeAsync();
+        return ResponseMessagePricingConfig.PRICING_CONFIG_UPDATE_SUCCESS;
+    }
 
     public async Task CalculateOverdueSurcharge (Shipment shipment)
     {

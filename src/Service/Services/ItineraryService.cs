@@ -707,29 +707,29 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             )
         .ToListAsync();
 
-        return pathResults.Select(r =>
+        var results = new List<dynamic>();
+        foreach (var r in pathResults)
         {
             var pathResponse = _metroGraph.CreateResponseFromPath(r.StationIdListPath, _mapperlyMapper);
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
-            // Calculate pricing for each parcel
-            /*ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
-
-            ParcelPriceCalculator.CalculateParcelPricing(
+            // calculate pricing for each parcel
+            await ParcelPriceCalculator.CalculateParcelPricing(
                 pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
 
-            // Check est arrival time
+            // check est arrival time
             var date = new DateOnly(request.ScheduledDateTime.Year,
-                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
+                request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = await CheckEstArrivalTime(pathResponse, request.TimeSlotId, date);
 
-            return new
+            results.Add(new
             {
                 StationId = r.StationId,
                 Response = pathResponse
-            };
-        }).ToList<dynamic>();
+            });
+        }
+
+        return results;
     }
 
     private TotalPriceResponse BuildTotalPriceResponse(List<dynamic> bestPathResponses, List<string> stationIdList)
@@ -898,6 +898,18 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         returnShipment.TotalInsuranceFeeVnd = returnShipment.Parcels.Sum(x => x.InsuranceFeeVnd);
         returnShipment.TotalShippingFeeVnd = returnShipment.Parcels.Sum(x => x.ShippingFeeVnd.Value);
 
+        // add other parcels (if any) from old shipment to new shipment with status = normal
+        var otherParcels = primaryShipment.Parcels
+            .Where(x => x.Status != ParcelStatusEnum.Normal)
+            .ToList();
+
+        if (otherParcels.Any())
+        {
+            newParcels = null;
+            CloneToNewParcels(otherParcels, newParcels);
+            ((List<Parcel>)returnShipment.Parcels).AddRange(newParcels);
+        }
+
         if (returnShipment.TotalSurchargeFeeVnd > 0)
         {
             returnShipment.TotalCostVnd += returnShipment.TotalSurchargeFeeVnd.Value;
@@ -921,7 +933,6 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         {
             var newParcel = new Parcel
             {
-                Id = Guid.NewGuid().ToString(),
                 ShipmentId = parcel.ShipmentId,
                 WeightKg = parcel.WeightKg,
                 PriceVnd = parcel.PriceVnd,
@@ -932,7 +943,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                 CategoryInsuranceId = parcel.CategoryInsuranceId,
                 CategoryInsurance = parcel.CategoryInsurance,
                 OverdueSurchangeFeeVnd = parcel.OverdueSurchangeFeeVnd,
-                Status = ParcelStatusEnum.Normal,
+                Status = parcel.Status,
                 ValueVnd = parcel.ValueVnd,
                 DescriptionImageUrl = parcel.DescriptionImageUrl,
                 Description = parcel.Description,

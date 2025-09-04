@@ -13,7 +13,7 @@ namespace MetroShip.Service.BusinessModels;
 
 public static class ParcelPriceCalculator
 {
-    public static void CalculateParcelPricing(
+    public static async Task CalculateParcelPricing(
         List<ParcelRequest> parcels,
         BestPathGraphResponse pathResponse,
         IPricingService priceCalculationService,
@@ -32,8 +32,8 @@ public static class ParcelPriceCalculator
             /*parcel.ShippingFeeVnd = priceCalculationService.
                 CalculateShippingPrice(chargeableWeight, pathResponse.TotalKm);*/
 
-            parcel.ShippingFeeVnd = priceCalculationService.
-                CalculatePriceAsync(chargeableWeight, pathResponse.TotalKm).Result;
+            parcel.ShippingFeeVnd = await priceCalculationService.
+                CalculatePriceAsync(chargeableWeight, pathResponse.TotalKm);
             parcel.PriceVnd += parcel.ShippingFeeVnd;
 
             // Calculate insurance if required

@@ -36,5 +36,21 @@ namespace MetroShip.WebAPI.Controllers
             var pricingTable = await _pricingService.GetPricingTableAsync(pricingConfigId);
             return Ok(BaseResponse.OkResponseDto(pricingTable));
         }
+
+        [HttpPost(WebApiEndpoint.PricingEndpoint.CreatePricing)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> CreatePricingAsync([FromBody] PricingConfigRequest request)
+        {
+            var newPricingConfig = await _pricingService.ChangePricingConfigAsync(request);
+            return Ok(BaseResponse.OkResponseDto(newPricingConfig, null));
+        }
+
+        [HttpPut(WebApiEndpoint.PricingEndpoint.UpdatePricing)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> ActivatePricingAsync([FromRoute] string pricingConfigId)
+        {
+            var activatedPricingConfigId = await _pricingService.ActivatePricingConfigAsync(pricingConfigId);
+            return Ok(BaseResponse.OkResponseDto(activatedPricingConfigId, null));
+        }
     }
 }

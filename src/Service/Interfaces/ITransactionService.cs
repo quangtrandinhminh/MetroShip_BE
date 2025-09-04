@@ -13,4 +13,6 @@ public interface ITransactionService
         string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null);
 
     Task CancelTransactionAsync(string transactionId);
+    Task<List<VietQrBankDetail>> GetBanksFromVietQr();
+    Task<string> GenerateBankQrLink(int bankShortName, string accountNo, decimal? amount);
 }

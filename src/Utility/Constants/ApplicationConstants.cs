@@ -72,6 +72,14 @@
         public const string ROLES_REQUIRED = "Vai trò không được để trống.";
         public const string USER_NOT_ALLOWED = "Bạn không có quyền truy cập mục này.";
         public const string EMAIL_VALIDATION_REQUIRED = "Vui lòng nhập mã OTP gửi đến email để kích hoạt tài khoản.";
+
+        public const string BANKID_INVALID = "BankId không hợp lệ.";
+        public const string ACCOUNTNO_INVALID = "Số tài khoản không hợp lệ.";
+        public const string ACCOUNTNAME_INVALID = "Tên tài khoản viết hoa không dấu.";
+        public const string ACCOUNTNO_REQUIRED = "Số tài khoản không được để trống.";
+        public const string ACCOUNTNAME_REQUIRED = "Tên tài khoản không được để trống.";
+        public const string ACCOUNTNO_LENGTH_INVALID = "Số tài khoản từ 10 đến 19 ký tự.";
+        public const string ACCOUNTNAME_LENGTH_INVALID = "Tên tài khoản không được vượt quá 255 ký tự. ";
     }
 
     public class ResponseMessageIdentitySuccess
@@ -100,6 +108,7 @@
         public const string ADMIN_NOT_FOUND = "Không tìm thấy quản trị viên.";
         public const string CUSTOMER_NOT_FOUND = "Không tìm thấy khách hàng.";
         public const string ASSIGN_ROLE_SUCCESS = "Gán vai trò thành công.";
+        public const string UPDATE_BANK_INFO_SUCCESS = "Cập nhật thông tin ngân hàng thành công.";
     }
 
     public class ResponseMessageConstrantsImage
@@ -345,5 +354,44 @@
         public const string MAX_COMPENSATION_RATE_ON_SHIPPING_FEE_INVALID = "Tỷ lệ bồi thường tối đa trên phí vận chuyển phải từ 0 đến 1.";
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
+    }
+
+    public class ResponseMessageSystemConfig
+    {
+        public const string CONFIG_KEY_REQUIRED = "Yêu cầu ConfigKey.";
+        public const string CONFIG_KEY_INVALID = "ConfigKey không hợp lệ.";
+        public const string CONFIG_NOT_FOUND = "Không tìm thấy cấu hình hệ thống.";
+        public const string CONFIG_EXISTED = "Cấu hình hệ thống đã tồn tại.";
+        public const string CONFIG_UPDATE_SUCCESS = "Cập nhật cấu hình hệ thống thành công.";
+        public const string CONFIG_DELETE_SUCCESS = "Xóa cấu hình hệ thống thành công.";
+        public const string CONFIG_CREATE_SUCCESS = "Tạo cấu hình hệ thống thành công.";
+        public const string DESCRIPTION_REQUIRED = "Yêu cầu mô tả.";
+        public const string CONFIG_TYPE_INVALID = "Loại cấu hình không hợp lệ.";
+        public const string MAX_DISTANCE_INVALID = "Khoảng cách tối đa phải là một số nguyên dương.";
+        public const string MAX_CAPACITY_INVALID = "Sức chứa tối đa phải là một số nguyên dương ";
+        public const string MAX_COUNT_STATION_INVALID = "Số lượng ga tối đa phải là một số nguyên dương.";
+        public const string MAX_SCHEDULE_DAY_INVALID = "Số ngày lên lịch tối đa phải là một số nguyên dương.";
+        public const string CONFIG_VALUE_SAME = "Giá trị cấu hình không thay đổi.";
+        public const string MAX_SHIFT_ATTEMPTS_INVALID = "Số lần thử ca làm việc tối đa phải là một số nguyên dương.";
+    }
+
+    public class ResponseMessagePricingConfig
+    {
+        public const string PRICING_CONFIG_NOT_FOUND = "Không tìm thấy cấu hình giá.";
+        public const string PRICING_CONFIG_EXISTED = "Cấu hình giá đã tồn tại.";
+        public const string PRICING_CONFIG_UPDATE_SUCCESS = "Cập nhật cấu hình giá thành công.";
+        public const string PRICING_CONFIG_DELETE_SUCCESS = "Xóa cấu hình giá thành công.";
+        public const string PRICING_CONFIG_CREATE_SUCCESS = "Tạo cấu hình giá thành công.";
+        public const string NAME_REQUIRED = "Yêu cầu tên cấu hình giá.";
+        public const string DESCRIPTION_REQUIRED = "Yêu cầu mô tả cấu hình giá.";
+        public const string BASE_FEE_VND_PER_KM_INVALID = "Phí cơ bản (VND) phải lớn hơn hoặc bằng 0.";
+        public const string WEIGHT_FEE_VND_PER_KG_INVALID = "Phí theo trọng lượng (VND) phải lớn hơn hoặc bằng 0.";
+        public const string VOLUME_FEE_VND_PER_M3_INVALID = "Phí theo thể tích (VND) phải lớn hơn hoặc bằng 0.";
+        public const string BULK_FEE_VND_INVALID = "Phí hàng cồng kềnh (VND) phải lớn hơn hoặc bằng 0.";
+        public const string FRAGILE_FEE_VND_INVALID = "Phí hàng dễ vỡ (VND) phải lớn hơn hoặc bằng 0.";
+        public const string EXPRESS_FEE_RATE_ON_SHIPPING_FEE_INVALID = "Tỷ lệ phí chuyển phát nhanh trên phí vận chuyển phải từ 0 đến 1.";
+        public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
+        public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
+        public const string PRICING_CONFIG_ALREADY_ACTIVATED = "Cấu hình giá đã được kích hoạt";
     }
 }

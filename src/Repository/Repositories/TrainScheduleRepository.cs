@@ -45,4 +45,25 @@ public class TrainScheduleRepository : BaseRepository<TrainSchedule>, ITrainSche
             })
             .ToListAsync();
     }
+
+    public async Task<DirectionEnum?> GetTrainDirectionByTrainAndSegmentAsync(string trainId, int segmentIndex, DirectionEnum direction)
+    {
+        var train = await _context.MetroTrains
+            .Include(t => t.Line)
+            .ThenInclude(l => l.Routes)
+            .FirstOrDefaultAsync(t => t.Id == trainId);
+
+        if (train?.Line?.Routes == null || !train.Line.Routes.Any())
+            return null;
+
+        var routes = train.Line.Routes
+            .Where(r => r.Direction == direction)
+            .OrderBy(r => r.SeqOrder)
+            .ToList();
+
+        if (segmentIndex < 0 || segmentIndex >= routes.Count)
+            return null;
+
+        return routes[segmentIndex].Direction;
+    }
 }

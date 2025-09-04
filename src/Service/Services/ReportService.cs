@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Interfaces;
+using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.ParcelCategory;
 using MetroShip.Service.ApiModels.Report;
 using MetroShip.Service.ApiModels.Shipment;
@@ -44,29 +45,47 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<ShipmentListWithStatsResponse> GetShipmentStatsAsync()
     {
+        var now = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7));
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
+
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
+
         var query = _shipmentRepository.GetAllWithCondition();
-        var totalShipments = await query.CountAsync();
 
-        var todayVietnamTime = DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(7)).Date;
-        var todayUtc = todayVietnamTime.ToUniversalTime();
+        // === Tháng hiện tại ===
+        var thisMonthQuery = query.Where(s => s.CreatedAt >= startOfThisMonth.UtcDateTime && s.CreatedAt < startOfNextMonth.UtcDateTime);
+        var totalShipmentsThisMonth = await thisMonthQuery.CountAsync();
 
-        var newShipmentsCount = await query.CountAsync(s => s.CreatedAt >= todayUtc);
-        var percentageNewShipments = totalShipments > 0
-            ? Math.Round((double)newShipmentsCount / totalShipments * 100, 2)
+        var totalCompleteThisMonth = await thisMonthQuery.CountAsync(s =>
+            s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+            s.ShipmentStatus == ShipmentStatusEnum.Compensated ||
+            s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
+
+        // === Tháng trước ===
+        var lastMonthQuery = query.Where(s => s.CreatedAt >= startOfLastMonth.UtcDateTime && s.CreatedAt <= endOfLastMonth.UtcDateTime);
+        var totalShipmentsLastMonth = await lastMonthQuery.CountAsync();
+
+        var totalCompleteLastMonth = await lastMonthQuery.CountAsync(s =>
+            s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+            s.ShipmentStatus == ShipmentStatusEnum.Compensated ||
+            s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation);
+
+        // === % tăng trưởng ===
+        var percentageNewShipments = totalShipmentsLastMonth > 0
+            ? Math.Round((double)(totalShipmentsThisMonth - totalShipmentsLastMonth) / totalShipmentsLastMonth * 100, 2)
             : 0;
 
-        var totalCompleteShipments = await query.CountAsync(s => s.ShipmentStatus == ShipmentStatusEnum.Completed);
-        var newCompleteShipmentsCount = await query.CountAsync(
-            s => s.ShipmentStatus == ShipmentStatusEnum.Completed && s.CreatedAt >= todayUtc);
-        var percentageNewCompleteShipments = totalCompleteShipments > 0
-            ? Math.Round((double)newCompleteShipmentsCount / totalCompleteShipments * 100, 2)
+        var percentageNewCompleteShipments = totalCompleteLastMonth > 0
+            ? Math.Round((double)(totalCompleteThisMonth - totalCompleteLastMonth) / totalCompleteLastMonth * 100, 2)
             : 0;
 
         return new ShipmentListWithStatsResponse
         {
-            TotalShipments = totalShipments,
+            TotalShipments = totalShipmentsThisMonth,
             PercentageNewShipments = percentageNewShipments,
-            TotalCompleteShipments = totalCompleteShipments,
+            TotalCompleteShipments = totalCompleteThisMonth,
             PercentageNewCompleteShipments = percentageNewCompleteShipments
         };
     }
@@ -77,17 +96,29 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .Where(v => v.DeletedTime == null &&
                         v.UserRoles.Any(r => r.Role.Name == UserRoleEnum.Customer.ToString()));
 
-        var totalUsersWithRoleUser = await query.CountAsync();
+        var now = DateTimeOffset.UtcNow;
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
 
-        var firstDayOfMonth = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var newUsersCount = await query.CountAsync(u => u.CreatedTime >= firstDayOfMonth);
-        var percentageNewUsers = totalUsersWithRoleUser > 0
-            ? Math.Round((double)newUsersCount / totalUsersWithRoleUser * 100, 2)
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
+
+        // === Tháng này ===
+        var thisMonthUsers = await query.CountAsync(u =>
+            u.CreatedTime >= startOfThisMonth && u.CreatedTime < startOfNextMonth);
+
+        // === Tháng trước ===
+        var lastMonthUsers = await query.CountAsync(u =>
+            u.CreatedTime >= startOfLastMonth && u.CreatedTime <= endOfLastMonth);
+
+        // === % tăng trưởng ===
+        var percentageNewUsers = lastMonthUsers > 0
+            ? Math.Round((double)(thisMonthUsers - lastMonthUsers) / lastMonthUsers * 100, 2)
             : 0;
 
         return new UserListWithStatsResponse
         {
-            TotalUsersWithRoleUser = totalUsersWithRoleUser,
+            TotalUsersWithRoleUser = thisMonthUsers,
             PercentageNewUsers = percentageNewUsers
         };
     }
@@ -97,77 +128,92 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         var query = _transactionRepository.GetAllWithCondition()
             .Where(t => t.DeletedAt == null);
 
-        var totalTransactions = await query.CountAsync();
+        var now = DateTimeOffset.UtcNow;
+        var startOfThisMonth = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+        var startOfNextMonth = startOfThisMonth.AddMonths(1);
 
-        var firstDayOfMonth = new DateTimeOffset(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var newTransactionsCount = await query.CountAsync(t => t.CreatedAt >= firstDayOfMonth);
-        var percentageNewTransactions = totalTransactions > 0
-            ? Math.Round((double)newTransactionsCount / totalTransactions * 100, 2)
-            : 0;
-
-        var totalPaidTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Paid);
-        var totalPaidAmount = await query
-            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
-            .SumAsync(t => t.PaymentAmount);
-
-        var newPaidTransactionsCount = await query.CountAsync(
-            t => t.PaymentStatus == PaymentStatusEnum.Paid && t.CreatedAt >= firstDayOfMonth);
-        var percentageNewPaidTransactions = totalPaidTransactions > 0
-            ? Math.Round((double)newPaidTransactionsCount / totalPaidTransactions * 100, 2)
-            : 0;
-
-        var totalUnpaidTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Failed);
-        var percentageUnpaidTransactions = totalTransactions > 0
-            ? Math.Round((double)totalUnpaidTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        var totalPendingTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Pending);
-        var percentagePendingTransactions = totalTransactions > 0
-            ? Math.Round((double)totalPendingTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        var totalCancelledTransactions = await query.CountAsync(t => t.PaymentStatus == PaymentStatusEnum.Cancelled);
-        var percentageCancelledTransactions = totalTransactions > 0
-            ? Math.Round((double)totalCancelledTransactions / totalTransactions * 100, 2)
-            : 0;
-
-        // ===== Thêm phần tính Growth so với tháng trước =====
-        var prevMonthStart = firstDayOfMonth.AddMonths(-1);
-        var prevMonthEnd = firstDayOfMonth.AddTicks(-1);
+        var startOfLastMonth = startOfThisMonth.AddMonths(-1);
+        var endOfLastMonth = startOfThisMonth.AddTicks(-1);
 
         decimal CalcGrowth(decimal current, decimal prev) =>
             prev > 0 ? Math.Round(((current - prev) / prev) * 100m, 2) : 0;
 
-        var prevTotalTransactions = await query.CountAsync(t => t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd);
-        var prevTotalPaidAmount = await query
+        // ===== Tháng này =====
+        var thisMonthTransactions = await query.CountAsync(t =>
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Paid &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPaidAmount = await query
             .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
-                        t.CreatedAt >= prevMonthStart && t.CreatedAt <= prevMonthEnd)
+                        t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth)
             .SumAsync(t => t.PaymentAmount);
 
-        var growthTotalTransactions = CalcGrowth(newTransactionsCount, prevTotalTransactions);
-        var growthPaidAmount = CalcGrowth(totalPaidAmount, prevTotalPaidAmount);
+        var thisMonthUnpaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Failed &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthPendingTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Pending &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        var thisMonthCancelledTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Cancelled &&
+            t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth);
+
+        // ===== Tháng trước =====
+        var prevMonthTransactions = await query.CountAsync(t =>
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Paid &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPaidAmount = await query
+            .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
+                        t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth)
+            .SumAsync(t => t.PaymentAmount);
+
+        var prevMonthUnpaidTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Failed &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthPendingTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Pending &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        var prevMonthCancelledTransactions = await query.CountAsync(t =>
+            t.PaymentStatus == PaymentStatusEnum.Cancelled &&
+            t.CreatedAt >= startOfLastMonth && t.CreatedAt <= endOfLastMonth);
+
+        // ===== Tính % tăng trưởng =====
+        var growthTotalTransactions = CalcGrowth(thisMonthTransactions, prevMonthTransactions);
+        var growthPaidTransactions = CalcGrowth(thisMonthPaidTransactions, prevMonthPaidTransactions);
+        var growthPaidAmount = CalcGrowth(thisMonthPaidAmount, prevMonthPaidAmount);
+        var growthUnpaidTransactions = CalcGrowth(thisMonthUnpaidTransactions, prevMonthUnpaidTransactions);
+        var growthPendingTransactions = CalcGrowth(thisMonthPendingTransactions, prevMonthPendingTransactions);
+        var growthCancelledTransactions = CalcGrowth(thisMonthCancelledTransactions, prevMonthCancelledTransactions);
 
         return new TransactionListWithStatsResponse
         {
-            // Giữ nguyên trường cũ
-            TotalTransactions = totalTransactions,
-            PercentageNewTransactions = percentageNewTransactions,
+            TotalTransactions = thisMonthTransactions,
+            PercentageNewTransactions = (double)growthTotalTransactions,
 
-            TotalPaidTransactions = totalPaidTransactions,
-            PercentageNewPaidTransactions = percentageNewPaidTransactions,
-            TotalPaidAmount = totalPaidAmount,
+            TotalPaidTransactions = thisMonthPaidTransactions,
+            PercentageNewPaidTransactions = (double)growthPaidTransactions,
+            TotalPaidAmount = thisMonthPaidAmount,
+            GrowthPaidAmount = growthPaidAmount,
 
-            TotalUnpaidTransactions = totalUnpaidTransactions,
-            PercentageUnpaidTransactions = percentageUnpaidTransactions,
+            TotalUnpaidTransactions = thisMonthUnpaidTransactions,
+            PercentageUnpaidTransactions = (double)growthUnpaidTransactions,
 
-            TotalPendingTransactions = totalPendingTransactions,
-            PercentagePendingTransactions = percentagePendingTransactions,
+            TotalPendingTransactions = thisMonthPendingTransactions,
+            PercentagePendingTransactions = (double)growthPendingTransactions,
 
-            TotalCancelledTransactions = totalCancelledTransactions,
-            PercentageCancelledTransactions = percentageCancelledTransactions,
-
-            GrowthTotalTransactions = growthTotalTransactions,
-            GrowthPaidAmount = growthPaidAmount
+            TotalCancelledTransactions = thisMonthCancelledTransactions,
+            PercentageCancelledTransactions = (double)growthCancelledTransactions
         };
     }
 
@@ -216,55 +262,133 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<TransactionDataItem>> GetTransactionChartAsync(RevenueChartRequest request)
     {
-        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+        var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = _transactionRepository.GetAllWithCondition()
-            .Where(t => t.DeletedAt == null);
-        query = ApplyDateFilter(query, finalFilterType, request, t => t.CreatedAt);
+        var query = ApplyDateFilter(
+            _transactionRepository.GetAllWithCondition().Where(t => t.DeletedAt == null),
+            filterType,
+            request,
+            t => t.CreatedAt
+        );
 
-        var data = await query
-            .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+        // ⚡ GroupBy theo Year/Month
+        var rawData = await query
+            .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
             .Select(g => new TransactionDataItem
             {
                 Year = g.Key.Year,
                 Month = g.Key.Month,
                 TotalTransactions = g.Count(),
-                TotalPaidAmount = g
-                    .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid)
-                    .Sum(t => t.PaymentAmount)
+
+                ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                         && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
+
+                Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                       && t.PaymentStatus == PaymentStatusEnum.Paid)
+                             .Sum(t => t.PaymentAmount),
+
+                Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                    && t.PaymentStatus == PaymentStatusEnum.Paid)
+                          .Sum(t => t.PaymentAmount),
+
+                Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                          && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
             })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
 
-        // === Thêm tính Growth % ===
-        for (int i = 0; i < data.Count; i++)
+        List<TransactionDataItem> fullData;
+
+        switch (filterType)
         {
-            var current = data[i];
+            case RevenueFilterType.day:
+                var targetYear = request.Year ?? DateTime.UtcNow.Year;
+                var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
+                // Day -> chỉ lấy đúng tháng đó
+                fullData = rawData
+                    .Where(d => d.Year == targetYear && d.Month == targetMonth)
+                    .ToList();
+                break;
+
+            case RevenueFilterType.Default: // ✅ Default = Year
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                fullData = Enumerable.Range(1, 12)
+                    .Select(m => BuildTransactionItem(rawData, year, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var q = request.Quarter ?? 1;
+                var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
+                fullData = monthsInQuarter
+                    .Select(m => BuildTransactionItem(rawData, qYear, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? 1;
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? 12;
+
+                var months = Enumerable.Range(startYear * 12 + startMonth,
+                    (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                    .Select(x => new
+                    {
+                        Year = (x - 1) / 12,
+                        Month = (x - 1) % 12 + 1
+                    });
+
+                fullData = months
+                    .Select(m => BuildTransactionItem(rawData, m.Year, m.Month))
+                    .ToList();
+                break;
+
+            default:
+                fullData = rawData;
+                break;
+        }
+
+        // === Tính Income, Outcome, NetAmount ===
+        foreach (var item in fullData)
+        {
+            item.TotalIncome = item.ShipmentCost + item.Surcharge;
+            item.TotalOutcome = item.Refund + item.Compensation;
+            item.NetAmount = item.TotalIncome - item.TotalOutcome;
+        }
+
+        // === Tính Growth % theo NetAmount ===
+        for (int i = 0; i < fullData.Count; i++)
+        {
+            var current = fullData[i];
             var prevYear = current.Month == 1 ? current.Year - 1 : current.Year;
             var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
 
-            var prev = data.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
-            if (prev != null && prev.TotalPaidAmount != 0)
+            var prev = fullData.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
+            if (prev != null && prev.NetAmount != 0)
             {
-                current.PaidAmountGrowthPercent = Math.Round(
-                    ((current.TotalPaidAmount - prev.TotalPaidAmount) / prev.TotalPaidAmount) * 100m, 2);
+                current.NetGrowthPercent = Math.Round(
+                    ((current.NetAmount - prev.NetAmount) / prev.NetAmount) * 100m, 2);
             }
             else
             {
-                current.PaidAmountGrowthPercent = 0;
+                current.NetGrowthPercent = 0;
             }
         }
 
         return new RevenueChartResponse<TransactionDataItem>
         {
-            FilterType = finalFilterType,
+            FilterType = filterType,
             Year = request.Year,
             Quarter = request.Quarter,
             StartYear = request.StartYear,
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
-            Data = data
+            Data = fullData
         };
     }
 
@@ -339,80 +463,252 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<RevenueChartResponse<ShipmentFeedbackDataItem>> GetShipmentFeedbackChartAsync(RevenueChartRequest request)
     {
-        var finalFilterType = request.FilterType ?? RevenueFilterType.Default;
+        var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = _shipmentRepository.GetAllWithCondition()
-            .Where(s => s.FeedbackAt != null); // chỉ lấy shipment có feedback
+        var query = ApplyDateFilter(
+            _shipmentRepository.GetAllWithCondition(),
+            filterType,
+            request,
+            s => s.FeedbackAt
+        );
 
-        query = ApplyDateFilter(query, finalFilterType, request, s => s.FeedbackAt.Value);
-
-        var data = await query
-            .GroupBy(s => new { s.FeedbackAt.Value.Year, s.FeedbackAt.Value.Month })
+        // ⚡ GroupBy theo Year/Month
+        var rawData = await query
+            .Where(s => s.FeedbackAt.HasValue)
+            .GroupBy(s => new
+            {
+                Year = s.FeedbackAt.Value.Year,
+                Month = s.FeedbackAt.Value.Month
+            })
             .Select(g => new ShipmentFeedbackDataItem
             {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
-                TotalFeedbacks = g.Count(),
-                AverageRating = g.Any(s => s.Rating != null)
-                    ? Math.Round(g.Average(s => (double)s.Rating.Value), 2)
-                    : 0,
-                PositiveFeedbackRate = g.Any(s => s.Rating != null)
-                    ? Math.Round(g.Count(s => s.Rating >= 4) * 100.0 / g.Count(s => s.Rating != null), 2)
-                    : 0,
-                ResponseRate = g.Count(s => s.FeedbackResponse != null) > 0
-                    ? Math.Round(g.Count(s => s.FeedbackResponse != null) * 100.0 / g.Count(), 2)
-                    : 0,
-                AvgResponseTimeHours = g.Count(s => s.FeedbackResponse != null) > 0
-                    ? Math.Round(
-                        g.Where(s => s.FeedbackRespondedAt != null)
-                         .Average(s => (s.FeedbackRespondedAt.Value - s.FeedbackAt.Value).TotalHours), 2)
-                    : 0
+                Year = (int)g.Key.Year,
+                Month = (int)g.Key.Month,
+
+                TotalShipments = g.Count(),
+                CompleteAndCompensatedCount = g.Count(s =>
+                    s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+                    s.ShipmentStatus == ShipmentStatusEnum.Compensated),
+                CompletedWithCompensationCount = g.Count(s =>
+                    s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+
+                TotalFeedbacks = g.Count(s => s.Rating != null),
+                FiveStarFeedbacks = g.Count(s => s.Rating == 5)
             })
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
             .ToListAsync();
+
+        List<ShipmentFeedbackDataItem> fullData;
+
+        switch (filterType)
+        {
+            case RevenueFilterType.day:
+                // Day -> chỉ lấy đúng ngày, không fill đủ 12 tháng
+                fullData = rawData;
+                break;
+
+            case RevenueFilterType.Default: // ✅ Default = Year
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                fullData = Enumerable.Range(1, 12)
+                    .Select(m => BuildItem(rawData, year, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var q = request.Quarter ?? 1;
+                var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
+                fullData = monthsInQuarter
+                    .Select(m => BuildItem(rawData, qYear, m))
+                    .ToList();
+                break;
+
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? 1;
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? 12;
+
+                var months = Enumerable.Range(startYear * 12 + startMonth,
+                    (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                 .Select(x => new
+                 {
+                     Year = (x - 1) / 12,
+                     Month = (x - 1) % 12 + 1
+                 });
+
+                fullData = months
+                    .Select(m => BuildItem(rawData, m.Year, m.Month))
+                    .ToList();
+                break;
+
+            default:
+                fullData = rawData;
+                break;
+        }
 
         return new RevenueChartResponse<ShipmentFeedbackDataItem>
         {
-            FilterType = finalFilterType,
+            FilterType = filterType,
             Year = request.Year,
             Quarter = request.Quarter,
             StartYear = request.StartYear,
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
-            Data = data
+            Data = fullData
+        };
+    }
+
+    public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
+    {
+        IQueryable<Shipment> q;
+
+        // Lấy filterType từ request, nếu null thì mặc định = Day (Default)
+        var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
+
+        if (finalFilterType == RevenueFilterType.Default || finalFilterType == RevenueFilterType.day)
+        {
+            // ✅ Default = Today
+            var today = DateTime.UtcNow.Date;
+            var tomorrow = today.AddDays(1);
+
+            q = _shipmentRepository.GetAllWithCondition()
+                 .Where(s => s.CreatedAt >= today && s.CreatedAt < tomorrow);
+        }
+        else
+        {
+            // ✅ ApplyDateFilter
+            q = _shipmentRepository.GetAllWithCondition();
+            q = ApplyDateFilter(q, finalFilterType, request, s => s.CreatedAt);
+        }
+
+        // nhóm status
+        var successfulStatuses = new[]
+        {
+        ShipmentStatusEnum.Completed,
+        ShipmentStatusEnum.CompletedWithCompensation,
+        ShipmentStatusEnum.Compensated
+    };
+
+        var unsuccessfulStatuses = new[]
+        {
+        ShipmentStatusEnum.Refunded,    
+        ShipmentStatusEnum.Returned,
+    };
+
+        // aggregate query (theo filter đã áp)
+        var agg = await q
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                PeriodStart = g.Min(s => s.CreatedAt),
+                PeriodEnd = g.Max(s => s.CreatedAt),
+                TotalOrders = g.Count(),
+                SuccessfulOrders = g.Count(s => successfulStatuses.Contains(s.ShipmentStatus)),
+                UnsuccessfulOrders = g.Count(s => unsuccessfulStatuses.Contains(s.ShipmentStatus)),
+                TotalFeedbacks = g.Count(s => s.Rating != null),
+                GoodFeedbacks = g.Count(s => s.Rating != null && s.Rating >= 4)
+            })
+            .FirstOrDefaultAsync();
+
+        // ✅ Xác định khoảng thời gian theo FilterType (không phụ thuộc dữ liệu trong DB)
+        DateTime periodStart;
+        DateTime periodEnd;
+
+        switch (finalFilterType)
+        {
+            case RevenueFilterType.day:
+            case RevenueFilterType.Default:
+                var today = DateTime.UtcNow.Date;
+                periodStart = today;
+                periodEnd = today.AddDays(1).AddTicks(-1);
+                break;
+
+            case RevenueFilterType.MonthRange:
+                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                var startMonth = request.StartMonth ?? DateTime.UtcNow.Month;
+                periodStart = new DateTime(startYear, startMonth, 1);
+
+                var endYear = request.EndYear ?? startYear;
+                var endMonth = request.EndMonth ?? startMonth;
+                // Lấy ngày cuối cùng của endMonth
+                var endMonthLastDay = DateTime.DaysInMonth(endYear, endMonth);
+                periodEnd = new DateTime(endYear, endMonth, endMonthLastDay, 23, 59, 59);
+                break;
+
+            case RevenueFilterType.Quarter:
+                var qYear = request.Year ?? DateTime.UtcNow.Year;
+                var quarter = request.Quarter ?? ((DateTime.UtcNow.Month - 1) / 3 + 1);
+                var qStartMonth = (quarter - 1) * 3 + 1;
+                periodStart = new DateTime(qYear, qStartMonth, 1);
+                periodEnd = periodStart.AddMonths(3).AddTicks(-1);
+                break;
+
+            case RevenueFilterType.Year:
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                periodStart = new DateTime(year, 1, 1);
+                periodEnd = new DateTime(year, 12, 31, 23, 59, 59);
+                break;
+
+            default:
+                // fallback theo dữ liệu
+                periodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date;
+                periodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date;
+                break;
+        }
+
+        // map DTO
+        return new ActivityMetricsDto
+        {
+            FilterType = finalFilterType,
+            FilterTypeName = finalFilterType.ToString(),
+            PeriodStart = periodStart,
+            PeriodEnd = periodEnd,
+            TotalOrders = agg?.TotalOrders ?? 0,
+            SuccessfulOrders = agg?.SuccessfulOrders ?? 0,
+            UnsuccessfulOrders = agg?.UnsuccessfulOrders ?? 0,
+            TotalFeedbacks = agg?.TotalFeedbacks ?? 0,
+            GoodFeedbacks = agg?.GoodFeedbacks ?? 0,
+            SatisfactionPercent = (agg != null && agg.TotalFeedbacks > 0)
+                ? Math.Round(100.0 * agg.GoodFeedbacks / agg.TotalFeedbacks, 2)
+                : 0,
         };
     }
 
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
-    IQueryable<T> query,
-    RevenueFilterType filterType,
-    RevenueChartRequest request,
-    Expression<Func<T, DateTimeOffset>> dateSelector)
+     IQueryable<T> query,
+     RevenueFilterType filterType,
+     RevenueChartRequest request,
+     Expression<Func<T, DateTimeOffset?>> dateSelector)
     {
         var propertyName = GetPropertyName(dateSelector);
 
         switch (filterType)
         {
             case RevenueFilterType.Year:
-                if (request.Year.HasValue)
-                {
-                    query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value);
-                }
+            case RevenueFilterType.Default: // ✅ Default = Year
+                var year = request.Year ?? DateTime.UtcNow.Year;
+                var yearStart = new DateTimeOffset(year, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                var yearEnd = yearStart.AddYears(1).AddTicks(-1);
+
+                query = query.Where(x =>
+                    EF.Property<DateTimeOffset>(x, propertyName) >= yearStart &&
+                    EF.Property<DateTimeOffset>(x, propertyName) <= yearEnd);
                 break;
 
             case RevenueFilterType.Quarter:
                 if (request.Year.HasValue && request.Quarter.HasValue)
                 {
+                    var qYear = request.Year.Value;
                     var startMonth = (request.Quarter.Value - 1) * 3 + 1;
-                    var endMonth = startMonth + 2;
+                    var start = new DateTimeOffset(qYear, startMonth, 1, 0, 0, 0, TimeSpan.Zero);
+                    var end = start.AddMonths(3).AddTicks(-1);
 
                     query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName).Year == request.Year.Value &&
-                        EF.Property<DateTimeOffset>(x, propertyName).Month >= startMonth &&
-                        EF.Property<DateTimeOffset>(x, propertyName).Month <= endMonth);
+                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
                 }
                 break;
 
@@ -437,26 +733,64 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 }
                 break;
 
-            case RevenueFilterType.day: // ✅ thêm lọc theo ngày cụ thể
-                if (request.Day.HasValue)
-                {
-                    var targetDate = request.Day.Value.Date;
-                    var start = new DateTimeOffset(targetDate, TimeSpan.Zero);
-                    var end = start.AddDays(1).AddTicks(-1);
+            case RevenueFilterType.day:
+                var targetDate = request.Day?.Date ?? DateTime.UtcNow.Date;
+                var dayStart = new DateTimeOffset(targetDate, TimeSpan.Zero);
+                var dayEnd = dayStart.AddDays(1).AddTicks(-1);
 
-                    query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName) >= start &&
-                        EF.Property<DateTimeOffset>(x, propertyName) <= end);
-                }
-                break;
-
-            case RevenueFilterType.Default:
-            default:
-                // Không filter gì cho Default
+                query = query.Where(x =>
+                    EF.Property<DateTimeOffset>(x, propertyName) >= dayStart &&
+                    EF.Property<DateTimeOffset>(x, propertyName) <= dayEnd);
                 break;
         }
 
         return query;
+    }
+
+    private TransactionDataItem BuildTransactionItem(List<TransactionDataItem> rawData, int year, int month)
+    {
+        var found = rawData.FirstOrDefault(d => d.Year == year && d.Month == month);
+        if (found != null) return found;
+
+        return new TransactionDataItem
+        {
+            Year = year,
+            Month = month,
+            TotalTransactions = 0,
+            ShipmentCost = 0,
+            Surcharge = 0,
+            Refund = 0,
+            Compensation = 0,
+            TotalIncome = 0,
+            TotalOutcome = 0,
+            NetAmount = 0,
+            NetGrowthPercent = 0
+        };
+    }
+
+    private ShipmentFeedbackDataItem BuildItem(List<ShipmentFeedbackDataItem> rawData, int year, int month)
+    {
+        var item = rawData.FirstOrDefault(x => x.Month == month && x.Year == year);
+        int totalShipments = item?.TotalShipments ?? 0;
+        int totalFeedbacks = item?.TotalFeedbacks ?? 0;
+
+        return new ShipmentFeedbackDataItem
+        {
+            Year = year,
+            Month = month,
+            TotalShipments = totalShipments,
+            CompleteAndCompensatedCount = item?.CompleteAndCompensatedCount ?? 0,
+            CompletedWithCompensationCount = item?.CompletedWithCompensationCount ?? 0,
+            CompleteAndCompensatedPercent = totalShipments > 0
+                ? Math.Round((item?.CompleteAndCompensatedCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+            CompletedWithCompensationPercent = totalShipments > 0
+                ? Math.Round((item?.CompletedWithCompensationCount ?? 0) * 100.0 / totalShipments, 2) : 0,
+
+            TotalFeedbacks = totalFeedbacks,
+            FiveStarFeedbacks = item?.FiveStarFeedbacks ?? 0,
+            FiveStarPercent = totalFeedbacks > 0
+                ? Math.Round((item?.FiveStarFeedbacks ?? 0) * 100.0 / totalFeedbacks, 2) : 0
+        };
     }
 
     private string GetPropertyName<T, TProp>(Expression<Func<T, TProp>> expression)
@@ -466,34 +800,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression memberExpr)
             return memberExpr.Member.Name;
         throw new InvalidOperationException("Invalid expression");
-    }
-
-    private (DateTimeOffset start, DateTimeOffset end) GetDateRangeFromRequest(RevenueChartRequest request, RevenueFilterType filterType)
-    {
-        switch (filterType)
-        {
-            case RevenueFilterType.Year:
-                return (new DateTimeOffset(request.Year.Value, 1, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.Year.Value, 12, 31, 23, 59, 59, TimeSpan.Zero));
-
-            case RevenueFilterType.Quarter:
-                var startMonth = (request.Quarter.Value - 1) * 3 + 1;
-                var endMonth = startMonth + 2;
-                return (new DateTimeOffset(request.Year.Value, startMonth, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.Year.Value, endMonth,
-                            DateTime.DaysInMonth(request.Year.Value, endMonth), 23, 59, 59, TimeSpan.Zero));
-
-            case RevenueFilterType.MonthRange:
-                return (new DateTimeOffset(request.StartYear.Value, request.StartMonth.Value, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(request.EndYear.Value, request.EndMonth.Value,
-                            DateTime.DaysInMonth(request.EndYear.Value, request.EndMonth.Value), 23, 59, 59, TimeSpan.Zero));
-
-            default:
-                var now = DateTimeOffset.UtcNow;
-                return (new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero),
-                        new DateTimeOffset(now.Year, now.Month,
-                            DateTime.DaysInMonth(now.Year, now.Month), 23, 59, 59, TimeSpan.Zero));
-        }
     }
 
     private (DateTimeOffset startDate, DateTimeOffset endDate) CalculateDateRange(CategoryStatisticsRequest request)

@@ -17,6 +17,7 @@ using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.ApiModels.SupportTicket;
+using MetroShip.Service.ApiModels.SystemConfig;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.User;
@@ -36,6 +37,7 @@ public interface IMapperlyMapper
     IQueryable<UserResponse> MapToUserResponseList(IQueryable<UserEntity> entity);
     PaginatedListResponse<UserResponse> MapToUserResponsePaginatedList(PaginatedList<UserEntity> entity);
     UserResponse MapToUserResponse(UserEntity entity);
+    void MapBankInfoRequestToEntity(BankInfoRequest request, UserEntity entity);
 
     // shipment
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
@@ -114,6 +116,7 @@ public interface IMapperlyMapper
     // pricing config
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
+    PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
@@ -134,5 +137,10 @@ public interface IMapperlyMapper
     Notification MapNotificationRequest(NotificationCreateRequest request);
     void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
     PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
-    
+
+    // config
+    SystemConfig MapToSystemConfigEntity(SystemConfigRequest request);
+    SystemConfigResponse MapToSystemConfigResponse(SystemConfig entity);
+    PaginatedListResponse<SystemConfigResponse> MapToSystemConfigPaginatedList(PaginatedList<SystemConfig> entityList);
+    void MapToSystemConfigEntity(SystemConfigRequest request, SystemConfig entity);
 }

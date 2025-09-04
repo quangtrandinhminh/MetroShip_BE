@@ -52,6 +52,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IItineraryService _itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -545,6 +546,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             _shipmentMediaRepository.Add(mediaEntity);
         }
 
+        foreach (var media in request.parcelMediaRequests)
+        {
+            var parcel = shipment.Parcels.FirstOrDefault(p => p.Id == media.ParcelId);
+            if (parcel == null) continue;
+
+            var mediaEntity = _mapperlyMapper.MapToParcelMediaEntity(media);
+            mediaEntity.ParcelId = parcel.Id;
+            mediaEntity.BusinessMediaType = BusinessMediaTypeEnum.Pickup;
+            mediaEntity.MediaType = DataHelper.IsImage(mediaEntity.MediaUrl);
+            _parcelMediaRepository.Add(mediaEntity);
+        }
+
         // Save changes to the database
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
@@ -684,11 +697,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         // Update shipment status and timestamps
         shipment.ShipmentStatus = shipment.Parcels.Any(p => p.Status == ParcelStatusEnum.Lost) 
-            ? ShipmentStatusEnum.CompletedWithCompensation
+            ? ShipmentStatusEnum.DeliveredPartially
             : ShipmentStatusEnum.Completed;
         shipment.CompletedAt = CoreHelper.SystemTimeNow;
         var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DestinationStationId);
-        if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation)
+        if (shipment.ShipmentStatus == ShipmentStatusEnum.DeliveredPartially)
         {
             // If there are lost parcels, calculate compensation
             var lostParcels = shipment.Parcels

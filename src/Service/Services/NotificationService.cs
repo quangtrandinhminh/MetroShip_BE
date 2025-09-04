@@ -153,6 +153,47 @@ namespace MetroShip.Service.Services
             return 1;
         }
 
+        public async Task<int> DeleteAllNotificationsAsync(string userId)
+        {
+            var currentUserId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+            var roles = JwtClaimUltils.GetUserRole(_httpContextAccessor);
+
+            // Nếu userId khác currentUserId và không phải admin → không cho phép
+            if (userId != currentUserId && !roles.Contains(nameof(UserRoleEnum.Admin)))
+            {
+                throw new AppException(HttpResponseCodeConstants.FORBIDDEN,
+                    "Bạn không có quyền xóa thông báo của người khác", StatusCodes.Status403Forbidden);
+            }
+
+            _logger.Information($"Deleting all notifications for user {userId}");
+
+            int deletedCount = 0;
+
+            if (roles.Contains(nameof(UserRoleEnum.Admin)) && userId == currentUserId)
+            {
+                // Admin tự gọi → xóa tất cả
+                var allNotifications = await _notificationRepository.GetAllAsync();
+                foreach (var noti in allNotifications)
+                {
+                    _notificationRepository.Delete(noti);
+                    deletedCount++;
+                }
+            }
+            else
+            {
+                // User thường hoặc Admin chỉ định user → chỉ xóa thông báo của user đó
+                var userNotifications = await _notificationRepository.FindByConditionAsync(x => x.ToUserId == userId);
+                foreach (var noti in userNotifications)
+                {
+                    _notificationRepository.Delete(noti);
+                    deletedCount++;
+                }
+            }
+
+            await _notificationRepository.SaveChangesAsync();
+            return deletedCount;
+        }
+
         public async Task<int> GetUnreadCountAsync(string userId)
         {
             _logger.Information($"Getting unread notification count for user {userId}");

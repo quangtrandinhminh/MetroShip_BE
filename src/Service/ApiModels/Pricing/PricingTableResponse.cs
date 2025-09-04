@@ -10,8 +10,6 @@ public record PricingTableResponse
     public bool IsActive { get; set; } = true;
     public int? FreeStoreDays { get; set; }
     public decimal? BaseSurchargePerDayVnd { get; set; }
-
-    [Column(TypeName = "decimal(5, 2)")]
     public decimal? RefundRate { get; set; }
     public int? RefundForCancellationBeforeScheduledHours { get; set; }
     public string? Description { get; set; }

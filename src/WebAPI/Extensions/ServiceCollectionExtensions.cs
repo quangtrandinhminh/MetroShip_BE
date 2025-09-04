@@ -235,6 +235,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+        services.AddScoped<ISystemConfigService, SystemConfigService>();
 
         // Register repositories
         services.AddScoped<IUnitOfWork, UnitOfWork>();
