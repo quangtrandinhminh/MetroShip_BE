@@ -359,6 +359,7 @@
         public const string INSURANCE_POLICY_DEACTIVATE_SUCCESS = "Vô hiệu hóa chính sách bảo hiểm thành công.";
         public const string INSURANCE_POLICY_ALREADY_DEACTIVATED = "Chính sách bảo hiểm đang được vô hiệu hóa";
         public const string INSURANCE_POLICY_IN_USE = "Chính sách bảo hiểm đang được sử dụng bởi một hoặc nhiều loại bưu kiện. Vui lòng gỡ bỏ liên kết trước khi vô hiệu hóa chính sách.";
+        public const string INSURANCE_POLICY_EXPIRED = "Chính sách bảo hiểm đã hết hạn và không thể kích hoạt lại.";
     }
 
     public class ResponseMessageSystemConfig

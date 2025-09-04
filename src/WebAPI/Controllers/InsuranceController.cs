@@ -4,6 +4,7 @@ using MetroShip.Service.ApiModels.InsurancePolicy;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +30,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(response);
         }
 
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [HttpPost(WebApiEndpoint.InsurancePolicyEndpoint.CreatePolicy)]
         public async Task<IActionResult> CreatePolicy([FromBody] InsurancePolicyRequest request)
         {
@@ -36,6 +38,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response));
         }
 
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [HttpPut(WebApiEndpoint.InsurancePolicyEndpoint.ActivatePolicy)]
         public async Task<IActionResult> ActivatePolicy([FromRoute] string id)
         {
@@ -43,6 +46,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response));
         }
 
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [HttpPut(WebApiEndpoint.InsurancePolicyEndpoint.DeactivatePolicy)]
         public async Task<IActionResult> DeactivatePolicy([FromRoute] string id)
         {

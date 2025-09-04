@@ -24,7 +24,7 @@ public record InsurancePolicyResponse
     // Nếu không mua bảo hiểm, đền tối thiểu là x lần ShippingFeeVnd
     public decimal? MinCompensationRateOnShippingFee { get; set; }
 
-    public DateOnly ValidFrom { get; set; }
+    public DateOnly? ValidFrom { get; set; }
 
     public DateOnly? ValidTo { get; set; }
 

@@ -87,6 +87,14 @@ public class InsuranceService(IServiceProvider serviceProvider) : IInsuranceServ
             StatusCodes.Status400BadRequest);
         }
 
+        if (entity.ValidTo != null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageInsurancePolicy.INSURANCE_POLICY_EXPIRED,
+            StatusCodes.Status400BadRequest);
+        }
+
         DateOnly today = DateOnly.FromDateTime(CoreHelper.SystemTimeNow.DateTime.UtcToSystemTime());
         entity.IsActive = true;
         entity.ValidFrom = today;

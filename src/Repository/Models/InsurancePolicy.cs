@@ -37,7 +37,7 @@ public class InsurancePolicy : BaseEntity
     public decimal? MinCompensationRateOnShippingFee { get; set; }
 
     [Column(TypeName = "date")]
-    public DateOnly ValidFrom { get; set; }
+    public DateOnly? ValidFrom { get; set; }
 
     [Column(TypeName = "date")]
     public DateOnly? ValidTo { get; set; }
