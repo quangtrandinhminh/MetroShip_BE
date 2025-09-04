@@ -284,7 +284,8 @@ namespace MetroShip.Service.Services
         public async Task ForgotPassword(ForgotPasswordRequest model, CancellationToken cancellationToken = default)
         {
             _logger.Information("Forgot password: {@model}", model);
-            var account = await GetUserByUserName(model.UserName);
+            //var account = await GetUserByUserName(model.UserName);
+            var account = await GetUserByEmail(model.Email);
             if (account == null) throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
 
             // create reset token that expires after 1 day

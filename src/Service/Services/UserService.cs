@@ -121,7 +121,12 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
         foreach (var user in userResponse.Items)
         {
-            user.Role = _mapper.MapRoleToRoleName(roleEntity);
+            // get roles of user
+            var userEntity = users.Items.FirstOrDefault(u => u.Id == user.Id);
+            var userRole = userEntity != null
+                ? userEntity.UserRoles.Select(ur => ur.Role).Where(r => r != null).ToList()
+                : new List<RoleEntity>();
+            user.Role = _mapper.MapRoleToRoleName(userRole);
 
             if (user.StaffAssignments != null && user.StaffAssignments.Any())
             {
