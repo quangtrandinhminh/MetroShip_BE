@@ -512,8 +512,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .Select(g => new ShipmentFeedbackDataItem
             {
-                Year = (int)g.Key.Year,
-                Month = (int)g.Key.Month,
+                Year = g.Key.Year,
+                Month = g.Key.Month,
 
                 TotalShipments = g.Count(),
                 CompleteAndCompensatedCount = g.Count(s =>
@@ -528,13 +528,45 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .ToListAsync();
 
         List<ShipmentFeedbackDataItem> fullData;
+        DateTime? respWeekStart = null;
+        DateTime? respWeekEnd = null;
 
         switch (filterType)
         {
             case RevenueFilterType.Day:
-                // Day -> chỉ lấy đúng ngày, không fill đủ 12 tháng
                 fullData = rawData;
                 break;
+
+            case RevenueFilterType.Week:
+                {
+                    if (request.Day.HasValue)
+                    {
+                        // Tuần chứa ngày cụ thể
+                        var target = request.Day.Value.Date;
+                        var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                        var ws = target.AddDays(-diff);
+                        var we = ws.AddDays(6);
+
+                        respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
+                        respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                    }
+                    else
+                    {
+                        // Tuần thứ N trong tháng
+                        var yeart = request.Year ?? DateTime.UtcNow.Year;
+                        var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                        var weekInMonth = Math.Max(1, request.Week ?? 1);
+
+                        var (wsUtc, weUtc) = GetWeekRangeInMonth(yeart, month, weekInMonth);
+
+                        respWeekStart = wsUtc;
+                        respWeekEnd = weUtc;
+                    }
+
+                    // rawData đã được filter trong ApplyDateFilter
+                    fullData = rawData;
+                    break;
+                }
 
             case RevenueFilterType.Default: // ✅ Default = Year
             case RevenueFilterType.Year:
@@ -582,10 +614,13 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             FilterType = filterType,
             Year = request.Year,
             Quarter = request.Quarter,
+            Week = request.Week,
             StartYear = request.StartYear,
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
+            WeekStartDate = respWeekStart,
+            WeekEndDate = respWeekEnd,
             Data = fullData
         };
     }
