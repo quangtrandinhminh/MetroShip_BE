@@ -703,6 +703,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 // Lấy ngày cuối cùng của endMonth
                 var endMonthLastDay = DateTime.DaysInMonth(endYear, endMonth);
                 periodEnd = DateTime.SpecifyKind(new DateTime(endYear, endMonth, endMonthLastDay, 23, 59, 59), DateTimeKind.Utc);
+                // ✅ Apply filter trước khi aggregate
+                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
                 break;
 
             case RevenueFilterType.Quarter:
