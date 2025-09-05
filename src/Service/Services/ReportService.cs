@@ -271,7 +271,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             t => t.CreatedAt
         );
 
-        // ⚡ GroupBy theo Year/Month
         var rawData = await query
             .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
             .Select(g => new TransactionDataItem
@@ -299,10 +298,12 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .ToListAsync();
 
         List<TransactionDataItem> fullData;
+        DateTime? weekStart = null;
+        DateTime? weekEnd = null;
 
         switch (filterType)
         {
-            case RevenueFilterType.day:
+            case RevenueFilterType.Day:
                 var targetYear = request.Year ?? DateTime.UtcNow.Year;
                 var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
                 // Day -> chỉ lấy đúng tháng đó
@@ -311,7 +312,28 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                     .ToList();
                 break;
 
-            case RevenueFilterType.Default: // ✅ Default = Year
+            case RevenueFilterType.Week:
+                var wYear = request.Year ?? DateTime.UtcNow.Year;
+                var w = request.Week ??
+                    System.Globalization.CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+                        DateTime.UtcNow,
+                        System.Globalization.CalendarWeekRule.FirstFourDayWeek,
+                        DayOfWeek.Monday);
+
+                var jan1 = new DateTime(wYear, 1, 1);
+                weekStart = jan1.AddDays((w - 1) * 7);
+                while (weekStart.Value.DayOfWeek != DayOfWeek.Monday)
+                    weekStart = weekStart.Value.AddDays(-1);
+
+                weekEnd = weekStart.Value.AddDays(6);
+
+                fullData = rawData
+                    .Where(d => new DateTime(d.Year, d.Month, 1) >= weekStart &&
+                                new DateTime(d.Year, d.Month, 1) <= weekEnd)
+                    .ToList();
+                break;
+
+            case RevenueFilterType.Default:
             case RevenueFilterType.Year:
                 var year = request.Year ?? DateTime.UtcNow.Year;
                 fullData = Enumerable.Range(1, 12)
@@ -360,7 +382,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             item.NetAmount = item.TotalIncome - item.TotalOutcome;
         }
 
-        // === Tính Growth % theo NetAmount ===
+        // === Growth theo NetAmount ===
         for (int i = 0; i < fullData.Count; i++)
         {
             var current = fullData[i];
@@ -384,10 +406,13 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             FilterType = filterType,
             Year = request.Year,
             Quarter = request.Quarter,
+            Week = request.Week,
             StartYear = request.StartYear,
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
+            WeekStartDate = weekStart,
+            WeekEndDate = weekEnd,
             Data = fullData
         };
     }
@@ -501,7 +526,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         switch (filterType)
         {
-            case RevenueFilterType.day:
+            case RevenueFilterType.Day:
                 // Day -> chỉ lấy đúng ngày, không fill đủ 12 tháng
                 fullData = rawData;
                 break;
@@ -567,7 +592,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         // Lấy filterType từ request, nếu null thì mặc định = Day (Default)
         var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
 
-        if (finalFilterType == RevenueFilterType.Default || finalFilterType == RevenueFilterType.day)
+        if (finalFilterType == RevenueFilterType.Default || finalFilterType == RevenueFilterType.Day)
         {
             // ✅ Default = Today
             var today = DateTime.UtcNow.Date;
@@ -622,7 +647,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         switch (finalFilterType)
         {
-            case RevenueFilterType.day:
+            case RevenueFilterType.Day:
             case RevenueFilterType.Default:
                 var today = DateTime.UtcNow.Date;
                 periodStart = today;
@@ -683,10 +708,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     #region Helper Methods
     private IQueryable<T> ApplyDateFilter<T>(
-     IQueryable<T> query,
-     RevenueFilterType filterType,
-     RevenueChartRequest request,
-     Expression<Func<T, DateTimeOffset?>> dateSelector)
+    IQueryable<T> query,
+    RevenueFilterType filterType,
+    RevenueChartRequest request,
+    Expression<Func<T, DateTimeOffset?>> dateSelector)
     {
         var propertyName = GetPropertyName(dateSelector);
 
@@ -738,7 +763,27 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 }
                 break;
 
-            case RevenueFilterType.day:
+            case RevenueFilterType.Week:
+                if (request.Year.HasValue && request.Week.HasValue)
+                {
+                    var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+
+                    var jan1 = new DateTime(request.Year.Value, 1, 1);
+                    var weekStart = jan1.AddDays((request.Week.Value - 1) * 7);
+
+                    while (weekStart.DayOfWeek != DayOfWeek.Monday)
+                        weekStart = weekStart.AddDays(-1);
+
+                    var weekStartOffset = new DateTimeOffset(weekStart, TimeSpan.Zero);
+                    var weekEndOffset = weekStartOffset.AddDays(7).AddTicks(-1);
+
+                    query = query.Where(x =>
+                        EF.Property<DateTimeOffset>(x, propertyName) >= weekStartOffset &&
+                        EF.Property<DateTimeOffset>(x, propertyName) <= weekEndOffset);
+                }
+                break;
+
+            case RevenueFilterType.Day:
                 var targetDate = request.Day?.Date ?? DateTime.UtcNow.Date;
                 var dayStart = new DateTimeOffset(targetDate, TimeSpan.Zero);
                 var dayEnd = dayStart.AddDays(1).AddTicks(-1);
