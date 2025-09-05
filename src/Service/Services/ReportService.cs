@@ -629,13 +629,13 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         IQueryable<Shipment> q;
 
-        // Lấy filterType từ request, nếu null thì mặc định = Day (Default)
+        // Lấy filterType từ request, nếu null thì mặc định = Default (Year)
         var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
 
-        if (finalFilterType == RevenueFilterType.Default || finalFilterType == RevenueFilterType.Day)
+        if (finalFilterType == RevenueFilterType.Day)
         {
-            // ✅ Default = Today
-            var today = DateTime.UtcNow.Date;
+            // ✅ Day = Today
+            var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
             var tomorrow = today.AddDays(1);
 
             q = _shipmentRepository.GetAllWithCondition()
@@ -643,53 +643,26 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         }
         else
         {
-            // ✅ ApplyDateFilter
+            // ✅ Default => Year
             q = _shipmentRepository.GetAllWithCondition();
-            q = ApplyDateFilter(q, finalFilterType, request, s => s.CreatedAt);
+            q = ApplyDateFilter(
+                q,
+                finalFilterType == RevenueFilterType.Default
+                    ? RevenueFilterType.Year
+                    : finalFilterType,
+                request,
+                s => s.CreatedAt
+            );
         }
 
-        // nhóm status
-        var completedStatuses = new[]
-        {
-        ShipmentStatusEnum.Completed
-    };
-
-        var compensatedStatuses = new[]
-        {
-        ShipmentStatusEnum.Compensated,
-        ShipmentStatusEnum.CompletedWithCompensation
-    };
-
-        var refundedStatuses = new[]
-        {
-        ShipmentStatusEnum.Returned
-    };
-
-        // aggregate query
-        var agg = await q
-            .GroupBy(_ => 1)
-            .Select(g => new
-            {
-                PeriodStart = g.Min(s => s.CreatedAt),
-                PeriodEnd = g.Max(s => s.CreatedAt),
-                TotalOrders = g.Count(),
-                CompletedOrders = g.Count(s => completedStatuses.Contains(s.ShipmentStatus)),
-                CompensatedOrders = g.Count(s => compensatedStatuses.Contains(s.ShipmentStatus)),
-                RefundedOrders = g.Count(s => refundedStatuses.Contains(s.ShipmentStatus)),
-                TotalFeedbacks = g.Count(s => s.Rating != null),
-                GoodFeedbacks = g.Count(s => s.Rating != null && s.Rating >= 4)
-            })
-            .FirstOrDefaultAsync();
-
-        // ✅ Xác định khoảng thời gian
+        // ✅ Xác định khoảng thời gian trước aggregate để tránh lặp lại logic
         DateTime periodStart;
         DateTime periodEnd;
 
         switch (finalFilterType)
         {
             case RevenueFilterType.Day:
-            case RevenueFilterType.Default:
-                var today = DateTime.UtcNow.Date;
+                var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
                 periodStart = today;
                 periodEnd = today.AddDays(1).AddTicks(-1);
                 break;
@@ -698,7 +671,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 if (request.Day.HasValue)
                 {
                     // tuần chứa ngày cụ thể
-                    var target = request.Day.Value.Date;
+                    var target = DateTime.SpecifyKind(request.Day.Value.Date, DateTimeKind.Utc);
                     var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
                     var ws = target.AddDays(-diff);
                     var we = ws.AddDays(6);
@@ -715,42 +688,90 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
                     var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
 
-                    periodStart = wsUtc;
-                    periodEnd = weUtc;
+                    periodStart = DateTime.SpecifyKind(wsUtc, DateTimeKind.Utc); // Giả sử GetWeekRangeInMonth trả Unspecified
+                    periodEnd = DateTime.SpecifyKind(weUtc, DateTimeKind.Utc);
                 }
                 break;
 
             case RevenueFilterType.MonthRange:
                 var startYear = request.StartYear ?? DateTime.UtcNow.Year;
                 var startMonth = request.StartMonth ?? DateTime.UtcNow.Month;
-                periodStart = new DateTime(startYear, startMonth, 1);
+                periodStart = DateTime.SpecifyKind(new DateTime(startYear, startMonth, 1), DateTimeKind.Utc);
 
                 var endYear = request.EndYear ?? startYear;
                 var endMonth = request.EndMonth ?? startMonth;
                 // Lấy ngày cuối cùng của endMonth
                 var endMonthLastDay = DateTime.DaysInMonth(endYear, endMonth);
-                periodEnd = new DateTime(endYear, endMonth, endMonthLastDay, 23, 59, 59);
+                periodEnd = DateTime.SpecifyKind(new DateTime(endYear, endMonth, endMonthLastDay, 23, 59, 59), DateTimeKind.Utc);
                 break;
 
             case RevenueFilterType.Quarter:
                 var qYear = request.Year ?? DateTime.UtcNow.Year;
                 var quarter = request.Quarter ?? ((DateTime.UtcNow.Month - 1) / 3 + 1);
                 var qStartMonth = (quarter - 1) * 3 + 1;
-                periodStart = new DateTime(qYear, qStartMonth, 1);
+                periodStart = DateTime.SpecifyKind(new DateTime(qYear, qStartMonth, 1), DateTimeKind.Utc);
                 periodEnd = periodStart.AddMonths(3).AddTicks(-1);
-                break;
+                break;  // Di chuyển lọc vào trước aggregate nếu có thể, hoặc re-agg sau
 
+            case RevenueFilterType.Default: // ✅ Default = Year
             case RevenueFilterType.Year:
                 var yearOnly = request.Year ?? DateTime.UtcNow.Year;
-                periodStart = new DateTime(yearOnly, 1, 1);
-                periodEnd = new DateTime(yearOnly, 12, 31, 23, 59, 59);
+                periodStart = DateTime.SpecifyKind(new DateTime(yearOnly, 1, 1), DateTimeKind.Utc);
+                periodEnd = DateTime.SpecifyKind(new DateTime(yearOnly, 12, 31, 23, 59, 59), DateTimeKind.Utc);
                 break;
 
             default:
-                // fallback theo dữ liệu
-                periodStart = agg?.PeriodStart.DateTime ?? DateTime.UtcNow.Date;
-                periodEnd = agg?.PeriodEnd.DateTime ?? DateTime.UtcNow.Date;
+                // fallback theo dữ liệu (sẽ set sau aggregate nếu cần)
+                periodStart = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
+                periodEnd = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
                 break;
+        }
+
+        // Áp dụng lọc thêm cho Quarter nếu ApplyDateFilter chưa xử lý đầy đủ
+        if (finalFilterType == RevenueFilterType.Quarter)
+        {
+            q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
+        }
+
+        // nhóm status (di chuyển lên để reuse nếu re-agg)
+        var completedStatuses = new[]
+        {
+        ShipmentStatusEnum.Completed
+    };
+
+        var compensatedStatuses = new[]
+        {
+        ShipmentStatusEnum.Compensated,
+        ShipmentStatusEnum.CompletedWithCompensation
+    };
+
+        var refundedStatuses = new[]
+        {
+        ShipmentStatusEnum.Returned
+    };
+
+        // aggregate query (bây giờ sau tất cả lọc)
+        var agg = await q
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                PeriodStart = g.Min(s => s.CreatedAt),
+                PeriodEnd = g.Max(s => s.CreatedAt),
+                TotalOrders = g.Count(),
+                CompletedOrders = g.Count(s => completedStatuses.Contains(s.ShipmentStatus)),
+                CompensatedOrders = g.Count(s => compensatedStatuses.Contains(s.ShipmentStatus)),
+                RefundedOrders = g.Count(s => refundedStatuses.Contains(s.ShipmentStatus)),
+                TotalFeedbacks = g.Count(s => s.Rating != null),
+                GoodFeedbacks = g.Count(s => s.Rating != null && s.Rating >= 4)
+            })
+            .FirstOrDefaultAsync();
+
+        // Nếu default fallback, update period từ agg
+        if (finalFilterType == default(RevenueFilterType) && agg != null)
+        {
+            // Giả sử agg.PeriodStart là DateTimeOffset, dùng .UtcDateTime để lấy UTC DateTime
+            periodStart = agg.PeriodStart.UtcDateTime; // Hoặc .DateTime nếu entity dùng DateTime, chỉnh nếu lỗi
+            periodEnd = agg.PeriodEnd.UtcDateTime;
         }
 
         // map DTO
