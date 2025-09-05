@@ -313,7 +313,7 @@ namespace MetroShip.Service.Services
         public async Task ResetPassword(ResetPasswordRequest dto, CancellationToken cancellationToken = default)
         {
             _logger.Information("Reset password: {@dto}", dto);
-            var account = await GetUserByUserName(dto.UserName);
+            var account = await GetUserByEmail(dto.Email);
 
             if (account == null) 
                 throw new AppException(ErrorCode.UserInvalid, ResponseMessageIdentity.INVALID_USER, StatusCodes.Status401Unauthorized);
