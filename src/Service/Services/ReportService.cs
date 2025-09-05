@@ -298,46 +298,58 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             .ToListAsync();
 
         List<TransactionDataItem> fullData;
-        DateTime? weekStart = null;
-        DateTime? weekEnd = null;
+        DateTime? respWeekStart = null;
+        DateTime? respWeekEnd = null;
 
         switch (filterType)
         {
             case RevenueFilterType.Day:
                 var targetYear = request.Year ?? DateTime.UtcNow.Year;
                 var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
-                // Day -> chỉ lấy đúng tháng đó
                 fullData = rawData
                     .Where(d => d.Year == targetYear && d.Month == targetMonth)
                     .ToList();
                 break;
 
             case RevenueFilterType.Week:
-                var wYear = request.Year ?? DateTime.UtcNow.Year;
-                var w = request.Week ??
-                    System.Globalization.CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
-                        DateTime.UtcNow,
-                        System.Globalization.CalendarWeekRule.FirstFourDayWeek,
-                        DayOfWeek.Monday);
+                {
+                    if (request.Day.HasValue)
+                    {
+                        // Tuần chứa ngày cụ thể
+                        var target = request.Day.Value.Date;
+                        var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                        var ws = target.AddDays(-diff);
+                        var we = ws.AddDays(6);
 
-                var jan1 = new DateTime(wYear, 1, 1);
-                weekStart = jan1.AddDays((w - 1) * 7);
-                while (weekStart.Value.DayOfWeek != DayOfWeek.Monday)
-                    weekStart = weekStart.Value.AddDays(-1);
+                        respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
+                        respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                    }
+                    else
+                    {
+                        // Tuần thứ N trong tháng
+                        var year = request.Year ?? DateTime.UtcNow.Year;
+                        var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                        var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                weekEnd = weekStart.Value.AddDays(6);
+                        var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
 
-                fullData = rawData
-                    .Where(d => new DateTime(d.Year, d.Month, 1) >= weekStart &&
-                                new DateTime(d.Year, d.Month, 1) <= weekEnd)
-                    .ToList();
-                break;
+                        respWeekStart = wsUtc;
+                        respWeekEnd = weUtc;
+                    }
+
+                    fullData = rawData
+                        .Where(d =>
+                            new DateTime(d.Year, d.Month, 1) >= respWeekStart &&
+                            new DateTime(d.Year, d.Month, 1) <= respWeekEnd)
+                        .ToList();
+                    break;
+                }
 
             case RevenueFilterType.Default:
             case RevenueFilterType.Year:
-                var year = request.Year ?? DateTime.UtcNow.Year;
+                var yearOnly = request.Year ?? DateTime.UtcNow.Year;
                 fullData = Enumerable.Range(1, 12)
-                    .Select(m => BuildTransactionItem(rawData, year, m))
+                    .Select(m => BuildTransactionItem(rawData, yearOnly, m))
                     .ToList();
                 break;
 
@@ -411,8 +423,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             StartMonth = request.StartMonth,
             EndYear = request.EndYear,
             EndMonth = request.EndMonth,
-            WeekStartDate = weekStart,
-            WeekEndDate = weekEnd,
+            WeekStartDate = respWeekStart,
+            WeekEndDate = respWeekEnd,
             Data = fullData
         };
     }
@@ -761,37 +773,40 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
             case RevenueFilterType.Week:
                 {
-                    var yeart = request.Year ?? DateTime.UtcNow.Year;
-                    var month = request.StartMonth ?? DateTime.UtcNow.Month;
-                    var weekInMonth = Math.Max(1, request.Week ?? 1);
-
-                    var monthStart = new DateTime(yeart, month, 1);
-
-                    // tìm Monday đầu tiên trong tháng
-                    var firstMondayDelta = ((int)DayOfWeek.Monday - (int)monthStart.DayOfWeek + 7) % 7;
-                    var firstMonday = monthStart.AddDays(firstMondayDelta);
-
-                    // tuần bắt đầu = Monday đầu tiên + (weekInMonth - 1)*7
-                    var weekStart = firstMonday.AddDays((weekInMonth - 1) * 7);
-
-                    // clamp: nếu vượt quá cuối tháng thì lấy Monday cuối cùng trong tháng
-                    var lastDayOfMonth = new DateTime(yeart, month, DateTime.DaysInMonth(yeart, month));
-                    if (weekStart > lastDayOfMonth)
+                    // Mode 1: nếu client gửi Day => lấy tuần chứa Day
+                    if (request.Day.HasValue)
                     {
-                        var lastMondayDelta = ((int)lastDayOfMonth.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-                        weekStart = lastDayOfMonth.AddDays(-lastMondayDelta);
+                        var target = request.Day.Value.Date; // DateTime (local) — ta chuyển sang UTC date
+                        var targetUtc = DateTime.SpecifyKind(target, DateTimeKind.Utc);
+
+                        // tìm Monday trước hoặc bằng target (tuần chứa target)
+                        var diff = ((int)targetUtc.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                        var weekStartDate = targetUtc.AddDays(-diff);
+                        var weekEndDate = weekStartDate.AddDays(6);
+
+                        var start = new DateTimeOffset(weekStartDate, TimeSpan.Zero);
+                        var end = new DateTimeOffset(weekEndDate.Date.AddDays(1).AddTicks(-1), TimeSpan.Zero);
+
+                        query = query.Where(x =>
+                            EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                            EF.Property<DateTimeOffset>(x, propertyName) <= end);
                     }
+                    else
+                    {
+                        // Mode 2: dùng Year + StartMonth + Week (tuần thứ N của THÁNG)
+                        var yeart = request.Year ?? DateTime.UtcNow.Year;
+                        var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                        var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                    var weekEnd = weekStart.AddDays(6);
-                    if (weekEnd > lastDayOfMonth) weekEnd = lastDayOfMonth;
+                        var (wsUtc, weUtc) = GetWeekRangeInMonth(yeart, month, weekInMonth);
 
-                    var weekStartOffset = new DateTimeOffset(weekStart, TimeSpan.Zero);
-                    var weekEndOffset = new DateTimeOffset(
-                        weekEnd.Year, weekEnd.Month, weekEnd.Day, 23, 59, 59, TimeSpan.Zero);
+                        var start = new DateTimeOffset(wsUtc, TimeSpan.Zero);
+                        var end = new DateTimeOffset(weUtc, TimeSpan.Zero);
 
-                    query = query.Where(x =>
-                        EF.Property<DateTimeOffset>(x, propertyName) >= weekStartOffset &&
-                        EF.Property<DateTimeOffset>(x, propertyName) <= weekEndOffset);
+                        query = query.Where(x =>
+                            EF.Property<DateTimeOffset>(x, propertyName) >= start &&
+                            EF.Property<DateTimeOffset>(x, propertyName) <= end);
+                    }
                     break;
                 }
 
@@ -894,5 +909,47 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 return (yearStart, yearEnd);
         }
     }
+
+    private static (DateTime weekStartDateUtc, DateTime weekEndDateUtc) GetWeekRangeInMonth(int year, int month, int weekInMonth)
+    {
+        // đảm bảo weekInMonth >= 1
+        weekInMonth = Math.Max(1, weekInMonth);
+
+        var monthStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var lastDayOfMonth = new DateTime(year, month, DateTime.DaysInMonth(year, month), 0, 0, 0, DateTimeKind.Utc);
+
+        // tìm Monday **on or after** first day of month
+        var firstMonday = monthStart;
+        while (firstMonday.DayOfWeek != DayOfWeek.Monday)
+        {
+            firstMonday = firstMonday.AddDays(1);
+        }
+
+        // tuần bắt đầu
+        var weekStart = firstMonday.AddDays((weekInMonth - 1) * 7);
+
+        // nếu tuầnStart đã vượt quá cuối tháng -> lấy Monday cuối cùng trong tháng
+        if (weekStart > lastDayOfMonth)
+        {
+            // tìm Monday on or before lastDayOfMonth
+            var lastMonday = lastDayOfMonth;
+            while (lastMonday.DayOfWeek != DayOfWeek.Monday)
+            {
+                lastMonday = lastMonday.AddDays(-1);
+            }
+
+            weekStart = lastMonday;
+        }
+
+        var weekEnd = weekStart.AddDays(6);
+        if (weekEnd > lastDayOfMonth) weekEnd = lastDayOfMonth;
+
+        // trả về DateTime UTC (00:00:00 start, 23:59:59.9999999 end)
+        var weekStartUtc = DateTime.SpecifyKind(weekStart.Date, DateTimeKind.Utc);
+        var weekEndUtc = DateTime.SpecifyKind(weekEnd.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+
+        return (weekStartUtc, weekEndUtc);
+    }
+
     #endregion
 }
