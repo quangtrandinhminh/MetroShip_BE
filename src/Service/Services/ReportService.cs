@@ -694,6 +694,32 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 periodEnd = today.AddDays(1).AddTicks(-1);
                 break;
 
+            case RevenueFilterType.Week:
+                if (request.Day.HasValue)
+                {
+                    // tuần chứa ngày cụ thể
+                    var target = request.Day.Value.Date;
+                    var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                    var ws = target.AddDays(-diff);
+                    var we = ws.AddDays(6);
+
+                    periodStart = ws;
+                    periodEnd = we.AddDays(1).AddTicks(-1);
+                }
+                else
+                {
+                    // tuần thứ N trong tháng
+                    var year = request.Year ?? DateTime.UtcNow.Year;
+                    var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                    var weekInMonth = Math.Max(1, request.Week ?? 1);
+
+                    var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
+
+                    periodStart = wsUtc;
+                    periodEnd = weUtc;
+                }
+                break;
+
             case RevenueFilterType.MonthRange:
                 var startYear = request.StartYear ?? DateTime.UtcNow.Year;
                 var startMonth = request.StartMonth ?? DateTime.UtcNow.Month;
@@ -715,9 +741,9 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
 
             case RevenueFilterType.Year:
-                var year = request.Year ?? DateTime.UtcNow.Year;
-                periodStart = new DateTime(year, 1, 1);
-                periodEnd = new DateTime(year, 12, 31, 23, 59, 59);
+                var yearOnly = request.Year ?? DateTime.UtcNow.Year;
+                periodStart = new DateTime(yearOnly, 1, 1);
+                periodEnd = new DateTime(yearOnly, 12, 31, 23, 59, 59);
                 break;
 
             default:
