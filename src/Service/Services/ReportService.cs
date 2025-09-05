@@ -337,11 +337,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         respWeekEnd = weUtc;
                     }
 
-                    fullData = rawData
-                        .Where(d =>
-                            new DateTime(d.Year, d.Month, 1) >= respWeekStart &&
-                            new DateTime(d.Year, d.Month, 1) <= respWeekEnd)
-                        .ToList();
+                    // ✅ rawData đã được filter theo tuần rồi, chỉ cần gán thẳng
+                    fullData = rawData;
                     break;
                 }
 
