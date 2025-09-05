@@ -760,24 +760,40 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
 
             case RevenueFilterType.Week:
-                if (request.Year.HasValue && request.Week.HasValue)
                 {
-                    var cal = System.Globalization.CultureInfo.InvariantCulture.Calendar;
+                    var yeart = request.Year ?? DateTime.UtcNow.Year;
+                    var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                    var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                    var jan1 = new DateTime(request.Year.Value, 1, 1);
-                    var weekStart = jan1.AddDays((request.Week.Value - 1) * 7);
+                    var monthStart = new DateTime(yeart, month, 1);
 
-                    while (weekStart.DayOfWeek != DayOfWeek.Monday)
-                        weekStart = weekStart.AddDays(-1);
+                    // tìm Monday đầu tiên trong tháng
+                    var firstMondayDelta = ((int)DayOfWeek.Monday - (int)monthStart.DayOfWeek + 7) % 7;
+                    var firstMonday = monthStart.AddDays(firstMondayDelta);
+
+                    // tuần bắt đầu = Monday đầu tiên + (weekInMonth - 1)*7
+                    var weekStart = firstMonday.AddDays((weekInMonth - 1) * 7);
+
+                    // clamp: nếu vượt quá cuối tháng thì lấy Monday cuối cùng trong tháng
+                    var lastDayOfMonth = new DateTime(yeart, month, DateTime.DaysInMonth(yeart, month));
+                    if (weekStart > lastDayOfMonth)
+                    {
+                        var lastMondayDelta = ((int)lastDayOfMonth.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+                        weekStart = lastDayOfMonth.AddDays(-lastMondayDelta);
+                    }
+
+                    var weekEnd = weekStart.AddDays(6);
+                    if (weekEnd > lastDayOfMonth) weekEnd = lastDayOfMonth;
 
                     var weekStartOffset = new DateTimeOffset(weekStart, TimeSpan.Zero);
-                    var weekEndOffset = weekStartOffset.AddDays(7).AddTicks(-1);
+                    var weekEndOffset = new DateTimeOffset(
+                        weekEnd.Year, weekEnd.Month, weekEnd.Day, 23, 59, 59, TimeSpan.Zero);
 
                     query = query.Where(x =>
                         EF.Property<DateTimeOffset>(x, propertyName) >= weekStartOffset &&
                         EF.Property<DateTimeOffset>(x, propertyName) <= weekEndOffset);
+                    break;
                 }
-                break;
 
             case RevenueFilterType.Day:
                 var targetDate = request.Day?.Date ?? DateTime.UtcNow.Date;
