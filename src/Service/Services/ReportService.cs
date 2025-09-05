@@ -597,7 +597,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         var refundedStatuses = new[]
         {
-        ShipmentStatusEnum.Refunded,
         ShipmentStatusEnum.Returned
     };
 
