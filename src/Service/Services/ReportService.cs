@@ -427,10 +427,9 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         var totalOrders = await query.CountAsync();
 
         var categoryData = await query
-            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault()
-            .CategoryInsurance.ParcelCategory != null
-                ? s.Parcels.FirstOrDefault().CategoryInsurance.ParcelCategory.CategoryName
-                : "Unknown")
+            .SelectMany(s => s.Parcels)
+            .Where(p => p.CategoryInsurance.ParcelCategory != null)
+            .GroupBy(p => p.CategoryInsurance.ParcelCategory.CategoryName)
             .Select(g => new
             {
                 Name = g.Key,
@@ -438,19 +437,16 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .ToListAsync();
 
-        // Kỳ trước
+        // ==== Kỳ trước (so sánh growth) ====
         var durationDays = (endDate - startDate).TotalDays + 1;
         var previousStart = startDate.AddDays(-durationDays);
         var previousEnd = startDate.AddDays(-1);
 
-        var prevQuery = _shipmentRepository.GetAllWithCondition()
-            .Where(s => s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd);
-
-        var previousData = await prevQuery
-            .GroupBy(s => s.Parcels.Any() && s.Parcels.FirstOrDefault() != null && s.Parcels.FirstOrDefault()
-            .CategoryInsurance.ParcelCategory != null
-                ? s.Parcels.FirstOrDefault().CategoryInsurance.ParcelCategory.CategoryName
-                : "Unknown")
+        var previousData = await _shipmentRepository.GetAllWithCondition()
+            .Where(s => s.CreatedAt >= previousStart && s.CreatedAt <= previousEnd)
+            .SelectMany(s => s.Parcels)
+            .Where(p => p.CategoryInsurance.ParcelCategory != null)
+            .GroupBy(p => p.CategoryInsurance.ParcelCategory.CategoryName)
             .Select(g => new
             {
                 Name = g.Key,
@@ -854,7 +850,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     private (DateTimeOffset startDate, DateTimeOffset endDate) CalculateDateRange(CategoryStatisticsRequest request)
     {
-        var today = DateTimeOffset.UtcNow; // luôn UTC
+        var today = DateTimeOffset.UtcNow; // ✅ luôn UTC
 
         switch (request.RangeType)
         {
@@ -863,9 +859,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 return (startOfToday, startOfToday.AddDays(1).AddTicks(-1));
 
             case RangeType.ThisWeek:
-                var startOfTodayWeek = new DateTimeOffset(today.Year, today.Month, today.Day, 0, 0, 0, TimeSpan.Zero);
-                var diff = (int)today.DayOfWeek;
-                var weekStart = startOfTodayWeek.AddDays(-diff);
+                // Lùi về Monday (UTC)
+                var diff = (int)today.DayOfWeek == 0 ? 6 : (int)today.DayOfWeek - 1;
+                var weekStart = new DateTimeOffset(today.Year, today.Month, today.Day, 0, 0, 0, TimeSpan.Zero)
+                                    .AddDays(-diff);
                 var weekEnd = weekStart.AddDays(7).AddTicks(-1);
                 return (weekStart, weekEnd);
 
@@ -875,27 +872,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 return (monthStart, monthEnd);
 
             case RangeType.Year:
+            default: // ✅ default = Year
                 var yearStart = new DateTimeOffset(today.Year, 1, 1, 0, 0, 0, TimeSpan.Zero);
                 var yearEnd = yearStart.AddYears(1).AddTicks(-1);
                 return (yearStart, yearEnd);
-
-            default:
-                if (request.StartDate == null || request.EndDate == null)
-                    throw new ArgumentException("StartDate and EndDate are required for custom date range.");
-
-                var customStart = new DateTimeOffset(
-                    request.StartDate.Value.Year,
-                    request.StartDate.Value.Month,
-                    request.StartDate.Value.Day,
-                    0, 0, 0, TimeSpan.Zero);
-
-                var customEnd = new DateTimeOffset(
-                    request.EndDate.Value.Year,
-                    request.EndDate.Value.Month,
-                    request.EndDate.Value.Day,
-                    23, 59, 59, TimeSpan.Zero);
-
-                return (customStart, customEnd);
         }
     }
     #endregion

@@ -16,7 +16,7 @@ namespace MetroShip.Service.ApiModels.ParcelCategory
 
     public class CategoryStatisticsRequest
     {
-        public RangeType RangeType { get; set; } = RangeType.Today;
+        public RangeType RangeType { get; set; } = RangeType.Year;
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
