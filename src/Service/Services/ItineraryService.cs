@@ -707,29 +707,29 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             )
         .ToListAsync();
 
-        return pathResults.Select(r =>
+        var results = new List<dynamic>();
+        foreach (var r in pathResults)
         {
             var pathResponse = _metroGraph.CreateResponseFromPath(r.StationIdListPath, _mapperlyMapper);
             _mapperlyMapper.CloneToParcelRequestList(request.Parcels, pathResponse.Parcels);
 
-            // Calculate pricing for each parcel
-            /*ParcelPriceCalculator.CalculateParcelPricing(
-                pathResponse.Parcels, pathResponse, _pricingService, categories);*/
-
-            ParcelPriceCalculator.CalculateParcelPricing(
+            // calculate pricing for each parcel
+            await ParcelPriceCalculator.CalculateParcelPricing(
                 pathResponse.Parcels, pathResponse, _pricingService, categoryInsurance);
 
-            // Check est arrival time
+            // check est arrival time
             var date = new DateOnly(request.ScheduledDateTime.Year,
-                               request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
-            pathResponse.EstArrivalTime = CheckEstArrivalTime(pathResponse, request.TimeSlotId, date).Result;
+                request.ScheduledDateTime.Month, request.ScheduledDateTime.Day);
+            pathResponse.EstArrivalTime = await CheckEstArrivalTime(pathResponse, request.TimeSlotId, date);
 
-            return new
+            results.Add(new
             {
                 StationId = r.StationId,
                 Response = pathResponse
-            };
-        }).ToList<dynamic>();
+            });
+        }
+
+        return results;
     }
 
     private TotalPriceResponse BuildTotalPriceResponse(List<dynamic> bestPathResponses, List<string> stationIdList)

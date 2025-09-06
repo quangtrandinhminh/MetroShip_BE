@@ -34,6 +34,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Riok.Mapperly.Abstractions;
 using System.Text.Json;
+using MetroShip.Service.ApiModels.SystemConfig;
 using static MetroShip.Repository.Repositories.ShipmentRepository;
 
 namespace MetroShip.Service.Mapper;
@@ -58,6 +59,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<UserResponse> MapToUserResponsePaginatedList(PaginatedList<UserEntity> entity);
     public partial UserResponse MapToUserResponse(UserEntity entity);
     public partial void MapRegisterRequestToEntity(RegisterRequest request, UserEntity entity);
+    public partial void MapBankInfoRequestToEntity(BankInfoRequest request, UserEntity entity);
 
     // shipment
     public partial PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
@@ -144,6 +146,8 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
+    public partial InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
+
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);
     public partial PaginatedListResponse<TransactionResponse> MapToTransactionPaginatedList(PaginatedList<Transaction> source);
@@ -174,6 +178,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     // pricing config
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
+    public partial PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);
@@ -194,6 +199,12 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial Notification MapNotificationRequest(NotificationCreateRequest request);
     public partial void MapNotificationUpdate(NotificationUpdateRequest request, Notification notification);
     public partial PaginatedListResponse<NotificationDto> MapNotificationList(PaginatedList<Notification> paginatedList);
+
+    // config
+    public partial SystemConfig MapToSystemConfigEntity(SystemConfigRequest request);
+    public partial SystemConfigResponse MapToSystemConfigResponse(SystemConfig entity);
+    public partial PaginatedListResponse<SystemConfigResponse> MapToSystemConfigPaginatedList(PaginatedList<SystemConfig> entityList);
+    public partial void MapToSystemConfigEntity(SystemConfigRequest request, SystemConfig entity);
 
     // datetimeoffset to dateonly
     public DateOnly MapDateTimeOffsetToDateOnly(DateTimeOffset dateTimeOffset)

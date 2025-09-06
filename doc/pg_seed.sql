@@ -316,15 +316,15 @@ DO $$
 $$;
 DO $$
     BEGIN
-        IF EXISTS (SELECT 1 FROM public."Routes") THEN
-            DELETE FROM public."Routes";
+        IF EXISTS (SELECT 1 FROM public."RouteStation") THEN
+            DELETE FROM public."RouteStation";
         END IF;
     END
 $$;
 DO $$
     BEGIN
-        IF EXISTS (SELECT 1 FROM public."MetroLines") THEN
-            DELETE FROM public."MetroLines";
+        IF EXISTS (SELECT 1 FROM public."MetroRoute") THEN
+            DELETE FROM public."MetroRoute";
         END IF;
     END
 $$;
@@ -339,7 +339,7 @@ $$;
 -- Seed Metro Lines
 -- Metro Line 1: Bến Thành – Suối Tiên
 -- Delete Carriage & price
-INSERT INTO public."MetroLines"
+INSERT INTO public."MetroRoute"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "LineType",
  "LineOwner", "StationListJSON",
 /* "CarriagesPerTrain","CarriageLenghtMeter","CarriageWidthMeter", "CarriageHeightMeter",
@@ -502,7 +502,7 @@ VALUES
      NULL, FALSE);
 
 -- Metro Line 1: Routes between each adjacent station (26 segments) - old
-INSERT INTO public."Routes"
+INSERT INTO public."RouteStation"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
  "SeqOrder","TravelTimeMin","LengthKm",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -590,7 +590,7 @@ VALUES
      'Nhà hát Thành phố – Bến Thành','Opera House – Ben Thanh', 1, 13,2,0.715,NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 2: Ben Thanh – Tham Luong -- Delete Carriage & price
-INSERT INTO public."MetroLines"
+INSERT INTO public."MetroRoute"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations","DwellTimeMin",
  "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -722,7 +722,7 @@ VALUES
  NULL, FALSE);
 
 -- Metro Line 2: Routes Insert (Forward and Reverse) - old
-INSERT INTO public."Routes"
+INSERT INTO public."RouteStation"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
  "SeqOrder","TravelTimeMin","LengthKm","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
@@ -831,7 +831,7 @@ VALUES
 -- Metro Line 3A: Ben Thanh – Tan Kien, deleted carriage & price
 -- Generated on: 2025-06-11 07:09:19 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/the-metro-line-3a
-INSERT INTO public."MetroLines"
+INSERT INTO public."MetroRoute"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
  "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -1034,7 +1034,7 @@ VALUES
  NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 3A: Routes Insert (Forward and Reverse) - Calculated using Haversine + 5% curve adjustment - old
-INSERT INTO public."Routes"
+INSERT INTO public."RouteStation"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
  "SeqOrder","TravelTimeMin","LengthKm","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
@@ -1230,7 +1230,7 @@ VALUES
 -- Metro Line 3B: Cong Hoa – Hiep Binh, deleted carriage & price
 -- Generated on: 2025-06-11 08:40:31 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/the-metro-line-3b
-INSERT INTO public."MetroLines"
+INSERT INTO public."MetroRoute"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
  "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -1342,7 +1342,7 @@ VALUES
  NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 3B: Routes Insert (calculated using Haversine + 5% curve adjustment) - old
-INSERT INTO public."Routes"
+INSERT INTO public."RouteStation"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
  "SeqOrder","TravelTimeMin","LengthKm","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
 VALUES
@@ -1460,7 +1460,7 @@ VALUES
 -- Metro Line 4: Thanh Xuan – Ben Tau Hiep Phuoc
 -- Generated on: 2025-06-11 08:58:39 UTC
 -- Official source: http://www.maur.hochiminhcity.gov.vn/web/en/metro-line-4
-INSERT INTO public."MetroLines"
+INSERT INTO public."MetroRoute"
 ("Id","RegionId","LineNameVi","LineNameEn","LineCode","TotalKm","TotalStations", "DwellTimeMin",
  "LineType","LineOwner","StationListJSON",
  "ColorHex","IsActive","CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -1797,7 +1797,7 @@ VALUES
  NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 4 Forward Routes (2 Direction) - old
-INSERT INTO public."Routes"
+INSERT INTO public."RouteStation"
 ("Id","RouteCode","LineId","FromStationId","ToStationId","RouteNameVi","RouteNameEn","Direction",
  "SeqOrder","TravelTimeMin","LengthKm",
  "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
@@ -2567,7 +2567,7 @@ WHERE "Id" = 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd';
 -- InsurancePolicy Seed Data
 INSERT INTO public."InsurancePolicy"
 ("Id", "Name", "BaseFeeVnd", "MaxParcelValueVnd", "InsuranceFeeRateOnValue",
- "StandardCompensationValueVnd","MaxCompensationRateOnValue", "MinCompensationRateOnValue", "MaxCompensationRateOnShippingFee",
+ "StandardCompensationValueVnd","MaxCompensationRateOnValue", "MinCompensationRateOnValue", "MinCompensationRateOnShippingFee",
  "ValidFrom","IsActive",
  "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 VALUES
@@ -2599,7 +2599,7 @@ VALUES
 -- 22/08/2025: Add new metro lines, update metro time slots
 -- ───────────────────────────────────────────────────────────────
 -- Insert Metro Line 2A: Cát Linh - Hà Đông
-insert into public."MetroLines" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
+insert into public."MetroRoute" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
 values
     ('3522435d-fb6b-4715-852b-acc1d0640a19', 'd75d6e5a-34b5-4396-b0b9-2947250ed138',
      'Tuyến 2A: Cát Linh - Hà Đông', 'Line 2A: Cat Linh - Ha Dong',
@@ -2659,7 +2659,7 @@ values
      'd75d6e5a-34b5-4396-b0b9-2947250ed138', 20.9536, 105.7348,
      null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"3522435d-fb6b-4715-852b-acc1d0640a19","StationCode":"HN-L2-12"}]');
 
-insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+insert into public."RouteStation" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 values
     ('590d9716-49ef-489e-9e6e-969968c13615', 'HN-L2A-01-02', '3522435d-fb6b-4715-852b-acc1d0640a19', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'Cát Linh – La Thành', 'Cat Linh – La Thanh', 1, null, 0, 0.90, null, null, null, NOW(),NOW(), null),
     ('3ff0b341-4a53-4a07-8602-da1eada6614a', 'HN-L2A-02-03', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', 'b759bf6c-508f-4942-987a-9a93c5d7e7e3', 'La Thành – Thái Hà', 'La Thanh – Thai Ha', 2, null, 0, 1.00, null, null, null, NOW(),NOW(), null),
@@ -2673,7 +2673,7 @@ values
     ('65497ead-b3d6-48cd-8a46-c6d6fcb1864c', 'HN-L2A-10-11', '3522435d-fb6b-4715-852b-acc1d0640a19', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', 'La Khê – Văn Khê', 'La Khe – Van Khe', 10, null, 0, 1.10, null, null, null, NOW(),NOW(), null),
     ('be7482fe-5440-4355-9f43-aa4f1f9cfd83', 'HN-L2A-11-12', '3522435d-fb6b-4715-852b-acc1d0640a19', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', '03c5c444-a368-4b86-bcd9-8f889552d98a', 'Văn Khê – Yên Nghĩa', 'Van Khe – Yen Nghia', 11, null, 0, 1.30, null, null, null, NOW(),NOW(), null);
 
-insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+insert into public."RouteStation" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 values
     ('37f25d79-57f6-4a2d-9dc2-a227bd2e2cd0', 'HN-L2A-12-11', '3522435d-fb6b-4715-852b-acc1d0640a19', '03c5c444-a368-4b86-bcd9-8f889552d98a', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', 'Yên Nghĩa – Văn Khê', 'Yen Nghia – Van Khe', 1, null, 1, 1.30, null, null, null, NOW(),NOW(), null),
     ('3bf2cb57-a8a3-4157-9ebd-88b367ce8f98', 'HN-L2A-11-10', '3522435d-fb6b-4715-852b-acc1d0640a19', '42b99c6e-d3c3-4d2c-b7da-1e9c6d5f2f37', '0d424042-4e45-4b18-ba8c-d58eb71fd42d', 'Văn Khê – La Khê', 'Van Khe – La Khe', 2, null, 1, 1.10, null, null, null, NOW(),NOW(), null),
@@ -2688,7 +2688,7 @@ values
     ('4712eefb-312e-44e0-98ab-5a6e8c8b23fb', 'HN-L2A-02-01', '3522435d-fb6b-4715-852b-acc1d0640a19', 'ae60c0a1-a1ec-4911-9aed-590c0b7be1d1', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'La Thành – Cát Linh', 'La Thanh – Cat Linh', 11, null, 1, 0.90, null, null, null, NOW(),NOW(), null);
 
 -- Insert Metro Line 3: Nhon - Hanoi Station
-insert into public."MetroLines" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
+insert into public."MetroRoute" ("Id", "RegionId", "LineNameVi", "LineNameEn", "LineCode", "LineType", "LineOwner", "TotalKm", "TotalStations", "RouteTimeMin", "DwellTimeMin", "ColorHex", "IsActive", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt", "StationListJSON", "LineNumber")
 values
     ('f97526e3-fc53-411f-86e1-8bd313fe7f45', 'd75d6e5a-34b5-4396-b0b9-2947250ed138',
      'Tuyến 3: Nhổn - Ga Hà Nội', 'Line 3: Nhon - Hanoi Station',
@@ -2741,7 +2741,7 @@ values
      'd75d6e5a-34b5-4396-b0b9-2947250ed138', 21.0242, 105.8412,
      null, null, null, NOW(), NOW(), null, false, '[{"RouteId":"f97526e3-fc53-411f-86e1-8bd313fe7f45","StationCode":"HN-L3-12"}]');
 
-insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+insert into public."RouteStation" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 values
     ('a9fd5d25-5f0a-49d3-bc92-89d1f033dedd', 'HN-L3-01-02', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '0af65903-2de3-4ce2-a13b-89eb6b7fb3f0', '967369be-6913-4f60-9997-3589f2482f30', 'Nhổn – Minh Khai', 'Nhon – Minh Khai', 1, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
     ('5d37ed58-ee59-4e3b-b189-6be47738c445', 'HN-L3-02-03', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '967369be-6913-4f60-9997-3589f2482f30', '04ecc0e8-959f-4e0b-aa63-272d6d35d842', 'Minh Khai – Phú Diễn', 'Minh Khai – Phu Dien', 2, null, 0, 1.10, null, null, null, NOW(), NOW(), null),
@@ -2755,7 +2755,7 @@ values
     ('a93b3f1a-a5e8-44a2-b896-3dee57ebfc23', 'HN-L3-01-11', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'Cát Linh – Văn Miếu', 'Cat Linh – Van Mieu', 10, null, 0, 0.90, null, null, null, NOW(), NOW(), null),
     ('1320ae48-4fe6-482f-9d93-cf9fa957ad8e', 'HN-L3-11-12', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'eaef3dd6-7ca7-496e-aaf8-148356d184cd', 'Văn Miếu – Ga Hà Nội', 'Van Mieu – Hanoi Station', 11, null, 0, 0.80, null, null, null, NOW(), NOW(), null);
 
-insert into public."Routes" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
+insert into public."RouteStation" ("Id", "RouteCode", "LineId", "FromStationId", "ToStationId", "RouteNameVi", "RouteNameEn", "SeqOrder", "TravelTimeMin", "Direction", "LengthKm", "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 values
     ('48076f66-57b0-4ca9-a75e-08338f14e04c', 'HN-L3-12-11', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'eaef3dd6-7ca7-496e-aaf8-148356d184cd', 'dfc56068-0782-443c-acb3-d9a06507c0e0', 'Ga Hà Nội – Văn Miếu', 'Hanoi Station – Van Mieu', 1, null, 1, 0.80, null, null, null, NOW(), NOW(), null),
     ('a64b23a9-4055-48b0-8ff2-74b60d22485f', 'HN-L3-11-01', 'f97526e3-fc53-411f-86e1-8bd313fe7f45', 'dfc56068-0782-443c-acb3-d9a06507c0e0', '58af215d-ba4f-4bde-b7d9-bc077b85c2ac', 'Văn Miếu – Cát Linh', 'Van Mieu – Cat Linh', 2, null, 1, 0.90, null, null, null, NOW(), NOW(), null),

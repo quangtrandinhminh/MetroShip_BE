@@ -25,6 +25,8 @@
             public const string AssignRoleToStaff = BaseEndpoint + "/admin/assign-role";
             public const string GetAssignmentRoles = BaseEndpoint + "/assignment-roles";
             public const string CreateStaff = BaseEndpoint + "/staff-account";
+            public const string UpdateBankInfo = BaseEndpoint + "/bank-info";
+            public const string GetBankInfoAndQrCode = BaseEndpoint + "/bank-info";
         }
 
         public static class ParcelCategory
@@ -94,6 +96,8 @@
             public const string DeleteTransaction = BaseEndpoint + "/{id}";
             public const string GetTransactionsByShipmentId = BaseEndpoint + "/shipment/{shipmentId}";
             public const string GetTransactionType = BaseEndpoint + "/types";
+            public const string GetBanksFromVietQr = BaseEndpoint + "/vietqr/banks";
+            public const string GenerateBankQrLink = BaseEndpoint + "/vietqr/{bankId}/{accountNo}";
         }
 
         public static class Notification
@@ -105,6 +109,7 @@
             public const string CreateNotification = BaseEndpoint;
             public const string UpdateNotification = BaseEndpoint;
             public const string DeleteNotification = $"{BaseEndpoint}/{{id}}";
+            public const string DeleteAllNotifications = $"{BaseEndpoint}/delete-all";
             public const string GetUnreadCount = $"{BaseEndpoint}/unread-count";
             public const string MarkAsRead = $"{BaseEndpoint}/{{id}}/read";
             public const string MarkAllAsRead = $"{BaseEndpoint}/read-all";
@@ -197,10 +202,9 @@
         {
             private const string BaseEndpoint = "/" + AreaName + "/system-configs";
             public const string GetSystemConfigs = BaseEndpoint;
-            public const string GetSystemConfigById = BaseEndpoint + "/{id}";
             public const string CreateSystemConfig = BaseEndpoint;
-            public const string UpdateSystemConfig = BaseEndpoint + "/{id}";
-            public const string DeleteSystemConfig = BaseEndpoint + "/{id}";
+            public const string ChangeConfigValue = BaseEndpoint + "/config-value";
+            public const string UpdateSystemConfig = BaseEndpoint;
         }
 
         public static class RegionEndpoint
@@ -220,7 +224,7 @@
             public const string GetPricingById = BaseEndpoint + "/{id}";
             public const string GetPricingTable = BaseEndpoint + "/table";
             public const string CreatePricing = BaseEndpoint;
-            public const string UpdatePricing = BaseEndpoint + "/{id}";
+            public const string UpdatePricing = BaseEndpoint + "/activation/{pricingConfigId}";
             public const string DeletePricing = BaseEndpoint + "/{id}";
             public const string CalculatePrice = BaseEndpoint + "/calculation";
         }
@@ -233,6 +237,8 @@
             public const string CreatePolicy = BaseEndpoint;
             public const string UpdatePolicy = BaseEndpoint + "/{id}";
             public const string DeletePolicy = BaseEndpoint + "/{id}";
+            public const string ActivatePolicy = BaseEndpoint + "/activation/{id}";
+            public const string DeactivatePolicy = BaseEndpoint + "/deactivation/{id}";
         }
 
         public static class SupportTicketEndpoint

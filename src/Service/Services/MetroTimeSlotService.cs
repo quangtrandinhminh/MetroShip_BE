@@ -31,8 +31,8 @@ namespace MetroShip.Service.Services
         {
             _logger.Information("Getting all MetroTimeSlots for dropdown.");
 
-            var minShiftConfig = int.Parse(_systemConfigRepository
-                .GetSystemConfigValueByKey(nameof(_systemConfigSetting.SCHEDULE_BEFORE_SHIFT_MINUTES)));
+            /*var minShiftConfig = int.Parse(_systemConfigRepository
+                .GetSystemConfigValueByKey(nameof(_systemConfigSetting.SCHEDULE_BEFORE_SHIFT_MINUTES)));*/
             /*var maxShiftConfig = int.Parse(_systemConfigRepository
                 .GetSystemConfigValueByKey(nameof(_systemConfigSetting.MAX_SCHEDULE_BEFORE_SHIFT_MINUTES)));*/
             var timeSlots = await _metroTimeSlotRepository.GetAll()

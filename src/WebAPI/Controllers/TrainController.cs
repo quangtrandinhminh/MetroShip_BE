@@ -25,7 +25,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly ISchedulerFactory _schedulerFactory = serviceProvider.GetRequiredService<ISchedulerFactory>();
         private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
 
-        [Authorize]
+        //[Authorize]
         [HttpGet]
         [Route(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
         public async Task<IActionResult> GetTrainsAsync([FromQuery] TrainListFilterRequest request)

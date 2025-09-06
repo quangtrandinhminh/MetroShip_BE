@@ -10,6 +10,7 @@ public interface INotificationService
     Task<NotificationDto> CreateNotificationAsync(NotificationCreateRequest request);
     Task<int> UpdateNotificationAsync(NotificationUpdateRequest request);
     Task<int> DeleteNotificationAsync(string id);
+    Task<int> DeleteAllNotificationsAsync(string userId);
     Task<int> GetUnreadCountAsync(string userId);
     Task<bool> MarkAsReadAsync(string notificationId);
     Task<bool> MarkAllAsReadAsync(string userId);

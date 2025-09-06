@@ -90,5 +90,13 @@ namespace MetroShip.WebAPI.Controllers
             var assignmentRoles = EnumHelper.GetEnumList<AssignmentRoleEnum>();
             return Ok(BaseResponse.OkResponseDto(assignmentRoles));
         }
+
+        [HttpPut]
+        [Route(WebApiEndpoint.User.UpdateBankInfo)]
+        public async Task<IActionResult> UpdateBankInfo([FromBody] BankInfoRequest request)
+        {
+            await _userService.UpdateUserAsync(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.UPDATE_BANK_INFO_SUCCESS, null));
+        }
     }
 }

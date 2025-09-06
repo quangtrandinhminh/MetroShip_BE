@@ -93,7 +93,7 @@ public class BackgroundJobService(IServiceProvider serviceProvider) : IBackgroun
     }
 
     // schedule job to cancel transaction after 15 minutes
-    public async Task ScheduleCancelTransactionJob(string transactionId)
+    public async Task ScheduleCancelTransactionJob(string transactionId, DateTimeOffset paymentDeadline)
     {
         _logger.Information("Scheduling job to cancel transaction with ID: {transactionId}", transactionId);
         var jobData = new JobDataMap
@@ -109,7 +109,7 @@ public class BackgroundJobService(IServiceProvider serviceProvider) : IBackgroun
 
         var trigger = TriggerBuilder.Create()
             .WithIdentity($"Trigger-CancelTransaction-{transactionId}")
-            .StartAt(CoreHelper.SystemTimeNow.AddMinutes(15))
+            .StartAt(paymentDeadline)
             .Build();
 
         await _schedulerFactory.GetScheduler().Result.ScheduleJob(jobDetail, trigger);

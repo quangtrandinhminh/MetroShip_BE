@@ -113,17 +113,20 @@ namespace MetroShip.Utility.Config
         public string MAX_CAPACITY_PER_LINE_M3 { get; set; }
         public string MAX_NUMBER_OF_SHIFT_ATTEMPTS { get; set; }
 
+
+
         // main policy
-        public string CONFIRMATION_HOUR { get; set; }
-        public string PAYMENT_REQUEST_HOUR { get; set; }
         public string MAX_SCHEDULE_SHIPMENT_DAY { get; set; }
+
+        /*public string CONFIRMATION_HOUR { get; set; }
+        public string PAYMENT_REQUEST_HOUR { get; set; }
         public string ALLOW_CANCEL_BEFORE_HOUR { get; set; }
         public string REFUND_PERCENT { get; set; }
         public string SURCHARGE_AFTER_DELIVERED_HOUR { get; set; }
         public string SURCHARGE_PER_DAY_PERCENT { get; set; }
         public string FREE_STORAGE_DAY { get; set; }
         public string SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }
-        public string MAX_SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }
+        public string MAX_SCHEDULE_BEFORE_SHIFT_MINUTES { get; set; }*/
 
         // price structure
         /*public string DISTANCE_STEP_KM { get; set; }
