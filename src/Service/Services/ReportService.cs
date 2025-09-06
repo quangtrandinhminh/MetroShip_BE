@@ -727,8 +727,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         IQueryable<Shipment> q;
 
-        // Lấy filterType từ request, nếu null thì mặc định = Default (Year)
-        var finalFilterType = request?.FilterType ?? RevenueFilterType.Default;
+        // ✅ Nếu null hoặc Default thì coi như Year
+        var requestedFilter = request?.FilterType ?? RevenueFilterType.Default;
+        var finalFilterType = (requestedFilter == RevenueFilterType.Default)
+            ? RevenueFilterType.Year
+            : requestedFilter;
 
         if (finalFilterType == RevenueFilterType.Day)
         {
@@ -743,17 +746,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         {
             // ✅ Default => Year
             q = _shipmentRepository.GetAllWithCondition();
-            q = ApplyDateFilter(
-                q,
-                finalFilterType == RevenueFilterType.Default
-                    ? RevenueFilterType.Year
-                    : finalFilterType,
-                request,
-                s => s.CreatedAt
-            );
+            q = ApplyDateFilter(q, finalFilterType, request, s => s.CreatedAt);
         }
 
-        // ✅ Xác định khoảng thời gian trước aggregate để tránh lặp lại logic
+        // ✅ Xác định khoảng thời gian
         DateTime periodStart;
         DateTime periodEnd;
 
@@ -813,8 +809,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 periodEnd = periodStart.AddMonths(3).AddTicks(-1);
                 break;  // Di chuyển lọc vào trước aggregate nếu có thể, hoặc re-agg sau
 
-            case RevenueFilterType.Default: // ✅ Default = Year
-            case RevenueFilterType.Year:
+            case RevenueFilterType.Year: // ✅ Default cũng đã map về Year ở trên
                 var yearOnly = request.Year ?? DateTime.UtcNow.Year;
                 periodStart = DateTime.SpecifyKind(new DateTime(yearOnly, 1, 1), DateTimeKind.Utc);
                 periodEnd = DateTime.SpecifyKind(new DateTime(yearOnly, 12, 31, 23, 59, 59), DateTimeKind.Utc);
@@ -866,19 +861,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             })
             .FirstOrDefaultAsync();
 
-        // Nếu default fallback, update period từ agg
-        if (finalFilterType == default(RevenueFilterType) && agg != null)
-        {
-            // Giả sử agg.PeriodStart là DateTimeOffset, dùng .UtcDateTime để lấy UTC DateTime
-            periodStart = agg.PeriodStart.UtcDateTime; // Hoặc .DateTime nếu entity dùng DateTime, chỉnh nếu lỗi
-            periodEnd = agg.PeriodEnd.UtcDateTime;
-        }
-
-        // map DTO
         return new ActivityMetricsDto
         {
-            FilterType = finalFilterType,
-            FilterTypeName = finalFilterType.ToString(),
+            FilterType = requestedFilter, // ✅ vẫn trả về đúng cái request gốc (Default nếu null)
+            FilterTypeName = requestedFilter.ToString(),
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
             TotalOrders = agg?.TotalOrders ?? 0,
