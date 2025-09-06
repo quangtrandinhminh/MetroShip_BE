@@ -59,6 +59,7 @@ namespace MetroShip.Service.ApiModels.Report
     {
         public int Year { get; set; }
         public int Month { get; set; }
+        public int? Day { get; set; }
 
         // Shipment
         public int TotalShipments { get; set; }

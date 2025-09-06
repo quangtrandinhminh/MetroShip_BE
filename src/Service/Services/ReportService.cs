@@ -543,37 +543,69 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = ApplyDateFilter(
+        IQueryable<Shipment> query = ApplyDateFilter(
             _shipmentRepository.GetAllWithCondition(),
             filterType,
             request,
             s => s.FeedbackAt
-        );
+        ).Where(s => s.FeedbackAt.HasValue);
 
-        // ⚡ GroupBy theo Year/Month
-        var rawData = await query
-            .Where(s => s.FeedbackAt.HasValue)
-            .GroupBy(s => new
-            {
-                Year = s.FeedbackAt.Value.Year,
-                Month = s.FeedbackAt.Value.Month
-            })
-            .Select(g => new ShipmentFeedbackDataItem
-            {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
+        List<ShipmentFeedbackDataItem> rawData;
 
-                TotalShipments = g.Count(),
-                CompleteAndCompensatedCount = g.Count(s =>
-                    s.ShipmentStatus == ShipmentStatusEnum.Completed ||
-                    s.ShipmentStatus == ShipmentStatusEnum.Compensated),
-                CompletedWithCompensationCount = g.Count(s =>
-                    s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+        if (filterType == RevenueFilterType.Week)
+        {
+            // ✅ Group theo ngày khi filter = Week
+            rawData = await query
+                .GroupBy(s => new
+                {
+                    Year = s.FeedbackAt.Value.Year,
+                    Month = s.FeedbackAt.Value.Month,
+                    Day = s.FeedbackAt.Value.Day
+                })
+                .Select(g => new ShipmentFeedbackDataItem
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Day = g.Key.Day,
 
-                TotalFeedbacks = g.Count(s => s.Rating != null),
-                FiveStarFeedbacks = g.Count(s => s.Rating == 5)
-            })
-            .ToListAsync();
+                    TotalShipments = g.Count(),
+                    CompleteAndCompensatedCount = g.Count(s =>
+                        s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+                        s.ShipmentStatus == ShipmentStatusEnum.Compensated),
+                    CompletedWithCompensationCount = g.Count(s =>
+                        s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+
+                    TotalFeedbacks = g.Count(s => s.Rating != null),
+                    FiveStarFeedbacks = g.Count(s => s.Rating == 5)
+                })
+                .ToListAsync();
+        }
+        else
+        {
+            // ✅ Group theo tháng cho các filter khác
+            rawData = await query
+                .GroupBy(s => new
+                {
+                    Year = s.FeedbackAt.Value.Year,
+                    Month = s.FeedbackAt.Value.Month
+                })
+                .Select(g => new ShipmentFeedbackDataItem
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+
+                    TotalShipments = g.Count(),
+                    CompleteAndCompensatedCount = g.Count(s =>
+                        s.ShipmentStatus == ShipmentStatusEnum.Completed ||
+                        s.ShipmentStatus == ShipmentStatusEnum.Compensated),
+                    CompletedWithCompensationCount = g.Count(s =>
+                        s.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation),
+
+                    TotalFeedbacks = g.Count(s => s.Rating != null),
+                    FiveStarFeedbacks = g.Count(s => s.Rating == 5)
+                })
+                .ToListAsync();
+        }
 
         List<ShipmentFeedbackDataItem> fullData;
         DateTime? respWeekStart = null;
@@ -581,19 +613,16 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         switch (filterType)
         {
-            case RevenueFilterType.Day:
-                fullData = rawData;
-                break;
-
             case RevenueFilterType.Week:
                 {
+                    DateTime ws, we;
                     if (request.Day.HasValue)
                     {
                         // Tuần chứa ngày cụ thể
                         var target = request.Day.Value.Date;
                         var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-                        var ws = target.AddDays(-diff);
-                        var we = ws.AddDays(6);
+                        ws = target.AddDays(-diff);
+                        we = ws.AddDays(6);
 
                         respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
                         respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
@@ -605,14 +634,35 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         var month = request.StartMonth ?? DateTime.UtcNow.Month;
                         var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                        var (wsUtc, weUtc) = GetWeekRangeInMonth(yeart, month, weekInMonth);
+                        (ws, we) = GetWeekRangeInMonth(yeart, month, weekInMonth);
 
-                        respWeekStart = wsUtc;
-                        respWeekEnd = weUtc;
+                        respWeekStart = ws;
+                        respWeekEnd = we;
                     }
 
-                    // rawData đã được filter trong ApplyDateFilter
-                    fullData = rawData;
+                    // ✅ Build đủ 7 ngày
+                    var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
+
+                    fullData = daysInWeek
+                        .Select(d =>
+                        {
+                            var existing = rawData.FirstOrDefault(r =>
+                                r.Year == d.Year && r.Month == d.Month && r.Day == d.Day);
+
+                            return existing ?? new ShipmentFeedbackDataItem
+                            {
+                                Year = d.Year,
+                                Month = d.Month,
+                                Day = d.Day,
+                                TotalShipments = 0,
+                                CompleteAndCompensatedCount = 0,
+                                CompletedWithCompensationCount = 0,
+                                TotalFeedbacks = 0,
+                                FiveStarFeedbacks = 0
+                            };
+                        })
+                        .ToList();
+
                     break;
                 }
 
@@ -641,11 +691,11 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
                 var months = Enumerable.Range(startYear * 12 + startMonth,
                     (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
-                 .Select(x => new
-                 {
-                     Year = (x - 1) / 12,
-                     Month = (x - 1) % 12 + 1
-                 });
+                    .Select(x => new
+                    {
+                        Year = (x - 1) / 12,
+                        Month = (x - 1) % 12 + 1
+                    });
 
                 fullData = months
                     .Select(m => BuildItem(rawData, m.Year, m.Month))
