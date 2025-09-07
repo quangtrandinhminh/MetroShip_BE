@@ -8,7 +8,6 @@ namespace MetroShip.Service.ApiModels.Station
 {
     public class UpdateStationRequest
     {
-        public string? StationCode { get; set; }
         public string? StationNameVi { get; set; }
         public string? StationNameEn { get; set; }
         public string? Address { get; set; }
