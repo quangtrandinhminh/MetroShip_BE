@@ -63,9 +63,6 @@ namespace MetroShip.WebAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStation(Guid id, [FromBody] UpdateStationRequest request)
         {
-            if (id.ToString() != request.StationId)
-                return BadRequest("Mismatched station ID.");
-
             var updatedStation = await _stationService.UpdateStationAsync(id,request);
             if (updatedStation == null)
                 return NotFound();

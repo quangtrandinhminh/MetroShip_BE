@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace MetroShip.Service.ApiModels.Station
 {
-    public class CreateStationRequest
+    public class UpdateStationRequest
     {
-        public string? Id { get; set; }
         public string? StationNameVi { get; set; }
         public string? StationNameEn { get; set; }
         public string? Address { get; set; }
