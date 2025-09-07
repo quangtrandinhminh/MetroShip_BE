@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
+[Table("RouteStation")]
 [Index(nameof(LineId))]
 [Index(nameof(FromStationId))]
 [Index(nameof(ToStationId))]

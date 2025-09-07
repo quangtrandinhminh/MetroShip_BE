@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250903172921_init_092025_ 028")]
+    partial class init_092025_028
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -321,14 +324,14 @@ namespace MetroShip.Repository.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<decimal?>("MaxCompensationRateOnShippingFee")
+                        .HasColumnType("decimal(8, 6)");
+
                     b.Property<decimal?>("MaxCompensationRateOnValue")
                         .HasColumnType("decimal(8, 6)");
 
                     b.Property<decimal?>("MaxParcelValueVnd")
                         .HasColumnType("decimal(18, 2)");
-
-                    b.Property<decimal?>("MinCompensationRateOnShippingFee")
-                        .HasColumnType("decimal(8, 6)");
 
                     b.Property<decimal?>("MinCompensationRateOnValue")
                         .HasColumnType("decimal(8, 6)");
@@ -339,7 +342,7 @@ namespace MetroShip.Repository.Migrations
                     b.Property<decimal?>("StandardCompensationValueVnd")
                         .HasColumnType("decimal(18, 2)");
 
-                    b.Property<DateOnly?>("ValidFrom")
+                    b.Property<DateOnly>("ValidFrom")
                         .HasColumnType("date");
 
                     b.Property<DateOnly?>("ValidTo")

@@ -23,6 +23,7 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.Jobs;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace MetroShip.Service.Services;
 
@@ -37,6 +38,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly ITransactionRepository _transactionRepository = serviceProvider.GetRequiredService<ITransactionRepository>();
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
@@ -59,7 +61,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             ShipmentStatusEnum.AwaitingPayment,
             ShipmentStatusEnum.AwaitingRefund,
             ShipmentStatusEnum.ApplyingSurcharge,
-            ShipmentStatusEnum.CompletedWithCompensation,
+            ShipmentStatusEnum.DeliveredPartially,
             ShipmentStatusEnum.ToCompensate
         };
 
@@ -298,7 +300,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
 
-    private async Task HandlePaymentForShipment(Shipment shipment, string userId)
+    /*private async Task HandlePaymentForShipment(Shipment shipment, string userId)
     {
         _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
 
@@ -361,8 +363,20 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
             });
             await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
         }
-        else if (shipment.ShipmentStatus == ShipmentStatusEnum.CompletedWithCompensation
-            || shipment.ShipmentStatus == ShipmentStatusEnum.ToCompensate)
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.DeliveredPartially)
+        {
+            shipment.ShipmentStatus = ShipmentStatusEnum.CompletedWithCompensation;
+            shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+            _shipmentTrackingRepository.Add(new ShipmentTracking
+            {
+                ShipmentId = shipment.Id,
+                CurrentShipmentStatus = shipment.ShipmentStatus,
+                Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = userId,
+            });
+        }
+        else if (shipment.ShipmentStatus == ShipmentStatusEnum.ToCompensate)
         {
             shipment.ShipmentStatus = ShipmentStatusEnum.Compensated;
             shipment.CompensatedAt = CoreHelper.SystemTimeNow;
@@ -424,6 +438,135 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
 
         await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id);
         return transaction;
+    }*/
+
+    private async Task HandlePaymentForShipment(Shipment shipment, string userId)
+    {
+        _logger.Information("Handling payment for shipment: {shipmentId}", shipment.Id);
+
+        switch (shipment.ShipmentStatus)
+        {
+            case ShipmentStatusEnum.AwaitingPayment:
+                if (!shipment.IsReturnShipment)
+                {
+                    shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDropOff;
+                    shipment.PaidAt = CoreHelper.SystemTimeNow;
+                    _shipmentTrackingRepository.Add(new ShipmentTracking
+                    {
+                        ShipmentId = shipment.Id,
+                        CurrentShipmentStatus = shipment.ShipmentStatus,
+                        Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                        EventTime = CoreHelper.SystemTimeNow,
+                        UpdatedBy = userId,
+                    });
+
+                    await _backgroundJobService.CancelScheduledUnpaidJob(shipment.Id);
+                    await _backgroundJobService.ScheduleUpdateNoDropOffJob(shipment.Id, shipment.ScheduledDateTime.Value);
+                }
+                else
+                {
+                    shipment.ShipmentStatus = ShipmentStatusEnum.PickedUp;
+                    shipment.PaidAt = CoreHelper.SystemTimeNow;
+
+                    _shipmentTrackingRepository.Add(new ShipmentTracking
+                    {
+                        ShipmentId = shipment.Id,
+                        CurrentShipmentStatus = shipment.ShipmentStatus,
+                        Status = $"Người gửi đã thanh toán cho đơn hàng {shipment.TrackingCode} qua VnPay",
+                        EventTime = CoreHelper.SystemTimeNow,
+                        UpdatedBy = userId,
+                    });
+                }
+                break;
+
+            case ShipmentStatusEnum.AwaitingRefund:
+                shipment.ShipmentStatus = ShipmentStatusEnum.Refunded;
+                shipment.RefundedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã hoàn tiền cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            case ShipmentStatusEnum.ApplyingSurcharge:
+                shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDelivery;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Người nhận đã thanh toán phụ phí cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
+                break;
+
+            case ShipmentStatusEnum.DeliveredPartially:
+                shipment.ShipmentStatus = ShipmentStatusEnum.CompletedWithCompensation;
+                shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            case ShipmentStatusEnum.ToCompensate:
+                shipment.ShipmentStatus = ShipmentStatusEnum.Compensated;
+                shipment.CompensatedAt = CoreHelper.SystemTimeNow;
+                _shipmentTrackingRepository.Add(new ShipmentTracking
+                {
+                    ShipmentId = shipment.Id,
+                    CurrentShipmentStatus = shipment.ShipmentStatus,
+                    Status = $"Nhân viên đã bồi thường cho đơn hàng {shipment.TrackingCode}",
+                    EventTime = CoreHelper.SystemTimeNow,
+                    UpdatedBy = userId,
+                });
+                break;
+
+            default:
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    "Trạng thái đơn hàng không hợp lệ để xử lý thanh toán.",
+                    StatusCodes.Status400BadRequest);
+        }
+
+        _shipmentRepository.Update(shipment);
+    }
+
+    private async Task<Transaction> HandleCreateTransaction(Shipment shipment, TransactionRequest request)
+    {
+        _logger.Information("Handling creation of transaction for shipment: {shipmentId}", shipment.Id);
+
+        var transaction = _mapper.MapToTransactionEntity(request);
+        transaction.ShipmentId = shipment.Id;
+        transaction.PaidById = JwtClaimUltils.GetUserId(_httpContextAccessor);
+        transaction.PaymentMethod = PaymentMethodEnum.VnPay;
+        transaction.PaymentStatus = PaymentStatusEnum.Pending;
+        transaction.TransactionType = request.TransactionType.Value;
+        transaction.Description = request.ToJsonString();
+
+        transaction.PaymentAmount = request.TransactionType switch
+        {
+            TransactionTypeEnum.ShipmentCost => shipment.TotalCostVnd,
+            TransactionTypeEnum.Refund => shipment.TotalRefundedFeeVnd.Value,
+            TransactionTypeEnum.Surcharge => shipment.TotalSurchargeFeeVnd.Value,
+            TransactionTypeEnum.Compensation => shipment.TotalCompensationFeeVnd.Value,
+            _ => throw new AppException(
+                ErrorCode.BadRequest,
+                "Loại giao dịch không hợp lệ để tạo giao dịch.",
+                StatusCodes.Status400BadRequest)
+        };
+
+        await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id, shipment.PaymentDealine.Value);
+        return transaction;
     }
 
     // cancel transaction by transactionId
@@ -443,5 +586,51 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
         transaction.PaymentStatus = PaymentStatusEnum.Cancelled;
         _transactionRepository.Update(transaction);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+    }
+
+    public async Task<List<VietQrBankDetail>> GetBanksFromVietQr()
+    {
+        _logger.Information("Fetching banks from VietQr");
+
+        // get from cache
+        var cacheKey = "VietQrBanks";
+        if (_memoryCache.TryGetValue(cacheKey, out List<VietQrBankDetail> cachedBanks))
+        {
+            _logger.Information("Returning cached banks from VietQr");
+            return cachedBanks;
+        }
+
+        HttpClient client = new HttpClient();
+        var baseUrl = " https://api.vietqr.io/v2/banks";
+        var response = await client.GetAsync(baseUrl);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            "Failed to fetch banks from VietQr",
+            StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var responseContent = await response.Content.ReadAsStringAsync();
+
+        // convert to VietQrBankResponse
+        var banks = JsonConvert.DeserializeObject<VietQrBankResponse>(responseContent).Data;
+        _memoryCache.Set(cacheKey, banks, TimeSpan.FromHours(12));
+        return banks;
+    }
+
+    public async Task<string> GenerateBankQrLink (int bankId, string accountNo, decimal? amount)
+    {
+        _logger.Information("Generating bank QR link for bankId: {bankId}, AccountNo: {AccountNo}", bankId, accountNo);
+
+        var bankShortName = GetBanksFromVietQr().Result.FirstOrDefault(b => b.Id == bankId).ShortName;
+        var qrLink = $"https://img.vietqr.io/image/{bankShortName}-{accountNo}-compact2.png";
+
+        if (amount.HasValue && amount > 0)
+        {
+            var roundedAmount = Math.Round(amount.Value, 0);
+            qrLink = $"{qrLink}?amount={roundedAmount}";
+        }
+        return qrLink;
     }
 }

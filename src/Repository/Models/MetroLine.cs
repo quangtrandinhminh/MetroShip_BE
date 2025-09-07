@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Repository.Models;
 
+[Table("MetroRoute")]
 [Index(nameof(LineCode), nameof(RegionId), IsUnique = true)]
 public partial class MetroLine : BaseEntity
 {
