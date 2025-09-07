@@ -12,10 +12,13 @@ namespace MetroShip.Service.ApiModels.Report
         public string FilterTypeName => FilterType.ToString();
         public int? Year { get; set; }
         public int? Quarter { get; set; }
+        public int? Week { get; set; } // 🆕 thêm tuần
         public int? StartYear { get; set; }
         public int? StartMonth { get; set; }
         public int? EndYear { get; set; }
         public int? EndMonth { get; set; }
+        public DateTime? WeekStartDate { get; set; } // 🆕 ngày bắt đầu tuần
+        public DateTime? WeekEndDate { get; set; }   // 🆕 ngày kết thúc tuần
         public List<T> Data { get; set; } = new();
     }
 
@@ -34,6 +37,7 @@ namespace MetroShip.Service.ApiModels.Report
     {
         public int Year { get; set; }
         public int Month { get; set; }
+        public int? Day { get; set; }
         public int TotalTransactions { get; set; }
 
         // Chi tiết theo loại transaction
@@ -55,6 +59,7 @@ namespace MetroShip.Service.ApiModels.Report
     {
         public int Year { get; set; }
         public int Month { get; set; }
+        public int? Day { get; set; }
 
         // Shipment
         public int TotalShipments { get; set; }
