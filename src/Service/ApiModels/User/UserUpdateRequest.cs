@@ -9,5 +9,5 @@ public sealed record UserUpdateRequest : BankInfoRequest
     public string? FullName { get; set; }
     public string? Address { get; set; }
     public string? Avatar { get; set; }
-    public DateTimeOffset? BirthDate { get; set; }
+    public DateOnly? BirthDate { get; set; }
 }

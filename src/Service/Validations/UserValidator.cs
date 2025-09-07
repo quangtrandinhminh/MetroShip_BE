@@ -2,6 +2,7 @@
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.Helpers;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Helpers;
 
 namespace MetroShip.Service.Validations;
 
@@ -100,7 +101,7 @@ public sealed class UserUpdateRequestValidator : AbstractValidator<UserUpdateReq
             .When(x => !string.IsNullOrEmpty(x.Avatar));
 
         RuleFor(x => x.BirthDate)
-            .LessThanOrEqualTo(DateTimeOffset.Now).WithMessage(ResponseMessageIdentity.BIRTHDATE_INVALID)
+            .LessThanOrEqualTo(DateOnly.FromDateTime(CoreHelper.SystemTimeNow.DateTime)).WithMessage(ResponseMessageIdentity.BIRTHDATE_INVALID)
             .When(x => x.BirthDate.HasValue);
 
         RuleFor(x => x.BankId)
