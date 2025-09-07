@@ -14,9 +14,6 @@ public partial class Station : BaseEntity
 {
     public Station()
     {
-        StationCode = this.GetType().Name.ToUpperInvariant();
-        RoutesFrom = new HashSet<Route>();
-        RoutesTo = new HashSet<Route>();
         IsMultiLine = false;
     }
 
@@ -54,10 +51,10 @@ public partial class Station : BaseEntity
         System.Text.Json.JsonSerializer.Deserialize<List<StationCodeListItem>>(StationCodeListJSON);
 
     [InverseProperty(nameof(Route.FromStation))]
-    public virtual ICollection<Route> RoutesFrom { get; set; }
+    public virtual ICollection<Route> RoutesFrom { get; set; } = new HashSet<Route>();
 
     [InverseProperty(nameof(Route.ToStation))]
-    public virtual ICollection<Route> RoutesTo { get; set; }
+    public virtual ICollection<Route> RoutesTo { get; set; } = new HashSet<Route>();
 
     [InverseProperty(nameof(Region.Stations))]
     public virtual Region Region { get; set; }
