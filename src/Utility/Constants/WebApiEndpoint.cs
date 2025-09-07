@@ -84,6 +84,7 @@
             public const string FeedbackShipment = BaseEndpoint + "/feedback";
             public const string CompleteShipment = BaseEndpoint + "/complete";
             public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
+            public const string ChangeItinerarySlot = BaseEndpoint + "/itineraries";
         }
 
         public static class TransactionEndpoint

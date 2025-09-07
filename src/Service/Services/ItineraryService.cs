@@ -349,6 +349,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
 
             _logger.Information("Assigned slot {SlotId} on {Date} to itinerary {ItineraryId} (Line: {LineId})",
                 assignedSlot.Id, assignedDate, itinerary.Id, currentLineId);
+            
         }
     }
 
@@ -378,6 +379,11 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
 
             var totalWeightKg = existingItineraries.Sum(i => i.TotalWeightKg ?? 0);
             var totalVolumeM3 = existingItineraries.Sum(i => i.TotalVolumeM3 ?? 0);
+
+            _logger.Information("Capacity check: Route {RouteId}, Date {Date}, Current: {CurrentWeight}kg/{CurrentVolume}m³" +
+                ", Adding: {AddWeight}kg/{AddVolume}m³, Max: {MaxWeight}kg/{MaxVolume}m³",
+                itinerary.RouteId, currentDate, totalWeightKg, totalVolumeM3,
+                shipment.TotalWeightKg, shipment.TotalVolumeM3, maxWeightKg, maxVolumeM3);
 
             // Check if adding this shipment exceeds capacity
             if (totalWeightKg + (shipment.TotalWeightKg ?? 0) <= maxWeightKg &&
@@ -411,8 +417,8 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                 attempts, currentSlot.Id, currentDate, itinerary.Route.RouteNameEn);
         }
 
-        _shipmentRepository.Delete(shipment);
-        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        /*_shipmentRepository.Delete(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);*/
         throw new AppException(
             ErrorCode.BadRequest,
             $"No available slot found for itinerary on route {itinerary.Route.RouteNameEn} after {maxAttempts} attempts",
@@ -526,68 +532,152 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
     }
 
     // change all itineraries from this slot and date to another slot and date (isComplete = false, nearest slot from now)
-    public async Task ChangeItinerariesToNextSlotAsync(string shipmentId, DateOnly date, string currentSlotId)
+    public async Task<string> ChangeItinerariesToNextSlotAsync(ChangeItinerarySlotRequest request)
     {
         _logger.Information("Changing itineraries for shipment {ShipmentId} to next slot on {Date} from slot {CurrentSlotId}",
-                       shipmentId, date, currentSlotId);
+                       request.ShipmentId, request.FromDate, request.FromTimeSlotId);
 
-        // Get all itineraries for the shipment
-        var itineraries = await _shipmentItineraryRepository.GetAllWithCondition(
-                       x => x.ShipmentId == shipmentId && x.Date == date 
-                       && x.TimeSlotId == currentSlotId && x.DeletedAt == null)
+        // 1. Check exist for time slot id 
+        var timeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
+                x => !x.IsAbnormal && x.DeletedAt == null)
+            .OrderBy(x => x.Shift)
             .ToListAsync();
 
-        if (!itineraries.Any())
+        var toTimeSlot = timeSlots.FirstOrDefault(ts => ts.Id == request.ToTimeSlotId);
+        if (toTimeSlot == null)
         {
-            _logger.Warning("No itineraries found for shipment {ShipmentId} on date {Date} with slot {CurrentSlotId}",
-                               shipmentId, date, currentSlotId);
-
             throw new AppException(
                 ErrorCode.NotFound,
-                ResponseMessageItinerary.ITINERARY_NOT_FOUND,
+                ResponseMessageShipment.TIME_SLOT_NOT_FOUND + $" Khung giờ {toTimeSlot}",
                 StatusCodes.Status404NotFound);
         }
 
-        // Get next time slot
-        var nextTimeSlots = await _metroTimeSlotRepository.GetAllWithCondition(
-                                  x => !x.IsAbnormal && x.DeletedAt == null)
+        var fromTimeSlot = timeSlots.FirstOrDefault(ts => ts.Id == request.FromTimeSlotId);
+        if (fromTimeSlot == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND + $" Khung giờ {toTimeSlot}",
+            StatusCodes.Status404NotFound);
+        }
+
+        // ensure to date and to slot id is not before from date and from slot id
+        if (request.ToDate < request.FromDate ||
+            (request.ToDate == request.FromDate && toTimeSlot.Shift <= fromTimeSlot.Shift))
+        {
+            throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessageItinerary.INVALID_NEW_TIME_SLOT,
+                StatusCodes.Status400BadRequest);
+        }
+
+        // 2. Get shipment with all itineraries and parcels
+        var shipmentOrigin = await _shipmentRepository.GetSingleAsync(x => x.Id == request.ShipmentId
+            , false, x => x.ShipmentItineraries, x => x.Parcels);
+
+        if (shipmentOrigin == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // check if itineraries with from date and from slot id not completed exist
+        var itineraries = shipmentOrigin.ShipmentItineraries
+            .Where(i => i.Date == request.FromDate && i.TimeSlotId == request.FromTimeSlotId && !i.IsCompleted)
+            .OrderBy(i => i.LegOrder)
+            .ToList();
+
+        if (!itineraries.Any())
+        {
+            _logger.Warning("No itineraries not completed found for shipment {ShipmentId} on date {Date} with slot {CurrentSlot}",
+                               request.ShipmentId, request.FromDate, fromTimeSlot.Shift);
+
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageItinerary.ITINERARY_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // get all itineraries from the lowest leg order to the last leg order to calculate est arrival time again
+        var foundedItineraries = itineraries.Count;
+        _logger.Information("Found {Count} itineraries not completed for shipment {ShipmentId} on date {Date} with slot {CurrentSlot}",
+            foundedItineraries, request.ShipmentId, request.FromDate, fromTimeSlot.Shift);
+        var legOrder = itineraries.Min(i => i.LegOrder);
+        itineraries = shipmentOrigin.ShipmentItineraries.Where(i => i.LegOrder >= legOrder).OrderBy(i => i.LegOrder).ToList();
+        var itineraryCount = itineraries.Count;
+        _logger.Information("Processing {Count} itineraries from leg order {LegOrder} for shipment {ShipmentId}",
+                       itineraryCount, legOrder, request.ShipmentId);
+
+        // 3. Get system configuration
+        var maxWeightKg = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
+        var maxVolumeM3 = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
+        /*var maxAttempt = decimal.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));*/
+        var maxAttempt = 3;
+
+        // 4. Clone new shipment to handle new schedule for itineraries, calculate total weight and volume again to ensure not include lost parcel
+        var shipment = new Shipment();
+        shipment.Parcels = shipmentOrigin.Parcels.Where(p => p.Status == ParcelStatusEnum.Normal).ToList();
+        shipment.TotalWeightKg = shipment.Parcels.Sum(p => p.WeightKg);
+        shipment.TotalVolumeM3 = shipment.Parcels.Sum(p => p.VolumeCm3);
+        // convert to date and to time slot to schedule date time
+        shipment.ScheduledDateTime = new DateTimeOffset(request.ToDate.Year, request.ToDate.Month, request.ToDate.Day,
+            0, 0, 0, TimeSpan.Zero);
+        shipment.ScheduledShift = toTimeSlot.Shift;
+        shipment.ShipmentItineraries = itineraries;
+        shipment.ShipmentItineraries.First().Date = request.ToDate;
+        shipment.ShipmentItineraries.First().TimeSlotId = request.ToTimeSlotId;
+        shipment.Parcels = null; // no need parcel for this process
+
+        // get routes for all itineraries
+        var routeStationIds = shipment.ShipmentItineraries
+            .Select(i => i.RouteId)
+            .Distinct()
+            .ToList();
+
+        var routeStations = await _routeStationRepository.GetAllWithCondition(
+                x => routeStationIds.Contains(x.Id) && x.DeletedAt == null)
             .ToListAsync();
 
-        if (nextTimeSlots == null || !nextTimeSlots.Any())
+        foreach (var itinerary in shipment.ShipmentItineraries)
         {
-            _logger.Warning("No available time slots found for changing itineraries.");
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
-            StatusCodes.Status404NotFound);
+            // Get route stations for each itinerary
+            itinerary.Route = routeStations.FirstOrDefault(rs => rs.Id == itinerary.RouteId);
         }
 
-        // Find the current time slot in the list
-        var currentSlot = nextTimeSlots.FirstOrDefault(x => x.Id == currentSlotId);
-        if (currentSlot == null)
+        // 5. Bulk fetch all relevant itineraries for capacity calculation
+        var capacityData = await BulkFetchCapacityDataAsync(shipment, maxAttempt);
+
+        // 6. Process slot assignment for each itinerary
+        await ProcessSlotAssignmentAsync(shipment, capacityData, timeSlots, maxWeightKg, maxVolumeM3, maxAttempt);
+
+        // 7. Assign train schedules after time slot assignment
+        await AssignTrainSchedulesToItinerariesAsync(shipment);
+
+        // 8. apply changes to original shipment itineraries
+        foreach (var itinerary in shipment.ShipmentItineraries)
         {
-            _logger.Warning("Current time slot with ID {CurrentSlotId} not found in available time slots.",
-                                              currentSlotId);
-            throw new AppException(
-            ErrorCode.NotFound,
-            ResponseMessageShipment.TIME_SLOT_NOT_FOUND,
-            StatusCodes.Status404NotFound);
-        }
+            itinerary.Route = null; // Clear route to avoid circular reference
 
-        // Get next slot
-        (date, currentSlot) = GetNextSlot(date, currentSlot, nextTimeSlots);
-
-        // Update all itineraries to the next slot and date
-        foreach (var itinerary in itineraries)
-        {
-            itinerary.TimeSlotId = currentSlot.Id;
-            itinerary.Date = date;
-            itinerary.IsCompleted = false; // Set to false as per requirement
-
-            _shipmentItineraryRepository.Update(itinerary);
+            // replace old itinerary with new itinerary by id
+            var oldItinerary = itineraries.FirstOrDefault(i => i.Id == itinerary.Id);
+            if (oldItinerary != null)
+            {
+                oldItinerary.Date = itinerary.Date;
+                oldItinerary.TimeSlotId = itinerary.TimeSlotId;
+                oldItinerary.TrainId = itinerary.TrainId;
+                oldItinerary.TrainScheduleId = itinerary.TrainScheduleId;
+                _shipmentItineraryRepository.Update(oldItinerary);
+            }
         }
 
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        return $"Đã thay đổi lịch trình cho {foundedItineraries} lộ trình thành ca {toTimeSlot.Shift} vào ngày {request.ToDate}. " +
+            $"Đã tính toán lại thời gian cho tổng cộng {itineraryCount} lộ trình. ";
     }
 
     public async Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request)

@@ -12,4 +12,5 @@ public interface IItineraryService
 
    Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request);
    Task HandleItineraryForReturnShipment(Shipment primaryShipment, Shipment returnShipment);
+   Task<string> ChangeItinerariesToNextSlotAsync(ChangeItinerarySlotRequest request);
 }

@@ -28,6 +28,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
         private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
         private readonly NotificationHub _notificationHub = serviceProvider.GetRequiredService<NotificationHub>();
+        private readonly IItineraryService itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
 
         [HttpGet("load-station")]
         public async Task<IActionResult> GetAllStationIdCanLoadShipment(string shipmentId)
@@ -208,6 +209,13 @@ namespace MetroShip.WebAPI.Controllers
                 ReturnShipmentId = returnShipment.Id,
                 ReturnShipmentTrackingCode = returnShipment.TrackingCode 
             }));
+        }
+
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.ChangeItinerarySlot)]
+        public async Task<IActionResult> CompleteReturnShipment([FromBody] ChangeItinerarySlotRequest request)
+        {
+            var result = await itineraryService.ChangeItinerariesToNextSlotAsync(request);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
     }
 }

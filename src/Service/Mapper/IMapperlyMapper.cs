@@ -49,6 +49,7 @@ public interface IMapperlyMapper
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
     void MapToShipmentEntity(Shipment entity, Shipment request);
+    Shipment CloneToNewShipment(Shipment origin);
 
     // station
     StationResponse MapToStationResponse(Station entity);
