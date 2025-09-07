@@ -73,6 +73,7 @@
         public const string USER_NOT_ALLOWED = "Bạn không có quyền truy cập mục này.";
         public const string EMAIL_VALIDATION_REQUIRED = "Vui lòng nhập mã OTP gửi đến email để kích hoạt tài khoản.";
 
+        public const string BANKID_REQUIRED = "BankId không được để trống.";
         public const string BANKID_INVALID = "BankId không hợp lệ.";
         public const string ACCOUNTNO_INVALID = "Số tài khoản không hợp lệ.";
         public const string ACCOUNTNAME_INVALID = "Tên tài khoản viết hoa không dấu.";
