@@ -619,7 +619,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         foreach (var parcel in shipment.Parcels)
         {
-            parcel.Status = ParcelStatusEnum.Canceled;
+            parcel.Status = ParcelStatusEnum.Rejected;
             _parcelRepository.Update(parcel);
 
             _parcelTrackingRepository.Add(new ParcelTracking
@@ -731,6 +731,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             .ToList();
         foreach (var parcel in normalParcel)
         {
+            parcel.Status = ParcelStatusEnum.Delivered;
             _parcelTrackingRepository.Add(new ParcelTracking
             {
                 ParcelId = parcel.Id,
