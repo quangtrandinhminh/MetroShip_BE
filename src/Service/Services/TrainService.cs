@@ -104,8 +104,21 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
 
-        // 👉 Map entity -> DTO
+        // Map entity -> DTO
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
+        Dictionary<string, (DirectionEnum? direction, int? segmentIndex)> trainStates = new();
+
+        if (!string.IsNullOrEmpty(request.TimeSlotId))
+        {
+            // filter train schedules theo TimeSlotId nếu được cung cấp
+            trainSchedules = trainSchedules
+                .Where(ts => ts.TimeSlotId == request.TimeSlotId)
+                .ToList();
+        }
+        else
+        {
+            trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
+        }
 
         foreach (var train in response.Items) // train bây giờ là TrainListResponse
         {
@@ -129,8 +142,18 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 })
                 .ToList();
 
+            // Nếu chỉ có 1 trainSchedules, gán direction theo trainSchedules
+            if (train.TrainSchedules.Count == 1)
+            {
+                train.Direction = train.TrainSchedules[0].Direction;
+                continue;
+            }
+
+            // Nếu lấy all trainSchedules, tìm direction từ Firebase
+            train.Direction = trainStates[train.Id].direction;
+
             //Lấy direction hiện tại từ Firebase
-            var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
+            /*var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
             var segmentIndex = await _trainStateStore.GetSegmentIndexAsync(train.Id);
 
             if (firebaseDirection.HasValue && segmentIndex.HasValue)
@@ -148,7 +171,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     //fallback: nếu DB không tìm thấy route, gán theo Firebase
                     train.Direction = firebaseDirection.Value;
                 }
-            }
+            }*/
         }
 
         return response;
