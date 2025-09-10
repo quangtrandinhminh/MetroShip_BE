@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
+using RestSharp.Extensions;
 using Serilog;
 
 namespace MetroShip.Service.Services;
@@ -272,9 +273,6 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                  x.Date.Value >= startDate &&
                  x.Date.Value <= endDate &&
                  x.DeletedAt == null)
-            .Include(x => x.Shipment)
-            .Include(x => x.Route)
-            .Include(x => x.TimeSlot)
             .Select(x => new CalculatedItinerary
             {
                 Date = x.Date.Value,
@@ -468,26 +466,27 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
 
         // Group itineraries by LineId and Direction for efficient querying
         var itineraryGroups = shipment.ShipmentItineraries
-            .GroupBy(i => new { i.Route.LineId, i.Route.Direction })
+            .GroupBy(i => new { i.Route.LineId, i.Route.Direction, i.TimeSlotId })
             .ToList();
 
         // Bulk fetch all relevant train schedules
-        var allTrainSchedules = new Dictionary<(string LineId, DirectionEnum Direction), List<TrainSchedule>>();
+        var allTrainSchedules = new Dictionary<(string LineId, DirectionEnum Direction, string TimeSlotId), List<TrainSchedule>>();
 
         foreach (var group in itineraryGroups)
         {
             var lineId = group.Key.LineId;
             var direction = group.Key.Direction;
+            var timeSlotId = group.Key.TimeSlotId;
 
             var trainSchedules = await _trainScheduleRepository.GetAllWithCondition(
                 ts => ts.LineId == lineId &&
                       ts.Direction == direction &&
+                      ts.TimeSlotId == timeSlotId &&
+                      ts.Train.IsActive &&
                       ts.DeletedAt == null)
-                .Include(ts => ts.Train)
-                .Include(ts => ts.TimeSlot)
                 .ToListAsync();
 
-            allTrainSchedules[(lineId, direction)] = trainSchedules;
+            allTrainSchedules[(lineId, direction, timeSlotId)] = trainSchedules;
         }
 
         // Assign train schedules to each itinerary
@@ -495,12 +494,11 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         {
             var lineId = itinerary.Route.LineId;
             var direction = itinerary.Route.Direction;
-            var timeSlotId = itinerary.TimeSlotId;
 
-            if (allTrainSchedules.TryGetValue((lineId, direction), out var trainSchedules))
+            if (allTrainSchedules.TryGetValue((lineId, direction, itinerary.TimeSlotId), out var trainSchedules))
             {
                 // Find train schedule that matches the assigned time slot
-                var matchingSchedule = trainSchedules.FirstOrDefault(ts => ts.TimeSlotId == timeSlotId);
+                var matchingSchedule = trainSchedules.FirstOrDefault(ts => ts.TimeSlotId == itinerary.TimeSlotId);
 
                 if (matchingSchedule != null)
                 {
@@ -510,12 +508,12 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
                     //_shipmentItineraryRepository.Update(itinerary);
 
                     _logger.Information("Assigned Train {TrainId} (Schedule {ScheduleId}) to itinerary {ItineraryId} on line {LineId}, direction {Direction}, timeSlot {TimeSlotId}",
-                        matchingSchedule.TrainId, matchingSchedule.Id, itinerary.Id, lineId, direction, timeSlotId);
+                        matchingSchedule.TrainId, matchingSchedule.Id, itinerary.Id, lineId, direction, itinerary.TimeSlotId);
                 }
                 else
                 {
                     _logger.Warning("No train schedule found for line {LineId}, direction {Direction}, timeSlot {TimeSlotId}",
-                        lineId, direction, timeSlotId);
+                        lineId, direction, itinerary.TimeSlotId);
 
                     // Optional: throw exception or handle this case based on your business rules
                     /*throw new AppException(
