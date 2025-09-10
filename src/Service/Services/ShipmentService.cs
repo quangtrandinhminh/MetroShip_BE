@@ -484,6 +484,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             StatusCodes.Status404NotFound);
         }
 
+        if (stationId != shipment.DepartureStationId)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Bạn không có quyền nhận hàng được gửi tại ga này",
+            StatusCodes.Status400BadRequest);
+        }
+
         // Check if the shipment is already confirmed
         if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDropOff)
         {
@@ -659,6 +667,8 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _logger.Information("Complete shipment with ID: {@shipmentId}", request.ShipmentId);
         //ShipmentValidator.ValidateShipmentCompleteRequest(request);
 
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+
         var shipment = await _shipmentRepository.GetSingleAsync(
         x => x.Id == request.ShipmentId, false, x => x.Parcels);
 
@@ -668,6 +678,14 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             throw new AppException(
             ErrorCode.NotFound,
             ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        if (stationId != shipment.DestinationStationId)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Bạn không có quyền giao đơn hàng tại ga này",
             StatusCodes.Status400BadRequest);
         }
 

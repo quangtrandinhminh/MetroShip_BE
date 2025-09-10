@@ -91,7 +91,7 @@
         public const string FORGOT_PASSWORD_SUCCESS = "Yêu cầu đặt lại mật khẩu thành công, vui lòng kiểm tra email.";
         public const string RESET_PASSWORD_SUCCESS = "Đặt lại mật khẩu thành công!";
         public const string CHANGE_PASSWORD_SUCCESS = "Thay đổi mật khẩu thành công!";
-        public const string RESEND_EMAIL_SUCCESS = "Gửi lại email xác thực thành công!";
+        public const string RESEND_EMAIL_SUCCESS = "Đã Gửi lại mã xác thực qua email.";
         public const string UPDATE_USER_SUCCESS = "Cập nhật thông tin người dùng thành công!";
         public const string DELETE_USER_SUCCESS = "Xóa người dùng thành công!";
         public const string ADD_ROLE_SUCCESS = "Thêm vai trò thành công!";
