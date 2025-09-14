@@ -133,7 +133,7 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> RateShipment([FromBody] ShipmentFeedbackRequest request)
         {
             await shipmentService.RateShipment(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.FEEDBACK_SUCCESS, null));
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.RATE_SUCCESS, null));
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
