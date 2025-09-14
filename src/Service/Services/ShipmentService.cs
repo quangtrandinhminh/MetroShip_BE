@@ -1040,7 +1040,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }
-    public async Task FeedbackShipment(ShipmentFeedbackRequest request)
+    public async Task RateShipment(ShipmentFeedbackRequest request)
     {
         _logger.Information("Feedback shipment with ID: {@shipmentId}", request.ShipmentId);
         ShipmentValidator.ValidateShipmentFeedbackRequest(request);

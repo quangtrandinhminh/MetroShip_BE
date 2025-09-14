@@ -24,7 +24,7 @@ public interface IShipmentService
     Task PickUpShipment(ShipmentPickUpRequest request);
     Task RejectShipment(ShipmentRejectRequest request);
     Task CancelShipment(ShipmentRejectRequest request);
-    Task FeedbackShipment(ShipmentFeedbackRequest request);
+    Task RateShipment(ShipmentFeedbackRequest request);
     Task UpdateShipmentStatusUnpaid(string shipmentId);
     Task ApplySurchargeForShipment(string shipmentId);
     Task<(Shipment returnShipment, string message)> ReturnForShipment(string shipmentId,

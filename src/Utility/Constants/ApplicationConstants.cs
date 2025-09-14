@@ -184,7 +184,7 @@
         public const string RATING_INVALID = "Đánh giá phải từ 1 đến 5.";
         public const string SHIPMENT_ID_REQUIRED = "Yêu cầu ShipmentId.";
         public const string SHIPMENT_ID_INVALID = "ShipmentId không hợp lệ.";
-        public const string FEEDBACK_SUCCESS = "Gửi phản hồi thành công.";
+        public const string RATE_SUCCESS = "Gửi đánh giá thành công.";
         public const string COMPLETED_SUCCESS = "Hoàn thành đơn hàng thành công.";
         public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Đơn hàng không ở trạng thái 'Chờ giao hàng'.";
         public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";

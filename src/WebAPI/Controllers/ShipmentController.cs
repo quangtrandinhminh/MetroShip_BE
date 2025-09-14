@@ -129,10 +129,10 @@ namespace MetroShip.WebAPI.Controllers
         [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         // feedback
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
-        [HttpPost(WebApiEndpoint.ShipmentEndpoint.FeedbackShipment)]
-        public async Task<IActionResult> FeedbackShipment([FromBody] ShipmentFeedbackRequest request)
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.RateShipment)]
+        public async Task<IActionResult> RateShipment([FromBody] ShipmentFeedbackRequest request)
         {
-            await shipmentService.FeedbackShipment(request);
+            await shipmentService.RateShipment(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.FEEDBACK_SUCCESS, null));
         }
 
