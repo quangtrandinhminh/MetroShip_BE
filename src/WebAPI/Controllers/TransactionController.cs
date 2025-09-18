@@ -70,6 +70,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(paymentUrl));
         }
 
+        [AllowAnonymous]        
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
         public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
         {
