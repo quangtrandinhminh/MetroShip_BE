@@ -1,8 +1,10 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Transaction;
+using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.Helpers;
 using MetroShip.Service.Interfaces;
+using MetroShip.Service.Services;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -58,6 +60,27 @@ namespace MetroShip.WebAPI.Controllers
         {
             var result = await _transactionService.GenerateBankQrLink(bankId, accountNo, amount);
             return Ok(BaseResponse.OkResponseDto(result));
+        }
+
+        [Authorize(Roles = $"{nameof(UserRoleEnum.Customer)}, {nameof(UserRoleEnum.Staff)}")]
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
+        public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
+        {
+            var paymentUrl = await _transactionService.CreateVnPayTransaction(request);
+            return Ok(BaseResponse.OkResponseDto(paymentUrl));
+        }
+
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
+        public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
+        {
+            var result = await _transactionService.ExecuteVnPayPayment(model);
+            // Redirect to the payment result page
+            if (string.IsNullOrEmpty(result))
+            {
+                return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
+            }
+
+            return Redirect(result);
         }
     }
 }

@@ -25,7 +25,6 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
         private readonly IShipmentService shipmentService = serviceProvider.GetRequiredService<IShipmentService>();
-        private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
         private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
         private readonly NotificationHub _notificationHub = serviceProvider.GetRequiredService<NotificationHub>();
         private readonly IItineraryService itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
@@ -71,27 +70,6 @@ namespace MetroShip.WebAPI.Controllers
             var (shipmentId,trackingCode) = await shipmentService.BookShipment(request);
             return Created(nameof(Create), 
                 BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
-        }
-
-        [Authorize]
-        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
-        public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
-        {
-            var paymentUrl = await transactionService.CreateVnPayTransaction(request);
-            return Ok(BaseResponse.OkResponseDto(paymentUrl));
-        }
-
-        [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
-        public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
-        {
-            var result = await transactionService.ExecuteVnPayPayment(model);
-            // Redirect to the payment result page
-            if (string.IsNullOrEmpty(result))
-            {
-                return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
-            }
-
-            return Redirect(result);
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
