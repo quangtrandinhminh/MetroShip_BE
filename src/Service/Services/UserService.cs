@@ -250,7 +250,6 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
 
         _mapper.MapUserRequestToEntity(request, user);
         user.NormalizedUserName = request.UserName.ToUpperInvariant();
-        user.AccountName = request.AccountName.ToUpperInvariant();
         await _userRepository.UpdateAsync(user);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }

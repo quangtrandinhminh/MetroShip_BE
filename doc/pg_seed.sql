@@ -2567,7 +2567,7 @@ WHERE "Id" = 'f6c0e0bf-7be8-4d5d-be84-8ed7047150dd';
 -- InsurancePolicy Seed Data
 INSERT INTO public."InsurancePolicy"
 ("Id", "Name", "BaseFeeVnd", "MaxParcelValueVnd", "InsuranceFeeRateOnValue",
- "StandardCompensationValueVnd","MaxCompensationRateOnValue", "MinCompensationRateOnValue", "MaxCompensationRateOnShippingFee",
+ "StandardCompensationValueVnd","MaxCompensationRateOnValue", "MinCompensationRateOnValue", "MinCompensationRateOnShippingFee",
  "ValidFrom","IsActive",
  "CreatedBy", "LastUpdatedBy", "DeletedBy", "CreatedAt", "LastUpdatedAt", "DeletedAt")
 VALUES

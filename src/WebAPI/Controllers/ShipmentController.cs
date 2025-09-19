@@ -25,9 +25,9 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IList<EnumResponse> _enumResponses = EnumHelper.GetEnumList<ShipmentStatusEnum>();
         private readonly IShipmentService shipmentService = serviceProvider.GetRequiredService<IShipmentService>();
-        private readonly ITransactionService transactionService = serviceProvider.GetRequiredService<ITransactionService>();
         private readonly IStationRepository stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
         private readonly NotificationHub _notificationHub = serviceProvider.GetRequiredService<NotificationHub>();
+        private readonly IItineraryService itineraryService = serviceProvider.GetRequiredService<IItineraryService>();
 
         [HttpGet("load-station")]
         public async Task<IActionResult> GetAllStationIdCanLoadShipment(string shipmentId)
@@ -72,27 +72,6 @@ namespace MetroShip.WebAPI.Controllers
                 BaseResponse.OkResponseDto(new { ShipmentId = shipmentId, TrackingCode = trackingCode }));
         }
 
-        [Authorize]
-        [HttpPost(WebApiEndpoint.ShipmentEndpoint.CreateTransactionVnPay)]
-        public async Task<IActionResult> CreateVnPayUrl([FromBody] TransactionRequest request)
-        {
-            var paymentUrl = await transactionService.CreateVnPayTransaction(request);
-            return Ok(BaseResponse.OkResponseDto(paymentUrl));
-        }
-
-        [HttpGet(WebApiEndpoint.ShipmentEndpoint.VnpayExecute)]
-        public async Task<IActionResult> VnPayExecute([FromQuery] VnPayCallbackModel model)
-        {
-            var result = await transactionService.ExecuteVnPayPayment(model);
-            // Redirect to the payment result page
-            if (string.IsNullOrEmpty(result))
-            {
-                return Ok(BaseResponse.OkResponseDto("Update shipment success!", null));
-            }
-
-            return Redirect(result);
-        }
-
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetTotalPrice)]
         public async Task<IActionResult> GetTotalPrice([FromBody] TotalPriceCalcRequest request)
@@ -128,11 +107,11 @@ namespace MetroShip.WebAPI.Controllers
         [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
         // feedback
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
-        [HttpPost(WebApiEndpoint.ShipmentEndpoint.FeedbackShipment)]
-        public async Task<IActionResult> FeedbackShipment([FromBody] ShipmentFeedbackRequest request)
+        [HttpPost(WebApiEndpoint.ShipmentEndpoint.RateShipment)]
+        public async Task<IActionResult> RateShipment([FromBody] ShipmentFeedbackRequest request)
         {
-            await shipmentService.FeedbackShipment(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.FEEDBACK_SUCCESS, null));
+            await shipmentService.RateShipment(request);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.RATE_SUCCESS, null));
         }
 
         [Authorize(Roles = nameof(UserRoleEnum.Staff))]
@@ -208,6 +187,13 @@ namespace MetroShip.WebAPI.Controllers
                 ReturnShipmentId = returnShipment.Id,
                 ReturnShipmentTrackingCode = returnShipment.TrackingCode 
             }));
+        }
+
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.ChangeItinerarySlot)]
+        public async Task<IActionResult> CompleteReturnShipment([FromBody] ChangeItinerarySlotRequest request)
+        {
+            var result = await itineraryService.ChangeItinerariesToNextSlotAsync(request);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
     }
 }

@@ -81,9 +81,10 @@
             public const string AssignTrainToShipment = BaseEndpoint + "/staff/assign-train";
             public const string GetShipmentById = BaseEndpoint + "/{id}";
             public const string CancelShipment = BaseEndpoint + "/cancel";
-            public const string FeedbackShipment = BaseEndpoint + "/feedback";
+            public const string RateShipment = BaseEndpoint + "/feedback";
             public const string CompleteShipment = BaseEndpoint + "/complete";
             public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
+            public const string ChangeItinerarySlot = BaseEndpoint + "/itineraries";
         }
 
         public static class TransactionEndpoint
@@ -237,6 +238,8 @@
             public const string CreatePolicy = BaseEndpoint;
             public const string UpdatePolicy = BaseEndpoint + "/{id}";
             public const string DeletePolicy = BaseEndpoint + "/{id}";
+            public const string ActivatePolicy = BaseEndpoint + "/activation/{id}";
+            public const string DeactivatePolicy = BaseEndpoint + "/deactivation/{id}";
         }
 
         public static class SupportTicketEndpoint

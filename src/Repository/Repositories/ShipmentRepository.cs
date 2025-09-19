@@ -298,6 +298,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             {
                 Id = media.Id,
                 ShipmentId = media.ShipmentId,
+                BusinessMediaType = media.BusinessMediaType,
                 MediaType = media.MediaType,
                 MediaUrl = media.MediaUrl,
                 CreatedAt = media.CreatedAt,

@@ -22,6 +22,8 @@ namespace MetroShip.Service.Interfaces
         Task<int?> GetSegmentIndexAsync(string trainId);
         Task<DateTimeOffset?> GetStartTimeAsync(string trainId);
         Task<TrainPositionResult?> GetPositionResultAsync(string trainId);
+        Task<Dictionary<string, (DirectionEnum? direction, int? segmentIndex)>> GetDirectionsAndSegmentIndicesAsync(
+            List<string> trainIds);
         #endregion
 
         #region Remove methods

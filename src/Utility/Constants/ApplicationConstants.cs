@@ -73,6 +73,7 @@
         public const string USER_NOT_ALLOWED = "Bạn không có quyền truy cập mục này.";
         public const string EMAIL_VALIDATION_REQUIRED = "Vui lòng nhập mã OTP gửi đến email để kích hoạt tài khoản.";
 
+        public const string BANKID_REQUIRED = "BankId không được để trống.";
         public const string BANKID_INVALID = "BankId không hợp lệ.";
         public const string ACCOUNTNO_INVALID = "Số tài khoản không hợp lệ.";
         public const string ACCOUNTNAME_INVALID = "Tên tài khoản viết hoa không dấu.";
@@ -90,7 +91,7 @@
         public const string FORGOT_PASSWORD_SUCCESS = "Yêu cầu đặt lại mật khẩu thành công, vui lòng kiểm tra email.";
         public const string RESET_PASSWORD_SUCCESS = "Đặt lại mật khẩu thành công!";
         public const string CHANGE_PASSWORD_SUCCESS = "Thay đổi mật khẩu thành công!";
-        public const string RESEND_EMAIL_SUCCESS = "Gửi lại email xác thực thành công!";
+        public const string RESEND_EMAIL_SUCCESS = "Đã Gửi lại mã xác thực qua email.";
         public const string UPDATE_USER_SUCCESS = "Cập nhật thông tin người dùng thành công!";
         public const string DELETE_USER_SUCCESS = "Xóa người dùng thành công!";
         public const string ADD_ROLE_SUCCESS = "Thêm vai trò thành công!";
@@ -183,7 +184,7 @@
         public const string RATING_INVALID = "Đánh giá phải từ 1 đến 5.";
         public const string SHIPMENT_ID_REQUIRED = "Yêu cầu ShipmentId.";
         public const string SHIPMENT_ID_INVALID = "ShipmentId không hợp lệ.";
-        public const string FEEDBACK_SUCCESS = "Gửi phản hồi thành công.";
+        public const string RATE_SUCCESS = "Gửi đánh giá thành công.";
         public const string COMPLETED_SUCCESS = "Hoàn thành đơn hàng thành công.";
         public const string SHIPMENT_NOT_AWAITING_DELIVERY = "Đơn hàng không ở trạng thái 'Chờ giao hàng'.";
         public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";
@@ -201,6 +202,7 @@
         public const string BASE_PRICE_VND_PER_KM_REQUIRED = "Yêu cầu giá cơ bản mỗi km (VND).";
         public const string BASE_PRICE_VND_PER_KM_INVALID = "Giá cơ bản mỗi km (VND) phải lớn hơn hoặc bằng 0.";
         public const string ITINERARY_NOT_FOUND = "Không tìm thấy lộ trình.";
+        public const string INVALID_NEW_TIME_SLOT = "Ngày hoặc khung giờ mục tiêu không hợp lệ. Không được sớm hơn lịch ban đầu";
     }
 
     public class ResponseMessageParcel
@@ -343,7 +345,7 @@
         public const string INSURANCE_POLICY_UPDATE_SUCCESS = "Cập nhật chính sách bảo hiểm thành công.";
         public const string INSURANCE_POLICY_DELETE_SUCCESS = "Xóa chính sách bảo hiểm thành công.";
         public const string INSURANCE_POLICY_CREATE_SUCCESS = "Tạo chính sách bảo hiểm thành công.";
-        public const string NAME_REQUIRED = "Yêu cầu tên chính sách bảo hiểm.";
+        public const string NAME_REQUIRED = "Tên chính sách bảo hiểm không được để trống.";
         public const string DESCRIPTION_REQUIRED = "Yêu cầu mô tả chính sách bảo hiểm.";
         public const string BASE_FEE_VND_INVALID = "Phí cơ bản (VND) phải lớn hơn hoặc bằng 0.";
         public const string MAX_PARCEL_VALUE_VND_INVALID = "Giá trị hàng hóa tối đa (VND) phải lớn hơn 0.";
@@ -351,9 +353,15 @@
         public const string STANDARD_COMPENSATION_VALUE_VND_INVALID = "Giá trị bồi thường tiêu chuẩn (VND) phải lớn hơn hoặc bằng 0.";
         public const string MAX_COMPENSATION_RATE_ON_VALUE_INVALID = "Tỷ lệ bồi thường tối đa trên giá trị phải từ 0 đến 1.";
         public const string MIN_COMPENSATION_RATE_ON_VALUE_INVALID = "Tỷ lệ bồi thường tối thiểu trên giá trị phải từ 0 đến 1.";
-        public const string MAX_COMPENSATION_RATE_ON_SHIPPING_FEE_INVALID = "Tỷ lệ bồi thường tối đa trên phí vận chuyển phải từ 0 đến 1.";
+        public const string MIN_COMPENSATION_RATE_ON_SHIPPING_FEE_INVALID = "Tỷ lệ bồi thường tối thiểu trên phí vận chuyển phải lớn hơn 4.";
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
+        public const string INSURANCE_POLICY_ALREADY_ACTIVATED = "Chính sách bảo hiểm đang được kích hoạt";
+        public const string INSURANCE_POLICY_ACTIVATE_SUCCESS = "Kích hoạt chính sách bảo hiểm thành công.";
+        public const string INSURANCE_POLICY_DEACTIVATE_SUCCESS = "Vô hiệu hóa chính sách bảo hiểm thành công.";
+        public const string INSURANCE_POLICY_ALREADY_DEACTIVATED = "Chính sách bảo hiểm đang được vô hiệu hóa";
+        public const string INSURANCE_POLICY_IN_USE = "Chính sách bảo hiểm đang được sử dụng bởi một hoặc nhiều loại bưu kiện. Vui lòng gỡ bỏ liên kết trước khi vô hiệu hóa chính sách.";
+        public const string INSURANCE_POLICY_EXPIRED = "Chính sách bảo hiểm đã hết hạn và không thể kích hoạt lại.";
     }
 
     public class ResponseMessageSystemConfig

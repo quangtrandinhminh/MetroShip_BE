@@ -49,6 +49,7 @@ public interface IMapperlyMapper
     List<(DateTimeOffset, DateTimeOffset, MetroTimeSlotResponse, decimal, decimal, ShipmentStatusEnum, List<string>)> slots);*/
     List<ItineraryResponse> MapToListShipmentItineraryResponse(List<ShipmentItinerary> entity);
     void MapToShipmentEntity(Shipment entity, Shipment request);
+    Shipment CloneToNewShipment(Shipment origin);
 
     // station
     StationResponse MapToStationResponse(Station entity);
@@ -131,6 +132,7 @@ public interface IMapperlyMapper
     // insurance policy
     InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
     PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
+    InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
 
     //notification
     NotificationDto MapNotification(Notification notification);

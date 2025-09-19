@@ -72,6 +72,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial List<ShipmentTrackingResponse> MapToParcelTrackingResponseList(ICollection<ShipmentTrackingResponse> entity);
     public partial ShipmentTrackingResponse MapToShipmentTrackingResponse(ShipmentTracking entity);
 
+    public partial Shipment CloneToNewShipment(Shipment origin);
+
     public partial void MapToShipmentEntity(Shipment entity, Shipment request);
 
     // Explicitly specify the namespace for 'AvailableTimeSlotDto' in the method signature
@@ -145,6 +147,8 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial InsuranceResponse MapToInsuranceResponse(InsurancePolicy entity);
 
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
+
+    public partial InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);

@@ -93,6 +93,7 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         {
             InsurancePolicyId = request.InsurancePolicyId,
             ParcelCategoryId = entity.Id,
+            IsActive = true
         });
 
         // Pass the correctly mapped entity to the repository
@@ -139,6 +140,13 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
         var entity = await GetParcelCategoryById(id);
         entity.DeletedAt = CoreHelper.SystemTimeNow;
+
+        // deactivate all associated category insurances
+        foreach (var categoryInsurance in entity.CategoryInsurances.Where(ci => ci.IsActive))
+        {
+            categoryInsurance.IsActive = false;
+            _categoryInsuranceRepository.Update(categoryInsurance);
+        }
 
         _parcelCategoryRepository.Update(entity);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);

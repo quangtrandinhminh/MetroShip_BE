@@ -69,6 +69,50 @@ namespace MetroShip.Service.Services
             try { return await _firebase.Child("train_position").Child(trainId).OnceSingleAsync<TrainPositionResult>(); }
             catch { return null; }
         }
+
+        public async Task<Dictionary<string, (DirectionEnum? direction, int? segmentIndex)>> GetDirectionsAndSegmentIndicesAsync(
+            List<string> trainIds)
+        {
+            var result = new Dictionary<string, (DirectionEnum? direction, int? segmentIndex)>();
+
+            // Get all train_state data in one call
+            var allTrainStates = await _firebase.Child("train_state")
+                .OnceSingleAsync<Dictionary<string, Dictionary<string, object>>>();
+
+            if (allTrainStates != null)
+            {
+                foreach (var trainId in trainIds)
+                {
+                    DirectionEnum? direction = null;
+                    int? segmentIndex = null;
+
+                    if (allTrainStates.TryGetValue(trainId, out var trainData))
+                    {
+                        // Parse Direction
+                        if (trainData.TryGetValue("Direction", out var directionObj) && directionObj != null)
+                        {
+                            if (Enum.TryParse<DirectionEnum>(directionObj.ToString(), true, out var parsedDirection))
+                            {
+                                direction = parsedDirection;
+                            }
+                        }
+
+                        // Parse SegmentIndex
+                        if (trainData.TryGetValue("SegmentIndex", out var segmentObj) && segmentObj != null)
+                        {
+                            if (int.TryParse(segmentObj.ToString(), out var parsedSegment))
+                            {
+                                segmentIndex = parsedSegment;
+                            }
+                        }
+                    }
+
+                    result[trainId] = (direction, segmentIndex);
+                }
+            }
+
+            return result;
+        }
         #endregion
 
         #region Remove methods
