@@ -19,6 +19,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Service.Services;
 
@@ -69,20 +70,11 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
     {
         _logger.Information("Get parcel category by id {id}", id);
 
-        var category = await _parcelCategoryRepository.GetSingleAsync(c => c.Id == id.ToString());
-
-        if (category == null)
-        {
-            throw new AppException(
-                HttpResponseCodeConstants.NOT_FOUND,
-                ResponseMessageConstantsParcelCategory.NOT_FOUND,
-                StatusCodes.Status404NotFound);
-        }
-
+        var category = await GetParcelCategoryById(id);
         return _mapper.MapToParcelCategoryResponse(category);
     }
 
-    public async Task<ParcelCategoryResponse> CreateAsync(ParcelCategoryCreateRequest request)
+    public async Task<string> CreateAsync(ParcelCategoryCreateRequest request)
     {
         _logger.Information("Create parcel category {@request}", request);
 
@@ -100,11 +92,10 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         await _parcelCategoryRepository.AddAsync(entity);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
-        // Return the created entity mapped to a response
-        return _mapper.MapToParcelCategoryResponse(entity);
+        return ResponseMessageConstantsParcelCategory.CREATE_SUCCESS;
     }
 
-    public async Task<ParcelCategoryResponse> UpdateAsync(ParcelCategoryUpdateRequest request)
+    public async Task<string> UpdateAsync(ParcelCategoryUpdateRequest request)
     {
         _logger.Information("Update parcel category {@request}", request);
 
@@ -131,7 +122,9 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
         // Return the updated entity mapped to a response
-        return _mapper.MapToParcelCategoryResponse(entity);
+        //return _mapper.MapToParcelCategoryResponse(entity);
+
+        return ResponseMessageConstantsParcelCategory.UPDATE_SUCCESS;
     }
 
     public async Task DeleteAsync(Guid id)
@@ -154,9 +147,11 @@ public class ParcelCategoryService(IServiceProvider serviceProvider) : IParcelCa
 
     private async Task<ParcelCategory> GetParcelCategoryById(Guid id)
     {
-        var entity = await _parcelCategoryRepository.GetSingleAsync(
-            c => c.Id == id.ToString(), false,
-            c => c.CategoryInsurances);
+        var entity = await _parcelCategoryRepository.GetAll()
+            .Where(c => c.Id == id.ToString() && c.DeletedAt == null)
+            .Include(c => c.CategoryInsurances.Where(ci => ci.DeletedAt == null))
+                .ThenInclude(ci => ci.InsurancePolicy)
+            .FirstOrDefaultAsync();
 
         if (entity == null)
         {

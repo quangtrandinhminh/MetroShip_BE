@@ -240,6 +240,7 @@
             public const string DeletePolicy = BaseEndpoint + "/{id}";
             public const string ActivatePolicy = BaseEndpoint + "/activation/{id}";
             public const string DeactivatePolicy = BaseEndpoint + "/deactivation/{id}";
+            public const string GetAllActivePoliciesDropdown = BaseEndpoint + "/dropdown";
         }
 
         public static class SupportTicketEndpoint

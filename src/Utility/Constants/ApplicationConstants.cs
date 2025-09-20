@@ -125,6 +125,7 @@
         public const string NOT_FOUND = "Không tìm thấy loại bưu kiện.";
         public const string UPDATE_SUCCESS = "Cập nhật loại bưu kiện thành công.";
         public const string DELETE_SUCCESS = "Xóa loại bưu kiện thành công.";
+        public const string CREATE_SUCCESS = "Tạo loại bưu kiện thành công.";
     }
 
     public class ResponseMessageShipment

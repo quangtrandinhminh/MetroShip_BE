@@ -37,15 +37,15 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> Create([FromBody] ParcelCategoryCreateRequest request)
         {
             var result = await _parcelCategoryService.CreateAsync(request);
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, BaseResponse.OkResponseDto(result));
+            return Created(nameof(Create), BaseResponse.OkResponseDto(result, null));
         }
 
         [HttpPut(WebApiEndpoint.ParcelCategory.UpdateCategory)]
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> Update([FromBody] ParcelCategoryUpdateRequest request)
         {
-            await _parcelCategoryService.UpdateAsync(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsParcelCategory.UPDATE_SUCCESS));
+            var result = await _parcelCategoryService.UpdateAsync(request);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
 
         [HttpDelete(WebApiEndpoint.ParcelCategory.DeleteCategory)]

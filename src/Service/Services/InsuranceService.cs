@@ -135,4 +135,13 @@ public class InsuranceService(IServiceProvider serviceProvider) : IInsuranceServ
 
         return ResponseMessageInsurancePolicy.INSURANCE_POLICY_DEACTIVATE_SUCCESS;
     }
+
+    // get all active insurance policies dropdown
+    public async Task<IList<InsurancePolicyResponse>> GetAllActivePoliciesDropdown()
+    {
+        _logger.Information("Getting all active insurance policies for dropdown");
+        var entities = await _insuranceRepository.FindByConditionAsync(e => e.IsActive);
+        var response = _mapper.MapToInsurancePolicyResponseList(entities);
+        return response;
+    }
 }

@@ -7,6 +7,9 @@ namespace MetroShip.Service.ApiModels.Insurance;
 public record CategoryInsuranceResponse
 {
     public string Id { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset LastUpdatedAt { get; set; }
+    public DateTimeOffset? DeletedAt { get; set; }
     public InsuranceResponse? InsurancePolicy { get; set; }
 }
 
