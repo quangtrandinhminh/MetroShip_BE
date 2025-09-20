@@ -33,7 +33,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost(WebApiEndpoint.ParcelCategory.CreateCategory)]
-        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> Create([FromBody] ParcelCategoryCreateRequest request)
         {
             var result = await _parcelCategoryService.CreateAsync(request);
@@ -41,7 +41,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPut(WebApiEndpoint.ParcelCategory.UpdateCategory)]
-        [Authorize(Roles = $"{nameof(UserRoleEnum.Staff)},{nameof(UserRoleEnum.Customer)}")]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> Update([FromBody] ParcelCategoryUpdateRequest request)
         {
             await _parcelCategoryService.UpdateAsync(request);
@@ -49,7 +49,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpDelete(WebApiEndpoint.ParcelCategory.DeleteCategory)]
-        [Authorize(Roles = "Admin,Staff")]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> Delete(Guid id)
         {
             await _parcelCategoryService.DeleteAsync(id);
