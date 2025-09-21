@@ -122,6 +122,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
     public partial MetroLine MapToMetroLineEntity(MetroRouteRequest request);
     public partial MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
+    public partial PaginatedListResponse<MetroRouteResponse> MapToMetroLinePaginatedList(PaginatedList<MetroLine> entityList);
+    public partial MetroRouteResponseDetails MapToMetroLineResponseDetails(MetroLine entity);
+    public partial void MapToMetroLineEntity(MetroRouteUpdateRequest request, MetroLine entity);
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
@@ -149,6 +152,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PaginatedListResponse<ParcelCategoryResponse> MapToParcelCategoryPaginatedList(PaginatedList<ParcelCategory> entityList);
 
     public partial InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
+    public partial IList<InsurancePolicyResponse> MapToInsurancePolicyResponseList(ICollection<InsurancePolicy> entity);
 
     // transaction
     public partial Transaction MapToTransactionEntity(TransactionRequest request);

@@ -1,13 +1,17 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
+using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
+    [Authorize]
     public class MetroRouteController : ControllerBase
     {
         private readonly IMetroRouteService _metroRouteService;
@@ -25,6 +29,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost(WebApiEndpoint.MetroRouteEndpoint.CreateMetroLine)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> CreateMetroRouteAsync([FromBody] MetroRouteRequest request)
         {
             var response = await _metroRouteService.CreateMetroRoute(request);
@@ -32,25 +37,27 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpPost(WebApiEndpoint.MetroRouteEndpoint.ActivateMetroLine)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> ActivateMetroLineAsync([FromRoute] string id)
         {
             var response = await _metroRouteService.ActivateMetroLine(id);
             return Ok(BaseResponse.OkResponseDto(response));
         }
 
-        /*[HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLines)]
-        public async Task<IActionResult> GetAllMetroRoutesAsync()
+        [HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLines)]
+        public async Task<IActionResult> GetAllMetroRoutesAsync([FromQuery] PaginatedListRequest request
+            , [FromQuery] MetroRouteFilterRequest filter)
         {
-            var response = await _metroRouteService.GetAllMetroRoutes();
+            var response = await _metroRouteService.GetAllMetroRoutes(request, filter);
             return Ok(BaseResponse.OkResponseDto(response));
-        }*/
+        }
 
-        /*[HttpGet(WebApiEndpoint.MetroLine.GetMetroLinesByRegion)]
-        public async Task<IActionResult> GetAllMetroLinesByRegionAsync([FromQuery] string? regionId)
+        [HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLineById)]
+        public async Task<IActionResult> GetMetroRouteByIdAsync([FromRoute] string id)
         {
-            var metroLines = await _metroLineService.GetAllMetroLineByRegion(regionId);
-            return Ok(BaseResponse.OkResponseDto(metroLines));
-        }*/
+            var response = await _metroRouteService.GetMetroRouteById(id);
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
 
         [HttpGet]
         [Route(WebApiEndpoint.MetroRouteEndpoint.GetMetroLineWithStationsById)]
@@ -66,6 +73,14 @@ namespace MetroShip.WebAPI.Controllers
         {
             var response = await _metroRouteService.GetAllMetroLinesWithStationsAsync();
             return Ok(BaseResponse.OkResponseDto(response));
+        }
+
+        [HttpPut(WebApiEndpoint.MetroRouteEndpoint.UpdateMetroLine)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> UpdateMetroLineAsync([FromBody] MetroRouteUpdateRequest request)
+        {
+            var response = await _metroRouteService.UpdateMetroLine(request);
+            return Ok(BaseResponse.OkResponseDto(response, null));
         }
     }
 }

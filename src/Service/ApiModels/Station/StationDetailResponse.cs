@@ -19,5 +19,6 @@ namespace MetroShip.Service.ApiModels.Station
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
         public bool IsMultiLine { get; set; }
+        public decimal? AtKm { get; set; }
     }
 }

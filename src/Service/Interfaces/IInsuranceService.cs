@@ -14,4 +14,5 @@ public interface IInsuranceService
     Task<string> ActivatePolicy(string id);
 
     Task<string> DeactivatePolicy(string id);
+    Task<IList<InsurancePolicyResponse>> GetAllActivePoliciesDropdown();
 }

@@ -53,5 +53,12 @@ namespace MetroShip.WebAPI.Controllers
             var response = await _insuranceService.DeactivatePolicy(id);
             return Ok(BaseResponse.OkResponseDto(response));
         }
+
+        [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllActivePoliciesDropdown)]
+        public async Task<IActionResult> GetAllActivePoliciesDropdown()
+        {
+            var response = await _insuranceService.GetAllActivePoliciesDropdown();
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
     }
 }

@@ -85,6 +85,10 @@ public interface IMapperlyMapper
     MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
     MetroLine MapToMetroLineEntity(MetroRouteRequest request);
     MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
+    PaginatedListResponse<MetroRouteResponse> MapToMetroLinePaginatedList(PaginatedList<MetroLine> entityList);
+    MetroRouteResponseDetails MapToMetroLineResponseDetails(MetroLine entity);
+    void MapToMetroLineEntity(MetroRouteUpdateRequest request, MetroLine entity);
+
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
 
@@ -133,6 +137,7 @@ public interface IMapperlyMapper
     InsurancePolicyResponse MapToInsurancePolicyResponse(InsurancePolicy entity);
     PaginatedListResponse<InsurancePolicyResponse> MapToInsurancePolicyPaginatedList(PaginatedList<InsurancePolicy> entityList);
     InsurancePolicy MapToInsurancePolicy(InsurancePolicyRequest request);
+    IList<InsurancePolicyResponse> MapToInsurancePolicyResponseList(ICollection<InsurancePolicy> entity);
 
     //notification
     NotificationDto MapNotification(Notification notification);
