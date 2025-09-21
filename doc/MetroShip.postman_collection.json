@@ -1020,7 +1020,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"userName\": \"quangStaff\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"trandinhminhquangsxp2@gmail.com\",\r\n  \"phoneNumber\": \"0123456787\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 2\r\n}",
+							"raw": "{\r\n  \"userName\": \"quangStaff\",\r\n  \"fullName\": \"Quang\",\r\n  \"email\": \"quangtdmse171391@fpt.edu.vn\",\r\n  \"phoneNumber\": \"0123456787\",\r\n  \"password\": \"12345678\",\r\n  \"confirmPassword\": \"12345678\",\r\n  \"birthDate\": \"2000-01-01\",\r\n  \"role\": 2\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1144,6 +1144,52 @@
 							"path": [
 								"users",
 								"assignment-roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update bank only",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{customerAccessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bankId\": 21,\n  \"accountNo\": \"0901472180\",\n  \"accountName\": \"TRAN DINH MINH QUANG\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/bank-info",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"bank-info"
 							]
 						}
 					},
@@ -1836,7 +1882,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"dce2eb72-2449-47b6-8afb-b8844b5b9919\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
+							"raw": "{\r\n    \"departureStationId\": \"8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a\",\r\n    \"destinationStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n    \"scheduledDateTime\": \"2025-06-29T22:00:00+07:00\",\r\n    \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n    \"userLatitude\": 10.7569,\r\n    \"userLongitude\": 106.6761,\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        },\r\n        {\r\n            \"parcelCategoryId\": \"3d4e5f6a-7b8c-9012-def0-3fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 11,\r\n            \"widthCm\": 11,\r\n            \"heightCm\": 11\r\n        }\r\n    ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1965,13 +2011,40 @@
 					"response": []
 				},
 				{
+					"name": "ThaiBinhMarket - BT - TDY location - 2parcel",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"departureStationId\": \"5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0\",\r\n  \"destinationStationId\": \"b5f8e2a1-4c7d-4b5f-8e2a-1c7d4b5f8e2a\",\r\n  \"scheduledDateTime\": \"2025-08-25T21:30:00\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n      \"weightKg\": 10,\r\n      \"lengthCm\": 20,\r\n      \"widthCm\": 30,\r\n      \"heightCm\": 40,\r\n      \"descriptionImageUrl\": \"\"\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"categoryInsuranceId\": \"dce2eb72-2449-47b6-8afb-b8844b5b9919\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 25000,\r\n      \"valueVnd\": 5000000,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1756121980/l8hthk7olxgtg9ei98hn.png\"\r\n    }\r\n  ],\r\n  \"userLatitude\": 10.7568894,\r\n  \"userLongitude\": 106.6761499\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/total-price-itinerary",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"total-price-itinerary"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Book a shipment - TDY - ĐHYD - BXMT - 1 parcels",
 					"request": {
 						"method": "POST",
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 12467,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 12467,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-11T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-11T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 12467,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 12467,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-09-11T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-09-11T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1997,7 +2070,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-05T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-05T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
+							"raw": "{\r\n  \"departureStationId\": \"e8c9b5d4-7f8a-4e8c-9b5d-4f8a7e8c9b5d\",\r\n  \"destinationStationId\": \"e8c9b9d8-9f8a-4e8c-9b9d-8f8a9e8c9b9d\",\r\n  \"timeSlotId\": \"d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9\",\r\n  \"totalCostVnd\": 34420,\r\n  \"totalKm\": 4.42,\r\n  \"totalShippingFeeVnd\": 34420,\r\n  \"recipientEmail\": \"\",\r\n  \"recipientName\": \"Trần Quyết Thắng\",\r\n  \"recipientPhone\": \"0932754711\",\r\n  \"startReceiveAt\": \"2025-08-12T13:30:00.000Z\",\r\n  \"scheduledDateTime\": \"2025-08-12T15:30:00.000Z\",\r\n  \"senderName\": \"Tăng Dư Yến\",\r\n  \"senderPhone\": \"0932754722\",\r\n  \"parcels\": [\r\n    {\r\n      \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 10,\r\n      \"widthCm\": 20,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"\",\r\n      \"heightCm\": 30,\r\n      \"insuranceFeeVnd\": 5000,\r\n      \"isBulk\": false,\r\n      \"priceVnd\": 12467,\r\n      \"shippingFeeVnd\": 12467\r\n    },\r\n    {\r\n      \"parcelCategoryId\": \"4e5f6a7b-8c9d-0123-ef01-4fedcba98765\",\r\n      \"weightKg\": 20,\r\n      \"lengthCm\": 30,\r\n      \"widthCm\": 40,\r\n      \"chargeableWeight\": 20,\r\n      \"descriptionImageUrl\": \"https://res.cloudinary.com/dg8iesbty/image/upload/v1753373056/yy55xighwd8cv5ascslh.png\",\r\n      \"heightCm\": 50,\r\n      \"insuranceFeeVnd\": 20000,\r\n      \"isBulk\": true,\r\n      \"priceVnd\": 32467,\r\n      \"shippingFeeVnd\": 12467,\r\n      \"valueVnd\": 2000000\r\n    }\r\n  ],\r\n  \"shipmentItineraries\": [\r\n    {\r\n      \"routeId\": \"e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0\",\r\n      \"legOrder\": 1\r\n    },\r\n    {\r\n      \"routeId\": \"f6a7b8c9-0d1e-2f3a-4b5c-d6e7f8a9b0c1\",\r\n      \"legOrder\": 2\r\n    },\r\n    {\r\n      \"routeId\": \"a7b8c9d0-1e2f-3a4b-5c6d-e7f8a9b0c1d2\",\r\n      \"legOrder\": 3\r\n    },\r\n    {\r\n      \"routeId\": \"b8c9d0e1-2f3a-4b5c-6d7e-f8a9b0c1d2e3\",\r\n      \"legOrder\": 4\r\n    },\r\n    {\r\n      \"routeId\": \"c9d0e1f2-3a4b-5c6d-7e8f-a9b0c1d2e3f4\",\r\n      \"legOrder\": 5\r\n    },\r\n    {\r\n      \"routeId\": \"d0e1f2a3-4b5c-6d7e-8f9a-b0c1d2e3f4a5\",\r\n      \"legOrder\": 6\r\n    }\r\n  ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2069,6 +2142,32 @@
 					"response": []
 				},
 				{
+					"name": "Book a shipment - CongHoa - KCNC - 1 parcel",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"departureStationId\": \"c6a9f3b2-5d8e-4c6a-9f3b-2d8e5c6a9f3b\",\r\n    \"destinationStationId\": \"b4c5d6e7-f8a9-b0c1-d2e3-f4a5b6c7d8e9\",\r\n    \"senderName\": \"Quang\",\r\n    \"senderPhone\": \"0123456789\",\r\n    \"recipientName\": \"Yến\",\r\n    \"recipientPhone\": \"0123456789\",\r\n    \"scheduledDateTime\": \"2025-09-21T10:30:00.000Z\",\r\n    \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n    \"totalCostVnd\": 19908,\r\n    \"totalShippingFeeVnd\": 19908,\r\n    \"totalInsuranceFeeVnd\": 0,\r\n    \"totalKm\": 16.59,\r\n    \"shipmentItineraries\": [\r\n        {\r\n            \"routeId\": \"a1c4f7e8-2b5d-4a1c-f7e8-2b5da1c4f7e8\",\r\n            \"legOrder\": 1\r\n        },\r\n        {\r\n            \"routeId\": \"b2d5a8f9-3c6e-4b2d-a8f9-3c6eb2d5a8f9\",\r\n            \"legOrder\": 2\r\n        },\r\n        {\r\n            \"routeId\": \"53c8e7fe-8f9a-453c-8e8f-9a8e9a8c8e53\",\r\n            \"legOrder\": 3\r\n        },\r\n        {\r\n            \"routeId\": \"fa1d2c3b-4e5f-6a7b-8c9d-e0f1a2b3c4d5\",\r\n            \"legOrder\": 4\r\n        },\r\n        {\r\n            \"routeId\": \"1b2c3d4e-5f6a-7b8c-9d0e-f1a2b3c4d5e6\",\r\n            \"legOrder\": 5\r\n        },\r\n        {\r\n            \"routeId\": \"2c3d4e5f-6a7b-8c9d-0e1f-a2b3c4d5e6f7\",\r\n            \"legOrder\": 6\r\n        },\r\n        {\r\n            \"routeId\": \"3d4e5f6a-7b8c-9d0e-1f2a-b3c4d5e6f7a8\",\r\n            \"legOrder\": 7\r\n        },\r\n        {\r\n            \"routeId\": \"4e5f6a7b-8c9d-0e1f-2a3b-c4d5e6f7a8b9\",\r\n            \"legOrder\": 8\r\n        },\r\n        {\r\n            \"routeId\": \"5f6a7b8c-9d0e-1f2a-3b4c-d5e6f7a8b9c0\",\r\n            \"legOrder\": 9\r\n        },\r\n        {\r\n            \"routeId\": \"6a7b8c9d-0e1f-2a3b-4c5d-e6f7a8b9c0d1\",\r\n            \"legOrder\": 10\r\n        },\r\n        {\r\n            \"routeId\": \"7b8c9d0e-1f2a-3b4c-5d6e-f7a8b9c0d1e2\",\r\n            \"legOrder\": 11\r\n        },\r\n        {\r\n            \"routeId\": \"8c9d0e1f-2b3c-4d5e-6f7a-8b9c0d1e2f3a\",\r\n            \"legOrder\": 12\r\n        },\r\n        {\r\n            \"routeId\": \"9d0e1f2a-3b4c-5d6e-7f8a-b9c0d1e2f3a4\",\r\n            \"legOrder\": 13\r\n        },\r\n        {\r\n            \"routeId\": \"0e1f2a3b-4c5d-6e7f-8a9b-c0d1e2f3a4b5\",\r\n            \"legOrder\": 14\r\n        }\r\n    ],\r\n    \"parcels\": [\r\n        {\r\n            \"parcelCategoryId\": \"0a1b2c3d-4e5f-6789-abcd-0fedcba98765\",\r\n            \"categoryInsuranceId\": \"b75c76cb-6c42-47c7-b7d3-c4e1ed333b30\",\r\n            \"weightKg\": 10,\r\n            \"lengthCm\": 10,\r\n            \"widthCm\": 10,\r\n            \"heightCm\": 10,\r\n            \"isBulk\": false,\r\n            \"shippingFeeVnd\": 19908,\r\n            \"chargeableWeight\": 10,\r\n            \"insuranceFeeVnd\": 0,\r\n            \"priceVnd\": 19908\r\n        }\r\n    ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Get shipment by tracking code",
 					"event": [
 						{
@@ -2086,13 +2185,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments/MSHCMC2508070730JK9Y",
+							"raw": "{{baseUrl}}/shipments/0c4533d0-cfaf-411c-bda0-b77e2fe655cd",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"shipments",
-								"MSHCMC2508070730JK9Y"
+								"0c4533d0-cfaf-411c-bda0-b77e2fe655cd"
 							]
 						}
 					},
@@ -2104,7 +2203,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/shipments?orderDirection=desc&pageNumber=1&pageSize=5&isAwaitingNextTrain=true&itineraryIncludeStationId=5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+							"raw": "{{baseUrl}}/shipments",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2124,11 +2223,13 @@
 								},
 								{
 									"key": "orderDirection",
-									"value": "desc"
+									"value": "desc",
+									"disabled": true
 								},
 								{
 									"key": "pageNumber",
-									"value": "1"
+									"value": "1",
+									"disabled": true
 								},
 								{
 									"key": "lineId",
@@ -2137,15 +2238,18 @@
 								},
 								{
 									"key": "pageSize",
-									"value": "5"
+									"value": "5",
+									"disabled": true
 								},
 								{
 									"key": "isAwaitingNextTrain",
-									"value": "true"
+									"value": "true",
+									"disabled": true
 								},
 								{
 									"key": "itineraryIncludeStationId",
-									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0"
+									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+									"disabled": true
 								}
 							]
 						}
@@ -2195,118 +2299,6 @@
 								"shipments",
 								"customer",
 								"history"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Vnpay create payment link",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "accept",
-								"value": "*/*"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"shipmentId\": \"8db47bfb-3826-4866-979c-ed4c0fb1e038\",\n  \"transactionType\": 1,\n  \"returnUrl\": \"https://localhost:7085/api/auth/hello\",\n  \"cancelUrl\": \"https://metroship-cosdy.ondigitalocean.app/swagger/index.html\"\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "https://localhost:7085/api/shipments/vnpay/payment-url",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"shipments",
-								"vnpay",
-								"payment-url"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Vnpay excecute",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "https://localhost:7085/api/shipments/vnpay/payment-execute?vnp_Amount=4000000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14974199&vnp_CardType=ATM&vnp_OrderInfo=Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND&vnp_PayDate=20250523012110&vnp_ResponseCode=00&vnp_TmnCode=89668LJB&vnp_TransactionNo=14974199&vnp_TransactionStatus=00&vnp_TxnRef=MS-HCMC-17481179640000101VN&vnp_SecureHash=1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1",
-							"protocol": "https",
-							"host": [
-								"localhost"
-							],
-							"port": "7085",
-							"path": [
-								"api",
-								"shipments",
-								"vnpay",
-								"payment-execute"
-							],
-							"query": [
-								{
-									"key": "vnp_Amount",
-									"value": "4000000"
-								},
-								{
-									"key": "vnp_BankCode",
-									"value": "NCB"
-								},
-								{
-									"key": "vnp_BankTranNo",
-									"value": "VNP14974199"
-								},
-								{
-									"key": "vnp_CardType",
-									"value": "ATM"
-								},
-								{
-									"key": "vnp_OrderInfo",
-									"value": "Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND"
-								},
-								{
-									"key": "vnp_PayDate",
-									"value": "20250523012110"
-								},
-								{
-									"key": "vnp_ResponseCode",
-									"value": "00"
-								},
-								{
-									"key": "vnp_TmnCode",
-									"value": "89668LJB"
-								},
-								{
-									"key": "vnp_TransactionNo",
-									"value": "14974199"
-								},
-								{
-									"key": "vnp_TransactionStatus",
-									"value": "00"
-								},
-								{
-									"key": "vnp_TxnRef",
-									"value": "MS-HCMC-17481179640000101VN"
-								},
-								{
-									"key": "vnp_SecureHash",
-									"value": "1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1"
-								}
 							]
 						}
 					},
@@ -2444,7 +2436,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"shipmentId\": \"b90352f3-7fec-412b-b6d0-49fdddf9b7d0\",\n  \"pickedUpMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
+							"raw": "{\n  \"shipmentId\": \"0c4533d0-cfaf-411c-bda0-b77e2fe655cd\",\n  \"pickedUpMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2546,7 +2538,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNoZWNrZXIiLCJTdGF0aW9uSWQiOiJkNmU3ZjhhOS1iMGMxLWQyZTMtZjRhNS1iNmM3ZDhlOWYwYTEiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIzMWU5NDE4ZC1hMjVkLTQyOWUtOWUxYy0yNjhkYjIxZmI1MTQiLCJVc2VyTmFtZSI6InN0YWZmLWNrLWJ4c3QiLCJ1bmlxdWVfbmFtZSI6IlN0YWZmIGNoZWNrZXIgYuG6v24geGUgc3Xhu5FpIHRpw6puIiwiZW1haWwiOiJzdGFmZi1jay1ieHN0QGdtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiMDEyMzQ1Njc4NCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjA3LzA4LzIwMjUiLCJuYmYiOjE3NTQ0OTcwNDUsImV4cCI6MTc1NDU4MzQ0NSwiaWF0IjoxNzU0NDk3MDQ1fQ.TRX40-V4rvTwMGOe4qvGXnjg0vnb5WN24E88cIiUr6Q",
+									"value": "{{staffAccessToken}}",
 									"type": "string"
 								}
 							]
@@ -2564,7 +2556,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"shipmentId\": \"091be410-222f-4361-854b-850d0e0b4534\",\n  \"pickedUpMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
+							"raw": "{\n  \"shipmentId\": \"4ac072a9-774d-44c2-b458-81bb3b5439d5\",\n  \"pickedUpMedias\": [\n    {\n      \"mediaUrl\": \"string\",\n      \"description\": \"string\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2579,6 +2571,72 @@
 							"path": [
 								"shipments",
 								"complete"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "return for a shipment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/5a65e1d7-5adb-4db6-b436-afe01c0dc023/return",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"5a65e1d7-5adb-4db6-b436-afe01c0dc023",
+								"return"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change schedule for itinerary",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"d5055b06-b582-4d02-9a24-37c865022029\",\n  \"fromTimeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\n  \"fromDate\": \"2025-09-08\",\n  \"toTimeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\n  \"toDate\": \"2025-09-10\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/itineraries",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"itineraries"
 							]
 						}
 					},
@@ -2761,14 +2819,14 @@
 					"response": []
 				},
 				{
-					"name": "Staff load a parcel at BT",
+					"name": "Staff load a parcel at BT with Lost",
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNhcmdvTG9hZGVyIiwiU3RhdGlvbklkIjoiNWU5ZjNjMjctOGQ2Yi00YzQ0LTlhMTQtZGZkNmEzZTJlOGYwIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvc2lkIjoiZGZlOTUwMTYtZjFjZC00YzZlLWIwM2YtZWU5MTc1NTA1ODRlIiwiVXNlck5hbWUiOiJzdGFmZi1jZy1idCIsInVuaXF1ZV9uYW1lIjoiU3RhZmYgY2FyZ28gYmVuIHRoYW5oIiwiZW1haWwiOiJzdGFmZkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9leHBpcmVkIjoiMDcvMDgvMjAyNSIsIm5iZiI6MTc1NDQ5NjU0MCwiZXhwIjoxNzU0NTgyOTQwLCJpYXQiOjE3NTQ0OTY1NDB9.sfPpUhXeQmrLfWjzf_sbHg6-tLDoGL9urPeSWASmMUE",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiU3RhZmYiLCJBc3NpZ25tZW50Um9sZSI6IkNhcmdvTG9hZGVyIiwiU3RhdGlvbklkIjoiNWU5ZjNjMjctOGQ2Yi00YzQ0LTlhMTQtZGZkNmEzZTJlOGYwIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvc2lkIjoiZGZlOTUwMTYtZjFjZC00YzZlLWIwM2YtZWU5MTc1NTA1ODRlIiwiVXNlck5hbWUiOiJzdGFmZi1jZy1idCIsInVuaXF1ZV9uYW1lIjoiU3RhZmYgY2FyZ28gYmVuIHRoYW5oIiwiZW1haWwiOiJzdGFmZkBleGFtcGxlLmNvbSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL21vYmlsZXBob25lIjoiIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9leHBpcmVkIjoiMjcvMDgvMjAyNSIsIm5iZiI6MTc1NjIwNTQzMiwiZXhwIjoxNzU2MjkxODMyLCJpYXQiOjE3NTYyMDU0MzJ9.EEYDRdpwVuzqCfs0-uOsA-_iAcYEU1jPuh9BLmh6Bms",
 									"type": "string"
 								}
 							]
@@ -2781,7 +2839,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/parcels/staff/loading/MSHCMC2508070730JK9Y-01/HCMC-L1-T01",
+							"raw": "{{baseUrl}}/parcels/staff/loading/MSHCMC25082622306EJ4-01/HCMC-L1-T02?isLost=true",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2789,8 +2847,14 @@
 								"parcels",
 								"staff",
 								"loading",
-								"MSHCMC2508070730JK9Y-01",
-								"HCMC-L1-T01"
+								"MSHCMC25082622306EJ4-01",
+								"HCMC-L1-T02"
+							],
+							"query": [
+								{
+									"key": "isLost",
+									"value": "true"
+								}
 							]
 						}
 					},
@@ -2909,13 +2973,13 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/parcels/MSHCMC2508070730T203-01",
+							"raw": "{{baseUrl}}/parcels/MSHCMC25082622306EJ4-01",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"parcels",
-								"MSHCMC2508070730T203-01"
+								"MSHCMC25082622306EJ4-01"
 							]
 						}
 					},
@@ -2970,6 +3034,45 @@
 							],
 							"path": [
 								"stations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userLatitude\": 10.7569154,\n  \"userLongitude\": 106.6761585,\n  \"maxDistanceInMeters\": 500,\n  \"maxCount\": 0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://localhost:7085/api/stations/nearby",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"stations",
+								"nearby"
 							]
 						}
 					},
@@ -3029,6 +3132,170 @@
 							],
 							"path": [
 								"transactions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get viet qr banks",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/vietqr/banks",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"vietqr",
+								"banks"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create qr link",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/transactions/vietqr/32/113366668888?amount=10000.8395",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"transactions",
+								"vietqr",
+								"32",
+								"113366668888"
+							],
+							"query": [
+								{
+									"key": "amount",
+									"value": "10000.8395"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vnpay create payment link",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"shipmentId\": \"d9db1f11-659a-4d52-b66a-a46a27f2aba2\",\n  \"transactionType\": 3,\n  \"returnUrl\": \"https://localhost:7085/api/auth/hello\",\n  \"cancelUrl\": \"https://metroship-cosdy.ondigitalocean.app/swagger/index.html\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/shipments/vnpay/payment-url",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"shipments",
+								"vnpay",
+								"payment-url"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Vnpay excecute",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "https://localhost:7085/api/shipments/vnpay/payment-execute?vnp_Amount=4000000&vnp_BankCode=NCB&vnp_BankTranNo=VNP14974199&vnp_CardType=ATM&vnp_OrderInfo=Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND&vnp_PayDate=20250523012110&vnp_ResponseCode=00&vnp_TmnCode=89668LJB&vnp_TransactionNo=14974199&vnp_TransactionStatus=00&vnp_TxnRef=MS-HCMC-17481179640000101VN&vnp_SecureHash=1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1",
+							"protocol": "https",
+							"host": [
+								"localhost"
+							],
+							"port": "7085",
+							"path": [
+								"api",
+								"shipments",
+								"vnpay",
+								"payment-execute"
+							],
+							"query": [
+								{
+									"key": "vnp_Amount",
+									"value": "4000000"
+								},
+								{
+									"key": "vnp_BankCode",
+									"value": "NCB"
+								},
+								{
+									"key": "vnp_BankTranNo",
+									"value": "VNP14974199"
+								},
+								{
+									"key": "vnp_CardType",
+									"value": "ATM"
+								},
+								{
+									"key": "vnp_OrderInfo",
+									"value": "Thanh+to%C3%A1n+%C4%91%C6%A1n+h%C3%A0ng+ID%3A+MS-HCMC-17481179640000101VN%2C+T%E1%BB%95ng+gi%C3%A1+tr%E1%BB%8B%3A+40000.00+VND"
+								},
+								{
+									"key": "vnp_PayDate",
+									"value": "20250523012110"
+								},
+								{
+									"key": "vnp_ResponseCode",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TmnCode",
+									"value": "89668LJB"
+								},
+								{
+									"key": "vnp_TransactionNo",
+									"value": "14974199"
+								},
+								{
+									"key": "vnp_TransactionStatus",
+									"value": "00"
+								},
+								{
+									"key": "vnp_TxnRef",
+									"value": "MS-HCMC-17481179640000101VN"
+								},
+								{
+									"key": "vnp_SecureHash",
+									"value": "1adeedd98362f27186dbbe69d7abb04f82190bfc5ea323ff8a5815a5fb08dc672e6c30c0af9cc3806e251534ab361c19f74b68f5e24b0819161a079c731faef1"
+								}
 							]
 						}
 					},
@@ -3141,7 +3408,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains",
+							"raw": "{{baseUrl}}/metro-trains?StationId=5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -3161,12 +3428,7 @@
 								},
 								{
 									"key": "Date",
-									"value": "2024-11-11",
-									"disabled": true
-								},
-								{
-									"key": "Direction",
-									"value": "0",
+									"value": "2025-08-23",
 									"disabled": true
 								},
 								{
@@ -3191,7 +3453,11 @@
 								},
 								{
 									"key": "StationId",
-									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0",
+									"value": "5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0"
+								},
+								{
+									"key": "Direction",
+									"value": "1",
 									"disabled": true
 								}
 							]
@@ -3210,7 +3476,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-trains/line/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/slot/a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6/date/2025-06-28",
+							"raw": "{{baseUrl}}/metro-trains/line/e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c/slot/c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8/date/2025-08-07",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -3219,9 +3485,9 @@
 								"line",
 								"e4d1d6b2-4f3a-4de0-9efa-8c7f9f1a0b1c",
 								"slot",
-								"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+								"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8",
 								"date",
-								"2025-06-28"
+								"2025-08-07"
 							]
 						}
 					},
@@ -3243,7 +3509,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"timeSlotId\": \"a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6\",\r\n  \"date\": \"2025-08-07\",\r\n  \"direction\": 0\r\n}",
+							"raw": "{\r\n  \"trainId\": \"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0\",\r\n  \"timeSlotId\": \"c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8\",\r\n  \"date\": \"2025-08-07\",\r\n  \"direction\": 0\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3304,7 +3570,7 @@
 					"response": []
 				},
 				{
-					"name": "Get train pos",
+					"name": "Stsff Get train pos",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -3314,14 +3580,11 @@
 							}
 						],
 						"url": {
-							"raw": "https://localhost:7085/api/train/2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0/position",
-							"protocol": "https",
+							"raw": "{{baseUrl}}/train/2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0/position",
 							"host": [
-								"localhost"
+								"{{baseUrl}}"
 							],
-							"port": "7085",
 							"path": [
-								"api",
 								"train",
 								"2b3c4d5e-6f70-8192-a3b4-c5d6e7f8a9b0",
 								"position"
@@ -3356,7 +3619,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"trainCode\": null,\n  \"modelName\": \"HITACHI\",\n  \"isActive\": true,\n  \"lineId\": \"d1d4994a-6d56-4d8b-a597-c485af1368ba\",\n  \"trainNumber\": 2,\n  \"numberOfCarriages\": 3\n}",
+							"raw": "{\n  \"trainCode\": null,\n  \"modelName\": \"HITACHI\",\n  \"isActive\": true,\n  \"lineId\": \"d1d4994a-6d56-4d8b-a597-c485af1368ba\",\n  \"trainNumber\": 1,\n  \"numberOfCarriages\": 3\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3370,6 +3633,29 @@
 							],
 							"path": [
 								"metro-trains"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get shipment position",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/0c4533d0-cfaf-411c-bda0-b77e2fe655cd/position",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"0c4533d0-cfaf-411c-bda0-b77e2fe655cd",
+								"position"
 							]
 						}
 					},
@@ -3435,6 +3721,54 @@
 								{
 									"key": "stationId",
 									"value": "7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all lines",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines?PageNumber=1&PageSize=10&RegionId=d75d6e5a-34b5-4396-b0b9-2947250ed138&LineNameVi=c%C3%A1t&LineNameEn=cat&LineCode=hn",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines"
+							],
+							"query": [
+								{
+									"key": "PageNumber",
+									"value": "1"
+								},
+								{
+									"key": "PageSize",
+									"value": "10"
+								},
+								{
+									"key": "RegionId",
+									"value": "d75d6e5a-34b5-4396-b0b9-2947250ed138"
+								},
+								{
+									"key": "LineNameVi",
+									"value": "c%C3%A1t"
+								},
+								{
+									"key": "LineNameEn",
+									"value": "cat"
+								},
+								{
+									"key": "LineCode",
+									"value": "hn"
 								}
 							]
 						}
@@ -3527,7 +3861,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"lineNameVi\": \"Tuyến 3: Nhổn - Ga Hà Nội\",\n    \"lineNameEn\": \"Line 3: Nhon - Hanoi Station\",\n    \"regionId\": \"d75d6e5a-34b5-4396-b0b9-2947250ed138\",\n    \"lineNumber\": 3,\n    \"lineCode\": \"HN-L3\",\n    \"lineType\": \"Đường sắt đô thị Hà Nội\",\n    \"lineOwner\": \"Công ty Đường sắt Hà Nội (Hanoi Metro Company)\",\n    \"colorHex\": \"#00B359\",\n    \"RouteTimeMin\": \"\",\n    \"DwellTimeMin\": 30,\n    \"stations\": [\n        {\n            \"stationNameVi\": \"Nhổn\",\n            \"stationNameEn\": \"Nhon\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0456,\n            \"longitude\": 105.7423,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Minh Khai\",\n            \"stationNameEn\": \"Minh Khai\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0431,\n            \"longitude\": 105.7505,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Phú Diễn\",\n            \"stationNameEn\": \"Phu Dien\",\n            \"address\": \"Đường Cầu Diễn, phường Phúc Diễn, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0392,\n            \"longitude\": 105.7597,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Cầu Diễn\",\n            \"stationNameEn\": \"Cau Dien\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Cầu Diễn, quận Nam Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0361,\n            \"longitude\": 105.7675,\n            \"toNextStationKm\": 1.3\n        },\n        {\n            \"stationNameVi\": \"Lê Đức Thọ\",\n            \"stationNameEn\": \"Le Duc Tho\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Mai Dịch, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0321,\n            \"longitude\": 105.7788,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Đại học Quốc gia\",\n            \"stationNameEn\": \"Vietnam National University\",\n            \"address\": \"Đường Xuân Thủy, phường Dịch Vọng Hậu, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0322,\n            \"longitude\": 105.7891,\n            \"toNextStationKm\": 1.0\n        },\n        {\n            \"stationNameVi\": \"Chùa Hà\",\n            \"stationNameEn\": \"Chua Ha\",\n            \"address\": \"Đường Cầu Giấy, phường Dịch Vọng, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0315,\n            \"longitude\": 105.7984,\n            \"toNextStationKm\": 1.2\n        },\n        {\n            \"stationNameVi\": \"Cầu Giấy\",\n            \"stationNameEn\": \"Cau Giay\",\n            \"address\": \"Đường Cầu Giấy, phường Ngọc Khánh, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0298,\n            \"longitude\": 105.8087,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Kim Mã\",\n            \"stationNameEn\": \"Kim Ma\",\n            \"address\": \"Đường Kim Mã, phường Kim Mã, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0305,\n            \"longitude\": 105.8201,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"id\": \"980ab103-9b6a-4ef9-9082-3098146cfab0\",\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Văn Miếu\",\n            \"stationNameEn\": \"Van Mieu\",\n            \"address\": \"Phố Quốc Tử Giám, phường Văn Miếu, quận Đống Đa, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0270,\n            \"longitude\": 105.8354,\n            \"toNextStationKm\": 0.8\n        },\n        {\n            \"stationNameVi\": \"Ga Hà Nội\",\n            \"stationNameEn\": \"Hanoi Station\",\n            \"address\": \"Đường Trần Hưng Đạo, phường Cửa Nam, quận Hoàn Kiếm, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0242,\n            \"longitude\": 105.8412,\n            \"toNextStationKm\": 0\n        }\n    ]\n}",
+							"raw": "{\n    \"lineNameVi\": \"Tuyến 3: Nhổn - Ga Hà Nội\",\n    \"lineNameEn\": \"Line 3: Nhon - Hanoi Station\",\n    \"regionId\": \"d75d6e5a-34b5-4396-b0b9-2947250ed138\",\n    \"lineNumber\": 3,\n    \"lineCode\": \"HN-L3\",\n    \"lineType\": \"Đường sắt đô thị Hà Nội\",\n    \"lineOwner\": \"Công ty Đường sắt Hà Nội (Hanoi Metro Company)\",\n    \"colorHex\": \"#00B359\",\n    \"RouteTimeMin\": \"\",\n    \"DwellTimeMin\": 30,\n    \"stations\": [\n        {\n            \"stationNameVi\": \"Nhổn\",\n            \"stationNameEn\": \"Nhon\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0456,\n            \"longitude\": 105.7423,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Minh Khai\",\n            \"stationNameEn\": \"Minh Khai\",\n            \"address\": \"Đường Cầu Diễn, phường Minh Khai, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0431,\n            \"longitude\": 105.7505,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Phú Diễn\",\n            \"stationNameEn\": \"Phu Dien\",\n            \"address\": \"Đường Cầu Diễn, phường Phúc Diễn, quận Bắc Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0392,\n            \"longitude\": 105.7597,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Cầu Diễn\",\n            \"stationNameEn\": \"Cau Dien\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Cầu Diễn, quận Nam Từ Liêm, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0361,\n            \"longitude\": 105.7675,\n            \"toNextStationKm\": 1.3\n        },\n        {\n            \"stationNameVi\": \"Lê Đức Thọ\",\n            \"stationNameEn\": \"Le Duc Tho\",\n            \"address\": \"Đường Hồ Tùng Mậu, phường Mai Dịch, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0321,\n            \"longitude\": 105.7788,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Đại học Quốc gia\",\n            \"stationNameEn\": \"Vietnam National University\",\n            \"address\": \"Đường Xuân Thủy, phường Dịch Vọng Hậu, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0322,\n            \"longitude\": 105.7891,\n            \"toNextStationKm\": 1.0\n        },\n        {\n            \"stationNameVi\": \"Chùa Hà\",\n            \"stationNameEn\": \"Chua Ha\",\n            \"address\": \"Đường Cầu Giấy, phường Dịch Vọng, quận Cầu Giấy, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0315,\n            \"longitude\": 105.7984,\n            \"toNextStationKm\": 1.2\n        },\n        {\n            \"stationNameVi\": \"Cầu Giấy\",\n            \"stationNameEn\": \"Cau Giay\",\n            \"address\": \"Đường Cầu Giấy, phường Ngọc Khánh, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": false,\n            \"latitude\": 21.0298,\n            \"longitude\": 105.8087,\n            \"toNextStationKm\": 1.1\n        },\n        {\n            \"stationNameVi\": \"Kim Mã\",\n            \"stationNameEn\": \"Kim Ma\",\n            \"address\": \"Đường Kim Mã, phường Kim Mã, quận Ba Đình, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0305,\n            \"longitude\": 105.8201,\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"id\": \"58af215d-ba4f-4bde-b7d9-bc077b85c2ac\",\n            \"toNextStationKm\": 0.9\n        },\n        {\n            \"stationNameVi\": \"Văn Miếu\",\n            \"stationNameEn\": \"Van Mieu\",\n            \"address\": \"Phố Quốc Tử Giám, phường Văn Miếu, quận Đống Đa, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0270,\n            \"longitude\": 105.8354,\n            \"toNextStationKm\": 0.8\n        },\n        {\n            \"stationNameVi\": \"Ga Hà Nội\",\n            \"stationNameEn\": \"Hanoi Station\",\n            \"address\": \"Đường Trần Hưng Đạo, phường Cửa Nam, quận Hoàn Kiếm, Hà Nội\",\n            \"isUnderground\": true,\n            \"latitude\": 21.0242,\n            \"longitude\": 105.8412,\n            \"toNextStationKm\": 0\n        }\n    ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -3557,18 +3891,108 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/metro-lines/activation/d1d4994a-6d56-4d8b-a597-c485af1368ba",
+							"raw": "{{baseUrl}}/metro-lines/activation/f97526e3-fc53-411f-86e1-8bd313fe7f45",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"metro-lines",
 								"activation",
+								"f97526e3-fc53-411f-86e1-8bd313fe7f45"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get metroline by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines/d1d4994a-6d56-4d8b-a597-c485af1368ba",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines",
 								"d1d4994a-6d56-4d8b-a597-c485af1368ba"
 							]
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Update metro route",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"d1d4994a-6d56-4d8b-a597-c485af1368ba\",\n    \"lineNameVi\": \"Tuyến 2A: Cát Linh - Hà Đông\",\n    \"lineNameEn\": \"Line 2A: Cat Linh - Ha Dong\",\n    \"regionId\": \"d75d6e5a-34b5-4396-b0b9-2947250ed138\",\n    \"lineCode\": \"HN-L2A\",\n    \"colorHex\": \"#00B359\",\n    \"lineType\": \"Đường sắt đô thị Hà Nội\",\n    \"lineOwner\": \"Công ty Đường sắt Hà Nội (Hanoi Metro Company)\",\n    \"dwellTimeMin\": 30,\n    \"totalStations\": 12\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/metro-lines",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"metro-lines"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -3596,6 +4020,154 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Create cate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"insurancePolicyId\": \"5f55489c-c92a-4329-b848-b37dae74c252\",\n  \"categoryName\": \"Tài liệu\",\n  \"description\": \"Để nơi khô ráo, sắp xếp gọn gàng\",\n  \"weightLimitKg\": 10,\n  \"isInsuranceRequired\": false,\n  \"isActive\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/parcel-category",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcel-category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update cate",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"insurancePolicyId\": \"c5425af3-f441-48a5-a266-b4b96b22203c\",\n  \"categoryName\": \"Tài liệu\",\n  \"description\": \"Để nơi khô ráo, sắp xếp gọn gàng\",\n  \"weightLimitKg\": 0,\n  \"volumeLimitCm3\": 0,\n  \"lengthLimitCm\": 0,\n  \"widthLimitCm\": 0,\n  \"heightLimitCm\": 0,\n  \"totalSizeLimitCm\": 0,\n  \"isInsuranceRequired\": true,\n  \"isActive\": true,\n  \"id\": \"debbf845-6b3c-4ed3-9e62-9ad02329711f\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/parcel-category",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcel-category"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get by id",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcel-category/debbf845-6b3c-4ed3-9e62-9ad02329711f",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcel-category",
+								"debbf845-6b3c-4ed3-9e62-9ad02329711f"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete cate",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/parcel-category/debbf845-6b3c-4ed3-9e62-9ad02329711f",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"parcel-category",
+								"debbf845-6b3c-4ed3-9e62-9ad02329711f"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -3613,13 +4185,19 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/pricing/table",
+							"raw": "{{baseUrl}}/pricing/table?pricingConfigId=f30d3c57-e711-4fc3-96aa-67740bf77df7",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"pricing",
 								"table"
+							],
+							"query": [
+								{
+									"key": "pricingConfigId",
+									"value": "f30d3c57-e711-4fc3-96aa-67740bf77df7"
+								}
 							]
 						}
 					},
@@ -3657,6 +4235,119 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get all prcing table",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pricing",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pricing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "create new config",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"isActive\": true,\n    \"freeStoreDays\": 3,\n    \"baseSurchargePerDayVnd\": 2000,\n    \"refundRate\": 0.9,\n    \"refundForCancellationBeforeScheduledHours\": 24,\n    \"description\": \"Bảng giá 1/11/2025\",\n    \"weightTiers\": [\n        {\n            \"tierOrder\": 1,\n            \"maxWeightKg\": 10.0,\n            \"basePriceVndPerKmPerKg\": 30.0,\n            \"isPricePerKmAndKg\": true,\n            \"units\": \"VND/km/kg\"\n        },\n        {\n            \"tierOrder\": 2,\n            \"maxWeightKg\": 50.0,\n            \"basePriceVndPerKmPerKg\": 25.0,\n            \"isPricePerKmAndKg\": true,\n            \"units\": \"VND/km/kg\"\n        },\n        {\n            \"tierOrder\": 3,\n            \"maxWeightKg\": 100.0,\n            \"basePriceVndPerKmPerKg\": 22.0,\n            \"isPricePerKmAndKg\": true,\n            \"units\": \"VND/km/kg\"\n        },\n        {\n            \"tierOrder\": 4,\n            \"maxWeightKg\": 200.0,\n            \"basePriceVndPerKmPerKg\": 20.0,\n            \"isPricePerKmAndKg\": true,\n            \"units\": \"VND/km/kg\"\n        },\n        {\n            \"tierOrder\": 5,\n            \"maxWeightKg\": 500.0,\n            \"basePriceVndPerKmPerKg\": 20.0,\n            \"isPricePerKmAndKg\": true,\n            \"units\": \"VND/km/kg\"\n        }\n    ],\n    \"distanceTiers\": [\n        {\n            \"tierOrder\": 1,\n            \"maxDistanceKm\": 5.0,\n            \"basePriceVnd\": 10000.0,\n            \"isPricePerKm\": false\n        },\n        {\n            \"tierOrder\": 2,\n            \"maxDistanceKm\": 50.0,\n            \"basePriceVndPerKm\": 900.0,\n            \"isPricePerKm\": true\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pricing",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pricing"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activate config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/pricing/activation/1d6a8b60-79c4-40f0-a78c-4aa2bef85eff",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pricing",
+								"activation",
+								"1d6a8b60-79c4-40f0-a78c-4aa2bef85eff"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
 				}
 			]
 		},
@@ -3973,6 +4664,472 @@
 					}
 				}
 			]
+		},
+		{
+			"name": "Insurance",
+			"item": [
+				{
+					"name": "Get all insurance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/insurance-policies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"insurance-policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create policy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Chính sách bảo hiểm từ 1/10/2025\",\n    \"baseFeeVnd\": 5000.00,\n    \"maxParcelValueVnd\": 20000000.00,\n    \"insuranceFeeRateOnValue\": 0.005000,\n    \"maxCompensationRateOnValue\": 1.000000,\n    \"minCompensationRateOnValue\": 0.400000,\n    \"minCompensationRateOnShippingFee\": 4.000000,\n    \"isActive\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/insurance-policies",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"insurance-policies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "activate policy",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/insurance-policies/activation/5f55489c-c92a-4329-b848-b37dae74c252",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"insurance-policies",
+								"activation",
+								"5f55489c-c92a-4329-b848-b37dae74c252"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "deactivate policy",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/insurance-policies/deactivation/5f55489c-c92a-4329-b848-b37dae74c252",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"insurance-policies",
+								"deactivation",
+								"5f55489c-c92a-4329-b848-b37dae74c252"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "policy dropdown",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/insurance-policies/dropdown",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"insurance-policies",
+								"dropdown"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Noti",
+			"item": [
+				{
+					"name": "Send noti to all",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"hi\",\n  \"title\": \"hi from admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/notifications/send-to-all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"send-to-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all notification",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/notifications",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unread count",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/unread-count",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"unread-count"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark as read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/aeeac883-8f77-4159-bca5-1e5d77feb7cc/read",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"aeeac883-8f77-4159-bca5-1e5d77feb7cc",
+								"read"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Mark all as read",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/notifications/read-all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"notifications",
+								"read-all"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "SystemConfig",
+			"item": [
+				{
+					"name": "Get all system config",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/system-configs?isIncludeDeactivated=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system-configs"
+							],
+							"query": [
+								{
+									"key": "isIncludeDeactivated",
+									"value": "true"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change config value",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"configKey\": \"MAX_CAPACITY_PER_LINE_KG\",\n    \"configValue\": \"75000\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/system-configs/config-value",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system-configs",
+								"config-value"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update system config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "accept",
+								"value": "*/*"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json-patch+json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": \"00fd0ed6-9450-4a4d-a150-3980618bb436\",\n  \"description\": \"Số giờ cho phép xác nhận đơn hàngg\",\n  \"configType\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/system-configs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"system-configs"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{adminAccessToken}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		}
 	],
 	"event": [
@@ -4000,59 +5157,48 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "https://localhost:7085/api",
-			"type": "string"
+			"value": "https://localhost:7085/api"
 		},
 		{
 			"key": "baseUrl",
 			"value": "https://metroship-cosdy.ondigitalocean.app/api",
-			"type": "string",
 			"disabled": true
 		},
 		{
 			"key": "customerAccessToken",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjpbIkN1c3RvbWVyIiwiU2hvcE93bmVyIl0sImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3NpZCI6IjMiLCJVc2VyTmFtZSI6ImN1c3RvbWVyMSIsInVuaXF1ZV9uYW1lIjoiQ3VzdG9tZXIgMSIsImVtYWlsIjoiY3VzdG9tZXIxQGV4YW1wbGUuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbW9iaWxlcGhvbmUiOiIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIxMi8xMS8yMDI0IiwibmJmIjoxNzMxMzEyMjgyLCJleHAiOjE3MzEzOTg2ODIsImlhdCI6MTczMTMxMjI4Mn0.W8BMXdp1S7YmXG9UeyqdY5eDQosLKReEJW7uLcg7M_c",
-			"type": "string"
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjpbIkN1c3RvbWVyIiwiU2hvcE93bmVyIl0sImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL3NpZCI6IjMiLCJVc2VyTmFtZSI6ImN1c3RvbWVyMSIsInVuaXF1ZV9uYW1lIjoiQ3VzdG9tZXIgMSIsImVtYWlsIjoiY3VzdG9tZXIxQGV4YW1wbGUuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvbW9iaWxlcGhvbmUiOiIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIxMi8xMS8yMDI0IiwibmJmIjoxNzMxMzEyMjgyLCJleHAiOjE3MzEzOTg2ODIsImlhdCI6MTczMTMxMjI4Mn0.W8BMXdp1S7YmXG9UeyqdY5eDQosLKReEJW7uLcg7M_c"
 		},
 		{
 			"key": "adminAccessToken",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjAxLzA5LzIwMjQiLCJuYmYiOjE3MjUwOTIyNzksImV4cCI6MTcyNTE3ODY3OSwiaWF0IjoxNzI1MDkyMjc5fQ.ubl4X_0hxzu60v9STgZWzM7Cxk3R_sTGbxpEDjWLLBY",
-			"type": "string"
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQWRtaW4iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIxIiwiVXNlck5hbWUiOiJhZG1pbiIsInVuaXF1ZV9uYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IiIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvZXhwaXJlZCI6IjAxLzA5LzIwMjQiLCJuYmYiOjE3MjUwOTIyNzksImV4cCI6MTcyNTE3ODY3OSwiaWF0IjoxNzI1MDkyMjc5fQ.ubl4X_0hxzu60v9STgZWzM7Cxk3R_sTGbxpEDjWLLBY"
 		},
 		{
 			"key": "staffAccessToken",
-			"value": "",
-			"type": "string"
+			"value": ""
 		},
 		{
 			"key": "productionUrl",
-			"value": "https://metroshipapi-latest.onrender.com/",
-			"type": "string"
+			"value": "https://metroshipapi-latest.onrender.com/"
 		},
 		{
 			"key": "customer2AccessToken",
-			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQ3VzdG9tZXIiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIyZDgyODkwMS0zMWE2LTQwNTEtODNiZi00ZWZhNzhjYmNmZmEiLCJVc2VyTmFtZSI6InF1YW5nNjExMyIsInVuaXF1ZV9uYW1lIjoiUXVhbmciLCJlbWFpbCI6InRyYW5kaW5obWluaHF1YW5nc3hwMUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjAxMjM0NTY3ODgiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIwMy8wNi8yMDI1IiwibmJmIjoxNzQ4ODUxMDA0LCJleHAiOjE3NDg5Mzc0MDQsImlhdCI6MTc0ODg1MTAwNH0.w4ZcENAI_rv7Jkc1JjuyRq_UoSXOvOlteacJbH7mH2A",
-			"type": "string"
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiQ3VzdG9tZXIiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zaWQiOiIyZDgyODkwMS0zMWE2LTQwNTEtODNiZi00ZWZhNzhjYmNmZmEiLCJVc2VyTmFtZSI6InF1YW5nNjExMyIsInVuaXF1ZV9uYW1lIjoiUXVhbmciLCJlbWFpbCI6InRyYW5kaW5obWluaHF1YW5nc3hwMUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9tb2JpbGVwaG9uZSI6IjAxMjM0NTY3ODgiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL2V4cGlyZWQiOiIwMy8wNi8yMDI1IiwibmJmIjoxNzQ4ODUxMDA0LCJleHAiOjE3NDg5Mzc0MDQsImlhdCI6MTc0ODg1MTAwNH0.w4ZcENAI_rv7Jkc1JjuyRq_UoSXOvOlteacJbH7mH2A"
 		},
 		{
 			"key": "customerRT",
-			"value": "",
-			"type": "string"
+			"value": ""
 		},
 		{
 			"key": "customer2RT",
-			"value": "",
-			"type": "string"
+			"value": ""
 		},
 		{
 			"key": "adminRT",
-			"value": "",
-			"type": "string"
+			"value": ""
 		},
 		{
 			"key": "staffRT",
-			"value": "",
-			"type": "string"
+			"value": ""
 		}
 	]
 }
