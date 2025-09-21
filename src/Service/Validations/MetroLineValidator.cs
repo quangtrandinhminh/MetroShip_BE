@@ -14,6 +14,12 @@ public static class MetroLineValidator
         validator.ValidateApiModel(request);
     }
 
+    public static void ValidateMetroLineUpdateRequest(this MetroRouteUpdateRequest request)
+    {
+        var validator = new MetroRouteUpdateValidator();
+        validator.ValidateApiModel(request);
+    }
+
     /*private static void ValidateCreateStationRequest(CreateStationRequest request)
     {
         var validator = new StationCreateValidator();
@@ -75,6 +81,58 @@ public class MetroLineCreateValidator : AbstractValidator<MetroRouteRequest>
             .WithMessage("Cần phải có ít nhất hai ga cho một tuyến metro.");
 
         RuleForEach(x => x.Stations).SetValidator(new StationCreateValidator());
+    }
+}
+
+public class MetroRouteUpdateValidator : AbstractValidator<MetroRouteUpdateRequest>
+{
+    public MetroRouteUpdateValidator()
+    {
+        RuleFor(x => x.Id)
+            .NotEmpty().WithMessage("ID tuyến không được để trống.")
+            .Must(id => Guid.TryParse(id, out var _))
+            .WithMessage("ID tuyến phải là một GUID hợp lệ.");
+
+        RuleFor(x => x.LineNameVi)
+            .NotEmpty().WithMessage("Tên tuyến bằng tiếng Việt không được để trống.")
+            .MaximumLength(100).WithMessage("Tên tuyến bằng tiếng Việt không được vượt quá 100 ký tự.");
+
+        RuleFor(x => x.LineNameEn)
+            .NotEmpty().WithMessage("Tên tuyến bằng tiếng Anh không được để trống.")
+            .MaximumLength(100).WithMessage("Tên tuyến bằng tiếng Anh không được vượt quá 100 ký tự.");
+
+        RuleFor(x => x.RegionId)
+            .NotEmpty().WithMessage("Vùng không được để trống.")
+            .Must(regionId => Guid.TryParse(regionId, out var _))
+            .WithMessage("Vùng phải là một GUID hợp lệ.");
+
+        RuleFor(x => x.LineCode)
+            .MaximumLength(20).WithMessage("Mã tuyến không được vượt quá 20 ký tự.")
+            //.Matches(@"^[A-Za-z0-9]+$").WithMessage("Mã tuyến chỉ được gồm chữ cái và số.")
+            .When(x => !string.IsNullOrEmpty(x.LineCode));
+
+        RuleFor(x => x.LineType)
+            .MaximumLength(100).WithMessage("Loại tuyến không được vượt quá 100 ký tự.")
+            //.Matches(@"^[A-Za-z\s]+$").WithMessage("Loại tuyến chỉ được gồm chữ cái và khoảng trắng.")
+            .When(x => !string.IsNullOrEmpty(x.LineType));
+
+        RuleFor(x => x.LineOwner)
+            .MaximumLength(100).WithMessage("Chủ sở hữu tuyến không được vượt quá 100 ký tự.")
+            //.Matches(@"^[A-Za-z\s]+$").WithMessage("Chủ sở hữu tuyến chỉ được gồm chữ cái và khoảng trắng.")
+            .When(x => !string.IsNullOrEmpty(x.LineOwner));
+
+        RuleFor(x => x.ColorHex)
+            .Matches(@"^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$")
+            .WithMessage("Mã màu phải là một mã màu hex hợp lệ. Dạng #xxx hoặc #123456")
+            .When(x => !string.IsNullOrEmpty(x.ColorHex));
+
+        RuleFor(x => x.RouteTimeMin)
+            .GreaterThanOrEqualTo(0).WithMessage("Thời gian hành trình phải lớn hơn hoặc bằng 0.")
+            .When(x => x.RouteTimeMin.HasValue);
+
+        RuleFor(x => x.DwellTimeMin)
+            .GreaterThanOrEqualTo(0).WithMessage("Thời gian dừng phải lớn hơn hoặc bằng 0.")
+            .When(x => x.DwellTimeMin.HasValue);
     }
 }
 

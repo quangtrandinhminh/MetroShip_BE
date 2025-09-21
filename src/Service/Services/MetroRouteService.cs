@@ -25,6 +25,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using MetroShip.Service.ApiModels.Station;
 
 namespace MetroShip.Service.Services
 {
@@ -37,6 +38,7 @@ namespace MetroShip.Service.Services
         private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
         private readonly IBaseRepository<Route> _routeStationRepository = serviceProvider.GetRequiredService<IBaseRepository<Route>>();
         private readonly IRegionRepository _regionRepository = serviceProvider.GetRequiredService<IRegionRepository>();
+        private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
         private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
         private const string CACHE_KEY = nameof(MetroGraph);
 
@@ -65,14 +67,114 @@ namespace MetroShip.Service.Services
             return metroLines;
         }
 
-        public async Task<List<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request)
+        public async Task<PaginatedListResponse<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request, MetroRouteFilterRequest filter)
         {
-            throw new NotImplementedException("This method is not implemented");
+            _logger.Information("Getting all MetroLines with pagination. PageNumber: {PageNumber}, PageSize: {PageSize}",
+                               request.PageNumber, request.PageSize);
+
+            Expression<Func<MetroLine, bool>> predicate = BuildFilterExpression(filter);
+
+            var paginatedLines = await _metroRouteRepository.GetAllPaginatedQueryable(
+            request.PageNumber,
+            request.PageSize,
+            predicate,
+            line => line.LineCode,
+            true,
+            line => line.Region
+            );
+
+            return _mapper.MapToMetroLinePaginatedList(paginatedLines);
+        }
+
+        private Expression<Func<MetroLine, bool>> BuildFilterExpression(MetroRouteFilterRequest filter)
+        {
+            Expression<Func<MetroLine, bool>> predicate = line => line.DeletedAt == null;
+
+            if (filter != null)
+            {
+                if (!string.IsNullOrEmpty(filter.LineNameVi))
+                {
+                    predicate = predicate.And(x =>
+                                           EF.Functions.ILike(x.LineNameVi, $"%{filter.LineNameVi}%"));
+                }
+
+                if (!string.IsNullOrEmpty(filter.LineNameEn))
+                {
+                    predicate = predicate.And(x =>
+                                                              EF.Functions.ILike(x.LineNameEn, $"%{filter.LineNameEn}%"));
+                }
+
+                if (!string.IsNullOrEmpty(filter.LineCode))
+                {
+                    predicate = predicate.And(x =>
+                                           EF.Functions.ILike(x.LineCode, $"%{filter.LineCode}%"));
+                }
+
+                if (!string.IsNullOrEmpty(filter.RegionId))
+                {
+                    predicate = predicate.And(line => line.RegionId == filter.RegionId);
+                }
+                if (filter.IsActive.HasValue)
+                {
+                    predicate = predicate.And(line => line.IsActive == filter.IsActive.Value);
+                }
+            }
+
+            return predicate;
         }
 
         public async Task<MetroRouteResponseDetails> GetMetroRouteById(string metroRouteId)
         {
-            throw new NotImplementedException("This method is not implemented");
+            _logger.Information("Getting MetroLine details by ID: {MetroLineId}", metroRouteId);
+
+            var metroLine = await _metroRouteRepository.GetSingleAsync(
+            line => line.Id == metroRouteId && line.DeletedAt == null, false,
+            line => line.Region,
+            line => line.Trains);
+
+            if (metroLine == null)
+            {
+                throw new AppException(
+                ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+            }
+
+            var routes = await _routeStationRepository.GetAll()
+                .Where(r => r.LineId == metroLine.Id && r.Direction == DirectionEnum.Forward)
+                .OrderBy(r => r.SeqOrder)
+                .ToListAsync();
+
+            var stations = await _stationRepository.GetAll()
+                .Where(s => metroLine.StationList.Select(sl => sl.StationId).Contains(s.Id))
+                .ToListAsync();
+
+            // Map stations to response with sequence order
+            metroLine.StationList.Sort((a, b) =>
+                           metroLine.StationList.IndexOf(a).CompareTo(metroLine.StationList.IndexOf(b)));
+
+            var result = _mapper.MapToMetroLineResponseDetails(metroLine);
+            foreach (var stationItem in metroLine.StationList)
+            {
+                var station = stations.FirstOrDefault(s => s.Id == stationItem.StationId);
+                
+                if (station != null)
+                {
+                    station.StationCode = stationItem.StationCode;
+                    var stationResult = _mapper.MapToStationDetailResponse(station);
+                    var route = routes.FirstOrDefault(r => r.ToStationId == station.Id);
+
+                    // sum all km from the first route to this seq order
+                    var atKm = routes
+                        .Where(r => r.SeqOrder <= (route?.SeqOrder ?? 0))
+                        .Sum(r => r.LengthKm);
+
+                    stationResult.AtKm = atKm;
+                    result.Stations.Add(stationResult);
+                }
+            }
+
+            return result;
         }
 
         public async Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId)
@@ -301,7 +403,7 @@ namespace MetroShip.Service.Services
                     }
 
                     // Save metroLine & station to get IDs
-                    var saveResult1 = await _unitOfWork.SaveChangeAsync();
+                    var saveResult1 = await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
                     _logger.Information("First save completed with result: {Result}", saveResult1);
 
                     // Find active station indices
@@ -384,7 +486,7 @@ namespace MetroShip.Service.Services
                     }
 
                     // Final save
-                    var finalResult = await _unitOfWork.SaveChangeAsync();
+                    var finalResult = await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
                     _logger.Information("Final save completed with result: {Result}", finalResult);
 
                     await transaction.CommitAsync();
@@ -446,7 +548,7 @@ namespace MetroShip.Service.Services
                 _stationRepository.Update(station);
             }
 
-            await _unitOfWork.SaveChangeAsync();
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
             // delete metrograph cache
             if (_memoryCache.TryGetValue(CACHE_KEY, out MetroGraph? metroGraph))
             {
@@ -457,13 +559,80 @@ namespace MetroShip.Service.Services
             return MetroRouteMessageConstants.METROROUTE_ACTIVATE_SUCCESS;
         }
 
+        public async Task<string> UpdateMetroLine(MetroRouteUpdateRequest request)
+        {
+            _logger.Information("Updating MetroLine with ID: {MetroLineId}", request.Id);
+
+            request.ValidateMetroLineUpdateRequest();
+            _logger.Information("Validation passed");
+
+            var metroLine = await _metroRouteRepository.GetSingleAsync(
+                               line => line.Id == request.Id && line.DeletedAt == null, false);
+            if (metroLine == null)
+            {
+                throw new AppException(
+                ErrorCode.NotFound,
+                MetroRouteMessageConstants.METROROUTE_NOT_FOUND,
+                StatusCodes.Status404NotFound);
+            }
+
+            var region = await _regionRepository.GetAll()
+                .Where(s => s.Id == request.RegionId)
+                .Select(s => new { s.Id, s.RegionCode })
+                .FirstOrDefaultAsync();
+            if (region == null)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                RegionMessageConstants.REGION_NOT_FOUND,
+                StatusCodes.Status400BadRequest);
+            }
+
+            // If LineNumber or RegionId changed, update LineCode
+            if (metroLine.RegionId != request.RegionId /*|| metroLine.LineNumber != request.LineNumber*/)
+            {
+                metroLine.LineCode = string.IsNullOrEmpty(request.LineCode) ?
+                    MetroCodeGenerator.GenerateMetroLineCode(
+                        region.RegionCode,
+                        metroLine.LineNumber.Value) : request.LineCode;
+
+                // check if the new line code is already existed
+                var existingLine = await _metroRouteRepository.GetAll()
+                    .FirstOrDefaultAsync(l => l.LineCode == metroLine.LineCode && l.Id != metroLine.Id);
+                if (existingLine != null)
+                {
+                    throw new AppException(
+                    ErrorCode.BadRequest,
+                    MetroRouteMessageConstants.METROROUTE_EXISTED + $" with MetroRouteCode: {metroLine.LineCode}",
+                    StatusCodes.Status400BadRequest);
+                }
+            }
+            else if (!string.IsNullOrEmpty(request.LineCode) && metroLine.LineCode != request.LineCode)
+            {
+                // If LineCode is provided and different, check for uniqueness
+                var existingLine = await _metroRouteRepository.GetAll()
+                    .FirstOrDefaultAsync(l => l.LineCode == request.LineCode && l.Id != metroLine.Id);
+                if (existingLine != null)
+                {
+                    throw new AppException(
+                    ErrorCode.BadRequest,
+                    MetroRouteMessageConstants.METROROUTE_EXISTED + $" with MetroRouteCode: {existingLine.LineCode}");
+                }
+            }
+
+            _mapper.MapToMetroLineEntity(request, metroLine);
+            _metroRouteRepository.Update(metroLine);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+            return MetroRouteMessageConstants.ROUTE_UPDATE_SUCCESS;
+        }
+
         public async Task<List<MetroLineDto>> GetAllMetroLinesWithStationsAsync()
         {
             var metroLines = await _metroRouteRepository.GetAll()
                 .Include(ml => ml.Routes)
                     .ThenInclude(r => r.FromStation)
                 .Include(ml => ml.Routes)
-                    .ThenInclude(r => r.ToStation)
+                    .ThenInclude(r => r.ToStation) 
                 .Where(ml => ml.IsActive)
                 .OrderBy(ml => ml.LineNumber)
                 .ToListAsync();

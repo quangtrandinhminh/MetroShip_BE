@@ -122,6 +122,9 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
     public partial MetroLine MapToMetroLineEntity(MetroRouteRequest request);
     public partial MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
+    public partial PaginatedListResponse<MetroRouteResponse> MapToMetroLinePaginatedList(PaginatedList<MetroLine> entityList);
+    public partial MetroRouteResponseDetails MapToMetroLineResponseDetails(MetroLine entity);
+    public partial void MapToMetroLineEntity(MetroRouteUpdateRequest request, MetroLine entity);
 
     // parcel
     public partial Parcel MapToParcelEntity(ParcelRequest request);
