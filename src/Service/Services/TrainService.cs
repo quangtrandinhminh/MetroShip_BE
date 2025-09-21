@@ -1041,33 +1041,43 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (routes == null || routes.Count == 0)
             throw new AppException(ErrorCode.NotFound, "No route data found", StatusCodes.Status404NotFound);
 
-        // 🔹 Nếu chưa có segment thì fallback về 0
-        if (currentIndex == null || currentIndex < 0)
-            currentIndex = 0;
+        // 🔹 Lấy InitialSegmentIndex (route khởi đầu simulation)
+        var initialIndex = await _trainStateStore.GetInitialSegmentIndexAsync(trainId) ?? 0;
 
-        // --- Tính toán progress ---
-        var now = DateTimeOffset.UtcNow;
-        var elapsed = startTime != null ? (now - startTime.Value).TotalSeconds : 0;
-
-        double lat = routes.First().FromStation!.Latitude ?? 0;
-        double lng = routes.First().FromStation!.Longitude ?? 0;
-        double eta = 0;
-        double progress = 0;
-        var from = routes.First().FromStation!;
-        var to = routes.First().ToStation!;
-        var displayStatus = train.Status;
+        // --- Xác định route hiện tại dựa trên trạng thái ---
+        Route currentRoute;
+        TrainStatusEnum displayStatus;
 
         if (startTime == null)
         {
-            // ✅ fallback: chưa chạy thì coi như Scheduled
+            // chưa start -> Scheduled
+            currentRoute = routes[initialIndex];
             displayStatus = TrainStatusEnum.Scheduled;
         }
-        else if (currentIndex < routes.Count)
+        else if (currentIndex >= routes.Count)
         {
-            var currentRoute = routes[currentIndex ?? 0];
-            from = currentRoute.FromStation!;
-            to = currentRoute.ToStation!;
+            // đã chạy hết -> Completed
+            currentRoute = routes[initialIndex];
+            displayStatus = TrainStatusEnum.Completed;
+        }
+        else
+        {
+            // đang chạy
+            currentRoute = routes[currentIndex ?? 0];
+            displayStatus = train.Status;
+        }
 
+        var from = currentRoute.FromStation!;
+        var to = currentRoute.ToStation!;
+        double lat = from.Latitude!.Value;
+        double lng = from.Longitude!.Value;
+        double eta = 0;
+        double progress = 0;
+        double elapsed = 0;
+
+        if (startTime != null && displayStatus != TrainStatusEnum.Completed)
+        {
+            elapsed = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
             var distanceKm = (double)currentRoute.LengthKm;
             var speedKmh = 100;
             eta = (distanceKm / speedKmh) * 3600;
@@ -1078,23 +1088,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 to.Latitude!.Value, to.Longitude!.Value,
                 progress);
 
-            // --- Xác định status ---
+            // --- Cập nhật status khi đang chạy ---
             if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
             {
-                displayStatus = progress < 0.1
-                    ? TrainStatusEnum.Departed
-                    : TrainStatusEnum.InTransit;
+                displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
             }
-        }
-        else
-        {
-            // Đã chạy hết routes
-            from = routes.Last().FromStation!;
-            to = routes.Last().ToStation!;
-            lat = to.Latitude!.Value;
-            lng = to.Longitude!.Value;
-            progress = 1;
-            displayStatus = TrainStatusEnum.Completed;
         }
 
         // --- Current animation path ---
@@ -1129,8 +1127,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
             bool isCompleted = false;
             if (displayStatus == TrainStatusEnum.Completed)
-                isCompleted = true; // tất cả complete
-            else if (i < currentIndex)
+                isCompleted = true;
+            else if (i < (currentIndex ?? 0))
                 isCompleted = true;
 
             fullPath.Add(new
@@ -1198,7 +1196,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             TrainId = trainId,
             Latitude = lat,
             Longitude = lng,
-            StartTime = startTime ?? now, // fallback nếu chưa có
+            StartTime = startTime ?? DateTimeOffset.UtcNow, // fallback nếu chưa có
             ETA = TimeSpan.FromSeconds(eta),
             Elapsed = TimeSpan.FromSeconds(elapsed),
             ProgressPercent = (int)(progress * 100),
