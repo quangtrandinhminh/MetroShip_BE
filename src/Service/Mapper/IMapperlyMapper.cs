@@ -85,6 +85,10 @@ public interface IMapperlyMapper
     MetroLineItineraryResponse MapToMetroLineItineraryResponse(MetroLine entity);
     MetroLine MapToMetroLineEntity(MetroRouteRequest request);
     MetroRouteResponse MapToMetroLineResponse(MetroLine entity);
+    PaginatedListResponse<MetroRouteResponse> MapToMetroLinePaginatedList(PaginatedList<MetroLine> entityList);
+    MetroRouteResponseDetails MapToMetroLineResponseDetails(MetroLine entity);
+    void MapToMetroLineEntity(MetroRouteUpdateRequest request, MetroLine entity);
+
     // transaction
     Transaction MapToTransactionEntity(TransactionRequest request);
 

@@ -11,12 +11,14 @@ namespace MetroShip.Service.Interfaces
 {
     public interface IMetroRouteService
     {
-        Task<List<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request);
+        Task<PaginatedListResponse<MetroRouteResponse>> GetAllMetroRoutes(PaginatedListRequest request,
+            MetroRouteFilterRequest filter);
         Task<List<MetroLineItineraryResponse>> GetAllMetroRouteDropdown(string? stationId);
         Task<MetroRouteResponseDetails> GetMetroRouteById(string metroRouteId);
         Task<List<MetrolineGetByRegionResponse>> GetAllMetroLineByRegion(string? regionId);
         Task<int> CreateMetroRoute(MetroRouteRequest request);
         Task<string> ActivateMetroLine(string metroRouteId);
+        Task<string> UpdateMetroLine(MetroRouteUpdateRequest request);
         Task<List<MetroLineDto>> GetAllMetroLinesWithStationsAsync();
         Task<MetroLineDto> GetMetroLineByIdAsync(string lineId);
     }
