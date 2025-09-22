@@ -51,5 +51,18 @@ namespace MetroShip.Service.Interfaces
         #region List methods
         Task<List<string>> GetAllActiveTrainIdsAsync();
         #endregion
+
+        #region InitialSegmentIndex
+        
+        Task SetInitialSegmentIndexAsync(string trainId, int index);
+
+        
+        Task<int?> GetInitialSegmentIndexAsync(string trainId);
+
+        
+        Task RemoveInitialSegmentIndexAsync(string trainId);
+
+        Task<bool> HasInitialSegmentIndexAsync(string trainId);
+        #endregion
     }
 }

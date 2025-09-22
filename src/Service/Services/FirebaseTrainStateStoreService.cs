@@ -209,5 +209,46 @@ namespace MetroShip.Service.Services
             return trains;
         }
         #endregion
+
+        #region InitialSegmentIndex
+        /// <summary>
+        /// Set the initial segment index of a train (used for Scheduled or Completed status)
+        /// </summary>
+        public async Task SetInitialSegmentIndexAsync(string trainId, int index)
+        {
+            await _firebase.Child("train_state").Child(trainId).Child("InitialSegmentIndex").PutAsync(index);
+        }
+
+        /// <summary>
+        /// Get the initial segment index of a train
+        /// </summary>
+        public async Task<int?> GetInitialSegmentIndexAsync(string trainId)
+        {
+            try
+            {
+                return await _firebase.Child("train_state").Child(trainId).Child("InitialSegmentIndex").OnceSingleAsync<int>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Remove initial segment index of a train
+        /// </summary>
+        public async Task RemoveInitialSegmentIndexAsync(string trainId)
+        {
+            await _firebase.Child("train_state").Child(trainId).Child("InitialSegmentIndex").DeleteAsync();
+        }
+
+        /// <summary>
+        /// Check if InitialSegmentIndex exists
+        /// </summary>
+        public async Task<bool> HasInitialSegmentIndexAsync(string trainId)
+        {
+            return await GetInitialSegmentIndexAsync(trainId) != null;
+        }
+        #endregion
     }
 }
