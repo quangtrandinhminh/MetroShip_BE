@@ -105,6 +105,8 @@ public interface IMapperlyMapper
 
     // time slot
     MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+    PaginatedListResponse<MetroTimeSlotResponse> MapToPaginatedListResponse(PaginatedList<MetroTimeSlot> entityList);
+    void MapToMetroTimeSlotEntity(MetroTimeSlotUpdateRequest request, MetroTimeSlot entity);
 
     // media
     ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);

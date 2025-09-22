@@ -16,8 +16,8 @@ namespace MetroShip.Service.ApiModels.MetroTimeSlot
         public TimeOnly CloseTime { get; set; }
         public ShiftEnum Shift { get; set; }
         public bool IsAbnormal { get; set; }
-        public int ScheduleBeforeShiftMinutes { get; set; }= 30;
-        public int MaxScheduleBeforeShiftMinutes { get; set; } = 210;
+        /*public int ScheduleBeforeShiftMinutes { get; set; }= 30;
+        public int MaxScheduleBeforeShiftMinutes { get; set; } = 210;*/
         public TimeOnly? StartReceivingTime { get; set; }
         public TimeOnly? CutOffTime { get; set; }
     }

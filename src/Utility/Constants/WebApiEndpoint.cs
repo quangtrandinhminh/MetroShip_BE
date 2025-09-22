@@ -158,6 +158,7 @@
             public const string CreateMetroTimeSlot = BaseEndpoint;
             public const string UpdateMetroTimeSlot = BaseEndpoint;
             public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+            public const string GetAllMetroTimeSlots = BaseEndpoint + "/all";
         }
 
         public static class MetroTrainEndpoint
