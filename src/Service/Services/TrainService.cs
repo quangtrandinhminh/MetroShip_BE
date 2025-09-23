@@ -1041,23 +1041,20 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (routes == null || routes.Count == 0)
             throw new AppException(ErrorCode.NotFound, "No route data found", StatusCodes.Status404NotFound);
 
-        // 🔹 Lấy InitialSegmentIndex (route khởi đầu simulation)
-        var initialIndex = await _trainStateStore.GetInitialSegmentIndexAsync(trainId) ?? 0;
-
-        // --- Xác định route hiện tại dựa trên trạng thái ---
+        // --- Xác định trạng thái ---
         Route currentRoute;
         TrainStatusEnum displayStatus;
 
         if (startTime == null)
         {
-            // chưa start -> Scheduled
-            currentRoute = routes[initialIndex];
+            // chưa start -> Scheduled -> route đầu tiên
+            currentRoute = routes.First();
             displayStatus = TrainStatusEnum.Scheduled;
         }
         else if (currentIndex >= routes.Count)
         {
-            // đã chạy hết -> Completed
-            currentRoute = routes[initialIndex];
+            // đã chạy hết -> Completed -> route cuối cùng
+            currentRoute = routes.Last();
             displayStatus = TrainStatusEnum.Completed;
         }
         else
@@ -1067,24 +1064,36 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             displayStatus = train.Status;
         }
 
-        // --- NORMALIZE: muốn Scheduled và Completed "hiện ra giống nhau" ---
-        // Nếu bạn muốn chúng hoàn toàn giống nhau trên response, bật flag này.
-        bool normalizeIdle = displayStatus == TrainStatusEnum.Scheduled || displayStatus == TrainStatusEnum.Completed;
+        // --- From/To station theo trạng thái ---
+        Station from, to;
+        if (displayStatus == TrainStatusEnum.Scheduled)
+        {
+            from = routes.First().FromStation!;
+            to = routes.First().ToStation!;
+        }
+        else if (displayStatus == TrainStatusEnum.Completed)
+        {
+            from = routes.Last().ToStation!;
+            to = routes.Last().ToStation!;
+        }
+        else
+        {
+            from = currentRoute.FromStation!;
+            to = currentRoute.ToStation!;
+        }
 
-        var from = currentRoute.FromStation!;
-        var to = currentRoute.ToStation!;
         double lat = from.Latitude!.Value;
         double lng = from.Longitude!.Value;
         double eta = 0;
         double progress = 0;
         double elapsed = 0;
 
-        if (!normalizeIdle && startTime != null && displayStatus != TrainStatusEnum.Completed)
+        if (startTime != null && displayStatus != TrainStatusEnum.Completed && displayStatus != TrainStatusEnum.Scheduled)
         {
             // Đang chạy -> tính vị trí thực tế
             elapsed = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
             var distanceKm = (double)currentRoute.LengthKm;
-            var speedKmh = 100; // bạn có thể lấy tốc độ từ train nếu có
+            var speedKmh = 100;
             eta = (distanceKm / speedKmh) * 3600;
             progress = Math.Clamp(elapsed / eta, 0, 1);
 
@@ -1098,19 +1107,6 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             {
                 displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
             }
-        }
-        else
-        {
-            // normalize: cả Scheduled + Completed sẽ hiển thị giống nhau (vị trí = from station, progress = 0, eta = 0)
-            lat = from.Latitude.Value;
-            lng = from.Longitude.Value;
-            eta = 0;
-            progress = 0;
-            elapsed = 0;
-
-            // nếu bạn muốn status string cũng giống nhau thì uncomment:
-            displayStatus = TrainStatusEnum.Scheduled;
-            // nếu bạn muốn vẫn giữ "Completed" ở status string nhưng giá trị khác giống, bỏ dòng trên.
         }
 
         // --- Current animation path ---
@@ -1143,17 +1139,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 return new GeoPoint { Latitude = latStep, Longitude = lngStep };
             }).ToList();
 
-            bool isCompleted;
-            if (normalizeIdle)
-            {
-                // CHÚ Ý: để Scheduled và Completed "giống nhau" ta đặt isCompleted giống nhau (ở đây chọn = false)
-                isCompleted = false;
-            }
-            else
-            {
-                // logic cũ: nếu toàn bộ đã completed hoặc index trước currentIndex thì true
-                isCompleted = (displayStatus == TrainStatusEnum.Completed) || (i < (currentIndex ?? 0));
-            }
+            bool isCompleted = false;
+            if (displayStatus == TrainStatusEnum.Completed)
+                isCompleted = true;
+            else if (i < (currentIndex ?? 0))
+                isCompleted = true;
 
             fullPath.Add(new
             {
@@ -1215,8 +1205,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             .ToList();
 
         // --- Chuẩn bị StartTime cho response ---
-        // Gợi ý: tốt nhất đổi TrainPositionResult.StartTime thành nullable (DateTimeOffset?) để phản ánh chính xác.
-        DateTimeOffset? startTimeForResponse = normalizeIdle ? null : startTime;
+        DateTimeOffset? startTimeForResponse =
+            (displayStatus == TrainStatusEnum.Scheduled || displayStatus == TrainStatusEnum.Completed)
+            ? null
+            : startTime;
 
         var result = new TrainPositionResult
         {
