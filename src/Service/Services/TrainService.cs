@@ -1041,86 +1041,124 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (routes == null || routes.Count == 0)
             throw new AppException(ErrorCode.NotFound, "No route data found", StatusCodes.Status404NotFound);
 
-        // --- Xác định trạng thái ---
+        var idx = currentIndex ?? 0;
+
+        // --- Xác định trạng thái và currentRoute cơ bản ---
         Route currentRoute;
         TrainStatusEnum displayStatus;
 
         if (startTime == null)
         {
-            // chưa start -> Scheduled -> route đầu tiên
+            // chưa start -> Scheduled -> lấy route đầu tiên
             currentRoute = routes.First();
             displayStatus = TrainStatusEnum.Scheduled;
         }
-        else if (currentIndex >= routes.Count)
+        else if (idx >= routes.Count)
         {
-            // đã chạy hết -> Completed -> route cuối cùng
+            // đã chạy hết -> Completed -> currentRoute = route cuối cùng
             currentRoute = routes.Last();
             displayStatus = TrainStatusEnum.Completed;
         }
         else
         {
             // đang chạy
-            currentRoute = routes[currentIndex ?? 0];
+            currentRoute = routes[idx];
             displayStatus = train.Status;
         }
 
-        // --- From/To station theo trạng thái ---
-        Station from, to;
+        // --- Chọn from/to station hiển thị theo yêu cầu ---
+        Station fromStation;
+        Station toStation;
+
         if (displayStatus == TrainStatusEnum.Scheduled)
         {
-            from = routes.First().FromStation!;
-            to = routes.First().ToStation!;
+            fromStation = routes.First().FromStation!;
+            toStation = routes.First().ToStation!;
         }
         else if (displayStatus == TrainStatusEnum.Completed)
         {
-            from = routes.Last().ToStation!;
-            to = routes.Last().ToStation!;
+            // Hiển thị segment cuối; vị trí thực tế sẽ là toStation (đã đến trạm cuối)
+            fromStation = routes.Last().FromStation!;
+            toStation = routes.Last().ToStation!;
         }
         else
         {
-            from = currentRoute.FromStation!;
-            to = currentRoute.ToStation!;
+            // đang chạy -> segment theo currentRoute
+            fromStation = currentRoute.FromStation!;
+            toStation = currentRoute.ToStation!;
         }
 
-        double lat = from.Latitude!.Value;
-        double lng = from.Longitude!.Value;
-        double eta = 0;
+        // --- Tọa độ / progress / eta / elapsed ---
+        double lat = fromStation.Latitude!.Value;
+        double lng = fromStation.Longitude!.Value;
         double progress = 0;
-        double elapsed = 0;
+        double etaSeconds = 0;
+        double elapsedSeconds = 0;
 
-        if (startTime != null && displayStatus != TrainStatusEnum.Completed && displayStatus != TrainStatusEnum.Scheduled)
+        if (displayStatus == TrainStatusEnum.Scheduled)
         {
-            // Đang chạy -> tính vị trí thực tế
-            elapsed = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
-            var distanceKm = (double)currentRoute.LengthKm;
-            var speedKmh = 100;
-            eta = (distanceKm / speedKmh) * 3600;
-            progress = Math.Clamp(elapsed / eta, 0, 1);
+            // chưa bắt đầu: vị trí = from của segment đầu, progress = 0
+            lat = fromStation.Latitude.Value;
+            lng = fromStation.Longitude.Value;
+            progress = 0;
+            etaSeconds = 0;
+            elapsedSeconds = 0;
+        }
+        else if (displayStatus == TrainStatusEnum.Completed)
+        {
+            // đã hoàn thành: vị trí = last.ToStation, progress = 100%, ETA = 0, elapsed = now - startTime (nếu có)
+            var lastTo = routes.Last().ToStation!;
+            lat = lastTo.Latitude!.Value;
+            lng = lastTo.Longitude!.Value;
+            progress = 1.0;
+            etaSeconds = 0;
+            elapsedSeconds = startTime != null ? (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds : 0;
+        }
+        else
+        {
+            // đang chạy -> tính theo currentRoute và startTime
+            if (startTime != null)
+            {
+                elapsedSeconds = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
+                var distanceKm = (double)currentRoute.LengthKm;
+                var speedKmh = 100.0; // nếu có tốc độ thực tế lấy từ train -> thay vào đây
+                etaSeconds = (distanceKm / speedKmh) * 3600.0;
+                progress = etaSeconds > 0 ? Math.Clamp(elapsedSeconds / etaSeconds, 0.0, 1.0) : 0.0;
 
-            (lat, lng) = GeoUtils.Interpolate(
-                from.Latitude!.Value, from.Longitude!.Value,
-                to.Latitude!.Value, to.Longitude!.Value,
-                progress);
+                (lat, lng) = GeoUtils.Interpolate(
+                    fromStation.Latitude!.Value, fromStation.Longitude!.Value,
+                    toStation.Latitude!.Value, toStation.Longitude!.Value,
+                    progress);
 
             // --- Cập nhật status khi đang chạy ---
-            if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
+                if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
+                {
+                    displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
+                }
+            }
+            else
             {
-                displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
+                // phòng trường hợp startTime null nhưng status là running (không nên xảy ra) -> fallback đặt vị trí ở from
+                lat = fromStation.Latitude!.Value;
+                lng = fromStation.Longitude!.Value;
+                progress = 0;
+                etaSeconds = 0;
+                elapsedSeconds = 0;
             }
         }
 
-        // --- Current animation path ---
+        // --- Current animation path (từ from->to của segment hiển thị) ---
         var path = Enumerable.Range(0, 11).Select(i =>
         {
             var p = i / 10.0;
             var (stepLat, stepLng) = GeoUtils.Interpolate(
-                from.Latitude!.Value, from.Longitude!.Value,
-                to.Latitude!.Value, to.Longitude!.Value,
+                fromStation.Latitude!.Value, fromStation.Longitude!.Value,
+                toStation.Latitude!.Value, toStation.Longitude!.Value,
                 p);
             return new GeoPoint { Latitude = stepLat, Longitude = stepLng };
         }).ToList();
 
-        // --- Full polyline ---
+        // --- Full polyline: đánh dấu completed segments ---
         const int steps = 10;
         var fullPath = new List<object>();
         for (int i = 0; i < routes.Count; i++)
@@ -1139,11 +1177,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 return new GeoPoint { Latitude = latStep, Longitude = lngStep };
             }).ToList();
 
-            bool isCompleted = false;
+            bool isCompleted;
             if (displayStatus == TrainStatusEnum.Completed)
+            {
+                // tất cả completed
                 isCompleted = true;
-            else if (i < (currentIndex ?? 0))
-                isCompleted = true;
+            }
+            else if (displayStatus == TrainStatusEnum.Scheduled)
+            {
+                // chưa đi đâu -> không route nào completed
+                isCompleted = false;
+            }
+            else
+            {
+                // đang chạy: các route có index < currentIndex được coi là completed
+                isCompleted = i < idx;
+            }
 
             fullPath.Add(new
             {
@@ -1156,7 +1205,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // --- Shipments summary ---
+        // --- Shipments & Parcels (giữ nguyên logic của bạn) ---
         var allShipmentsRaw = await _trainRepository.GetLoadedShipmentsByTrainAsync(trainId);
         var allShipments = allShipmentsRaw
             .GroupBy(s => s.Id)
@@ -1204,24 +1253,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             })
             .ToList();
 
-        // --- Chuẩn bị StartTime cho response ---
-        DateTimeOffset? startTimeForResponse =
-            (displayStatus == TrainStatusEnum.Scheduled || displayStatus == TrainStatusEnum.Completed)
-            ? null
-            : startTime;
+        // --- StartTime for response: Scheduled => null, others => show real startTime if present ---
+        DateTimeOffset? startTimeForResponse = displayStatus == TrainStatusEnum.Scheduled ? (DateTimeOffset?)null : startTime;
 
         var result = new TrainPositionResult
         {
             TrainId = trainId,
             Latitude = lat,
             Longitude = lng,
-            // Nếu StartTime nullable trong model thì gán startTimeForResponse; nếu không thì gán fallback
-            StartTime = startTimeForResponse ?? DateTimeOffset.MinValue,
-            ETA = TimeSpan.FromSeconds(eta),
-            Elapsed = TimeSpan.FromSeconds(elapsed),
-            ProgressPercent = (int)(progress * 100),
-            FromStation = from.StationNameVi,
-            ToStation = to.StationNameVi,
+            StartTime = startTimeForResponse ?? DateTimeOffset.MinValue, // consider making this property nullable in the model
+            ETA = TimeSpan.FromSeconds(etaSeconds),
+            Elapsed = TimeSpan.FromSeconds(elapsedSeconds),
+            ProgressPercent = (int)Math.Round(progress * 100.0),
+            FromStation = displayStatus == TrainStatusEnum.Completed
+                ? routes.Last().FromStation!.StationNameVi // show the last segment's from (you can also set to last.ToStation if you prefer)
+                : fromStation.StationNameVi,
+            ToStation = displayStatus == TrainStatusEnum.Completed
+                ? routes.Last().ToStation!.StationNameVi
+                : toStation.StationNameVi,
             Status = displayStatus.ToString(),
             Path = path,
             AdditionalData = new
