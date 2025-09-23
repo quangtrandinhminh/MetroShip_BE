@@ -1031,7 +1031,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // 🔹 Lấy train và routes (cái này vẫn bắt buộc phải có)
         var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction ?? 0)
-            ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+        ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
         var routes = train.Line?.Routes?
             .Where(r => r.FromStation != null && r.ToStation != null && r.Direction == (direction ?? r.Direction))
@@ -1067,6 +1067,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             displayStatus = train.Status;
         }
 
+        // --- NORMALIZE: muốn Scheduled và Completed "hiện ra giống nhau" ---
+        // Nếu bạn muốn chúng hoàn toàn giống nhau trên response, bật flag này.
+        bool normalizeIdle = displayStatus == TrainStatusEnum.Scheduled || displayStatus == TrainStatusEnum.Completed;
+
         var from = currentRoute.FromStation!;
         var to = currentRoute.ToStation!;
         double lat = from.Latitude!.Value;
@@ -1075,11 +1079,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         double progress = 0;
         double elapsed = 0;
 
-        if (startTime != null && displayStatus != TrainStatusEnum.Completed)
+        if (!normalizeIdle && startTime != null && displayStatus != TrainStatusEnum.Completed)
         {
+            // Đang chạy -> tính vị trí thực tế
             elapsed = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
             var distanceKm = (double)currentRoute.LengthKm;
-            var speedKmh = 100;
+            var speedKmh = 100; // bạn có thể lấy tốc độ từ train nếu có
             eta = (distanceKm / speedKmh) * 3600;
             progress = Math.Clamp(elapsed / eta, 0, 1);
 
@@ -1093,6 +1098,19 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             {
                 displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
             }
+        }
+        else
+        {
+            // normalize: cả Scheduled + Completed sẽ hiển thị giống nhau (vị trí = from station, progress = 0, eta = 0)
+            lat = from.Latitude.Value;
+            lng = from.Longitude.Value;
+            eta = 0;
+            progress = 0;
+            elapsed = 0;
+
+            // nếu bạn muốn status string cũng giống nhau thì uncomment:
+            displayStatus = TrainStatusEnum.Scheduled;
+            // nếu bạn muốn vẫn giữ "Completed" ở status string nhưng giá trị khác giống, bỏ dòng trên.
         }
 
         // --- Current animation path ---
@@ -1125,11 +1143,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 return new GeoPoint { Latitude = latStep, Longitude = lngStep };
             }).ToList();
 
-            bool isCompleted = false;
-            if (displayStatus == TrainStatusEnum.Completed)
-                isCompleted = true;
-            else if (i < (currentIndex ?? 0))
-                isCompleted = true;
+            bool isCompleted;
+            if (normalizeIdle)
+            {
+                // CHÚ Ý: để Scheduled và Completed "giống nhau" ta đặt isCompleted giống nhau (ở đây chọn = false)
+                isCompleted = false;
+            }
+            else
+            {
+                // logic cũ: nếu toàn bộ đã completed hoặc index trước currentIndex thì true
+                isCompleted = (displayStatus == TrainStatusEnum.Completed) || (i < (currentIndex ?? 0));
+            }
 
             fullPath.Add(new
             {
@@ -1190,13 +1214,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             })
             .ToList();
 
-        // ✅ Kết quả cuối cùng
+        // --- Chuẩn bị StartTime cho response ---
+        // Gợi ý: tốt nhất đổi TrainPositionResult.StartTime thành nullable (DateTimeOffset?) để phản ánh chính xác.
+        DateTimeOffset? startTimeForResponse = normalizeIdle ? null : startTime;
+
         var result = new TrainPositionResult
         {
             TrainId = trainId,
             Latitude = lat,
             Longitude = lng,
-            StartTime = startTime ?? DateTimeOffset.UtcNow, // fallback nếu chưa có
+            // Nếu StartTime nullable trong model thì gán startTimeForResponse; nếu không thì gán fallback
+            StartTime = startTimeForResponse ?? DateTimeOffset.MinValue,
             ETA = TimeSpan.FromSeconds(eta),
             Elapsed = TimeSpan.FromSeconds(elapsed),
             ProgressPercent = (int)(progress * 100),
