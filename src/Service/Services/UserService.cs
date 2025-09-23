@@ -304,6 +304,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
         _logger.Information($"Delete user by id {id}");
         var user = await GetUserById(id);
         user.DeletedTime = CoreHelper.SystemTimeNow;
+        user.RefreshTokenExpiredTime = CoreHelper.SystemTimeNow;
         await _userRepository.UpdateAsync(user);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
     }

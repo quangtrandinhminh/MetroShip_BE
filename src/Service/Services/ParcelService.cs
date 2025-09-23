@@ -49,6 +49,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IShipmentTrackingRepository _shipmentTrackingRepository = serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IStaffAssignmentRepository _staffAssignmentRepository = serviceProvider.GetRequiredService<IStaffAssignmentRepository>();
 
     /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
@@ -145,6 +146,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     public async Task ConfirmParcelAsync (ParcelConfirmRequest request)
     {
         _logger.Information("Confirming parcel with code: {ParcelCode}", request.ParcelCode);
+        // check if staff assignment has station same as shipment departure station
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         var parcel = await _parcelRepository.GetAll()
             .Where(p => p.DeletedAt == null && p.ParcelCode == request.ParcelCode)
             .Include(p => p.Shipment)
@@ -162,12 +166,24 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 StatusCodes.Status400BadRequest);
         }
 
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
+        var staffStationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        // Check if stationId is the same as shipment departure station
+        if (!stationId.Equals(shipment.DepartureStationId))
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            $"Kiện hàng {request.ParcelCode} chỉ có thể được xác nhận nhận tại Ga {stationName}, " +
+            $"không thể xác nhận tại Ga {staffStationName}",
+            StatusCodes.Status400BadRequest);
+        }
+
         // Check if the parcel is already confirmed
         if (parcel.ParcelTrackings.Any(pt => pt.TrackingForShipmentStatus == ShipmentStatusEnum.PickedUp))
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Parcel has already been confirmed for pickup.",
+            $"Kiện hàng {request.ParcelCode} đã được xác nhận nhận tại ga {stationName}",
             StatusCodes.Status400BadRequest);
         }
 
@@ -177,11 +193,12 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Parcel confirmation is outside the allowed pickup time range.",
+            $"Kiện hàng {request.ParcelCode} không thể xác nhận nhận tại ga " +
+            $"{stationName} ngoài khung thời gian nhận hàng từ " +
+            $"{shipment.StartReceiveAt.Value.UtcToSystemTime()} đến {shipment.ScheduledDateTime.Value.UtcToSystemTime()}",
             StatusCodes.Status400BadRequest);
         }
 
-        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
         var parcelTracking = new ParcelTracking
         {
             ParcelId = parcel.Id,

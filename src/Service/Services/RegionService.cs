@@ -56,4 +56,37 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         await _unitOfWork.SaveChangeAsync();
         return RegionMessageConstants.REGION_CREATE_SUCCESS;
     }
+
+    // update region
+    public async Task<string> UpdateRegionAsync(UpdateRegionRequest request)
+    {
+        _logger.Information("Updating region with ID: {RegionId}", request.Id);
+
+        var region = await _regionRepository.GetByIdAsync(request.Id);
+        if (region == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            RegionMessageConstants.REGION_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Check if another region with the same name or code already exists
+        var existingRegion = await _regionRepository.IsExistAsync(
+                       r => (r.RegionName == request.RegionName) && r.Id != request.Id
+                              );
+        if (existingRegion)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            RegionMessageConstants.REGION_NAME_EXISTED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        region.RegionName = request.RegionName;
+
+        _regionRepository.Update(region);
+        await _unitOfWork.SaveChangeAsync();
+        return RegionMessageConstants.REGION_UPDATE_SUCCESS;
+    }
 }

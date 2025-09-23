@@ -30,7 +30,6 @@ namespace MetroShip.Service.Services
         private readonly IMapperlyMapper _mapper = serviceProvider.GetRequiredService<IMapperlyMapper>();
         private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
         private readonly IUnitOfWork _unitOfWork = serviceProvider.GetRequiredService<IUnitOfWork>();
-        private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
         private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
 
         public async Task<IList<MetroTimeSlotResponse>> GetAllForMetroTimeSlot()
@@ -196,31 +195,26 @@ namespace MetroShip.Service.Services
             bool requestCrossesMidnight = request.OpenTime > request.CloseTime;
             bool existingCrossesMidnight = existingSlot.Shift == ShiftEnum.Night && existingSlot.OpenTime > existingSlot.CloseTime;
 
-            if (requestCrossesMidnight && existingCrossesMidnight)
+            switch (requestCrossesMidnight)
             {
-                // Both cross midnight - they overlap if either part overlaps
-                return (request.OpenTime < existingSlot.CloseTime.AddHours(24) && request.CloseTime.AddHours(24) > existingSlot.OpenTime) ||
-                       (request.OpenTime < existingSlot.CloseTime && request.CloseTime.AddHours(24) > existingSlot.OpenTime);
-            }
-            else if (requestCrossesMidnight && !existingCrossesMidnight)
-            {
-                // Request crosses midnight, existing doesn't
-                // Check if request's first part (same day) overlaps with existing
-                // or if request's second part (next day) overlaps with existing
-                return (request.OpenTime < existingSlot.CloseTime && TimeOnly.MaxValue > existingSlot.OpenTime) ||
-                       (TimeOnly.MinValue < existingSlot.CloseTime && request.CloseTime > existingSlot.OpenTime);
-            }
-            else if (!requestCrossesMidnight && existingCrossesMidnight)
-            {
-                // Request doesn't cross midnight, existing does
-                // Check if request overlaps with either part of existing slot
-                return (request.OpenTime < existingSlot.CloseTime && request.CloseTime > TimeOnly.MinValue) ||
-                       (request.OpenTime < TimeOnly.MaxValue && request.CloseTime > existingSlot.OpenTime);
-            }
-            else
-            {
-                // Neither crosses midnight - standard overlap check
-                return request.OpenTime < existingSlot.CloseTime && request.CloseTime > existingSlot.OpenTime;
+                case true when existingCrossesMidnight:
+                    // Both cross midnight - they overlap if either part overlaps
+                    return (request.OpenTime < existingSlot.CloseTime.AddHours(24) && request.CloseTime.AddHours(24) > existingSlot.OpenTime) ||
+                           (request.OpenTime < existingSlot.CloseTime && request.CloseTime.AddHours(24) > existingSlot.OpenTime);
+                case true when !existingCrossesMidnight:
+                    // Request crosses midnight, existing doesn't
+                    // Check if request's first part (same day) overlaps with existing
+                    // or if request's second part (next day) overlaps with existing
+                    return (request.OpenTime < existingSlot.CloseTime && TimeOnly.MaxValue > existingSlot.OpenTime) ||
+                           (TimeOnly.MinValue < existingSlot.CloseTime && request.CloseTime > existingSlot.OpenTime);
+                case false when existingCrossesMidnight:
+                    // Request doesn't cross midnight, existing does
+                    // Check if request overlaps with either part of existing slot
+                    return (request.OpenTime < existingSlot.CloseTime && request.CloseTime > TimeOnly.MinValue) ||
+                           (request.OpenTime < TimeOnly.MaxValue && request.CloseTime > existingSlot.OpenTime);
+                default:
+                    // Neither crosses midnight - standard overlap check
+                    return request.OpenTime < existingSlot.CloseTime && request.CloseTime > existingSlot.OpenTime;
             }
         }
     }

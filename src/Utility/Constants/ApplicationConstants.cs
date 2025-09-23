@@ -110,6 +110,7 @@
         public const string CUSTOMER_NOT_FOUND = "Không tìm thấy khách hàng.";
         public const string ASSIGN_ROLE_SUCCESS = "Gán vai trò thành công.";
         public const string UPDATE_BANK_INFO_SUCCESS = "Cập nhật thông tin ngân hàng thành công.";
+        public const string STAFF_CANNOT_CONFIRM_AT_STATION = "Nhân viên không thể xác nhận bưu kiện tại ga ";
     }
 
     public class ResponseMessageConstrantsImage
@@ -306,6 +307,7 @@
         public const string REGION_NAME_REQUIRED = "Yêu cầu tên vùng.";
         public const string REGION_CODE_INVALID = "RegionId không hợp lệ.";
         public const string REGION_NAME_INVALID = "Tên vùng không hợp lệ.";
+        public const string REGION_NAME_EXISTED = "Tên vùng đã tồn tại.";
     }
 
     public class MetroRouteMessageConstants
