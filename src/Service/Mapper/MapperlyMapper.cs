@@ -187,6 +187,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
     public partial PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
+    public partial void MapToPricingConfigEntity(PricingConfigRequest request, PricingConfig entity);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);

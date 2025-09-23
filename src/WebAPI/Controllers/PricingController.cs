@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
@@ -11,12 +12,14 @@ using Microsoft.AspNetCore.Mvc;
 namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
+    [Produces("application/json")]
     public class PricingController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
 
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [HttpGet(WebApiEndpoint.PricingEndpoint.GetAllPricing)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<PricingTableResponse>>), 200)]
         public async Task<IActionResult> GetAllPricingAsync([FromQuery] PaginatedListRequest request)
         {
             var response = await _pricingService.GetPricingPaginatedList(request);
@@ -31,6 +34,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.PricingEndpoint.GetPricingTable)]
+        [ProducesResponseType(typeof(BaseResponse<PricingTableResponse>), 200)]
         public async Task<IActionResult> GetPricingTableAsync([FromQuery] string? pricingConfigId)
         {
             var pricingTable = await _pricingService.GetPricingTableAsync(pricingConfigId);

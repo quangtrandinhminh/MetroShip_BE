@@ -27,7 +27,6 @@
             public const string CreateStaff = BaseEndpoint + "/staff-account";
             public const string UpdateBankInfo = BaseEndpoint + "/bank-info";
             public const string GetBankInfoAndQrCode = BaseEndpoint + "/bank-info";
-            public const string BanUser = BaseEndpoint + "/ban/{id}";
         }
 
         public static class ParcelCategory

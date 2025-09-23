@@ -404,6 +404,10 @@
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
         public const string PRICING_CONFIG_ALREADY_ACTIVATED = "Cấu hình giá đã được kích hoạt";
+        public const string PRICING_CONFIG_IN_USE = "Cấu hình giá đã được kích hoạt và không thể chỉnh sửa. Vui lòng tạo cấu hình mới.";
+        public const string PRICING_CONFIG_EXPIRED = "Cấu hình giá đã hết hạn và không thể kích hoạt lại.";
+        public const string PRICING_CONFIG_ACTIVATE_SUCCESS = "Kích hoạt cấu hình giá thành công.";
+        public const string PRICING_CONFIG_CANNOT_ACTIVATE_ON_UPDATE = "Cấu hình giá không thể kích hoạt trong khi đang sửa đổi.";
     }
 
     public class ResponseMessageTimeSlot

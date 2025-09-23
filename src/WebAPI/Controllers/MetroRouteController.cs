@@ -1,6 +1,7 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
@@ -45,6 +46,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLines)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<MetroRouteResponse>>), 200)]
         public async Task<IActionResult> GetAllMetroRoutesAsync([FromQuery] PaginatedListRequest request
             , [FromQuery] MetroRouteFilterRequest filter)
         {
@@ -53,6 +55,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.MetroRouteEndpoint.GetMetroLineById)]
+        [ProducesResponseType(typeof(BaseResponse<MetroRouteResponseDetails>), 200)]
         public async Task<IActionResult> GetMetroRouteByIdAsync([FromRoute] string id)
         {
             var response = await _metroRouteService.GetMetroRouteById(id);
@@ -61,6 +64,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.MetroRouteEndpoint.GetMetroLineWithStationsById)]
+        [ProducesResponseType(typeof(BaseResponse<MetroLineDto>), 200)]
         public async Task<IActionResult> GetMetroLineWithStationsByIdAsync([FromRoute] string id)
         {
             var response = await _metroRouteService.GetMetroLineByIdAsync(id);
@@ -69,6 +73,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.MetroRouteEndpoint.GetAllActiveMetroLines)]
+        [ProducesResponseType(typeof(BaseResponse<List<MetroLineDto>>), 200)]
         public async Task<IActionResult> GetAllMetroLinesWithStationsAsync()
         {
             var response = await _metroRouteService.GetAllMetroLinesWithStationsAsync();

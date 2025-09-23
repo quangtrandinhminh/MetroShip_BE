@@ -721,27 +721,26 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
 
         var result = new List<string> { request.DepartureStationId };
 
-        if (request is { UserLongitude: not null, UserLatitude: not null })
+        if (request is not { UserLongitude: not null, UserLatitude: not null }) return result;
+
+        var nearStations = await _stationRepository.GetAllStationIdNearUser(
+            request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+
+        // Remove departure station if present (to avoid duplication)
+        nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
+
+        // Ensure at least 2 stations are available (including departure)
+        while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 10)
         {
-            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+            // Extend distance by 2 times
+            maxDistanceInMeters *= 2;
+            nearStations = await _stationRepository.GetAllStationIdNearUser(
                 request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
-
-            // Remove departure station if present (to avoid duplication)
             nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
-
-            // Ensure at least 2 stations are available (including departure)
-            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
-            {
-                // Extend distance by 1000 meters
-                maxDistanceInMeters += 2000;
-                nearStations = await _stationRepository.GetAllStationIdNearUser(
-                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
-                nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
-            }
-
-            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
-            result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
         }
+
+        // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+        result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
 
         return result;
     }

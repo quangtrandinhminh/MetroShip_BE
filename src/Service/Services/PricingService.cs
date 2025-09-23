@@ -1,4 +1,5 @@
-﻿using MetroShip.Repository.Extensions;
+﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
@@ -175,32 +176,83 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     {
         _logger.Information("Creating or updating pricing configuration: {@Request}", request);
         PricingConfigValidator.ValidatePricingConfigRequest(request);
-
-        var activeConfig = _pricingRepository.GetAllWithCondition(x => x.IsActive 
-        && x.DeletedAt == null);
-
-        if (activeConfig.Any() && request.IsActive)
+        string result;
+        // if updating existing config, ensure it exists and is not active
+        if (!string.IsNullOrEmpty(request.Id))
         {
-            foreach (var config in activeConfig)
+            _logger.Information("Updating existing pricing configuration with ID: {Id}", request.Id);
+
+            if (request.IsActive)
             {
-                config.IsActive = false;
-                config.EffectiveTo = CoreHelper.SystemTimeNow;
-                _pricingRepository.Update(config);
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_CANNOT_ACTIVATE_ON_UPDATE,
+                StatusCodes.Status400BadRequest
+                );
             }
 
-            _cache.Remove(CACHE_KEY); // Clear cache after update
-        }
+            var existingConfig = await _pricingRepository.GetSingleAsync(
+                    x => x.Id == request.Id && x.DeletedAt == null,
+                    false,
+                    x => x.WeightTiers, x => x.DistanceTiers
+                );
 
-        var pricingConfig = _mapper.MapToPricingConfigEntity(request);
-        if (request.IsActive)
+            if (existingConfig == null)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+                StatusCodes.Status400BadRequest
+                );
+            }
+
+            if (existingConfig.IsActive)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_IN_USE,
+                StatusCodes.Status400BadRequest
+                );
+            }
+
+            _mapper.MapToPricingConfigEntity(request, existingConfig);
+            _pricingRepository.Update(existingConfig);
+
+            result = ResponseMessagePricingConfig.PRICING_CONFIG_UPDATE_SUCCESS;
+        }
+        else
         {
-            pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
-        }
+            _logger.Information("Creating new pricing configuration.");
 
-        _pricingRepository.Add(pricingConfig);
+            // create new config and deactivate old active config if needed
+            var activeConfig = _pricingRepository.GetAllWithCondition(x => x.IsActive
+                                                                           && x.DeletedAt == null);
+
+            if (activeConfig.Any() && request.IsActive)
+            {
+                foreach (var config in activeConfig)
+                {
+                    config.IsActive = false;
+                    config.EffectiveTo = CoreHelper.SystemTimeNow;
+                    _pricingRepository.Update(config);
+                }
+
+                _cache.Remove(CACHE_KEY); // Clear cache after update
+            }
+
+            var pricingConfig = _mapper.MapToPricingConfigEntity(request);
+            if (request.IsActive)
+            {
+                pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
+            }
+
+            _pricingRepository.Add(pricingConfig);
+            result = ResponseMessagePricingConfig.PRICING_CONFIG_CREATE_SUCCESS;
+        }
+        
         await _unitOfWork.SaveChangeAsync();
        
-        return ResponseMessagePricingConfig.PRICING_CONFIG_CREATE_SUCCESS;
+        return result;
     }
 
     // activate config
@@ -224,7 +276,17 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             ResponseMessagePricingConfig.PRICING_CONFIG_ALREADY_ACTIVATED,
             StatusCodes.Status400BadRequest
             );
-        }   
+        }
+
+        // cannot activate expired config
+        if (pricingConfig.EffectiveTo != null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_EXPIRED,
+            StatusCodes.Status400BadRequest
+            );
+        }
 
         // ensure only one active config
         var activeConfigs = _pricingRepository.GetAllWithCondition(x => x.IsActive

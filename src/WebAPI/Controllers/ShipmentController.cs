@@ -3,6 +3,7 @@ using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.Graph;
 using MetroShip.Service.ApiModels.Notification;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Shipment;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.VNPay;
@@ -38,6 +39,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipments)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<ShipmentListResponse>>), 200)]
         public async Task<IActionResult> GetShipments([FromQuery] PaginatedListRequest request, [FromQuery] ShipmentFilterRequest? filterRequest,[FromQuery] string? searchKeyword, 
             [FromQuery] DateTimeOffset? createdFrom, [FromQuery] DateTimeOffset? createdTo, [FromQuery] OrderByRequest? orderByRequest)
         {
@@ -49,6 +51,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [Authorize]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentByTrackingCode)]
+        [ProducesResponseType(typeof(BaseResponse<ShipmentDetailsResponse>), 200)]
         public async Task<IActionResult> Get([FromRoute] string shipmentTrackingCode)
         {
             var response = await shipmentService.GetShipmentByTrackingCode(shipmentTrackingCode);
@@ -57,6 +60,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentsHistory)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<ShipmentListResponse>>), 200)]
         public async Task<IActionResult> GetHistory([FromQuery] PaginatedListRequest request, ShipmentStatusEnum? status)
         {
             var response = await shipmentService.GetShipmentsHistory(request, status);
@@ -74,6 +78,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpPost(WebApiEndpoint.ShipmentEndpoint.GetTotalPrice)]
+        [ProducesResponseType(typeof(BaseResponse<TotalPriceResponse>), 200)]
         public async Task<IActionResult> GetTotalPrice([FromBody] TotalPriceCalcRequest request)
         {
             var result = await shipmentService.GetItineraryAndTotalPrice(request);

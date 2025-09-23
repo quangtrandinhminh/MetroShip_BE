@@ -124,6 +124,7 @@ public interface IMapperlyMapper
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
     PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
+    void MapToPricingConfigEntity(PricingConfigRequest request, PricingConfig entity);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);

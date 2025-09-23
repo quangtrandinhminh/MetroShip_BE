@@ -2,7 +2,8 @@
 
 public record PricingConfigRequest
 {
-    public bool IsActive { get; set; } = true;
+    public string? Id { get; set; }
+    public bool IsActive { get; set; } 
     public int? FreeStoreDays { get; set; }
     public decimal? BaseSurchargePerDayVnd { get; set; }
     public decimal? RefundRate { get; set; }

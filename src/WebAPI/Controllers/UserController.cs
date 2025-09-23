@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.StaffAssignment;
 using MetroShip.Service.ApiModels.User;
 using MetroShip.Service.Helpers;
@@ -29,6 +30,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.User.GetUsers)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<UserResponse>>), 200)]
         public async Task<IActionResult> GetUser([FromQuery] PaginatedListRequest request, [FromQuery] UserRoleEnum? role, 
             [FromQuery] string? searchKeyword, [FromQuery] DateTimeOffset? createdFrom, [FromQuery] DateTimeOffset? createdTo, 
             [FromQuery] OrderByRequest? orderBy)
@@ -41,6 +43,7 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet]
         [Route(WebApiEndpoint.User.GetUser)]
+        [ProducesResponseType(typeof(BaseResponse<UserResponse>), 200)]
         public async Task<IActionResult> GetUser([FromRoute] string id)
         {
             return Ok(BaseResponse.OkResponseDto(await _userService.GetByIdAsync(id)));
@@ -97,15 +100,6 @@ namespace MetroShip.WebAPI.Controllers
         {
             await _userService.UpdateUserAsync(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.UPDATE_BANK_INFO_SUCCESS, null));
-        }
-
-        [HttpDelete]
-        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
-        [Route(WebApiEndpoint.User.BanUser)]
-        public async Task<IActionResult> BanUser([FromRoute] string id)
-        {
-            await _userService.BanUserAsync(id);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.BAN_USER_SUCCESS, null));
         }
     }
 }

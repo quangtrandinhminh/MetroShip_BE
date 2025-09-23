@@ -1,6 +1,7 @@
 ﻿using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.InsurancePolicy;
+using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
@@ -17,6 +18,7 @@ namespace MetroShip.WebAPI.Controllers
         private readonly IInsuranceService _insuranceService = serviceProvider.GetRequiredService<IInsuranceService>();
 
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllPolicies)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<InsurancePolicyResponse>>), 200)]
         public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request)
         {
             var response = await _insuranceService.GetAllPoliciesPaginatedList(request);
@@ -24,6 +26,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetPolicyById)]
+        [ProducesResponseType(typeof(BaseResponse<InsurancePolicyResponse>), 200)]
         public async Task<IActionResult> GetPolicyById([FromRoute] string id)
         {
             var response = await _insuranceService.GetPolicyById(id);
