@@ -27,6 +27,7 @@
             public const string CreateStaff = BaseEndpoint + "/staff-account";
             public const string UpdateBankInfo = BaseEndpoint + "/bank-info";
             public const string GetBankInfoAndQrCode = BaseEndpoint + "/bank-info";
+            public const string BanUser = BaseEndpoint + "/ban/{id}";
         }
 
         public static class ParcelCategory
@@ -158,6 +159,7 @@
             public const string CreateMetroTimeSlot = BaseEndpoint;
             public const string UpdateMetroTimeSlot = BaseEndpoint;
             public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+            public const string GetAllMetroTimeSlots = BaseEndpoint + "/all";
         }
 
         public static class MetroTrainEndpoint

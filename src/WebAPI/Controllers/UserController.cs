@@ -98,5 +98,14 @@ namespace MetroShip.WebAPI.Controllers
             await _userService.UpdateUserAsync(request);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.UPDATE_BANK_INFO_SUCCESS, null));
         }
+
+        [HttpDelete]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [Route(WebApiEndpoint.User.BanUser)]
+        public async Task<IActionResult> BanUser([FromRoute] string id)
+        {
+            await _userService.BanUserAsync(id);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.BAN_USER_SUCCESS, null));
+        }
     }
 }

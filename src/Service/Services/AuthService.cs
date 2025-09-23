@@ -215,6 +215,7 @@ namespace MetroShip.Service.Services
                     Avatar = payload.Picture,
                     EmailConfirmed = true,
                     SecurityStamp = Guid.NewGuid().ToString(),
+                    Verified = CoreHelper.SystemTimeNow
                 };
                 await _userRepository.CreateUserAsync(account);
                 await _userRepository.SaveChangeAsync();

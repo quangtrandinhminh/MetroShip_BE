@@ -168,6 +168,8 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // time slot
     public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+    public partial PaginatedListResponse<MetroTimeSlotResponse> MapToPaginatedListResponse(PaginatedList<MetroTimeSlot> entityList);
+    public partial void MapToMetroTimeSlotEntity(MetroTimeSlotUpdateRequest request, MetroTimeSlot entity);
 
     // media
     public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);

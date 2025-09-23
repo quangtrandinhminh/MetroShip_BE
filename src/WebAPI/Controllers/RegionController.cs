@@ -3,6 +3,7 @@ using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Region;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
+using MetroShip.Utility.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -30,10 +31,19 @@ namespace MetroShip.WebAPI.Controllers
         }*/
 
         [HttpPost(WebApiEndpoint.RegionEndpoint.CreateRegion)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> CreateRegionAsync([FromBody] CreateRegionRequest request)
         {
             var result = await _regionService.CreateRegionAsync(request);
             return Created(nameof(CreateRegionAsync), BaseResponse.OkResponseDto(result, null));
+        }
+
+        [HttpPut(WebApiEndpoint.RegionEndpoint.UpdateRegion)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> UpdateRegionAsync([FromBody] UpdateRegionRequest request)
+        {
+            var result = await _regionService.UpdateRegionAsync(request);
+            return Ok(BaseResponse.OkResponseDto(result, null));
         }
     }
 }
