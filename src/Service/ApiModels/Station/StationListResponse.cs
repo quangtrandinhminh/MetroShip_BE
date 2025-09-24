@@ -12,6 +12,7 @@ namespace MetroShip.Service.ApiModels.Station
         public string StationCode { get; set; }
         public string StationNameVi { get; set; }
         public string StationNameEn { get; set; }
+        public string Address { get; set; }
         public bool IsActive { get; set; }
         public string RegionId { get; set; }
         public double? Latitude { get; set; }

@@ -613,9 +613,9 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
         var maxVolumeM3 = decimal.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
-        /*var maxAttempt = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));*/
-        var maxAttempt = 3;
+        var maxAttempt = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));
+        //var maxAttempt = 3;
 
         // 4. Clone new shipment to handle new schedule for itineraries, calculate total weight and volume again to ensure not include lost parcel
         var shipment = new Shipment();

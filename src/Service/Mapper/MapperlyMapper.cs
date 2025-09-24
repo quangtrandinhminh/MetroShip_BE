@@ -66,6 +66,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
 
     public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    public partial ShipmentForGuest MapToShipmentForGuest(Shipment entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);

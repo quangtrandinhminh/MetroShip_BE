@@ -231,8 +231,25 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         return shipmentResponse;
     }
 
+    public async Task<ShipmentForGuest?> GetShipmentForGuest(string trackingCode)
+    {
+        _logger.Information("Get shipment by tracking code: {@trackingCode}", trackingCode);
+        var shipment = await _shipmentRepository.GetShipmentByTrackingCodeAsync(trackingCode);
+        if (shipment is null)
+        {
+            return null;
+        }
+
+        var shipmentResponse = _mapperlyMapper.MapToShipmentForGuest(shipment);
+        InitializeGraphAsync().Wait();
+        shipmentResponse.ItineraryGraph = _metroGraph.CreateItineraryGraphResponses(
+            shipmentResponse.ShipmentItineraries.Select(x => x.RouteId).ToList(),
+            _mapperlyMapper);
+        return shipmentResponse;
+    }
+
     public async Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentsHistory(PaginatedListRequest request,
-        ShipmentStatusEnum? status)
+        ShipmentStatusEnum? status, bool? isRecipient)
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Get shipments history with request: {@request} for {@cus}", request, customerId);
@@ -240,6 +257,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         if (status != null)
         {
             expression = expression.And(x => x.ShipmentStatus == status);
+        }
+
+        if (isRecipient != null && isRecipient.Value)
+        {
+            var customer = await _userRepository.GetUserByIdAsync(customerId);
+            expression = expression.And(x => x.RecipientId.Equals(customerId)
+                || x.RecipientPhone.Equals(customer.PhoneNumber) || x.RecipientEmail.Equals(customer.Email));
         }
 
         // var shipments = await _shipmentRepository.GetAllPaginatedQueryable(
@@ -392,9 +416,11 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         });
 
         // Check if all itineraries have been scheduled
-        /*var maxAttempt = _systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS));*/
-        await _itineraryService.CheckAvailableTimeSlotsAsync(shipment, 3);
+        var maxAttempt = int.Parse
+            (_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));
+
+        await _itineraryService.CheckAvailableTimeSlotsAsync(shipment, maxAttempt);
         shipment = await _shipmentRepository.AddAsync(shipment, cancellationToken);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 

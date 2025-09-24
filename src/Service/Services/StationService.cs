@@ -20,6 +20,9 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using System.Linq.Expressions;
+using MetroShip.Utility.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Service.Services
 {
@@ -47,6 +50,43 @@ namespace MetroShip.Service.Services
         _systemConfigRepository = systemConfigRepository;
         _httpContextAccessor = httpContextAccessor;
     }
+
+        public async Task<PaginatedListResponse<StationListResponse>> GetAllStationAsync(
+            PaginatedListRequest request, StationFilter filter)
+        {
+            Expression<Func<Station, bool>> predicate = s => s.DeletedAt == null;
+
+            if (!string.IsNullOrWhiteSpace(filter.RegionId))
+            {
+                predicate = predicate.And(s => s.RegionId == filter.RegionId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.MetroRouteId))
+            {
+                predicate = predicate.And(s => s.RoutesFrom.Any(mr => mr.MetroLine.Id == filter.MetroRouteId) 
+                || s.RoutesTo.Any(mr => mr.MetroLine.Id == filter.MetroRouteId));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.StationName))
+            {
+                predicate = predicate.And(s =>
+                    EF.Functions.ILike(s.StationNameVi, $"%{filter.StationName}%")
+                               || EF.Functions.ILike(s.StationNameEn, $"%{filter.StationName}%"));
+            }
+
+            if (filter.IsActive.HasValue)
+            {
+                predicate = predicate.And(s => s.IsActive == filter.IsActive.Value);
+            }
+
+            var stations = await _stationRepository.GetAllPaginatedQueryable(
+                request.PageNumber,
+                request.PageSize,
+                    predicate);
+
+            return _mapper.MapToStationListResponsePaginatedList(stations);
+        }
+
         public async Task<IEnumerable<StationListResponse>> GetAllStationsAsync(string? regionId)
         {
             var stations = string.IsNullOrWhiteSpace(regionId)

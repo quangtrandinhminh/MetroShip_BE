@@ -85,6 +85,7 @@
             public const string CompleteShipment = BaseEndpoint + "/complete";
             public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
             public const string ChangeItinerarySlot = BaseEndpoint + "/itineraries";
+            public const string GetShipmentForGuest = BaseEndpoint + "/guest/{shipmentTrackingCode}";
         }
 
         public static class TransactionEndpoint
@@ -130,11 +131,14 @@
         public static class StationEndpoint 
         {
             private const string BaseEndpoint = "/" + AreaName + "/stations";
-            public const string GetStations = BaseEndpoint;
+            public const string GetDropdownList = BaseEndpoint;
             public const string GetStationById = BaseEndpoint + "/{id}";
             public const string CreateStation = BaseEndpoint;
-            public const string UpdateStation = BaseEndpoint;
+            public const string UpdateStation = BaseEndpoint + "/{id}";
             public const string DeleteStation = BaseEndpoint + "/{id}";
+            public const string GetAllStations = BaseEndpoint + "/all";
+            public const string GetStationsNearUsers = BaseEndpoint + "/nearby";
+            public const string CalculateDistance = BaseEndpoint + "/distance";
         }
         public static class MetroRouteEndpoint
         {

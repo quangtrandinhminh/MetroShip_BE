@@ -43,6 +43,7 @@ public interface IMapperlyMapper
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     ShipmentListResponse MapToShipmentListResponse(Shipment entity);
     ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    ShipmentForGuest MapToShipmentForGuest(Shipment entity);
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(

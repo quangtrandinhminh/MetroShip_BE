@@ -2,15 +2,18 @@
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.ApiModels.Station;
 using MetroShip.Service.Interfaces;
+using MetroShip.Utility.Constants;
 using MetroShip.Utility.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
+using MetroShip.Utility.Enums;
 
 namespace MetroShip.WebAPI.Controllers
 {
-    [Route("api/stations")]
     [ApiController]
+    [Authorize]
     public class StationController : ControllerBase
     {
         private readonly IStationService _stationService;
@@ -20,14 +23,22 @@ namespace MetroShip.WebAPI.Controllers
             _stationService = stationService;
         }
 
-        [HttpGet]
+        [HttpGet(WebApiEndpoint.StationEndpoint.GetAllStations)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> GetAllStationsAsync([FromQuery] PaginatedListRequest request, [FromQuery] StationFilter filter)
+        {
+            var stations = await _stationService.GetAllStationAsync(request, filter);
+            return Ok(BaseResponse.OkResponseDto(stations));
+        }
+
+        [HttpGet(WebApiEndpoint.StationEndpoint.GetDropdownList)]
         public async Task<IActionResult> GetAllStationsAsync([FromQuery] string? regionId)
         {
             var stations = await _stationService.GetAllStationsAsync(regionId);
             return Ok(BaseResponse.OkResponseDto(stations));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet(WebApiEndpoint.StationEndpoint.GetStationById)]
         public async Task<IActionResult> GetStationById(Guid id)
         {
             var station = await _stationService.GetStationByIdAsync(id);
@@ -37,14 +48,15 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(station);
         }
 
-        [HttpPost("nearby")]
+        [HttpPost(WebApiEndpoint.StationEndpoint.GetStationsNearUsers)]
         public async Task<IActionResult> GetStationsNearUsers([FromBody] NearbyStationsRequest request)
         {
             var stations = await _stationService.GetStationsNearUsers(request);
             return Ok(BaseResponse.OkResponseDto(stations));
         }
 
-        [HttpPost("distance")]
+        [HttpPost(WebApiEndpoint.StationEndpoint.CalculateDistance)]
+        [AllowAnonymous]
         public async Task<IActionResult> CalculateDistance([FromBody] DistanceRequest request)
         {
             var distance = CalculateHelper.CalculateDistanceBetweenTwoCoordinatesByHaversine(
@@ -53,14 +65,16 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(distance));
         }
 
-        [HttpPost]
+        [HttpPost(WebApiEndpoint.StationEndpoint.CreateStation)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> CreateStation([FromBody] CreateStationRequest request)
         {
             var createdStation = await _stationService.CreateStationAsync(request);
             return CreatedAtAction(nameof(GetStationById), new { id = createdStation.Id }, createdStation);
         }
 
-        [HttpPut("{id}")]
+        [HttpPut(WebApiEndpoint.StationEndpoint.UpdateStation)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> UpdateStation(Guid id, [FromBody] UpdateStationRequest request)
         {
             var updatedStation = await _stationService.UpdateStationAsync(id,request);
@@ -70,7 +84,8 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(updatedStation);
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete(WebApiEndpoint.StationEndpoint.DeleteStation)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         public async Task<IActionResult> DeleteStation(Guid id)
         {
             await _stationService.DeleteStationAsync(id);

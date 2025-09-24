@@ -58,12 +58,22 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }
 
+        [AllowAnonymous]
+        [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentForGuest)]
+        [ProducesResponseType(typeof(BaseResponse<ShipmentForGuest>), 200)]
+        public async Task<IActionResult> GetShipmentDetailsForGuest([FromRoute] string shipmentTrackingCode)
+        {
+            var response = await shipmentService.GetShipmentForGuest(shipmentTrackingCode);
+            return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
+        }
+
         [Authorize(Roles = nameof(UserRoleEnum.Customer))]
         [HttpGet(WebApiEndpoint.ShipmentEndpoint.GetShipmentsHistory)]
         [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<ShipmentListResponse>>), 200)]
-        public async Task<IActionResult> GetHistory([FromQuery] PaginatedListRequest request, ShipmentStatusEnum? status)
+        public async Task<IActionResult> GetHistory([FromQuery] PaginatedListRequest request, ShipmentStatusEnum? status,
+            bool? isRecipient)
         {
-            var response = await shipmentService.GetShipmentsHistory(request, status);
+            var response = await shipmentService.GetShipmentsHistory(request, status, isRecipient);
             return Ok(BaseResponse.OkResponseDto(response, _enumResponses));
         }
 
