@@ -112,8 +112,7 @@ namespace MetroShip.Utility.Config
         public string MAX_CAPACITY_PER_LINE_KG { get; set; }
         public string MAX_CAPACITY_PER_LINE_M3 { get; set; }
         public string MAX_NUMBER_OF_SHIFT_ATTEMPTS { get; set; }
-
-
+        public string NUM_OF_MAX_DISTANCE_EXPANSION_TIMES { get; set; }
 
         // main policy
         public string MAX_SCHEDULE_SHIPMENT_DAY { get; set; }
