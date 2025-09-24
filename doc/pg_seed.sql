@@ -2736,6 +2736,6 @@ VALUES
      'Số lần dời ca tối đa khi tự động xếp lịch cho đơn hàng', 1,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('d4cc6723-f0d3-4db5-a13a-a81099816502','CANCEL_TRANSACTION_AFTER_MINUTE','3',
-     'Số lần dời ca tối đa khi tự động xếp lịch cho đơn hàng', 1,TRUE,
+     'Thời gian hủy giao dịch treo ở chờ thanh toán', 1,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL);
 
