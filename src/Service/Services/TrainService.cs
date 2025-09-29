@@ -59,6 +59,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     private readonly ITrainStateStoreService _trainStateStore =
         serviceProvider.GetRequiredService<ITrainStateStoreService>();
     private readonly ITrainScheduleRepository _trainScheduleRepository = serviceProvider.GetRequiredService<ITrainScheduleRepository>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -103,6 +105,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
+        var stationIds = paginatedList.Items
+            .SelectMany(t => new[] { t.CurrentStationId, t.CurrentRouteStationId })
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .ToList();
+        var stationNames = await _stationRepository.GetStationNamesByIdsAsync(stationIds);
+        /*var currentRouteStationIds = paginatedList.Items
+            .Where(t => t.Status == TrainStatusEnum.Departed && t.CurrentRouteStationId != null)
+            .Select(t => t.CurrentRouteStationId).ToList();
+        var routeStations = _routeStationRepository.GetAllWithCondition(rs => currentRouteStationIds.Contains(rs.Id))
+            .ToList();*/
 
         // Map entity -> DTO
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
@@ -122,6 +135,28 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         foreach (var train in response.Items) // train bây giờ là TrainListResponse
         {
+            /*if (train.Status == TrainStatusEnum.Departed && train.CurrentRouteStationId != null)
+            {
+                var routeStation = routeStations.FirstOrDefault(rs => rs.Id == train.CurrentRouteStationId);
+                if (routeStation != null)
+                {
+                    train.NextStationId = routeStation.ToStationId;
+                }
+            }*/
+
+            // Gán tên ga hiện tại
+            if (!string.IsNullOrEmpty(train.CurrentStationId) && stationNames.TryGetValue(train.CurrentStationId, out var currentStationName))
+            {
+                train.CurrentStationName = currentStationName;
+            }
+
+            // Gán tên ga tiếp theo
+            if (!string.IsNullOrEmpty(train.CurrentRouteStationId) && stationNames.TryGetValue(train.CurrentRouteStationId, out var nextStationName))
+            {
+                train.NextStationId = train.CurrentRouteStationId;
+                train.NextStationName = nextStationName;
+            }
+
             // Gán train schedules
             train.TrainSchedules = trainSchedules
                 .Where(ts => ts.TrainId == train.Id)
@@ -591,7 +626,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             train.CurrentStationId = prevRoute.ToStationId;
             train.Latitude = prevRoute.ToStation?.Latitude;
             train.Longitude = prevRoute.ToStation?.Longitude;
-
+            train.CurrentRouteStationId = null;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
         }
@@ -626,6 +661,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         train.Status = TrainStatusEnum.Departed;
         train.CurrentStationId = null;
+        // save next station id temporarily
+        train.CurrentRouteStationId = nextRoute.ToStationId;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
@@ -1378,9 +1415,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     "⚠️ Unexpected station for TrainId={TrainId}. Expected: {ExpectedStationId}, Received: {ReceivedStationId}, Direction={Direction}, SegmentIndex={SegmentIndex}",
                     trainId, expectedStationId, stationId, direction, resolvedSegmentIndex);
 
+                var expectedStationName = _stationRepository.GetStationNameByIdAsync(expectedStationId);
                 throw new AppException(
                     ErrorCode.BadRequest,
-                    $"Unexpected station. Expected: {expectedStationId}, Received: {stationId}",
+                    $"Bạn cần làm việc ở ga {expectedStationName} để xác nhận tàu đã đến trạm này. ",
                     StatusCodes.Status400BadRequest);
             }
 
