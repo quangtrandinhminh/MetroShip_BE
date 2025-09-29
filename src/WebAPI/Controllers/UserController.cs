@@ -70,7 +70,7 @@ namespace MetroShip.WebAPI.Controllers
         [HttpDelete]
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [Route(WebApiEndpoint.User.DeleteUser)]
-        public async Task<IActionResult> BanUser([FromRoute] int id)
+        public async Task<IActionResult> BanUser([FromRoute] string id)
         {
             await _userService.BanUserAsync(id);
             return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.BAN_USER_SUCCESS, null));
