@@ -27,7 +27,7 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string? PricingConfigId { get; set; }
     public string? PriceStructureDescriptionJSON { get; set; }
     public DateTimeOffset? PaymentDealine { get; set; }
-    
+    public DateTimeOffset? EstArrivalTime { get; set; }
 
     // Status tracking timestamps
     public string? RejectionReason { get; set; } // Reason for rejection, if applicable

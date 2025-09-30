@@ -228,6 +228,9 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         shipmentResponse.ItineraryGraph = _metroGraph.CreateItineraryGraphResponses(
             shipmentResponse.ShipmentItineraries.Select(x => x.RouteId).ToList(),
             _mapperlyMapper);
+
+        var itineraryResponse = shipmentResponse.ShipmentItineraries.OrderBy(i => i.LegOrder).LastOrDefault();
+        shipmentResponse.EstArrivalTime = await _itineraryService.CheckEstArrivalTime(itineraryResponse);
         return shipmentResponse;
     }
 

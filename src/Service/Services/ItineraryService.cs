@@ -45,7 +45,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
         _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
 
@@ -1037,5 +1037,32 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             };
             targetParcels.Add(newParcel);
         }
+    }
+
+    // check est arrival time for itinerary response
+    public async Task<DateTimeOffset> CheckEstArrivalTime(ItineraryResponse itineraryResponse)
+    {
+        var timeSlot = await _metroTimeSlotRepository.GetSingleAsync(
+                       x => x.Id == itineraryResponse.TimeSlotId && !x.IsAbnormal && x.DeletedAt == null);
+
+        if (timeSlot == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND + $" Khung giờ {itineraryResponse.TimeSlotId}",
+            StatusCodes.Status404NotFound);
+        }
+
+        var closeTime = timeSlot.CloseTime;
+        var date = itineraryResponse.Date.Value;
+        var systemDateTime = new DateTimeOffset(
+                                  date.Year, date.Month, date.Day,
+                                  closeTime.Hour, closeTime.Minute, closeTime.Second,
+                                  TimeSpan.FromHours(7)); // gmt +7
+
+        var utcTime = systemDateTime.ToUniversalTime();
+
+        var estArrivalTime = utcTime;
+        return estArrivalTime;
     }
 }
