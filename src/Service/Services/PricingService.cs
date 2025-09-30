@@ -60,7 +60,7 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         {
             pricingConfig = await _pricingRepository.GetSingleAsync(
                 x => x.Id == pricingConfigId,
-                false,
+                true,
                 x => x.WeightTiers, x => x.DistanceTiers
                 );
             if (pricingConfig == null)
@@ -360,46 +360,18 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     public async Task<int> GetFreeStoreDaysAsync(string pricingConfigId)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "No active pricing configuration found.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
         return pricingConfig.FreeStoreDays ?? 0;
     }
 
     public async Task<int> GetRefundForCancellationBeforeScheduledHours (string pricingConfigId)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException
-            (
-                ErrorCode.BadRequest,
-                "No active pricing configuration found.",
-                StatusCodes.Status400BadRequest
-            );
-        }
-
         return pricingConfig.RefundForCancellationBeforeScheduledHours ?? 0;
     }
 
     public async Task<decimal> CalculateRefund(string pricingConfigId, decimal? totalPrice)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "No active pricing configuration found.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
         return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
     }
 }

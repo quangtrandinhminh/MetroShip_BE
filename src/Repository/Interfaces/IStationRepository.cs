@@ -21,4 +21,5 @@ public interface IStationRepository : IBaseRepository<Station>
 
     Task<List<string>> GetAllStationsCanLoadShipmentAsync(string shipmentId);
     Task<List<string>> GetAllStationsCanUnloadShipmentAsync(string shipmentId);
+    Task<string?> GetStationAddressByIdAsync(string stationId);
 }

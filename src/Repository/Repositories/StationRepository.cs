@@ -224,4 +224,15 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         stationIds.Add(shipment.DestinationStationId);
         return stationIds;
     }
+
+    public async Task<string?> GetStationAddressByIdAsync(string stationId)
+    {
+        if (string.IsNullOrEmpty(stationId))
+            return null;
+
+        return await _context.Stations
+            .Where(s => s.Id == stationId)
+            .Select(s => s.Address)
+            .FirstOrDefaultAsync();
+    }
 }
