@@ -23,6 +23,14 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(result));
         }
 
+        [Authorize]
+        [HttpGet(WebApiEndpoint.SystemConfigEndpoint.GetConfigValueByKey)]
+        public async Task<IActionResult> GetSystemConfigValueByKey([FromRoute] string configKey)
+        {
+            var result = await _systemConfigService.GetSystemConfigValueByKey(configKey);
+            return Ok(BaseResponse.OkResponseDto(result));
+        }
+
         [HttpPost(WebApiEndpoint.SystemConfigEndpoint.ChangeConfigValue)]
         public async Task<IActionResult> ChangeConfigValue([FromBody] ChangeConfigValueRequest request)
         {

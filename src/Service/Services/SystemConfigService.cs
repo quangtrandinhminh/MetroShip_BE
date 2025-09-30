@@ -169,4 +169,20 @@ public class SystemConfigService(IServiceProvider serviceProvider) : ISystemConf
 
         return ResponseMessageSystemConfig.CONFIG_UPDATE_SUCCESS;
     }
+
+    // get config value by key
+    public async Task<SystemConfigResponse> GetSystemConfigValueByKey(string configKey)
+    {
+        _logger.Information("Get system config value by key: {ConfigKey}", configKey);
+        var config = await _systemConfigRepository.GetSingleAsync(x => x.ConfigKey == configKey && x.IsActive && x.DeletedAt == null);
+        if (config == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageSystemConfig.CONFIG_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        return _mapper.MapToSystemConfigResponse(config);
+    }
 }

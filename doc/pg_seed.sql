@@ -2735,7 +2735,7 @@ VALUES
     ('d074d0d7-a9ac-48f0-acde-b75bf3eafb94','MAX_NUMBER_OF_SHIFT_ATTEMPTS','3',
      'Số lần dời ca tối đa khi tự động xếp lịch cho đơn hàng', 1,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('d4cc6723-f0d3-4db5-a13a-a81099816502','CANCEL_TRANSACTION_AFTER_MINUTE','3',
+    ('d4cc6723-f0d3-4db5-a13a-a81099816502','CANCEL_TRANSACTION_AFTER_MINUTE','15',
      'Thời gian hủy giao dịch treo ở chờ thanh toán', 1,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL);
 

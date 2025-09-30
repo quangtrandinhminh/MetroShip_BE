@@ -170,7 +170,8 @@ namespace MetroShip.Service.Services
 
             var initialMaxDistance = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_DISTANCE_IN_METERS))); // 5000m
             var maxCount = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_COUNT_STATION_NEAR_USER))); // 3
-            var maxAllowedDistance = initialMaxDistance * 10;
+            var maxDistanceExpansionTime = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.NUM_OF_MAX_DISTANCE_EXPANSION_TIMES))); // 10 times
+            var maxAllowedDistance = initialMaxDistance * maxDistanceExpansionTime; // 50000m
 
             _logger.Information("Max distance in meters: {MaxDistance}, Max count: {MaxCount}",
                                initialMaxDistance, maxCount);

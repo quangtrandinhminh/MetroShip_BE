@@ -718,6 +718,8 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
         var maxStationCount = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
+        var maxDistanceExpansionTime = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.NUM_OF_MAX_DISTANCE_EXPANSION_TIMES))); // 10 times
 
         var result = new List<string> { request.DepartureStationId };
 
@@ -730,7 +732,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
         nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
 
         // Ensure at least 2 stations are available (including departure)
-        while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 10)
+        while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * maxDistanceExpansionTime)
         {
             // Extend distance by 2 times
             maxDistanceInMeters *= 2;

@@ -406,7 +406,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         var pricingTable = await _pricingService.GetPricingTableAsync(null);
         shipment.PricingConfigId = pricingTable.Id;
         shipment.PriceStructureDescriptionJSON = pricingTable.ToJsonString();
-        shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(15);
+
+        var cancelAfterMinutes = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE))); // 15 minutes
+        shipment.PaymentDealine = shipment.BookedAt.Value.AddMinutes(cancelAfterMinutes);
         await _backgroundJobService.ScheduleUnpaidJob(shipment.Id, shipment.PaymentDealine.Value);
 
         shipment.ShipmentTrackings.Add(new ShipmentTracking

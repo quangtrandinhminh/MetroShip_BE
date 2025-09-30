@@ -212,6 +212,7 @@
             public const string CreateSystemConfig = BaseEndpoint;
             public const string ChangeConfigValue = BaseEndpoint + "/config-value";
             public const string UpdateSystemConfig = BaseEndpoint;
+            public const string GetConfigValueByKey = BaseEndpoint + "/{configKey}";
         }
 
         public static class RegionEndpoint
