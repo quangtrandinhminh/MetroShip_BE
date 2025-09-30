@@ -6,5 +6,8 @@ namespace MetroShip.Service.Interfaces;
 public interface IStaffAssignmentService
 {
     Task<StaffAssignment?> GetByStaffIdAsync(string staffId);
-    Task<int> AssignAsync(StaffAssignmentRequest request);
+    Task<string> AssignAsync(StaffAssignmentRequest request);
+    Task<string> ActivateAssignment(string assignmentId);
+    Task<string> DeactivateAssignment(string assignmentId);
+    Task<string> DeactivateAssignmentByStaffId(string staffId);
 }

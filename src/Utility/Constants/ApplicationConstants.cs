@@ -428,4 +428,15 @@
         public const string START_TIME_MUST_BE_BEFORE_OPEN_TIME = "Giờ bắt đầu nhận hàng phải sớm hơn giờ mở ca.";
         public const string INVALID_NIGHT_SHIFT_TIMES = "Khung giờ ca đêm không hợp lệ. Giờ mở ca phải sau 18:00 và giờ đóng ca phải trước 06:00.";
     }
+
+    public class ResponseMessageAssignment
+    {
+        public const string ASSIGNMENT_NOT_FOUND = "Không tìm thấy phân công.";
+        public const string ASSIGNMENT_EXISTED = "Phân công đã tồn tại.";
+        public const string ASSIGNMENT_UPDATE_SUCCESS = "Cập nhật phân công thành công.";
+        public const string ASSIGNMENT_DELETE_SUCCESS = "Xóa phân công thành công.";
+        public const string ASSIGNMENT_CREATE_SUCCESS = "Phân công thành công.";
+        public const string ASSIGNMENT_ALREADY_INACTIVE = "Phân công đã không còn hiệu lực.";
+        public const string ASSIGNMENT_DEACTIVATE_SUCCESS = "Hủy phân công thành công.";
+    }
 }

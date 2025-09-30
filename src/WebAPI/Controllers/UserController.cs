@@ -82,7 +82,16 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> AssignRole([FromBody] StaffAssignmentRequest request)
         {
             var result = await _staffAssignmentService.AssignAsync(request);
-            return Ok(BaseResponse.OkResponseDto(ResponseMessageConstantsUser.ASSIGN_ROLE_SUCCESS, result));
+            return Ok(BaseResponse.OkResponseDto(result, null));
+        }
+
+        [HttpDelete]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [Route(WebApiEndpoint.User.RevokeStaffAssignment)]
+        public async Task<IActionResult> RevokeAssignment([FromRoute] string staffId)
+        {
+            var result = await _staffAssignmentService.DeactivateAssignmentByStaffId(staffId);
+            return Ok(BaseResponse.OkResponseDto(result, null, result));
         }
 
         // Get all assignmentRole enums
