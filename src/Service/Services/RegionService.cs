@@ -6,6 +6,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -25,7 +26,7 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         var regions = await _regionRepository.GetAllPaginatedQueryable(
                 request.PageNumber,
                 request.PageSize,
-                null,
+                x => x.DeletedAt == null,
                 r => r.RegionName,
                 true
         );
@@ -88,5 +89,36 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         _regionRepository.Update(region);
         await _unitOfWork.SaveChangeAsync();
         return RegionMessageConstants.REGION_UPDATE_SUCCESS;
+    }
+
+    // delete region
+    public async Task<string> DeleteRegionAsync(string regionId)
+    {
+        _logger.Information("Deleting region with ID: {RegionId}", regionId);
+
+        var region = await _regionRepository.GetSingleAsync(r => r.Id == regionId);
+        if (region == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            RegionMessageConstants.REGION_NOT_FOUND,
+                        StatusCodes.Status404NotFound);
+        }
+
+        var isMetroRouteExist = await _regionRepository.IsExistAsync(r => r.MetroLines.Any(ml => ml.DeletedAt == null) && r.Id == regionId);
+        var isStationExist = await _regionRepository.IsExistAsync(r => r.Stations.Any(s => s.DeletedAt == null) && r.Id == regionId);
+        if (isMetroRouteExist || isStationExist)
+        {
+            region.DeletedAt = CoreHelper.SystemTimeNow;
+            _regionRepository.Update(region);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        else
+        {
+            _regionRepository.Delete(region);
+            await _unitOfWork.SaveChangeAsync();
+        }
+
+        return RegionMessageConstants.REGION_DELETE_SUCCESS;
     }
 }

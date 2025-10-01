@@ -222,7 +222,7 @@
             public const string GetRegionById = BaseEndpoint + "/{id}";
             public const string CreateRegion = BaseEndpoint;
             public const string UpdateRegion = BaseEndpoint + "/{id}";
-            public const string DeleteRegion = BaseEndpoint + "/{id}";
+            public const string DeleteRegion = BaseEndpoint + "/{regionId}";
         }
 
         public static class PricingEndpoint

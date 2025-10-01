@@ -10,4 +10,6 @@ public interface IRegionService
     Task<string> CreateRegionAsync(CreateRegionRequest request);
 
     Task<string> UpdateRegionAsync(UpdateRegionRequest request);
+
+    Task<string> DeleteRegionAsync(string regionId);
 }

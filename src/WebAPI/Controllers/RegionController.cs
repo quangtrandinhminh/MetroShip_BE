@@ -45,5 +45,13 @@ namespace MetroShip.WebAPI.Controllers
             var result = await _regionService.UpdateRegionAsync(request);
             return Ok(BaseResponse.OkResponseDto(result, null));
         }
+
+        [HttpDelete(WebApiEndpoint.RegionEndpoint.DeleteRegion)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> DeleteRegionAsync([FromRoute] string regionId)
+        {
+            var result = await _regionService.DeleteRegionAsync(regionId);
+            return Ok(BaseResponse.OkResponseDto(result, null));
+        }
     }
 }
