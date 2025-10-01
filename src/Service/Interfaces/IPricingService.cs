@@ -7,7 +7,8 @@ namespace MetroShip.Service.Interfaces;
 
 public interface IPricingService
 {
-    Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request);
+    Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request,
+        bool? isActive = null);
     Task<decimal> CalculatePriceAsync(decimal weightKg, decimal distanceKm);
     Task<PricingTableResponse> GetPricingTableAsync(string? pricingConfigId);
     Task<decimal> CalculateRefund(string pricingConfigId, decimal? totalPrice);
@@ -16,4 +17,5 @@ public interface IPricingService
     Task<int> GetRefundForCancellationBeforeScheduledHours(string pricingConfigId);
     Task<string> ChangePricingConfigAsync(PricingConfigRequest request);
     Task<string> ActivatePricingConfigAsync(string pricingConfigId);
+    Task<string> DeletePricingConfigAsync(string pricingConfigId);
 }

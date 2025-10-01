@@ -109,12 +109,14 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         var isStationExist = await _regionRepository.IsExistAsync(r => r.Stations.Any(s => s.DeletedAt == null) && r.Id == regionId);
         if (isMetroRouteExist || isStationExist)
         {
+            _logger.Information("Region with ID: {RegionId} has associated MetroLines or Stations. Performing soft delete.", regionId);
             region.DeletedAt = CoreHelper.SystemTimeNow;
             _regionRepository.Update(region);
             await _unitOfWork.SaveChangeAsync();
         }
         else
         {
+            _logger.Information("Region with ID: {RegionId} has no associated MetroLines or Stations. Performing hard delete.", regionId);
             _regionRepository.Delete(region);
             await _unitOfWork.SaveChangeAsync();
         }

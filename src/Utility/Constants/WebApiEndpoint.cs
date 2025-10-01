@@ -233,7 +233,7 @@
             public const string GetPricingTable = BaseEndpoint + "/table";
             public const string CreatePricing = BaseEndpoint;
             public const string UpdatePricing = BaseEndpoint + "/activation/{pricingConfigId}";
-            public const string DeletePricing = BaseEndpoint + "/{id}";
+            public const string DeletePricing = BaseEndpoint + "/{pricingConfigId}";
             public const string CalculatePrice = BaseEndpoint + "/calculation";
         }
 

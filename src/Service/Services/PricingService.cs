@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Linq.Expressions;
 
 namespace MetroShip.Service.Services;
 
@@ -31,14 +32,19 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     private const int CACHE_EXPIRY_MINUTES = 30;
     private const string CACHE_KEY = "DefaultPricingConfig";
 
-    public async Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request)
+    public async Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request, bool? isActive = null)
     {
         _logger.Information("Fetching all pricing configurations with pagination: {@Request}", request);
+        Expression<Func<PricingConfig, bool>> predicate = x => x.DeletedAt == null;
+        if (isActive.HasValue)
+        {
+            predicate = predicate.And(x => x.IsActive == isActive.Value);
+        }
 
         var pricingConfigs = await _pricingRepository.GetAllPaginatedQueryable(
                 request.PageNumber,
                 request.PageSize,
-                x => x.DeletedAt == null,
+                predicate,
                 x => x.LastUpdatedAt, false,
                 x => x.WeightTiers, x => x.DistanceTiers
         );
@@ -373,5 +379,60 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
         return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
+    }
+
+    // delete pricing config
+    public async Task<string> DeletePricingConfigAsync(string pricingConfigId)
+    {
+        var pricingConfig = await _pricingRepository.GetSingleAsync(
+        x => x.Id == pricingConfigId && x.DeletedAt == null,
+        true,
+        x => x.WeightTiers, x => x.DistanceTiers
+                    );
+        if (pricingConfig == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+            StatusCodes.Status400BadRequest
+                );
+        }
+
+        if (pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_IN_USE,
+            StatusCodes.Status400BadRequest
+            );
+        }
+
+        var isUsedInShipment = await _pricingRepository.IsExistAsync(
+                       x => x.Shipments.Any(s => s.DeletedAt == null) && x.Id == pricingConfigId);
+
+        if (isUsedInShipment)
+        {
+            _logger.Information("Soft deleting pricing configuration with ID: {PricingConfigId}", pricingConfigId);
+            pricingConfig.DeletedAt = CoreHelper.SystemTimeNow;
+            foreach (var weightTier in pricingConfig.WeightTiers)
+            {
+                weightTier.DeletedAt = CoreHelper.SystemTimeNow;
+            }
+            foreach (var distanceTier in pricingConfig.DistanceTiers)
+            {
+                distanceTier.DeletedAt = CoreHelper.SystemTimeNow;
+            }
+
+            _pricingRepository.Update(pricingConfig);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        else
+        {
+            _logger.Information("Permanently deleting pricing configuration with ID: {PricingConfigId}", pricingConfigId);
+            _pricingRepository.Delete(pricingConfig);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        
+        return ResponseMessagePricingConfig.PRICING_CONFIG_DELETE_SUCCESS;
     }
 }
