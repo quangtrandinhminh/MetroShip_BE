@@ -365,6 +365,7 @@
         public const string INSURANCE_POLICY_ALREADY_DEACTIVATED = "Chính sách bảo hiểm đang được vô hiệu hóa";
         public const string INSURANCE_POLICY_IN_USE = "Chính sách bảo hiểm đang được sử dụng bởi một hoặc nhiều loại bưu kiện. Vui lòng gỡ bỏ liên kết trước khi vô hiệu hóa chính sách.";
         public const string INSURANCE_POLICY_EXPIRED = "Chính sách bảo hiểm đã hết hạn và không thể kích hoạt lại.";
+        public const string INSURANCE_POLICY_ACTIVE_CANNOT_DELETE = "Chính sách bảo hiểm đang được kích hoạt và không thể xóa.";
     }
 
     public class ResponseMessageSystemConfig
@@ -404,7 +405,7 @@
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
         public const string PRICING_CONFIG_ALREADY_ACTIVATED = "Cấu hình giá đã được kích hoạt";
-        public const string PRICING_CONFIG_IN_USE = "Cấu hình giá đã được kích hoạt và không thể chỉnh sửa. Vui lòng tạo cấu hình mới.";
+        public const string PRICING_CONFIG_IN_USE = "Cấu hình giá đã được kích hoạt và không thể chỉnh sửa.";
         public const string PRICING_CONFIG_EXPIRED = "Cấu hình giá đã hết hạn và không thể kích hoạt lại.";
         public const string PRICING_CONFIG_ACTIVATE_SUCCESS = "Kích hoạt cấu hình giá thành công.";
         public const string PRICING_CONFIG_CANNOT_ACTIVATE_ON_UPDATE = "Cấu hình giá không thể kích hoạt trong khi đang sửa đổi.";

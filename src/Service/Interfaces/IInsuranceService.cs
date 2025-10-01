@@ -5,7 +5,7 @@ namespace MetroShip.Service.Interfaces;
 
 public interface IInsuranceService
 {
-    Task<PaginatedListResponse<InsurancePolicyResponse>> GetAllPoliciesPaginatedList(PaginatedListRequest request);
+    Task<PaginatedListResponse<InsurancePolicyResponse>> GetAllPoliciesPaginatedList(PaginatedListRequest request, bool? isActive = null);
 
     Task<InsurancePolicyResponse?> GetPolicyById(string id);
 
@@ -15,4 +15,5 @@ public interface IInsuranceService
 
     Task<string> DeactivatePolicy(string id);
     Task<IList<InsurancePolicyResponse>> GetAllActivePoliciesDropdown();
+    Task<string> DeletePolicy(string id);
 }

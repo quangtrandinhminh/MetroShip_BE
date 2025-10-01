@@ -19,9 +19,9 @@ namespace MetroShip.WebAPI.Controllers
 
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllPolicies)]
         [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<InsurancePolicyResponse>>), 200)]
-        public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request)
+        public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request, [FromQuery] bool? isActive = null)
         {
-            var response = await _insuranceService.GetAllPoliciesPaginatedList(request);
+            var response = await _insuranceService.GetAllPoliciesPaginatedList(request, isActive);
             return Ok(response);
         }
 
@@ -61,6 +61,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAllActivePoliciesDropdown()
         {
             var response = await _insuranceService.GetAllActivePoliciesDropdown();
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [HttpDelete(WebApiEndpoint.InsurancePolicyEndpoint.DeletePolicy)]
+        public async Task<IActionResult> DeletePolicy([FromRoute] string id)
+        {
+            var response = await _insuranceService.DeletePolicy(id);
             return Ok(BaseResponse.OkResponseDto(response));
         }
     }

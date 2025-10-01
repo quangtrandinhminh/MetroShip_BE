@@ -49,6 +49,11 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
                 x => x.WeightTiers, x => x.DistanceTiers
         );
 
+        // order by isActive first, then by LastUpdatedAt descending
+        pricingConfigs.Items = pricingConfigs.Items
+            .OrderByDescending(pc => pc.IsActive)
+            .ThenByDescending(pc => pc.LastUpdatedAt)
+            .ToList();
         var response = _mapper.MapToPricingTablePaginatedList(pricingConfigs);
         foreach (var item in response.Items)
         {
@@ -414,14 +419,8 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         {
             _logger.Information("Soft deleting pricing configuration with ID: {PricingConfigId}", pricingConfigId);
             pricingConfig.DeletedAt = CoreHelper.SystemTimeNow;
-            foreach (var weightTier in pricingConfig.WeightTiers)
-            {
-                weightTier.DeletedAt = CoreHelper.SystemTimeNow;
-            }
-            foreach (var distanceTier in pricingConfig.DistanceTiers)
-            {
-                distanceTier.DeletedAt = CoreHelper.SystemTimeNow;
-            }
+            pricingConfig.WeightTiers?.ToList().ForEach(tier => tier.DeletedAt = pricingConfig.DeletedAt);
+            pricingConfig.DistanceTiers?.ToList().ForEach(tier => tier.DeletedAt = pricingConfig.DeletedAt);
 
             _pricingRepository.Update(pricingConfig);
             await _unitOfWork.SaveChangeAsync();

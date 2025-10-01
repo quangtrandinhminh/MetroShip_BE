@@ -12,6 +12,7 @@ using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Linq.Expressions;
 
 namespace MetroShip.Service.Services;
 
@@ -24,11 +25,24 @@ public class InsuranceService(IServiceProvider serviceProvider) : IInsuranceServ
     private readonly IHttpContextAccessor _httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>(); 
 
     // get all insurance policies
-    public async Task<PaginatedListResponse<InsurancePolicyResponse>> GetAllPoliciesPaginatedList (PaginatedListRequest request)
+    public async Task<PaginatedListResponse<InsurancePolicyResponse>> GetAllPoliciesPaginatedList (
+        PaginatedListRequest request, bool? isActive = null)
     {
         _logger.Information("Getting all insurance policies with pagination: {@Request}", request);
+        Expression<Func<InsurancePolicy, bool>> predicate = x => x.DeletedAt == null;
+        if (isActive.HasValue)
+        {
+            predicate = predicate.And(x => x.IsActive == isActive.Value);
+        }
 
-        var paginatedList = await _insuranceRepository.GetAllPaginatedQueryable(request.PageNumber, request.PageSize);
+        var paginatedList = await _insuranceRepository.GetAllPaginatedQueryable(
+            request.PageNumber, request.PageSize, predicate);
+
+        // order by isActive first, then by LastUpdatedAt descending
+        paginatedList.Items = paginatedList.Items
+            .OrderByDescending(ip => ip.IsActive)
+            .ThenByDescending(ip => ip.LastUpdatedAt)
+            .ToList();
         var response = _mapper.MapToInsurancePolicyPaginatedList(paginatedList);
         return response;
     }
@@ -140,8 +154,48 @@ public class InsuranceService(IServiceProvider serviceProvider) : IInsuranceServ
     public async Task<IList<InsurancePolicyResponse>> GetAllActivePoliciesDropdown()
     {
         _logger.Information("Getting all active insurance policies for dropdown");
-        var entities = await _insuranceRepository.FindByConditionAsync(e => e.IsActive);
+        var entities = await _insuranceRepository.FindByConditionAsync(e => e.IsActive && e.DeletedAt == null);
         var response = _mapper.MapToInsurancePolicyResponseList(entities);
         return response;
+    }
+
+    // delete insurance policy
+    public async Task<string> DeletePolicy(string id)
+    {
+        _logger.Information("Deleting insurance policy with id: {Id}", id);
+        var entity = await _insuranceRepository.GetSingleAsync(e => e.Id == id);
+        if (entity == null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageInsurancePolicy.INSURANCE_POLICY_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        if (entity.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessageInsurancePolicy.INSURANCE_POLICY_ACTIVE_CANNOT_DELETE,
+            StatusCodes.Status400BadRequest);
+        }
+
+        var isCategoryInsuranceExist = await _insuranceRepository.IsExistAsync(
+            i => i.CategoryInsurances.Any() && i.Id == entity.Id);
+        if (isCategoryInsuranceExist)
+        {
+            _logger.Information("Insurance policy with ID: {Id} has associated CategoryInsurances. Performing soft delete.", id);
+            entity.DeletedAt = CoreHelper.SystemTimeNow;
+            _insuranceRepository.Update(entity);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
+        else
+        {
+            _logger.Information("Insurance policy with ID: {Id} has no associated CategoryInsurances. Performing hard delete.", id);
+            _insuranceRepository.Delete(entity);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        }
+
+        return ResponseMessageInsurancePolicy.INSURANCE_POLICY_DELETE_SUCCESS;
     }
 }
