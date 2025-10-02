@@ -829,15 +829,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // 🔹 2. LUÔN tạo fullPath ngay từ đầu để đảm bảo có dữ liệu
         const int steps = 10;
-        var fullPath = shipment.ShipmentItineraries
-            .OrderBy(x => x.LegOrder)
-            .Where(x => x.Route != null && x.Route.FromStation != null && x.Route.ToStation != null)
-            .Select(x =>
-            {
-                var from = x.Route.FromStation;
-                var to = x.Route.ToStation;
+        var sortedItineraries = shipment.ShipmentItineraries.OrderBy(x => x.LegOrder).ToList();
 
-                var polyline = Enumerable.Range(0, steps + 1)
+        var fullPath = sortedItineraries.Select(x =>
+        {
+            var from = x.Route?.FromStation;
+            var to = x.Route?.ToStation;
+
+            var polyline = new List<GeoPoint>();
+            if (from != null && to != null)
+            {
+                polyline = Enumerable.Range(0, steps + 1)
                     .Select(s =>
                     {
                         var p = s / (double)steps;
@@ -847,17 +849,28 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                             p);
                         return new GeoPoint { Latitude = lat, Longitude = lng };
                     }).ToList();
+            }
 
-                return new
+            return new
+            {
+                LegOrder = x.LegOrder,
+                From = new
                 {
-                    x.LegOrder,
-                    From = new { Name = from.StationNameVi, from.Latitude, from.Longitude },
-                    To = new { Name = to.StationNameVi, to.Latitude, to.Longitude },
-                    x.IsCompleted,
-                    x.Message,
-                    Polyline = polyline
-                };
-            }).ToList();
+                    Name = from?.StationNameVi ?? x.Route?.FromStationId ?? "",
+                    Latitude = from?.Latitude ?? 0,
+                    Longitude = from?.Longitude ?? 0
+                },
+                To = new
+                {
+                    Name = to?.StationNameVi ?? x.Route?.ToStationId ?? "",
+                    Latitude = to?.Latitude ?? 0,
+                    Longitude = to?.Longitude ?? 0
+                },
+                IsCompleted = x.IsCompleted,
+                x.Message,
+                Polyline = polyline
+            };
+        }).ToList();
 
         // 🔹 3. Cho phép tracking từ khi pickup
         if (shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge &&
@@ -942,6 +955,23 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             // Fallback tính toán giống GetTrainPositionAsync
             position = await GetTrainPositionAsync(trainId);
         }
+
+        // *** sửa ở đây: đảm bảo top-level from/to/path lấy từ fullPath nếu cần ***
+        var firstLeg = fullPath.FirstOrDefault();
+
+        if (firstLeg != null)
+        {
+            // đảm bảo FromStation là điểm đầu của leg order đầu tiên
+            position.FromStation = firstLeg.From.Name ?? position.FromStation;
+        }
+
+        
+        // nếu position.Path đang rỗng thì fill bằng fullPath polyline
+        if (position.Path == null || !position.Path.Any())
+        {
+            position.Path = fullPath.SelectMany(p => p.Polyline).ToList();
+        }
+        // *** end sửa ***
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
         var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
