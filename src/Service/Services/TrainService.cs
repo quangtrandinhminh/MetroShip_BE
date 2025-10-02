@@ -949,14 +949,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // 🔹 6. Lấy position hiện tại của tàu
-        var position = await _trainStateStore.GetPositionResultAsync(trainId);
-        if (position == null)
-        {
-            // Fallback tính toán giống GetTrainPositionAsync
-            position = await GetTrainPositionAsync(trainId);
-        }
+        // 🚨 sửa ở đây: luôn gọi GetTrainPositionAsync để sync state trước
+        var position = await GetTrainPositionAsync(trainId);
 
-        // *** sửa ở đây: đảm bảo top-level from/to/path lấy từ fullPath nếu cần ***
+        // *** đảm bảo top-level from/to/path lấy từ fullPath nếu cần ***
         var firstLeg = fullPath.FirstOrDefault();
 
         if (firstLeg != null)
