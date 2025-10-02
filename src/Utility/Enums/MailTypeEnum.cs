@@ -7,4 +7,5 @@ public enum MailTypeEnum
     Account,
     Notification,
     Shipment,
+    Delivery,
 }

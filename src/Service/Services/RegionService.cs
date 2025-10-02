@@ -6,6 +6,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Service.Mapper;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -25,7 +26,7 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         var regions = await _regionRepository.GetAllPaginatedQueryable(
                 request.PageNumber,
                 request.PageSize,
-                null,
+                x => x.DeletedAt == null,
                 r => r.RegionName,
                 true
         );
@@ -55,5 +56,71 @@ public class RegionService(IServiceProvider serviceProvider) : IRegionService
         await _regionRepository.AddAsync(region);
         await _unitOfWork.SaveChangeAsync();
         return RegionMessageConstants.REGION_CREATE_SUCCESS;
+    }
+
+    // update region
+    public async Task<string> UpdateRegionAsync(UpdateRegionRequest request)
+    {
+        _logger.Information("Updating region with ID: {RegionId}", request.Id);
+
+        var region = await _regionRepository.GetByIdAsync(request.Id);
+        if (region == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            RegionMessageConstants.REGION_NOT_FOUND,
+            StatusCodes.Status404NotFound);
+        }
+
+        // Check if another region with the same name or code already exists
+        var existingRegion = await _regionRepository.IsExistAsync(
+                       r => (r.RegionName == request.RegionName) && r.Id != request.Id
+                              );
+        if (existingRegion)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            RegionMessageConstants.REGION_NAME_EXISTED,
+            StatusCodes.Status400BadRequest);
+        }
+
+        region.RegionName = request.RegionName;
+
+        _regionRepository.Update(region);
+        await _unitOfWork.SaveChangeAsync();
+        return RegionMessageConstants.REGION_UPDATE_SUCCESS;
+    }
+
+    // delete region
+    public async Task<string> DeleteRegionAsync(string regionId)
+    {
+        _logger.Information("Deleting region with ID: {RegionId}", regionId);
+
+        var region = await _regionRepository.GetSingleAsync(r => r.Id == regionId);
+        if (region == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            RegionMessageConstants.REGION_NOT_FOUND,
+                        StatusCodes.Status404NotFound);
+        }
+
+        var isMetroRouteExist = await _regionRepository.IsExistAsync(r => r.MetroLines.Any(ml => ml.DeletedAt == null) && r.Id == regionId);
+        var isStationExist = await _regionRepository.IsExistAsync(r => r.Stations.Any(s => s.DeletedAt == null) && r.Id == regionId);
+        if (isMetroRouteExist || isStationExist)
+        {
+            _logger.Information("Region with ID: {RegionId} has associated MetroLines or Stations. Performing soft delete.", regionId);
+            region.DeletedAt = CoreHelper.SystemTimeNow;
+            _regionRepository.Update(region);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        else
+        {
+            _logger.Information("Region with ID: {RegionId} has no associated MetroLines or Stations. Performing hard delete.", regionId);
+            _regionRepository.Delete(region);
+            await _unitOfWork.SaveChangeAsync();
+        }
+
+        return RegionMessageConstants.REGION_DELETE_SUCCESS;
     }
 }

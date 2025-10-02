@@ -1,4 +1,5 @@
-﻿using MetroShip.Repository.Extensions;
+﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Interfaces;
 using MetroShip.Repository.Models;
@@ -16,6 +17,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Linq.Expressions;
 
 namespace MetroShip.Service.Services;
 
@@ -30,18 +32,28 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     private const int CACHE_EXPIRY_MINUTES = 30;
     private const string CACHE_KEY = "DefaultPricingConfig";
 
-    public async Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request)
+    public async Task<PaginatedListResponse<PricingTableResponse>> GetPricingPaginatedList(PaginatedListRequest request, bool? isActive = null)
     {
         _logger.Information("Fetching all pricing configurations with pagination: {@Request}", request);
+        Expression<Func<PricingConfig, bool>> predicate = x => x.DeletedAt == null;
+        if (isActive.HasValue)
+        {
+            predicate = predicate.And(x => x.IsActive == isActive.Value);
+        }
 
         var pricingConfigs = await _pricingRepository.GetAllPaginatedQueryable(
                 request.PageNumber,
                 request.PageSize,
-                x => x.DeletedAt == null,
+                predicate,
                 x => x.LastUpdatedAt, false,
                 x => x.WeightTiers, x => x.DistanceTiers
         );
 
+        // order by isActive first, then by LastUpdatedAt descending
+        pricingConfigs.Items = pricingConfigs.Items
+            .OrderByDescending(pc => pc.IsActive)
+            .ThenByDescending(pc => pc.LastUpdatedAt)
+            .ToList();
         var response = _mapper.MapToPricingTablePaginatedList(pricingConfigs);
         foreach (var item in response.Items)
         {
@@ -59,7 +71,7 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
         {
             pricingConfig = await _pricingRepository.GetSingleAsync(
                 x => x.Id == pricingConfigId,
-                false,
+                true,
                 x => x.WeightTiers, x => x.DistanceTiers
                 );
             if (pricingConfig == null)
@@ -175,32 +187,83 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     {
         _logger.Information("Creating or updating pricing configuration: {@Request}", request);
         PricingConfigValidator.ValidatePricingConfigRequest(request);
-
-        var activeConfig = _pricingRepository.GetAllWithCondition(x => x.IsActive 
-        && x.DeletedAt == null);
-
-        if (activeConfig.Any() && request.IsActive)
+        string result;
+        // if updating existing config, ensure it exists and is not active
+        if (!string.IsNullOrEmpty(request.Id))
         {
-            foreach (var config in activeConfig)
+            _logger.Information("Updating existing pricing configuration with ID: {Id}", request.Id);
+
+            if (request.IsActive)
             {
-                config.IsActive = false;
-                config.EffectiveTo = CoreHelper.SystemTimeNow;
-                _pricingRepository.Update(config);
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_CANNOT_ACTIVATE_ON_UPDATE,
+                StatusCodes.Status400BadRequest
+                );
             }
 
-            _cache.Remove(CACHE_KEY); // Clear cache after update
-        }
+            var existingConfig = await _pricingRepository.GetSingleAsync(
+                    x => x.Id == request.Id && x.DeletedAt == null,
+                    false,
+                    x => x.WeightTiers, x => x.DistanceTiers
+                );
 
-        var pricingConfig = _mapper.MapToPricingConfigEntity(request);
-        if (request.IsActive)
+            if (existingConfig == null)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+                StatusCodes.Status400BadRequest
+                );
+            }
+
+            if (existingConfig.IsActive)
+            {
+                throw new AppException(
+                ErrorCode.BadRequest,
+                ResponseMessagePricingConfig.PRICING_CONFIG_IN_USE,
+                StatusCodes.Status400BadRequest
+                );
+            }
+
+            _mapper.MapToPricingConfigEntity(request, existingConfig);
+            _pricingRepository.Update(existingConfig);
+
+            result = ResponseMessagePricingConfig.PRICING_CONFIG_UPDATE_SUCCESS;
+        }
+        else
         {
-            pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
-        }
+            _logger.Information("Creating new pricing configuration.");
 
-        _pricingRepository.Add(pricingConfig);
+            // create new config and deactivate old active config if needed
+            var activeConfig = _pricingRepository.GetAllWithCondition(x => x.IsActive
+                                                                           && x.DeletedAt == null);
+
+            if (activeConfig.Any() && request.IsActive)
+            {
+                foreach (var config in activeConfig)
+                {
+                    config.IsActive = false;
+                    config.EffectiveTo = CoreHelper.SystemTimeNow;
+                    _pricingRepository.Update(config);
+                }
+
+                _cache.Remove(CACHE_KEY); // Clear cache after update
+            }
+
+            var pricingConfig = _mapper.MapToPricingConfigEntity(request);
+            if (request.IsActive)
+            {
+                pricingConfig.EffectiveFrom = CoreHelper.SystemTimeNow;
+            }
+
+            _pricingRepository.Add(pricingConfig);
+            result = ResponseMessagePricingConfig.PRICING_CONFIG_CREATE_SUCCESS;
+        }
+        
         await _unitOfWork.SaveChangeAsync();
        
-        return ResponseMessagePricingConfig.PRICING_CONFIG_CREATE_SUCCESS;
+        return result;
     }
 
     // activate config
@@ -224,7 +287,17 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             ResponseMessagePricingConfig.PRICING_CONFIG_ALREADY_ACTIVATED,
             StatusCodes.Status400BadRequest
             );
-        }   
+        }
+
+        // cannot activate expired config
+        if (pricingConfig.EffectiveTo != null)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_EXPIRED,
+            StatusCodes.Status400BadRequest
+            );
+        }
 
         // ensure only one active config
         var activeConfigs = _pricingRepository.GetAllWithCondition(x => x.IsActive
@@ -298,46 +371,67 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
     public async Task<int> GetFreeStoreDaysAsync(string pricingConfigId)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException(
-            ErrorCode.BadRequest,
-            "No active pricing configuration found.",
-            StatusCodes.Status400BadRequest
-            );
-        }
-
         return pricingConfig.FreeStoreDays ?? 0;
     }
 
     public async Task<int> GetRefundForCancellationBeforeScheduledHours (string pricingConfigId)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
-        {
-            throw new AppException
-            (
-                ErrorCode.BadRequest,
-                "No active pricing configuration found.",
-                StatusCodes.Status400BadRequest
-            );
-        }
-
         return pricingConfig.RefundForCancellationBeforeScheduledHours ?? 0;
     }
 
     public async Task<decimal> CalculateRefund(string pricingConfigId, decimal? totalPrice)
     {
         var pricingConfig = await GetPricingConfigAsync(pricingConfigId);
-        if (pricingConfig == null || !pricingConfig.IsActive)
+        return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
+    }
+
+    // delete pricing config
+    public async Task<string> DeletePricingConfigAsync(string pricingConfigId)
+    {
+        var pricingConfig = await _pricingRepository.GetSingleAsync(
+        x => x.Id == pricingConfigId && x.DeletedAt == null,
+        true,
+        x => x.WeightTiers, x => x.DistanceTiers
+                    );
+        if (pricingConfig == null)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "No active pricing configuration found.",
+            ResponseMessagePricingConfig.PRICING_CONFIG_NOT_FOUND,
+            StatusCodes.Status400BadRequest
+                );
+        }
+
+        if (pricingConfig.IsActive)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            ResponseMessagePricingConfig.PRICING_CONFIG_IN_USE,
             StatusCodes.Status400BadRequest
             );
         }
 
-        return (decimal)(totalPrice * (pricingConfig.RefundRate ?? 1));
+        var isUsedInShipment = await _pricingRepository.IsExistAsync(
+                       x => x.Shipments.Any(s => s.DeletedAt == null) && x.Id == pricingConfigId);
+
+        if (isUsedInShipment)
+        {
+            _logger.Information("Soft deleting pricing configuration with ID: {PricingConfigId}", pricingConfigId);
+            pricingConfig.DeletedAt = CoreHelper.SystemTimeNow;
+            pricingConfig.WeightTiers?.ToList().ForEach(tier => tier.DeletedAt = pricingConfig.DeletedAt);
+            pricingConfig.DistanceTiers?.ToList().ForEach(tier => tier.DeletedAt = pricingConfig.DeletedAt);
+
+            _pricingRepository.Update(pricingConfig);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        else
+        {
+            _logger.Information("Permanently deleting pricing configuration with ID: {PricingConfigId}", pricingConfigId);
+            _pricingRepository.Delete(pricingConfig);
+            await _unitOfWork.SaveChangeAsync();
+        }
+        
+        return ResponseMessagePricingConfig.PRICING_CONFIG_DELETE_SUCCESS;
     }
 }

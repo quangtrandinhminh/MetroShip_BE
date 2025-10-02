@@ -43,6 +43,7 @@ public interface IMapperlyMapper
     PaginatedListResponse<ShipmentListResponse> MapToShipmentListResponsePaginatedList(PaginatedList<Shipment> entity);
     ShipmentListResponse MapToShipmentListResponse(Shipment entity);
     ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    ShipmentForGuest MapToShipmentForGuest(Shipment entity);
     Shipment MapToShipmentEntity(ShipmentRequest request);
     ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
     /*List<ShipmentAvailableTimeSlotResponse> MapToAvailableTimeSlotResponseList(
@@ -105,6 +106,8 @@ public interface IMapperlyMapper
 
     // time slot
     MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+    PaginatedListResponse<MetroTimeSlotResponse> MapToPaginatedListResponse(PaginatedList<MetroTimeSlot> entityList);
+    void MapToMetroTimeSlotEntity(MetroTimeSlotUpdateRequest request, MetroTimeSlot entity);
 
     // media
     ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
@@ -122,6 +125,7 @@ public interface IMapperlyMapper
     PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
     PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
+    void MapToPricingConfigEntity(PricingConfigRequest request, PricingConfig entity);
 
     // region
     PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);

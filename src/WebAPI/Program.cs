@@ -27,6 +27,7 @@ builder.Logging.AddSerilog(Log.Logger);
 builder.Services.AddControllers();
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddAuthenticationAndAuthorization(builder.Configuration);
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerDocumentation(appName, "v1");
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

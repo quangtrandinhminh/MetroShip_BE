@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Enums;
@@ -11,15 +12,17 @@ using Microsoft.AspNetCore.Mvc;
 namespace MetroShip.WebAPI.Controllers
 {
     [ApiController]
+    [Produces("application/json")]
     public class PricingController(IServiceProvider serviceProvider) : ControllerBase
     {
         private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
 
         [Authorize(Roles = nameof(UserRoleEnum.Admin))]
         [HttpGet(WebApiEndpoint.PricingEndpoint.GetAllPricing)]
-        public async Task<IActionResult> GetAllPricingAsync([FromQuery] PaginatedListRequest request)
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<PricingTableResponse>>), 200)]
+        public async Task<IActionResult> GetAllPricingAsync([FromQuery] PaginatedListRequest request, [FromQuery] bool? isActive = null)
         {
-            var response = await _pricingService.GetPricingPaginatedList(request);
+            var response = await _pricingService.GetPricingPaginatedList(request, isActive);
             return Ok(response);
         }
 
@@ -31,6 +34,7 @@ namespace MetroShip.WebAPI.Controllers
         }
 
         [HttpGet(WebApiEndpoint.PricingEndpoint.GetPricingTable)]
+        [ProducesResponseType(typeof(BaseResponse<PricingTableResponse>), 200)]
         public async Task<IActionResult> GetPricingTableAsync([FromQuery] string? pricingConfigId)
         {
             var pricingTable = await _pricingService.GetPricingTableAsync(pricingConfigId);
@@ -51,6 +55,14 @@ namespace MetroShip.WebAPI.Controllers
         {
             var activatedPricingConfigId = await _pricingService.ActivatePricingConfigAsync(pricingConfigId);
             return Ok(BaseResponse.OkResponseDto(activatedPricingConfigId, null));
+        }
+
+        [HttpDelete(WebApiEndpoint.PricingEndpoint.DeletePricing)]
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        public async Task<IActionResult> DeletePricingAsync([FromRoute] string pricingConfigId)
+        {
+            var deletedPricingConfigId = await _pricingService.DeletePricingConfigAsync(pricingConfigId);
+            return Ok(BaseResponse.OkResponseDto(deletedPricingConfigId, null));
         }
     }
 }

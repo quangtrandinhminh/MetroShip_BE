@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Dom;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Train;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
@@ -28,6 +29,7 @@ namespace MetroShip.WebAPI.Controllers
         //[Authorize]
         [HttpGet]
         [Route(WebApiEndpoint.MetroTrainEndpoint.GetAllTrains)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<TrainListResponse>>), 200)]
         public async Task<IActionResult> GetTrainsAsync([FromQuery] TrainListFilterRequest request)
         {
             var response = await _trainService.PaginatedListResponse(request);

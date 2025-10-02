@@ -29,6 +29,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using MetroShip.Service.ApiModels;
 using static MetroShip.Utility.Constants.WebApiEndpoint;
 
 namespace MetroShip.Service.Services;
@@ -49,6 +50,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     private readonly IShipmentTrackingRepository _shipmentTrackingRepository = serviceProvider.GetRequiredService<IShipmentTrackingRepository>();
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
+    private readonly IPricingService _pricingService = serviceProvider.GetRequiredService<IPricingService>();
+    private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
+    private readonly IUserRepository _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
 
     /*public CreateParcelResponse CalculateParcelInfo(ParcelRequest request)
     {
@@ -145,6 +149,9 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
     public async Task ConfirmParcelAsync (ParcelConfirmRequest request)
     {
         _logger.Information("Confirming parcel with code: {ParcelCode}", request.ParcelCode);
+        // check if staff assignment has station same as shipment departure station
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var staffId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         var parcel = await _parcelRepository.GetAll()
             .Where(p => p.DeletedAt == null && p.ParcelCode == request.ParcelCode)
             .Include(p => p.Shipment)
@@ -162,12 +169,24 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
                 StatusCodes.Status400BadRequest);
         }
 
+        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
+        var staffStationName = await _stationRepository.GetStationNameByIdAsync(stationId);
+        // Check if stationId is the same as shipment departure station
+        if (!stationId.Equals(shipment.DepartureStationId))
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            $"Kiện hàng {request.ParcelCode} chỉ có thể được xác nhận nhận tại Ga {stationName}, " +
+            $"không thể xác nhận tại Ga {staffStationName}",
+            StatusCodes.Status400BadRequest);
+        }
+
         // Check if the parcel is already confirmed
         if (parcel.ParcelTrackings.Any(pt => pt.TrackingForShipmentStatus == ShipmentStatusEnum.PickedUp))
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Parcel has already been confirmed for pickup.",
+            $"Kiện hàng {request.ParcelCode} đã được xác nhận nhận tại ga {stationName}",
             StatusCodes.Status400BadRequest);
         }
 
@@ -177,11 +196,12 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Parcel confirmation is outside the allowed pickup time range.",
+            $"Kiện hàng {request.ParcelCode} không thể xác nhận nhận tại ga " +
+            $"{stationName} ngoài khung thời gian nhận hàng từ " +
+            $"{shipment.StartReceiveAt.Value.UtcToSystemTime()} đến {shipment.ScheduledDateTime.Value.UtcToSystemTime()}",
             StatusCodes.Status400BadRequest);
         }
 
-        var stationName = await _stationRepository.GetStationNameByIdAsync(shipment.DepartureStationId);
         var parcelTracking = new ParcelTracking
         {
             ParcelId = parcel.Id,
@@ -324,6 +344,7 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             // Update shipment status and timestamps
             shipment.ShipmentStatus = ShipmentStatusEnum.InTransit;
             shipment.CurrentTrainId = train.Id;
+            shipment.CurrentStationId = null;
             _shipmentRepository.Update(shipment);
 
             shipment.ShipmentTrackings.Add(new ShipmentTracking
@@ -588,6 +609,8 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
         {
             // Update shipment status and timestamps
             shipment.ShipmentStatus = ShipmentStatusEnum.AwaitingDelivery;
+            shipment.CurrentStationId = stationId;
+            shipment.AwaitedDeliveryAt = CoreHelper.SystemTimeNow;
             _shipmentRepository.Update(shipment);
 
             shipment.ShipmentTrackings.Add(new ShipmentTracking
@@ -600,8 +623,41 @@ public class ParcelService(IServiceProvider serviceProvider) : IParcelService
             });
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
+            var freeStoreDays = await _pricingService.GetFreeStoreDaysAsync(shipment.PricingConfigId);
             // Schedule job to apply surcharge after delivery
             await _backgroundJobService.ScheduleApplySurchargeJob(parcel.ShipmentId, shipment.PricingConfigId);
+
+            // send email to customer
+            _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}",
+                shipment.TrackingCode);
+            var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+            shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipment.Id,
+                includeProperties: s => s.Parcels);
+            shipment.DestinationStationName = stationName;
+            shipment.DestinationStationAddress = await _stationRepository.GetStationAddressByIdAsync(shipment.DestinationStationId);
+            shipment.SurchargeAppliedAt = shipment.AwaitedDeliveryAt?.AddDays(freeStoreDays).UtcToSystemTime();
+            shipment.AwaitedDeliveryAt = shipment.AwaitedDeliveryAt?.UtcToSystemTime();
+
+            // Schedule email to customer
+            await _emailService.ScheduleEmailJob(new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Delivery,
+                Name = user.UserName,
+                Data = shipment,
+            });
+
+            // Schedule email to recipient if provided
+            if (!string.IsNullOrEmpty(shipment.RecipientEmail) && shipment.RecipientEmail != user.Email)
+            {
+                await _emailService.ScheduleEmailJob(new SendMailModel
+                {
+                    Email = shipment.RecipientEmail,
+                    Type = MailTypeEnum.Delivery,
+                    Name = shipment.RecipientName,
+                    Data = shipment,
+                });
+            }
         }
 
         return result;

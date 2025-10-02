@@ -88,6 +88,17 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
             .FirstOrDefaultAsync();
     }
 
+    // get all stations with id and stationNameVi by list of ids
+    public async Task<Dictionary<string, string>> GetStationNamesByIdsAsync(List<string> stationIds)
+    {
+        if (stationIds == null || !stationIds.Any())
+            return new Dictionary<string, string>();
+
+        return await _context.Stations
+            .Where(s => stationIds.Contains(s.Id))
+            .ToDictionaryAsync(s => s.Id, s => s.StationNameVi);
+    }
+
     public async Task<Dictionary<(string, DirectionEnum), (string, string)>> GetStartAndEndStationIdsOfRouteAsync(string metroLineId)
     {
         if (string.IsNullOrEmpty(metroLineId))
@@ -212,5 +223,16 @@ public class StationRepository : BaseRepository<Station>, IStationRepository
         // Add departure station
         stationIds.Add(shipment.DestinationStationId);
         return stationIds;
+    }
+
+    public async Task<string?> GetStationAddressByIdAsync(string stationId)
+    {
+        if (string.IsNullOrEmpty(stationId))
+            return null;
+
+        return await _context.Stations
+            .Where(s => s.Id == stationId)
+            .Select(s => s.Address)
+            .FirstOrDefaultAsync();
     }
 }

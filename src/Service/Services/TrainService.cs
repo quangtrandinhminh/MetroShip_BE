@@ -59,6 +59,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     private readonly ITrainStateStoreService _trainStateStore =
         serviceProvider.GetRequiredService<ITrainStateStoreService>();
     private readonly ITrainScheduleRepository _trainScheduleRepository = serviceProvider.GetRequiredService<ITrainScheduleRepository>();
+    private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly IRouteStationRepository _routeStationRepository = serviceProvider.GetRequiredService<IRouteStationRepository>();
 
     public async Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request)
     {
@@ -103,12 +105,31 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
+        var stationIds = paginatedList.Items
+            .SelectMany(t => new[] { t.CurrentStationId, t.CurrentRouteStationId })
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Distinct()
+            .ToList();
+        var stationNames = await _stationRepository.GetStationNamesByIdsAsync(stationIds);
+        /*var currentRouteStationIds = paginatedList.Items
+            .Where(t => t.Status == TrainStatusEnum.Departed && t.CurrentRouteStationId != null)
+            .Select(t => t.CurrentRouteStationId).ToList();
+        var routeStations = _routeStationRepository.GetAllWithCondition(rs => currentRouteStationIds.Contains(rs.Id))
+            .ToList();*/
 
         // Map entity -> DTO
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
         Dictionary<string, (DirectionEnum? direction, int? segmentIndex)> trainStates = new();
 
-        if (!string.IsNullOrEmpty(request.TimeSlotId))
+        // Thêm: xác định ca hiện tại
+        string? activeTimeSlotId = request.TimeSlotId;
+        if (string.IsNullOrEmpty(activeTimeSlotId))
+        {
+            activeTimeSlotId = await GetCurrentTimeSlotIdAsync();
+        }
+
+         /*❌ Code cũ(lọc mất hết các schedule khác)
+         if (!string.IsNullOrEmpty(request.TimeSlotId))
         {
             // filter train schedules theo TimeSlotId nếu được cung cấp
             trainSchedules = trainSchedules
@@ -118,11 +139,42 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         else
         {
             trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
+        }*/
+
+        // ✅ Code mới: vẫn giữ toàn bộ trainSchedules, chỉ lấy direction từ Firebase nếu không có filter
+        if (string.IsNullOrEmpty(request.TimeSlotId))
+        {
+            trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
         }
 
         foreach (var train in response.Items) // train bây giờ là TrainListResponse
         {
-            // Gán train schedules
+            /*if (train.Status == TrainStatusEnum.Departed && train.CurrentRouteStationId != null)
+            {
+                var routeStation = routeStations.FirstOrDefault(rs => rs.Id == train.CurrentRouteStationId);
+                if (routeStation != null)
+                {
+                    train.NextStationId = routeStation.ToStationId;
+                }
+            }*/
+
+            // Gán ca hiện tại cho response
+            train.CurrentTimeSlotId = activeTimeSlotId;
+
+            // Gán tên ga hiện tại
+            if (!string.IsNullOrEmpty(train.CurrentStationId) && stationNames.TryGetValue(train.CurrentStationId, out var currentStationName))
+            {
+                train.CurrentStationName = currentStationName;
+            }
+
+            // Gán tên ga tiếp theo
+            if (!string.IsNullOrEmpty(train.CurrentRouteStationId) && stationNames.TryGetValue(train.CurrentRouteStationId, out var nextStationName))
+            {
+                train.NextStationId = train.CurrentRouteStationId;
+                train.NextStationName = nextStationName;
+            }
+
+            // Gán train schedules 
             train.TrainSchedules = trainSchedules
                 .Where(ts => ts.TrainId == train.Id)
                 .OrderBy(ts => ts.Shift)
@@ -150,7 +202,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
 
             // Nếu lấy all trainSchedules, tìm direction từ Firebase
-            train.Direction = trainStates[train.Id].direction;
+            if (trainStates.ContainsKey(train.Id))
+            {
+                train.Direction = trainStates[train.Id].direction;
+            }
 
             //Lấy direction hiện tại từ Firebase
             /*var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
@@ -591,7 +646,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             train.CurrentStationId = prevRoute.ToStationId;
             train.Latitude = prevRoute.ToStation?.Latitude;
             train.Longitude = prevRoute.ToStation?.Longitude;
-
+            train.CurrentRouteStationId = null;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
         }
@@ -626,6 +681,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         train.Status = TrainStatusEnum.Departed;
         train.CurrentStationId = null;
+        // save next station id temporarily
+        train.CurrentRouteStationId = nextRoute.ToStationId;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
@@ -879,8 +936,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // 🔹 6. Lấy position hiện tại của tàu
-        var position = await _trainStateStore.GetPositionResultAsync(trainId)
-            ?? throw new AppException(ErrorCode.NotFound, "Train position not found", StatusCodes.Status404NotFound);
+        var position = await _trainStateStore.GetPositionResultAsync(trainId);
+        if (position == null)
+        {
+            // Fallback tính toán giống GetTrainPositionAsync
+            position = await GetTrainPositionAsync(trainId);
+        }
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
         var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
@@ -1007,81 +1068,154 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
     // for getting train position based on trainId
     public async Task<TrainPositionResult> GetTrainPositionAsync(string trainId)
     {
-        // 🔹 Lấy Direction từ Firebase
-        var direction = await _trainStateStore.GetDirectionAsync(trainId)
-            ?? throw new AppException(ErrorCode.BadRequest,
-                "Train direction not initialized in Firebase. Call StartOrContinueSimulationAsync first.",
-                StatusCodes.Status400BadRequest);
+        // 🔹 Lấy Direction từ Firebase (có thể null nếu chưa start)
+        var direction = await _trainStateStore.GetDirectionAsync(trainId);
+        // ?? throw new AppException(ErrorCode.BadRequest,
+        //     "Train direction not initialized in Firebase. Call StartOrContinueSimulationAsync first.",
+        //     StatusCodes.Status400BadRequest);
 
-        // 🔹 Lấy SegmentIndex từ Firebase
-        var currentIndex = await _trainStateStore.GetSegmentIndexAsync(trainId)
-            ?? throw new AppException(ErrorCode.BadRequest,
-                "Train segment not initialized in Firebase. Call StartOrContinueSimulationAsync.",
-                StatusCodes.Status400BadRequest);
+        // 🔹 Lấy SegmentIndex từ Firebase (có thể null nếu chưa start)
+        var currentIndex = await _trainStateStore.GetSegmentIndexAsync(trainId);
+        // ?? throw new AppException(ErrorCode.BadRequest,
+        //     "Train segment not initialized in Firebase. Call StartOrContinueSimulationAsync.",
+        //     StatusCodes.Status400BadRequest);
 
-        // 🔹 Lấy StartTime từ Firebase
-        var startTime = await _trainStateStore.GetStartTimeAsync(trainId)
-            ?? throw new AppException(ErrorCode.BadRequest,
-                "Start time not initialized in Firebase. Call simulation start first.",
-                StatusCodes.Status400BadRequest);
+        // 🔹 Lấy StartTime từ Firebase (có thể null nếu chưa start)
+        var startTime = await _trainStateStore.GetStartTimeAsync(trainId);
+        // ?? throw new AppException(ErrorCode.BadRequest,
+        //     "Start time not initialized in Firebase. Call simulation start first.",
+        //     StatusCodes.Status400BadRequest);
 
-        // 🔹 Lấy train và routes
-        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction)
-            ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
+        // 🔹 Lấy train và routes (cái này vẫn bắt buộc phải có)
+        var train = await _trainRepository.GetTrainWithRoutesAsync(trainId, direction ?? 0)
+        ?? throw new AppException(ErrorCode.NotFound, "Train not found", StatusCodes.Status404NotFound);
 
         var routes = train.Line?.Routes?
-            .Where(r => r.FromStation != null && r.ToStation != null && r.Direction == direction)
+            .Where(r => r.FromStation != null && r.ToStation != null && r.Direction == (direction ?? r.Direction))
             .OrderBy(r => r.SeqOrder)
             .ToList();
 
         if (routes == null || routes.Count == 0)
             throw new AppException(ErrorCode.NotFound, "No route data found", StatusCodes.Status404NotFound);
 
-        if (currentIndex < 0 || currentIndex >= routes.Count)
-            throw new AppException(ErrorCode.BadRequest, "Train segment index out of range.", StatusCodes.Status400BadRequest);
+        var idx = currentIndex ?? 0;
 
-        var currentRoute = routes[currentIndex];
-        var from = currentRoute.FromStation!;
-        var to = currentRoute.ToStation!;
+        // --- Xác định trạng thái và currentRoute cơ bản ---
+        Route currentRoute;
+        TrainStatusEnum displayStatus;
 
-        // --- Tính toán progress ---
-        var now = DateTimeOffset.UtcNow;
-        var elapsed = (now - startTime).TotalSeconds;
-        var distanceKm = (double)currentRoute.LengthKm;
-        var speedKmh = 100;
-        var eta = (distanceKm / speedKmh) * 3600;
-        var progress = Math.Clamp(elapsed / eta, 0, 1);
-
-        if (progress >= 1)
-            progress = 1;
-
-        // --- Nội suy vị trí ---
-        var (lat, lng) = GeoUtils.Interpolate(
-            from.Latitude!.Value, from.Longitude!.Value,
-            to.Latitude!.Value, to.Longitude!.Value,
-            progress);
-
-        // --- Xác định status ---
-        var displayStatus = train.Status;
-        if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
+        if (startTime == null)
         {
-            displayStatus = progress < 0.1
-                ? TrainStatusEnum.Departed
-                : TrainStatusEnum.InTransit;
+            // chưa start -> Scheduled -> lấy route đầu tiên
+            currentRoute = routes.First();
+            displayStatus = TrainStatusEnum.Scheduled;
+        }
+        else if (idx >= routes.Count)
+        {
+            // đã chạy hết -> Completed -> currentRoute = route cuối cùng
+            currentRoute = routes.Last();
+            displayStatus = TrainStatusEnum.Completed;
+        }
+        else
+        {
+            // đang chạy
+            currentRoute = routes[idx];
+            displayStatus = train.Status;
         }
 
-        // --- Current animation path ---
+        // --- Chọn from/to station hiển thị theo yêu cầu ---
+        Station fromStation;
+        Station toStation;
+
+        if (displayStatus == TrainStatusEnum.Scheduled)
+        {
+            fromStation = routes.First().FromStation!;
+            toStation = routes.First().ToStation!;
+        }
+        else if (displayStatus == TrainStatusEnum.Completed)
+        {
+            // Hiển thị segment cuối; vị trí thực tế sẽ là toStation (đã đến trạm cuối)
+            fromStation = routes.Last().FromStation!;
+            toStation = routes.Last().ToStation!;
+        }
+        else
+        {
+            // đang chạy -> segment theo currentRoute
+            fromStation = currentRoute.FromStation!;
+            toStation = currentRoute.ToStation!;
+        }
+
+        // --- Tọa độ / progress / eta / elapsed ---
+        double lat = fromStation.Latitude!.Value;
+        double lng = fromStation.Longitude!.Value;
+        double progress = 0;
+        double etaSeconds = 0;
+        double elapsedSeconds = 0;
+
+        if (displayStatus == TrainStatusEnum.Scheduled)
+        {
+            // chưa bắt đầu: vị trí = from của segment đầu, progress = 0
+            lat = fromStation.Latitude.Value;
+            lng = fromStation.Longitude.Value;
+            progress = 0;
+            etaSeconds = 0;
+            elapsedSeconds = 0;
+        }
+        else if (displayStatus == TrainStatusEnum.Completed)
+        {
+            // đã hoàn thành: vị trí = last.ToStation, progress = 100%, ETA = 0, elapsed = now - startTime (nếu có)
+            var lastTo = routes.Last().ToStation!;
+            lat = lastTo.Latitude!.Value;
+            lng = lastTo.Longitude!.Value;
+            progress = 1.0;
+            etaSeconds = 0;
+            elapsedSeconds = startTime != null ? (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds : 0;
+        }
+        else
+        {
+            // đang chạy -> tính theo currentRoute và startTime
+            if (startTime != null)
+            {
+                elapsedSeconds = (DateTimeOffset.UtcNow - startTime.Value).TotalSeconds;
+                var distanceKm = (double)currentRoute.LengthKm;
+                var speedKmh = 100.0; // nếu có tốc độ thực tế lấy từ train -> thay vào đây
+                etaSeconds = (distanceKm / speedKmh) * 3600.0;
+                progress = etaSeconds > 0 ? Math.Clamp(elapsedSeconds / etaSeconds, 0.0, 1.0) : 0.0;
+
+                (lat, lng) = GeoUtils.Interpolate(
+                    fromStation.Latitude!.Value, fromStation.Longitude!.Value,
+                    toStation.Latitude!.Value, toStation.Longitude!.Value,
+                    progress);
+
+            // --- Cập nhật status khi đang chạy ---
+                if (displayStatus == TrainStatusEnum.Departed || displayStatus == TrainStatusEnum.InTransit)
+                {
+                    displayStatus = progress < 0.1 ? TrainStatusEnum.Departed : TrainStatusEnum.InTransit;
+                }
+            }
+            else
+            {
+                // phòng trường hợp startTime null nhưng status là running (không nên xảy ra) -> fallback đặt vị trí ở from
+                lat = fromStation.Latitude!.Value;
+                lng = fromStation.Longitude!.Value;
+                progress = 0;
+                etaSeconds = 0;
+                elapsedSeconds = 0;
+            }
+        }
+
+        // --- Current animation path (từ from->to của segment hiển thị) ---
         var path = Enumerable.Range(0, 11).Select(i =>
         {
             var p = i / 10.0;
             var (stepLat, stepLng) = GeoUtils.Interpolate(
-                from.Latitude!.Value, from.Longitude!.Value,
-                to.Latitude!.Value, to.Longitude!.Value,
+                fromStation.Latitude!.Value, fromStation.Longitude!.Value,
+                toStation.Latitude!.Value, toStation.Longitude!.Value,
                 p);
             return new GeoPoint { Latitude = stepLat, Longitude = stepLng };
         }).ToList();
 
-        // --- Full polyline ---
+        // --- Full polyline: đánh dấu completed segments ---
         const int steps = 10;
         var fullPath = new List<object>();
         for (int i = 0; i < routes.Count; i++)
@@ -1100,7 +1234,22 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 return new GeoPoint { Latitude = latStep, Longitude = lngStep };
             }).ToList();
 
-            var isCompleted = i < currentIndex;
+            bool isCompleted;
+            if (displayStatus == TrainStatusEnum.Completed)
+            {
+                // tất cả completed
+                isCompleted = true;
+            }
+            else if (displayStatus == TrainStatusEnum.Scheduled)
+            {
+                // chưa đi đâu -> không route nào completed
+                isCompleted = false;
+            }
+            else
+            {
+                // đang chạy: các route có index < currentIndex được coi là completed
+                isCompleted = i < idx;
+            }
 
             fullPath.Add(new
             {
@@ -1113,7 +1262,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             });
         }
 
-        // --- Shipments summary ---
+        // --- Shipments & Parcels (giữ nguyên logic của bạn) ---
         var allShipmentsRaw = await _trainRepository.GetLoadedShipmentsByTrainAsync(trainId);
         var allShipments = allShipmentsRaw
             .GroupBy(s => s.Id)
@@ -1161,18 +1310,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             })
             .ToList();
 
-        // ✅ Kết quả cuối cùng
+        // --- StartTime for response: Scheduled => null, others => show real startTime if present ---
+        DateTimeOffset? startTimeForResponse = displayStatus == TrainStatusEnum.Scheduled ? (DateTimeOffset?)null : startTime;
+
         var result = new TrainPositionResult
         {
             TrainId = trainId,
             Latitude = lat,
             Longitude = lng,
-            StartTime = startTime,
-            ETA = TimeSpan.FromSeconds(eta),
-            Elapsed = TimeSpan.FromSeconds(elapsed),
-            ProgressPercent = (int)(progress * 100),
-            FromStation = from.StationNameVi,
-            ToStation = to.StationNameVi,
+            StartTime = startTimeForResponse ?? DateTimeOffset.MinValue, // consider making this property nullable in the model
+            ETA = TimeSpan.FromSeconds(etaSeconds),
+            Elapsed = TimeSpan.FromSeconds(elapsedSeconds),
+            ProgressPercent = (int)Math.Round(progress * 100.0),
+            FromStation = displayStatus == TrainStatusEnum.Completed
+                ? routes.Last().FromStation!.StationNameVi // show the last segment's from (you can also set to last.ToStation if you prefer)
+                : fromStation.StationNameVi,
+            ToStation = displayStatus == TrainStatusEnum.Completed
+                ? routes.Last().ToStation!.StationNameVi
+                : toStation.StationNameVi,
             Status = displayStatus.ToString(),
             Path = path,
             AdditionalData = new
@@ -1183,8 +1338,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
         };
 
-        // 🔹 Lưu lại vị trí hiện tại vào Firebase
-        await _trainStateStore.SetPositionResultAsync(trainId, result);
+        // 🔹 Lưu lại vị trí hiện tại vào Firebase (optional, nếu chưa start thì có thể bỏ)
+        // await _trainStateStore.SetPositionResultAsync(trainId, result);
+        if (startTime != null)
+        {
+            await _trainStateStore.SetPositionResultAsync(trainId, result);
+        }
 
         return result;
     }
@@ -1276,9 +1435,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     "⚠️ Unexpected station for TrainId={TrainId}. Expected: {ExpectedStationId}, Received: {ReceivedStationId}, Direction={Direction}, SegmentIndex={SegmentIndex}",
                     trainId, expectedStationId, stationId, direction, resolvedSegmentIndex);
 
+                var expectedStationName = _stationRepository.GetStationNameByIdAsync(expectedStationId);
                 throw new AppException(
                     ErrorCode.BadRequest,
-                    $"Unexpected station. Expected: {expectedStationId}, Received: {stationId}",
+                    $"Bạn cần làm việc ở ga {expectedStationName} để xác nhận tàu đã đến trạm này. ",
                     StatusCodes.Status400BadRequest);
             }
 
@@ -1644,6 +1804,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
     }
 
+    private async Task<string?> GetCurrentTimeSlotIdAsync()
+    {
+        var now = TimeOnly.FromDateTime(DateTime.Now);
+        var timeSlots = await _timeSlotRepository.GetAllAsync();
+
+        var currentSlot = timeSlots.FirstOrDefault(ts =>
+            ts.StartReceivingTime.HasValue && ts.CutOffTime.HasValue &&
+            (
+                (ts.StartReceivingTime.Value <= ts.CutOffTime.Value &&
+                 ts.StartReceivingTime.Value <= now && now < ts.CutOffTime.Value)
+                ||
+                (ts.StartReceivingTime.Value > ts.CutOffTime.Value &&
+                 (now >= ts.StartReceivingTime.Value || now < ts.CutOffTime.Value))
+            )
+        );
+
+        return currentSlot?.Id;
+    }
 
     private (Station? start, Station? end) ResolveEndpointsFromRoutes(IReadOnlyList<Route> allRoutes)
     {

@@ -110,6 +110,7 @@
         public const string CUSTOMER_NOT_FOUND = "Không tìm thấy khách hàng.";
         public const string ASSIGN_ROLE_SUCCESS = "Gán vai trò thành công.";
         public const string UPDATE_BANK_INFO_SUCCESS = "Cập nhật thông tin ngân hàng thành công.";
+        public const string STAFF_CANNOT_CONFIRM_AT_STATION = "Nhân viên không thể xác nhận bưu kiện tại ga ";
     }
 
     public class ResponseMessageConstrantsImage
@@ -306,6 +307,7 @@
         public const string REGION_NAME_REQUIRED = "Yêu cầu tên vùng.";
         public const string REGION_CODE_INVALID = "RegionId không hợp lệ.";
         public const string REGION_NAME_INVALID = "Tên vùng không hợp lệ.";
+        public const string REGION_NAME_EXISTED = "Tên vùng đã tồn tại.";
     }
 
     public class MetroRouteMessageConstants
@@ -363,6 +365,7 @@
         public const string INSURANCE_POLICY_ALREADY_DEACTIVATED = "Chính sách bảo hiểm đang được vô hiệu hóa";
         public const string INSURANCE_POLICY_IN_USE = "Chính sách bảo hiểm đang được sử dụng bởi một hoặc nhiều loại bưu kiện. Vui lòng gỡ bỏ liên kết trước khi vô hiệu hóa chính sách.";
         public const string INSURANCE_POLICY_EXPIRED = "Chính sách bảo hiểm đã hết hạn và không thể kích hoạt lại.";
+        public const string INSURANCE_POLICY_ACTIVE_CANNOT_DELETE = "Chính sách bảo hiểm đang được kích hoạt và không thể xóa.";
     }
 
     public class ResponseMessageSystemConfig
@@ -402,5 +405,39 @@
         public const string VALID_FROM_REQUIRED = "Yêu cầu ngày bắt đầu hiệu lực.";
         public const string VALID_TO_REQUIRED = "Yêu cầu ngày kết thúc hiệu lực.";
         public const string PRICING_CONFIG_ALREADY_ACTIVATED = "Cấu hình giá đã được kích hoạt";
+        public const string PRICING_CONFIG_IN_USE = "Cấu hình giá đã được kích hoạt và không thể chỉnh sửa.";
+        public const string PRICING_CONFIG_EXPIRED = "Cấu hình giá đã hết hạn và không thể kích hoạt lại.";
+        public const string PRICING_CONFIG_ACTIVATE_SUCCESS = "Kích hoạt cấu hình giá thành công.";
+        public const string PRICING_CONFIG_CANNOT_ACTIVATE_ON_UPDATE = "Cấu hình giá không thể kích hoạt trong khi đang sửa đổi.";
+    }
+
+    public class ResponseMessageTimeSlot
+    {
+        public const string TIMESLOT_NOT_FOUND = "Không tìm thấy khung giờ.";
+        public const string TIMESLOT_EXISTED = "Khung giờ đã tồn tại.";
+        public const string TIMESLOT_UPDATE_SUCCESS = "Cập nhật khung giờ thành công.";
+        public const string TIMESLOT_DELETE_SUCCESS = "Xóa khung giờ thành công.";
+        public const string TIMESLOT_CREATE_SUCCESS = "Tạo khung giờ thành công.";
+        public const string START_TIME_REQUIRED = "Yêu cầu thời gian bắt đầu.";
+        public const string END_TIME_REQUIRED = "Yêu cầu thời gian kết thúc.";
+        public const string START_TIME_INVALID = "Thời gian bắt đầu không hợp lệ. Định dạng: HH:mm:ss";
+        public const string END_TIME_INVALID = "Thời gian kết thúc không hợp lệ. Định dạng: HH:mm:ss";
+        public const string OPEN_TIME_MUST_BE_BEFORE_CLOSE_TIME = "Giờ mở ca phải sớm hơn giờ đóng ca.";
+        public const string OVERLAPPING_TIMESLOT = "Khung giờ bị trùng lặp với khung giờ hiện có.";
+        public const string START_TIME_MUST_BE_BEFORE_CUT_OFF_TIME = "Giờ bắt đầu nhận hàng phải sớm hơn giờ cắt hàng.";
+        public const string CUT_OFF_TIME_MUST_BE_BEFORE_OPEN_TIME = "Giờ cắt hàng phải sớm hơn giờ mở ca.";
+        public const string START_TIME_MUST_BE_BEFORE_OPEN_TIME = "Giờ bắt đầu nhận hàng phải sớm hơn giờ mở ca.";
+        public const string INVALID_NIGHT_SHIFT_TIMES = "Khung giờ ca đêm không hợp lệ. Giờ mở ca phải sau 18:00 và giờ đóng ca phải trước 06:00.";
+    }
+
+    public class ResponseMessageAssignment
+    {
+        public const string ASSIGNMENT_NOT_FOUND = "Không tìm thấy phân công.";
+        public const string ASSIGNMENT_EXISTED = "Phân công đã tồn tại.";
+        public const string ASSIGNMENT_UPDATE_SUCCESS = "Cập nhật phân công thành công.";
+        public const string ASSIGNMENT_DELETE_SUCCESS = "Xóa phân công thành công.";
+        public const string ASSIGNMENT_CREATE_SUCCESS = "Phân công thành công.";
+        public const string ASSIGNMENT_ALREADY_INACTIVE = "Phân công đã không còn hiệu lực.";
+        public const string ASSIGNMENT_DEACTIVATE_SUCCESS = "Hủy phân công thành công.";
     }
 }

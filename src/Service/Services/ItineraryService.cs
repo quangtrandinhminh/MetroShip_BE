@@ -45,7 +45,7 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
 
-    public async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
+    private async Task<DateTimeOffset> CheckEstArrivalTime(BestPathGraphResponse pathResponse, string currentSlotId, DateOnly date)
     {
         _logger.Information("Checking estimated arrival time for path: {@PathResponse}", pathResponse);
 
@@ -613,9 +613,9 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_KG)));
         var maxVolumeM3 = decimal.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_CAPACITY_PER_LINE_M3)));
-        /*var maxAttempt = decimal.Parse(_systemConfigRepository
-            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));*/
-        var maxAttempt = 3;
+        var maxAttempt = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_NUMBER_OF_SHIFT_ATTEMPTS)));
+        //var maxAttempt = 3;
 
         // 4. Clone new shipment to handle new schedule for itineraries, calculate total weight and volume again to ensure not include lost parcel
         var shipment = new Shipment();
@@ -718,30 +718,31 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_DISTANCE_IN_METERS))); //2000 meters
         var maxStationCount = int.Parse(_systemConfigRepository
             .GetSystemConfigValueByKey(nameof(SystemConfigSetting.Instance.MAX_COUNT_STATION_NEAR_USER))); //5
+        var maxDistanceExpansionTime = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.NUM_OF_MAX_DISTANCE_EXPANSION_TIMES))); // 10 times
 
         var result = new List<string> { request.DepartureStationId };
 
-        if (request is { UserLongitude: not null, UserLatitude: not null })
+        if (request is not { UserLongitude: not null, UserLatitude: not null }) return result;
+
+        var nearStations = await _stationRepository.GetAllStationIdNearUser(
+            request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
+
+        // Remove departure station if present (to avoid duplication)
+        nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
+
+        // Ensure at least 2 stations are available (including departure)
+        while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * maxDistanceExpansionTime)
         {
-            var nearStations = await _stationRepository.GetAllStationIdNearUser(
+            // Extend distance by 2 times
+            maxDistanceInMeters *= 2;
+            nearStations = await _stationRepository.GetAllStationIdNearUser(
                 request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
-
-            // Remove departure station if present (to avoid duplication)
             nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
-
-            // Ensure at least 2 stations are available (including departure)
-            while (result.Count + nearStations.Count < 2 && maxDistanceInMeters < maxDistanceInMeters * 2)
-            {
-                // Extend distance by 1000 meters
-                maxDistanceInMeters += 2000;
-                nearStations = await _stationRepository.GetAllStationIdNearUser(
-                    request.UserLatitude.Value, request.UserLongitude.Value, maxDistanceInMeters, maxStationCount);
-                nearStations.RemoveAll(s => s.StationId == request.DepartureStationId);
-            }
-
-            // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
-            result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
         }
+
+        // Add up to (maxStationCount - 1) nearest stations (excluding departure) -- max 6
+        result.AddRange(nearStations.Take(maxStationCount).Select(_ => _.StationId));
 
         return result;
     }
@@ -1038,5 +1039,32 @@ public class ItineraryService(IServiceProvider serviceProvider) : IItineraryServ
             };
             targetParcels.Add(newParcel);
         }
+    }
+
+    // check est arrival time for itinerary response
+    public async Task<DateTimeOffset> CheckEstArrivalTime(ItineraryResponse itineraryResponse)
+    {
+        var timeSlot = await _metroTimeSlotRepository.GetSingleAsync(
+                       x => x.Id == itineraryResponse.TimeSlotId && !x.IsAbnormal && x.DeletedAt == null);
+
+        if (timeSlot == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.TIME_SLOT_NOT_FOUND + $" Khung giờ {itineraryResponse.TimeSlotId}",
+            StatusCodes.Status404NotFound);
+        }
+
+        var closeTime = timeSlot.CloseTime;
+        var date = itineraryResponse.Date.Value;
+        var systemDateTime = new DateTimeOffset(
+                                  date.Year, date.Month, date.Day,
+                                  closeTime.Hour, closeTime.Minute, closeTime.Second,
+                                  TimeSpan.FromHours(7)); // gmt +7
+
+        var utcTime = systemDateTime.ToUniversalTime();
+
+        var estArrivalTime = utcTime;
+        return estArrivalTime;
     }
 }

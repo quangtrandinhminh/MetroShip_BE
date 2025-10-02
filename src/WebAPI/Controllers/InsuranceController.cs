@@ -1,6 +1,7 @@
 ﻿using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.InsurancePolicy;
+using MetroShip.Service.ApiModels.MetroLine;
 using MetroShip.Service.ApiModels.PaginatedList;
 using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Constants;
@@ -17,13 +18,15 @@ namespace MetroShip.WebAPI.Controllers
         private readonly IInsuranceService _insuranceService = serviceProvider.GetRequiredService<IInsuranceService>();
 
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllPolicies)]
-        public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request)
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<InsurancePolicyResponse>>), 200)]
+        public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request, [FromQuery] bool? isActive = null)
         {
-            var response = await _insuranceService.GetAllPoliciesPaginatedList(request);
+            var response = await _insuranceService.GetAllPoliciesPaginatedList(request, isActive);
             return Ok(response);
         }
 
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetPolicyById)]
+        [ProducesResponseType(typeof(BaseResponse<InsurancePolicyResponse>), 200)]
         public async Task<IActionResult> GetPolicyById([FromRoute] string id)
         {
             var response = await _insuranceService.GetPolicyById(id);
@@ -58,6 +61,14 @@ namespace MetroShip.WebAPI.Controllers
         public async Task<IActionResult> GetAllActivePoliciesDropdown()
         {
             var response = await _insuranceService.GetAllActivePoliciesDropdown();
+            return Ok(BaseResponse.OkResponseDto(response));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [HttpDelete(WebApiEndpoint.InsurancePolicyEndpoint.DeletePolicy)]
+        public async Task<IActionResult> DeletePolicy([FromRoute] string id)
+        {
+            var response = await _insuranceService.DeletePolicy(id);
             return Ok(BaseResponse.OkResponseDto(response));
         }
     }

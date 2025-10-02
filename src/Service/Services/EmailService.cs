@@ -57,6 +57,9 @@ namespace MetroShip.Service.Services
                 case MailTypeEnum.Notification:
                     CreateNotificationMail(model); 
                     break;
+                case MailTypeEnum.Delivery:
+                    CreateDeliveryMail(model);
+                    break;
                 default:
                     break;
             }
@@ -292,7 +295,7 @@ namespace MetroShip.Service.Services
                 sb.AppendLine($"</table>");
             }
 
-            sb.AppendLine($"<p>Vui lòng thanh toán trong 15 phút sau khi đặt đơn, nếu đã hoàn thành bạn có thể bỏ qua thông báo này</p>");
+            //sb.AppendLine($"<p>Vui lòng thanh toán trong 15 phút sau khi đặt đơn, nếu đã hoàn thành bạn có thể bỏ qua thông báo này</p>");
             sb.AppendLine($"<p>Bạn có thể theo dõi tình trạng vận đơn bằng cách nhập mã: <strong>{shipment.TrackingCode}</strong>" +
                 $"<a href='{trackingLink ?? "#"}'>tại đây</a>" +
                 $"</p>");
@@ -348,6 +351,93 @@ namespace MetroShip.Service.Services
                     model.Email);
                 //throw new AppException(ErrorCode.Unknown, $"Failed to send notification email: {ex.Message}");
             }
+        }
+
+        private void CreateDeliveryMail(SendMailModel model)
+        {
+            try
+            {
+                var shipment = model.Data as Shipment;
+                if (shipment == null)
+                {
+                    throw new ArgumentException("Invalid shipment data for email");
+                }
+
+                var mailmsg = new MailMessage
+                {
+                    IsBodyHtml = true, // Changed to HTML for better formatting
+                    From = new MailAddress(EMAIL_SENDER, EMAIL_SENDER_NAME),
+                    Subject = $"Đơn hàng {shipment.TrackingCode} trên {APP_NAME} đã được giao đến trạm đích. "
+                };
+                mailmsg.To.Add(model.Email);
+
+                // Create formatted email body instead of raw JSON
+                mailmsg.Body = CreateDeliveryEmailBody(shipment, model.Name, APP_NAME);
+
+                SmtpClient smtp = new SmtpClient
+                {
+                    Host = EMAIL_SENDER_HOST,
+                    Port = EMAIL_SENDER_PORT,
+                    EnableSsl = EMAIL_IsSSL,
+                    Credentials = new NetworkCredential(EMAIL_SENDER, EMAIL_SENDER_PASSWORD)
+                };
+
+                smtp.Send(mailmsg);
+
+                _logger.Information("Email sent successfully to {Email} for shipment {TrackingCode}",
+                    model.Email, shipment.TrackingCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to send email to {Email}", model.Email);
+                //throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
+            }
+        }
+
+        private string? CreateDeliveryEmailBody(Shipment shipment, string customerName, string APP_NAME)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"<html><body>");
+            sb.AppendLine($"<h2>Chào {customerName},</h2>");
+            sb.AppendLine($"<p>Đơn hàng của bạn đã được giao đến trạm đích.</p>");
+            sb.AppendLine($"<p>Ga: <strong>{shipment.DestinationStationName}</strong></p>");
+            sb.AppendLine($"<p>Địa chỉ: <strong>{shipment.DestinationStationAddress}</strong></p>");
+            sb.AppendLine($"<p>Vui lòng mang CCCD hoặc CMND đến để nhận hàng trước " +
+                $"<strong>{shipment.SurchargeAppliedAt}</strong> để không bị tính thêm phụ phí</p>");
+
+            sb.AppendLine($"<h3>Thông tin vận đơn:</h3>");
+            sb.AppendLine($"<table border='1' cellpadding='5' cellspacing='0'>");
+            sb.AppendLine($"<tr><td><strong>Mã vận đơn:</strong></td><td>{shipment.TrackingCode}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Người gửi:</strong></td><td>{shipment.SenderName}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>SĐT người gửi:</strong></td><td>{shipment.SenderPhone}</td></tr>");
+            sb.AppendLine($"<tr><td><strong>Người nhận:</strong></td><td>{shipment.RecipientName}</td></tr>");
+            sb.AppendLine((string?)$"<tr><td><strong>SĐT người nhận:</strong></td><td>{shipment.RecipientPhone}</td></tr>");
+            sb.AppendLine($"</table>");
+
+            // Add parcel information
+            if (shipment.Parcels?.Any() == true)
+            {
+                sb.AppendLine($"<h3>Thông tin hàng hóa:</h3>");
+                sb.AppendLine($"<table border='1' cellpadding='5' cellspacing='0'>");
+                sb.AppendLine($"<tr><th>Mã kiện hàng</th><th>Kích thước (cm)</th><th>Khối lượng (kg)</th></tr>");
+
+                foreach (var parcel in shipment.Parcels)
+                {
+                    sb.AppendLine($"<tr>");
+                    sb.AppendLine($"<td>{parcel.ParcelCode}</td>");
+                    sb.AppendLine($"<td>{parcel.LengthCm} x {parcel.WidthCm} x {parcel.HeightCm}</td>");
+                    sb.AppendLine($"<td>{parcel.WeightKg}</td>");
+                    sb.AppendLine($"</tr>");
+                }
+
+                sb.AppendLine($"</table>");
+            }
+
+            sb.AppendLine($"<p>Cảm ơn bạn đã tin tưởng sử dụng dịch vụ của chúng tôi!</p>");
+            sb.AppendLine($"<p>Trân trọng,<br/>Đội ngũ {APP_NAME}</p>");
+            sb.AppendLine($"</body></html>");
+            return sb.ToString();
         }
     }
 }

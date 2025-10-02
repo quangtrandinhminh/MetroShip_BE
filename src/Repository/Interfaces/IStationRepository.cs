@@ -15,10 +15,11 @@ public interface IStationRepository : IBaseRepository<Station>
     IEnumerable<Station> GetStationsByRegion(string? regionId);
     bool AreStationsInSameMetroLine(string departureStationId, string destinationStationId);
     Task<string?> GetStationNameByIdAsync(string stationId);
-
+    Task<Dictionary<string, string>> GetStationNamesByIdsAsync(List<string> stationIds);
     Task<Dictionary<(string, DirectionEnum), (string, string)>> GetStartAndEndStationIdsOfRouteAsync(string metroLineId);
     Task<Dictionary<(string, DirectionEnum), (string, string)>> GetStartAndEndStationIdsOfRouteAsync(List<string> metroLineIds);
 
     Task<List<string>> GetAllStationsCanLoadShipmentAsync(string shipmentId);
     Task<List<string>> GetAllStationsCanUnloadShipmentAsync(string shipmentId);
+    Task<string?> GetStationAddressByIdAsync(string stationId);
 }

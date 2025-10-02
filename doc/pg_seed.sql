@@ -150,70 +150,8 @@ VALUES
      NULL,NULL,NULL,NOW(),NOW(),NULL),
 
     -- policy
-    ('a3f5b9e1-4c12-4fa8-9b2a-7d5e1c2f3a4b','CONFIRMATION_HOUR','24',
-     'Số giờ cho phép xác nhận đơn hàng',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('b4d6c8f2-5d23-5gb9-0c3b-8e6f2d3g4h5c','PAYMENT_REQUEST_HOUR','24',
-     'Số giờ yêu cầu thanh toán',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('c5e7d9g3-6e34-6hc0-1d4c-9f7g3e4h5i6d','ALLOW_CANCEL_BEFORE_HOUR','24',
-     'Cho phép hủy trước bao nhiêu giờ',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('d6f8e0h4-7f45-7id1-2e5d-0g8h4f5i6j7e','REFUND_PERCENT','80',
-     'Phần trăm hoàn tiền khi hủy',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('e7g9f1i5-8g56-8je2-3f6e-1h9i5g6j7k8f','SURCHARGE_AFTER_DELIVERED_HOUR','48',
-     'Phụ phí sau thời gian giao',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('f8h0g2j6-9h67-9kf3-4g7f-2i0j6h7k8l9g','SURCHARGE_PER_DAY_PERCENT','0.01',
-     'Phụ phí lưu kho mỗi ngày (VND)',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
     ('2e9e0869-85e5-4c23-bedc-126c27f50076','MAX_SCHEDULE_SHIPMENT_DAY','15',
      'Số ngày tối đa khách có thể đặt trước cho kiện hàng',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('09i1h3k7-0i78-0lg4-5h8g-3j1k7i8l9m0h','FREE_STORAGE_AFTER_DAY','30',
-     'Số ngày thanh lý hàng tồn kho',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('29e61663-34e5-457e-a6f8-121ee33ce4e4','SCHEDULE_BEFORE_SHIFT_MINUTES','30',
-     'Số phần trăm ưu đãi cho các kiện hàng giao ca đêm',2,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-
-    -- Price -- type=3
-    ('ae2856fc-485b-42b8-b986-a94318869b9e','DISTANCE_STEP_KM','300',
-     'Bước nhảy khoảng cách tính giá (km)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('aa1bdb30-7df7-4efd-8fc0-663c9b0576f5','PRICE_STEP_PERCENT_PER_DISTANCE_TIER','0.5',
-     'Phần trăm giá theo từng bậc khoảng cách', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('d5e99000-fd33-4eb6-b0ee-708c0ffbf5f7','DISTANCE_TIER_QUANTITY','10',
-     'Số lượng bậc khoảng cách', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('91c3f6a9-6f9a-4150-a31d-2b51ea2e7c07','WEIGHT_TIER_1_MAX_KG','5',
-     'Trọng lượng tối đa bậc 1 (kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('a3dbe011-5d6f-4c51-9714-2aa9a5a9246d','PRICE_TIER_1_VND','25000',
-     'Giá bậc 1 (VND)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('8ebaa2ee-b418-426b-bd86-5e5698324c80','WEIGHT_TIER_2_MAX_KG','10',
-     'Trọng lượng tối đa bậc 2 (kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('7cc423fb-925b-4031-9f19-92cb6dabc2e7','PRICE_TIER_2_VND_PER_KG','7500',
-     'Giá bậc 2 (VND/kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('0631cfda-896c-4f77-bd96-2ad90e127521','WEIGHT_TIER_3_MAX_KG','50',
-     'Trọng lượng tối đa bậc 3 (kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('8f95513d-8b40-4f11-913a-9240fc8ab8bd','PRICE_TIER_3_VND_PER_KG','7000',
-     'Giá bậc 3 (VND/kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('49159b29-8477-4927-bb98-a2342919c55c','WEIGHT_TIER_4_MAX_KG','100',
-     'Trọng lượng tối đa bậc 4 (kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('3df009ac-6562-484e-9acd-299138b5aa42','PRICE_TIER_4_VND_PER_KG','6500',
-     'Giá bậc 4 (VND/kg)', 3,TRUE,
-     NULL,NULL,NULL,NOW(),NOW(),NULL),
-    ('7000f9a3-1a1d-4f73-aacf-704ffcaa3ee6','PRICE_TIER_5_VND_PER_KG','6000',
-     'Giá bậc 5 (VND/kg)', 3,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- ───────────────────────────────────────────────────────────────
@@ -249,7 +187,7 @@ VALUES
      150, 150, 150,
      TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL,
-     300, NULL, 5000, FALSE),
+     300, NULL, 5000, TRUE),
 
     -- Hàng giá trị / Valuable goods
     ('4e5f6a7b-8c9d-0123-ef01-4fedcba98765',
@@ -2785,3 +2723,19 @@ WHERE "Id" = 'c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8';
 UPDATE public."MetroTimeSlots"
 SET "StartReceivingTime" = '18:30:00', "CutOffTime" = '22:30:00'
 WHERE "Id" = 'd4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9';
+-- ───────────────────────────────────────────────────────────────
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType", "IsActive",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+VALUES
+    -- System
+    ('158cc713-5a6f-4e08-9f53-58d3bd974dc0','NUM_OF_MAX_DISTANCE_EXPANSION_TIMES','10',
+     'Số lần mở rộng bán kính phạm vi tìm kiếm các ga gần vị trí người dùng', 1,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('d074d0d7-a9ac-48f0-acde-b75bf3eafb94','MAX_NUMBER_OF_SHIFT_ATTEMPTS','3',
+     'Số lần dời ca tối đa khi tự động xếp lịch cho đơn hàng', 1,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL),
+    ('d4cc6723-f0d3-4db5-a13a-a81099816502','CANCEL_TRANSACTION_AFTER_MINUTE','15',
+     'Thời gian hủy giao dịch treo ở chờ thanh toán', 1,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
+

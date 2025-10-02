@@ -11,7 +11,9 @@ public interface IShipmentService
     Task<PaginatedListResponse<ShipmentListResponse>> GetAllShipmentsAsync(PaginatedListRequest paginatedRequest, ShipmentFilterRequest? filterRequest = null,
     string? searchKeyword = null, DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null);
     Task<ShipmentDetailsResponse?> GetShipmentByTrackingCode(string trackingCode);
-    Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentsHistory(PaginatedListRequest request, ShipmentStatusEnum? status);
+    Task<ShipmentForGuest?> GetShipmentForGuest(string trackingCode);
+    Task<PaginatedListResponse<ShipmentListResponse>> GetShipmentsHistory(PaginatedListRequest request,
+        ShipmentStatusEnum? status, bool? isRecipient);
     Task<(string, string)> BookShipment(ShipmentRequest request, CancellationToken cancellationToken = default);
     //Task<BestPathGraphResponse> FindPathAsync(BestPathRequest request);
     Task<TotalPriceResponse> GetItineraryAndTotalPrice(TotalPriceCalcRequest request);

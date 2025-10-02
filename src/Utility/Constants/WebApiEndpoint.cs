@@ -27,6 +27,7 @@
             public const string CreateStaff = BaseEndpoint + "/staff-account";
             public const string UpdateBankInfo = BaseEndpoint + "/bank-info";
             public const string GetBankInfoAndQrCode = BaseEndpoint + "/bank-info";
+            public const string RevokeStaffAssignment = BaseEndpoint + "/revoke-assignment/{staffId}";
         }
 
         public static class ParcelCategory
@@ -85,6 +86,7 @@
             public const string CompleteShipment = BaseEndpoint + "/complete";
             public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
             public const string ChangeItinerarySlot = BaseEndpoint + "/itineraries";
+            public const string GetShipmentForGuest = BaseEndpoint + "/guest/{shipmentTrackingCode}";
         }
 
         public static class TransactionEndpoint
@@ -130,11 +132,14 @@
         public static class StationEndpoint 
         {
             private const string BaseEndpoint = "/" + AreaName + "/stations";
-            public const string GetStations = BaseEndpoint;
+            public const string GetDropdownList = BaseEndpoint;
             public const string GetStationById = BaseEndpoint + "/{id}";
             public const string CreateStation = BaseEndpoint;
-            public const string UpdateStation = BaseEndpoint;
+            public const string UpdateStation = BaseEndpoint + "/{id}";
             public const string DeleteStation = BaseEndpoint + "/{id}";
+            public const string GetAllStations = BaseEndpoint + "/all";
+            public const string GetStationsNearUsers = BaseEndpoint + "/nearby";
+            public const string CalculateDistance = BaseEndpoint + "/distance";
         }
         public static class MetroRouteEndpoint
         {
@@ -158,6 +163,7 @@
             public const string CreateMetroTimeSlot = BaseEndpoint;
             public const string UpdateMetroTimeSlot = BaseEndpoint;
             public const string DeleteMetroTimeSlot = BaseEndpoint + "/{id}";
+            public const string GetAllMetroTimeSlots = BaseEndpoint + "/all";
         }
 
         public static class MetroTrainEndpoint
@@ -206,6 +212,7 @@
             public const string CreateSystemConfig = BaseEndpoint;
             public const string ChangeConfigValue = BaseEndpoint + "/config-value";
             public const string UpdateSystemConfig = BaseEndpoint;
+            public const string GetConfigValueByKey = BaseEndpoint + "/{configKey}";
         }
 
         public static class RegionEndpoint
@@ -215,7 +222,7 @@
             public const string GetRegionById = BaseEndpoint + "/{id}";
             public const string CreateRegion = BaseEndpoint;
             public const string UpdateRegion = BaseEndpoint + "/{id}";
-            public const string DeleteRegion = BaseEndpoint + "/{id}";
+            public const string DeleteRegion = BaseEndpoint + "/{regionId}";
         }
 
         public static class PricingEndpoint
@@ -226,7 +233,7 @@
             public const string GetPricingTable = BaseEndpoint + "/table";
             public const string CreatePricing = BaseEndpoint;
             public const string UpdatePricing = BaseEndpoint + "/activation/{pricingConfigId}";
-            public const string DeletePricing = BaseEndpoint + "/{id}";
+            public const string DeletePricing = BaseEndpoint + "/{pricingConfigId}";
             public const string CalculatePrice = BaseEndpoint + "/calculation";
         }
 

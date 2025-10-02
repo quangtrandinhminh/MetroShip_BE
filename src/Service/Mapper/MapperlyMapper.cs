@@ -66,6 +66,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial ShipmentListResponse MapToShipmentListResponse(Shipment entity);
 
     public partial ShipmentDetailsResponse MapToShipmentDetailsResponse(Shipment entity);
+    public partial ShipmentForGuest MapToShipmentForGuest(Shipment entity);
     public partial Shipment MapToShipmentEntity(ShipmentRequest request);
     protected partial ShipmentItinerary MapToShipmentItinerary(ShipmentItineraryRequest request);
     public partial ItineraryResponse MapToShipmentItineraryResponse(ShipmentItinerary entity);
@@ -168,6 +169,8 @@ public partial class MapperlyMapper : IMapperlyMapper
 
     // time slot
     public partial MetroTimeSlotResponse MapToMetroTimeSlotResponse(MetroTimeSlot entity);
+    public partial PaginatedListResponse<MetroTimeSlotResponse> MapToPaginatedListResponse(PaginatedList<MetroTimeSlot> entityList);
+    public partial void MapToMetroTimeSlotEntity(MetroTimeSlotUpdateRequest request, MetroTimeSlot entity);
 
     // media
     public partial ShipmentMedia MapToShipmentMediaEntity(ShipmentMediaRequest request);
@@ -185,6 +188,7 @@ public partial class MapperlyMapper : IMapperlyMapper
     public partial PricingTableResponse MapToPricingTableResponse(PricingConfig entity);
     public partial PaginatedListResponse<PricingTableResponse> MapToPricingTablePaginatedList(PaginatedList<PricingConfig> entityList);
     public partial PricingConfig MapToPricingConfigEntity(PricingConfigRequest request);
+    public partial void MapToPricingConfigEntity(PricingConfigRequest request, PricingConfig entity);
 
     // region
     public partial PaginatedListResponse<RegionResponse> MapToRegionPaginatedList(PaginatedList<Region> entityList);

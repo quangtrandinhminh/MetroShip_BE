@@ -1,5 +1,6 @@
 ﻿using MetroShip.Service.ApiModels;
 using MetroShip.Service.ApiModels.PaginatedList;
+using MetroShip.Service.ApiModels.Pricing;
 using MetroShip.Service.ApiModels.Transaction;
 using MetroShip.Service.ApiModels.VNPay;
 using MetroShip.Service.Helpers;
@@ -29,6 +30,7 @@ namespace MetroShip.WebAPI.Controllers
         /// Get all transactions (paginated & optional payment status filter)
         /// </summary>
         [HttpGet(WebApiEndpoint.TransactionEndpoint.GetTransactions)]
+        [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<TransactionResponse>>), 200)]
         public async Task<IActionResult> GetTransactions([FromQuery] PaginatedListRequest request, [FromQuery] PaymentStatusEnum? status, 
         [FromQuery] string? searchKeyword,[FromQuery] DateTimeOffset? createdFrom,[FromQuery] DateTimeOffset? createdTo,[FromQuery] OrderByRequest orderByRequest)
         {
@@ -48,6 +50,7 @@ namespace MetroShip.WebAPI.Controllers
 
         // get banks from vietqr
         [HttpGet(WebApiEndpoint.TransactionEndpoint.GetBanksFromVietQr)]
+        [ProducesResponseType(typeof(BaseResponse<List<VietQrBankDetail>>), 200)]
         public async Task<IActionResult> GetBanksFromVietQr()
         {
             var result = await _transactionService.GetBanksFromVietQr();

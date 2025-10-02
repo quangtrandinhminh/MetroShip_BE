@@ -1,5 +1,6 @@
 ﻿namespace MetroShip.WebAPI.Extensions;
 
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.OpenApi.Models;
 
 public static class SwaggerExtensions
@@ -8,6 +9,7 @@ public static class SwaggerExtensions
     {
         services.AddSwaggerGen(options =>
         {
+            options.DescribeAllParametersInCamelCase();
             options.SwaggerDoc(versionName, new OpenApiInfo { Title = appName, Version = versionName });
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {

@@ -10,6 +10,8 @@ namespace MetroShip.Service.Interfaces
 {
     public interface IStationService
     {
+        Task<PaginatedListResponse<StationListResponse>> GetAllStationAsync(
+            PaginatedListRequest request, StationFilter filter);
         Task<IEnumerable<StationListResponse>> GetAllStationsAsync(string? regionId);
         Task<StationDetailResponse> GetStationByIdAsync(Guid id);
         Task<StationDetailResponse> CreateStationAsync(CreateStationRequest request);

@@ -20,6 +20,9 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using MetroShip.Utility.Constants;
 using MetroShip.Utility.Exceptions;
+using System.Linq.Expressions;
+using MetroShip.Utility.Helpers;
+using Microsoft.EntityFrameworkCore;
 
 namespace MetroShip.Service.Services
 {
@@ -47,6 +50,43 @@ namespace MetroShip.Service.Services
         _systemConfigRepository = systemConfigRepository;
         _httpContextAccessor = httpContextAccessor;
     }
+
+        public async Task<PaginatedListResponse<StationListResponse>> GetAllStationAsync(
+            PaginatedListRequest request, StationFilter filter)
+        {
+            Expression<Func<Station, bool>> predicate = s => s.DeletedAt == null;
+
+            if (!string.IsNullOrWhiteSpace(filter.RegionId))
+            {
+                predicate = predicate.And(s => s.RegionId == filter.RegionId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.MetroRouteId))
+            {
+                predicate = predicate.And(s => s.RoutesFrom.Any(mr => mr.MetroLine.Id == filter.MetroRouteId) 
+                || s.RoutesTo.Any(mr => mr.MetroLine.Id == filter.MetroRouteId));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.StationName))
+            {
+                predicate = predicate.And(s =>
+                    EF.Functions.ILike(s.StationNameVi, $"%{filter.StationName}%")
+                               || EF.Functions.ILike(s.StationNameEn, $"%{filter.StationName}%"));
+            }
+
+            if (filter.IsActive.HasValue)
+            {
+                predicate = predicate.And(s => s.IsActive == filter.IsActive.Value);
+            }
+
+            var stations = await _stationRepository.GetAllPaginatedQueryable(
+                request.PageNumber,
+                request.PageSize,
+                    predicate);
+
+            return _mapper.MapToStationListResponsePaginatedList(stations);
+        }
+
         public async Task<IEnumerable<StationListResponse>> GetAllStationsAsync(string? regionId)
         {
             var stations = string.IsNullOrWhiteSpace(regionId)
@@ -130,7 +170,8 @@ namespace MetroShip.Service.Services
 
             var initialMaxDistance = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_DISTANCE_IN_METERS))); // 5000m
             var maxCount = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_COUNT_STATION_NEAR_USER))); // 3
-            var maxAllowedDistance = initialMaxDistance * 10;
+            var maxDistanceExpansionTime = int.Parse(_systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.NUM_OF_MAX_DISTANCE_EXPANSION_TIMES))); // 10 times
+            var maxAllowedDistance = initialMaxDistance * maxDistanceExpansionTime; // 50000m
 
             _logger.Information("Max distance in meters: {MaxDistance}, Max count: {MaxCount}",
                                initialMaxDistance, maxCount);

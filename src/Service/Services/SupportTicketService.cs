@@ -1,4 +1,5 @@
 ﻿using MetroShip.Repository.Base;
+using MetroShip.Repository.Extensions;
 using MetroShip.Repository.Infrastructure;
 using MetroShip.Repository.Models;
 using MetroShip.Service.ApiModels.PaginatedList;
@@ -13,6 +14,7 @@ using MetroShip.Utility.Helpers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using System.Linq;
 
 namespace MetroShip.Service.Services;
 
@@ -67,8 +69,43 @@ public class SupportTicketService(IServiceProvider serviceProvider) : ISupportTi
         PaginatedListRequest request)
     {
         _logger.Information("Fetching all support tickets with pagination");
-        var tickets = await _supportingTicketRepository.GetAllPaginatedQueryable(
-            request.PageNumber, request.PageSize);
+        PaginatedList<SupportTicket> tickets;
+        var stationId = JwtClaimUltils.GetUserStation(_httpContextAccessor);
+        var role = JwtClaimUltils.GetUserRole(_httpContextAccessor);
+        
+        if (role.Contains(UserRoleEnum.Staff.ToString()) && stationId != null)
+        {
+            _logger.Information("User is associated with station {StationId}, filtering tickets by station", stationId);
+            tickets = await _supportingTicketRepository.GetAllPaginatedQueryable(
+                request.PageNumber,
+                request.PageSize,
+                // tickets where the shipment is departing from the user's station and is not a return shipment
+                // or tickets where the shipment is arriving at the user's station and is a return shipment
+                t => (t.Shipment.DepartureStationId == stationId && t.Shipment.ReturnForShipmentId == null)
+                || (t.Shipment.DestinationStationId == stationId && t.Shipment.ReturnForShipmentId != null)
+                && t.DeletedAt == null);
+        }
+        else if (role.Contains(UserRoleEnum.Customer.ToString()))
+        {
+            _logger.Information("User is a staff member, filtering tickets by opened by user");
+            var userId = JwtClaimUltils.GetUserId(_httpContextAccessor);
+            tickets = await _supportingTicketRepository.GetAllPaginatedQueryable(
+            request.PageNumber,
+            request.PageSize,
+            t => t.OpenById == userId && t.DeletedAt == null);
+        }
+        else if (role.Contains(UserRoleEnum.Admin.ToString()))
+        {
+            _logger.Information("User is an admin, fetching all tickets");
+            tickets = await _supportingTicketRepository.GetAllPaginatedQueryable(
+            request.PageNumber,
+            request.PageSize,
+            t => t.DeletedAt == null);
+        }
+        else
+        {
+            tickets = new();
+        }
 
         return _mapper.MapToSupportTicketPaginatedList(tickets);
     }
