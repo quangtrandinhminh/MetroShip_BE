@@ -148,6 +148,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         var thisMonthPaidAmount = await query
             .Where(t => t.PaymentStatus == PaymentStatusEnum.Paid &&
+             t.TransactionType != TransactionTypeEnum.Compensation &&
                         t.CreatedAt >= startOfThisMonth && t.CreatedAt < startOfNextMonth)
             .SumAsync(t => t.PaymentAmount);
 
