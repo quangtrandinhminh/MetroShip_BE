@@ -11,6 +11,7 @@ public record TrainListResponse
     public string ModelName { get; set; } = string.Empty;
     public string LineId { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public string? CurrentTimeSlotId { get; set; }
     public string? CurrentStationId { get; set; }
     public string? CurrentStationName { get; set; }
     public string? CurrentRouteStationId { get; set; }

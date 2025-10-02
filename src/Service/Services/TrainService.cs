@@ -121,7 +121,15 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
         Dictionary<string, (DirectionEnum? direction, int? segmentIndex)> trainStates = new();
 
-        if (!string.IsNullOrEmpty(request.TimeSlotId))
+        // Thêm: xác định ca hiện tại
+        string? activeTimeSlotId = request.TimeSlotId;
+        if (string.IsNullOrEmpty(activeTimeSlotId))
+        {
+            activeTimeSlotId = await GetCurrentTimeSlotIdAsync();
+        }
+
+         /*❌ Code cũ(lọc mất hết các schedule khác)
+         if (!string.IsNullOrEmpty(request.TimeSlotId))
         {
             // filter train schedules theo TimeSlotId nếu được cung cấp
             trainSchedules = trainSchedules
@@ -129,6 +137,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 .ToList();
         }
         else
+        {
+            trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
+        }*/
+
+        // ✅ Code mới: vẫn giữ toàn bộ trainSchedules, chỉ lấy direction từ Firebase nếu không có filter
+        if (string.IsNullOrEmpty(request.TimeSlotId))
         {
             trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
         }
@@ -144,6 +158,9 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 }
             }*/
 
+            // Gán ca hiện tại cho response
+            train.CurrentTimeSlotId = activeTimeSlotId;
+
             // Gán tên ga hiện tại
             if (!string.IsNullOrEmpty(train.CurrentStationId) && stationNames.TryGetValue(train.CurrentStationId, out var currentStationName))
             {
@@ -157,7 +174,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 train.NextStationName = nextStationName;
             }
 
-            // Gán train schedules
+            // Gán train schedules 
             train.TrainSchedules = trainSchedules
                 .Where(ts => ts.TrainId == train.Id)
                 .OrderBy(ts => ts.Shift)
@@ -185,7 +202,10 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
 
             // Nếu lấy all trainSchedules, tìm direction từ Firebase
-            train.Direction = trainStates[train.Id].direction;
+            if (trainStates.ContainsKey(train.Id))
+            {
+                train.Direction = trainStates[train.Id].direction;
+            }
 
             //Lấy direction hiện tại từ Firebase
             /*var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
@@ -1784,6 +1804,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
     }
 
+    private async Task<string?> GetCurrentTimeSlotIdAsync()
+    {
+        var now = TimeOnly.FromDateTime(DateTime.Now);
+        var timeSlots = await _timeSlotRepository.GetAllAsync();
+
+        var currentSlot = timeSlots.FirstOrDefault(ts =>
+            ts.StartReceivingTime.HasValue && ts.CutOffTime.HasValue &&
+            (
+                (ts.StartReceivingTime.Value <= ts.CutOffTime.Value &&
+                 ts.StartReceivingTime.Value <= now && now < ts.CutOffTime.Value)
+                ||
+                (ts.StartReceivingTime.Value > ts.CutOffTime.Value &&
+                 (now >= ts.StartReceivingTime.Value || now < ts.CutOffTime.Value))
+            )
+        );
+
+        return currentSlot?.Id;
+    }
 
     private (Station? start, Station? end) ResolveEndpointsFromRoutes(IReadOnlyList<Route> allRoutes)
     {
