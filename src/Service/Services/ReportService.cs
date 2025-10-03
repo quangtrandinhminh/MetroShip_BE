@@ -266,12 +266,20 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
-        var query = ApplyDateFilter(
-            _transactionRepository.GetAllWithCondition().Where(t => t.DeletedAt == null),
-            filterType,
-            request,
-            t => t.CreatedAt
-        );
+        var baseQuery = _transactionRepository.GetAllWithCondition()
+            .Where(t => t.DeletedAt == null);
+
+        IQueryable<Transaction> query;
+
+        // 👉 Với Week thì không dùng ApplyDateFilter, để tránh mất ngày giao thoa giữa 2 tháng
+        if (filterType == RevenueFilterType.Week)
+        {
+            query = baseQuery;
+        }
+        else
+        {
+            query = ApplyDateFilter(baseQuery, filterType, request, t => t.CreatedAt);
+        }
 
         var rawData = await query
             .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
@@ -307,28 +315,26 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         switch (filterType)
         {
             case RevenueFilterType.Day:
+                {
                     var targetYear = request.Year ?? DateTime.UtcNow.Year;
                     var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
                     fullData = rawData
                         .Where(d => d.Year == targetYear && d.Month == targetMonth)
                         .ToList();
                     break;
+                }
 
             case RevenueFilterType.Week:
                 {
+                    DateTime ws, we;
+
                     if (request.Day.HasValue)
                     {
                         // 🟢 Tuần chứa ngày cụ thể
                         var target = request.Day.Value.Date;
                         var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-                        var ws = target.AddDays(-diff);
-                        var we = ws.AddDays(6);
-
-                        respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
-                        respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-
-                        var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
-                        fullData = BuildFullDataForDays(daysInWeek, rawData);
+                        ws = target.AddDays(-diff);
+                        we = ws.AddDays(6);
                     }
                     else if (request.StartMonth.HasValue)
                     {
@@ -337,13 +343,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         var month = request.StartMonth.Value;
                         var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                        var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
-
-                        respWeekStart = wsUtc;
-                        respWeekEnd = weUtc;
-
-                        var daysInWeek = Enumerable.Range(0, 7).Select(i => wsUtc.AddDays(i)).ToList();
-                        fullData = BuildFullDataForDays(daysInWeek, rawData);
+                        (ws, we) = GetWeekRangeInMonth(year, month, weekInMonth);
                     }
                     else
                     {
@@ -351,27 +351,37 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         var year = request.Year ?? DateTime.UtcNow.Year;
                         var weekInYear = Math.Max(1, request.Week ?? 1);
 
-                        var (wsUtc, weUtc) = GetWeekRangeInYear(year, weekInYear);
-
-                        respWeekStart = wsUtc;
-                        respWeekEnd = weUtc;
-
-                        var daysInWeek = Enumerable.Range(0, 7).Select(i => wsUtc.AddDays(i)).ToList();
-                        fullData = BuildFullDataForDays(daysInWeek, rawData);
+                        (ws, we) = GetWeekRangeInYear(year, weekInYear);
                     }
+
+                    respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
+                    respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+
+                    // 👉 Lọc rawData lại theo week range (bao gồm cả giao thoa tháng)
+                    var rawWeekData = rawData
+                        .Where(r =>
+                            new DateTime(r.Year, r.Month, r.Day.Value) >= ws &&
+                            new DateTime(r.Year, r.Month, r.Day.Value) <= we)
+                        .ToList();
+
+                    var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
+                    fullData = BuildFullDataForDays(daysInWeek, rawWeekData);
 
                     break;
                 }
 
             case RevenueFilterType.Default:
             case RevenueFilterType.Year:
+                {
                     var yearOnly = request.Year ?? DateTime.UtcNow.Year;
                     fullData = Enumerable.Range(1, 12)
                         .Select(m => BuildTransactionItem(rawData, yearOnly, m))
                         .ToList();
                     break;
+                }
 
             case RevenueFilterType.Quarter:
+                {
                     var qYear = request.Year ?? DateTime.UtcNow.Year;
                     var q = request.Quarter ?? 1;
                     var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
@@ -379,8 +389,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         .Select(m => BuildTransactionItem(rawData, qYear, m))
                         .ToList();
                     break;
+                }
 
             case RevenueFilterType.MonthRange:
+                {
                     var startYear = request.StartYear ?? DateTime.UtcNow.Year;
                     var startMonth = request.StartMonth ?? 1;
                     var endYear = request.EndYear ?? startYear;
@@ -398,6 +410,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         .Select(m => BuildTransactionItem(rawData, m.Year, m.Month))
                         .ToList();
                     break;
+                }
 
             default:
                 fullData = rawData;
