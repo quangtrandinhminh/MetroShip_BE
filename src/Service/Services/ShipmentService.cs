@@ -1160,6 +1160,13 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // create new shipment for return
         var returnShipment = new Shipment();
         await _itineraryService.HandleItineraryForReturnShipment(shipment, returnShipment);
+        // set payment deadline for original shipment
+        var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
+        if (!int.TryParse(config, out int cancelAfterMinutes))
+        {
+            cancelAfterMinutes = 15; // default 15 minutes
+        }
+        returnShipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
 
         // Update shipment status to Returned
         shipment.ShipmentStatus = ShipmentStatusEnum.Returned;
