@@ -501,6 +501,21 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     r => r.FromStationId == request.StationId ||
                     r.ToStationId == request.StationId));
             }
+
+            if (!string.IsNullOrEmpty(request.Id))
+            {
+                expression = expression.And(x => x.Id == request.Id);
+            }
+
+            if (!string.IsNullOrEmpty(request.TrainCode))
+            {
+                expression = expression.And(x => EF.Functions.ILike(x.TrainCode, $"%{request.TrainCode}%"));
+            }
+
+            if (request.Status.HasValue)
+            {
+                expression = expression.And(x => x.Status == request.Status.Value);
+            }
         }
 
         return expression;
