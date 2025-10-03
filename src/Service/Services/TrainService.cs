@@ -90,6 +90,32 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         return response;
     }
 
+    public async Task<List<TrainDropdownResponse>> GetTrainsDropdownAsync(string? lineId = null, string? regionId = null)
+    {
+        _logger.Information("Get trains dropdown with lineId: {lineId}", lineId);
+
+        Expression<Func<MetroTrain, bool>> filter = t => t.IsActive && t.DeletedAt == null;
+        if (!string.IsNullOrEmpty(lineId))
+        {
+            filter = filter.And(t => t.LineId == lineId);
+        }
+        if (!string.IsNullOrEmpty(regionId))
+        {
+            filter = filter.And(t => t.Line != null && t.Line.RegionId == regionId);
+        }
+
+        var trains = await _trainRepository.GetAllWithCondition(filter)
+            .OrderBy(t => t.TrainCode)
+            .Select(t => new TrainDropdownResponse
+            {
+                Id = t.Id,
+                TrainCode = t.TrainCode,
+            })
+            .ToListAsync();
+
+        return trains;
+    }
+
     public async Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
     TrainListFilterRequest request)
     {

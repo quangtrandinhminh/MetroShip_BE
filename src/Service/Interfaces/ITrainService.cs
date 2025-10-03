@@ -8,6 +8,7 @@ namespace MetroShip.Service.Interfaces;
 
 public interface ITrainService
 {
+    Task<List<TrainDropdownResponse>> GetTrainsDropdownAsync(string? lineId = null, string? regionId = null);
     Task<IList<TrainCurrentCapacityResponse>> GetAllTrainsByLineSlotDateAsync(LineSlotDateFilterRequest request);
 
     Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
