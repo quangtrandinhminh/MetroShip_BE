@@ -5,7 +5,8 @@ namespace MetroShip.Service.ApiModels.StaffAssignment;
 public record StaffAssignmentRequest
 {
     public string StaffId { get; init; }
-    public string StationId { get; init; }
+    public string? StationId { get; init; }
+    public string? TrainId { get; init; }
     public AssignmentRoleEnum AssignedRole { get; init; }
     public DateTimeOffset? FromTime { get; init; }
     public DateTimeOffset? ToTime { get; init; }

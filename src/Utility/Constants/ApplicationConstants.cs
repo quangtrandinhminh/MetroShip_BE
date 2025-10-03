@@ -439,5 +439,10 @@
         public const string ASSIGNMENT_CREATE_SUCCESS = "Phân công thành công.";
         public const string ASSIGNMENT_ALREADY_INACTIVE = "Phân công đã không còn hiệu lực.";
         public const string ASSIGNMENT_DEACTIVATE_SUCCESS = "Hủy phân công thành công.";
+        public const string ASSIGNMENT_STATION_ID_REQUIRED = "Yêu cầu StationId.";
+        public const string ASSIGNMENT_STAFF_ID_REQUIRED = "Yêu cầu StaffId.";
+        public const string ASSIGNMENT_TRAIN_ID_REQUIRED = "Yêu cầu TrainId.";
+        public const string ASSIGNMENT_STATION_ID_NOT_ALLOWED = "StationId không được phép.";
+        public const string ASSIGNMENT_TRAIN_ID_NOT_ALLOWED = "StaffId không được phép.";
     }
 }

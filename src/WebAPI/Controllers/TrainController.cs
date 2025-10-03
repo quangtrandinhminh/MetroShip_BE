@@ -134,6 +134,14 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto("Train arrival confirmed successfully", null));
         }
 
+        [Authorize(Roles = nameof(UserRoleEnum.Staff), Policy = $"RequireAssignmentRole.{nameof(AssignmentRoleEnum.TrainOperator)}")]
+        [HttpPost("/api/train/confirm-arrival/{nextStationId}")]
+        public async Task<IActionResult> ConfirmTrainArrived([FromRoute] string nextStationId)
+        {
+            await _trainService.ConfirmTrainArrivedAsync(nextStationId);
+            return Ok(BaseResponse.OkResponseDto("Đã xác nhận tàu đến trạm.", null));
+        }
+
         [HttpPost("/api/train/schedule")]
         public async Task<IActionResult> ScheduleTrainAsync([FromForm] string trainIdOrCode, [FromQuery(Name = "startFromEnd")] int startFromEndValue = 0)
         {

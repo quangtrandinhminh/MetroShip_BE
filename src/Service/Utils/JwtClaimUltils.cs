@@ -42,4 +42,10 @@ public class JwtClaimUltils
         var roleClaim = user.FindFirst("AssignmentRole")?.Value;
         return Enum.TryParse<AssignmentRoleEnum>(roleClaim, out var role) ? role : null;
     }
+
+    public static string? GetUserTrain(IHttpContextAccessor accessor)
+    {
+        var user = GetLoginedUser(accessor);
+        return user.FindFirst("TrainId")?.Value;
+    }
 }

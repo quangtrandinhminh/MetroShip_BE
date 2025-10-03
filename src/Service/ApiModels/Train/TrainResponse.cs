@@ -21,6 +21,8 @@ public record TrainListResponse
     public string? CurrentRouteStationId { get; set; }
     public string? NextStationId { get; set; }
     public string? NextStationName { get; set; }
+    public decimal? CurrentKg { get; set; } = 0;
+    public decimal? CurrentM3 { get; set; } = 0;
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public TrainStatusEnum Status { get; set; }
