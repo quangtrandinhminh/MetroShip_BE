@@ -210,12 +210,12 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
 
             // Gán current capacity nếu có dữ liệu
-            /*var capacity = groupedData.FirstOrDefault(g => g.TrainId == train.Id);
+            var capacity = groupedData.FirstOrDefault(g => g.TrainId == train.Id);
             if (capacity != null)
             {
                 train.CurrentKg = capacity.TotalWeightKg;
                 train.CurrentM3 = capacity.TotalVolumeM3;
-            }*/
+            }
 
             //Lấy direction hiện tại từ Firebase
             /*var firebaseDirection = await _trainStateStore.GetDirectionAsync(train.Id);
