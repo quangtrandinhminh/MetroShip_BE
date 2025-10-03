@@ -9,6 +9,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Linq;
 using System.Linq.Expressions;
 using ILogger = Serilog.ILogger;
 
@@ -273,31 +274,31 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         );
 
         var rawData = await query
-        .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
-        .Select(g => new TransactionDataItem
-        {
-            Year = g.Key.Year,
-            Month = g.Key.Month,
-            Day = g.Key.Day,
-            TotalTransactions = g.Count(),
+            .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
+            .Select(g => new TransactionDataItem
+            {
+                Year = g.Key.Year,
+                Month = g.Key.Month,
+                Day = g.Key.Day,
+                TotalTransactions = g.Count(),
 
-            ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
-                                     && t.PaymentStatus == PaymentStatusEnum.Paid)
-                            .Sum(t => t.PaymentAmount),
+                ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                         && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
 
-            Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
-                                   && t.PaymentStatus == PaymentStatusEnum.Paid)
-                         .Sum(t => t.PaymentAmount),
+                Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                       && t.PaymentStatus == PaymentStatusEnum.Paid)
+                             .Sum(t => t.PaymentAmount),
 
-            Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
-                                && t.PaymentStatus == PaymentStatusEnum.Paid)
-                      .Sum(t => t.PaymentAmount),
+                Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                    && t.PaymentStatus == PaymentStatusEnum.Paid)
+                          .Sum(t => t.PaymentAmount),
 
-            Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
-                                      && t.PaymentStatus == PaymentStatusEnum.Paid)
-                            .Sum(t => t.PaymentAmount),
-        })
-        .ToListAsync();
+                Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                          && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                .Sum(t => t.PaymentAmount),
+            })
+            .ToListAsync();
 
         List<TransactionDataItem> fullData;
         DateTime? respWeekStart = null;
@@ -306,18 +307,18 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         switch (filterType)
         {
             case RevenueFilterType.Day:
-                var targetYear = request.Year ?? DateTime.UtcNow.Year;
-                var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
-                fullData = rawData
-                    .Where(d => d.Year == targetYear && d.Month == targetMonth)
-                    .ToList();
-                break;
+                    var targetYear = request.Year ?? DateTime.UtcNow.Year;
+                    var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
+                    fullData = rawData
+                        .Where(d => d.Year == targetYear && d.Month == targetMonth)
+                        .ToList();
+                    break;
 
             case RevenueFilterType.Week:
                 {
                     if (request.Day.HasValue)
                     {
-                        // Tuần chứa ngày cụ thể
+                        // 🟢 Tuần chứa ngày cụ thể
                         var target = request.Day.Value.Date;
                         var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
                         var ws = target.AddDays(-diff);
@@ -326,35 +327,14 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
                         respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                        var daysInWeek = Enumerable.Range(0, 7)
-                            .Select(i => ws.AddDays(i))
-                            .ToList();
-
-                        fullData = daysInWeek
-                            .Select(d =>
-                            {
-                                var existing = rawData.FirstOrDefault(r =>
-                                    r.Year == d.Year && r.Month == d.Month && r.Day == d.Day);
-
-                                return existing ?? new TransactionDataItem
-                                {
-                                    Year = d.Year,
-                                    Month = d.Month,
-                                    Day = d.Day,
-                                    TotalTransactions = 0,
-                                    ShipmentCost = 0,
-                                    Surcharge = 0,
-                                    Refund = 0,
-                                    Compensation = 0
-                                };
-                            })
-                            .ToList();
+                        var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
+                        fullData = BuildFullDataForDays(daysInWeek, rawData);
                     }
-                    else
+                    else if (request.StartMonth.HasValue)
                     {
-                        // Tuần thứ N trong tháng
+                        // 🟢 Tuần thứ N trong tháng
                         var year = request.Year ?? DateTime.UtcNow.Year;
-                        var month = request.StartMonth ?? DateTime.UtcNow.Month;
+                        var month = request.StartMonth.Value;
                         var weekInMonth = Math.Max(1, request.Week ?? 1);
 
                         var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
@@ -362,70 +342,62 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         respWeekStart = wsUtc;
                         respWeekEnd = weUtc;
 
-                        var daysInWeek = Enumerable.Range(0, 7)
-                            .Select(i => wsUtc.AddDays(i))
-                            .ToList();
+                        var daysInWeek = Enumerable.Range(0, 7).Select(i => wsUtc.AddDays(i)).ToList();
+                        fullData = BuildFullDataForDays(daysInWeek, rawData);
+                    }
+                    else
+                    {
+                        // 🟢 Tuần thứ N trong năm
+                        var year = request.Year ?? DateTime.UtcNow.Year;
+                        var weekInYear = Math.Max(1, request.Week ?? 1);
 
-                        fullData = daysInWeek
-                            .Select(d =>
-                            {
-                                var existing = rawData.FirstOrDefault(r =>
-                                    r.Year == d.Year && r.Month == d.Month && r.Day == d.Day);
+                        var (wsUtc, weUtc) = GetWeekRangeInYear(year, weekInYear);
 
-                                return existing ?? new TransactionDataItem
-                                {
-                                    Year = d.Year,
-                                    Month = d.Month,
-                                    Day = d.Day,
-                                    TotalTransactions = 0,
-                                    ShipmentCost = 0,
-                                    Surcharge = 0,
-                                    Refund = 0,
-                                    Compensation = 0
-                                };
-                            })
-                            .ToList();
+                        respWeekStart = wsUtc;
+                        respWeekEnd = weUtc;
+
+                        var daysInWeek = Enumerable.Range(0, 7).Select(i => wsUtc.AddDays(i)).ToList();
+                        fullData = BuildFullDataForDays(daysInWeek, rawData);
                     }
 
                     break;
                 }
 
-
             case RevenueFilterType.Default:
             case RevenueFilterType.Year:
-                var yearOnly = request.Year ?? DateTime.UtcNow.Year;
-                fullData = Enumerable.Range(1, 12)
-                    .Select(m => BuildTransactionItem(rawData, yearOnly, m))
-                    .ToList();
-                break;
+                    var yearOnly = request.Year ?? DateTime.UtcNow.Year;
+                    fullData = Enumerable.Range(1, 12)
+                        .Select(m => BuildTransactionItem(rawData, yearOnly, m))
+                        .ToList();
+                    break;
 
             case RevenueFilterType.Quarter:
-                var qYear = request.Year ?? DateTime.UtcNow.Year;
-                var q = request.Quarter ?? 1;
-                var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
-                fullData = monthsInQuarter
-                    .Select(m => BuildTransactionItem(rawData, qYear, m))
-                    .ToList();
-                break;
+                    var qYear = request.Year ?? DateTime.UtcNow.Year;
+                    var q = request.Quarter ?? 1;
+                    var monthsInQuarter = Enumerable.Range((q - 1) * 3 + 1, 3);
+                    fullData = monthsInQuarter
+                        .Select(m => BuildTransactionItem(rawData, qYear, m))
+                        .ToList();
+                    break;
 
             case RevenueFilterType.MonthRange:
-                var startYear = request.StartYear ?? DateTime.UtcNow.Year;
-                var startMonth = request.StartMonth ?? 1;
-                var endYear = request.EndYear ?? startYear;
-                var endMonth = request.EndMonth ?? 12;
+                    var startYear = request.StartYear ?? DateTime.UtcNow.Year;
+                    var startMonth = request.StartMonth ?? 1;
+                    var endYear = request.EndYear ?? startYear;
+                    var endMonth = request.EndMonth ?? 12;
 
-                var months = Enumerable.Range(startYear * 12 + startMonth,
-                    (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
-                    .Select(x => new
-                    {
-                        Year = (x - 1) / 12,
-                        Month = (x - 1) % 12 + 1
-                    });
+                    var months = Enumerable.Range(startYear * 12 + startMonth,
+                        (endYear * 12 + endMonth) - (startYear * 12 + startMonth) + 1)
+                        .Select(x => new
+                        {
+                            Year = (x - 1) / 12,
+                            Month = (x - 1) % 12 + 1
+                        });
 
-                fullData = months
-                    .Select(m => BuildTransactionItem(rawData, m.Year, m.Month))
-                    .ToList();
-                break;
+                    fullData = months
+                        .Select(m => BuildTransactionItem(rawData, m.Year, m.Month))
+                        .ToList();
+                    break;
 
             default:
                 fullData = rawData;
@@ -1115,6 +1087,42 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         var weekEndUtc = DateTime.SpecifyKind(weekEnd.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
         return (weekStartUtc, weekEndUtc);
+    }
+
+    private List<TransactionDataItem> BuildFullDataForDays(List<DateTime> days, List<TransactionDataItem> rawData)
+    {
+        return days.Select(d =>
+        {
+            var existing = rawData.FirstOrDefault(r =>
+                r.Year == d.Year && r.Month == d.Month && r.Day == d.Day);
+
+            return existing ?? new TransactionDataItem
+            {
+                Year = d.Year,
+                Month = d.Month,
+                Day = d.Day,
+                TotalTransactions = 0,
+                ShipmentCost = 0,
+                Surcharge = 0,
+                Refund = 0,
+                Compensation = 0
+            };
+        }).ToList();
+    }
+
+    private (DateTime wsUtc, DateTime weUtc) GetWeekRangeInYear(int year, int weekOfYear)
+    {
+        var jan1 = new DateTime(year, 1, 1);
+        int daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
+
+        var firstMonday = jan1.AddDays(daysOffset);
+        if (firstMonday.Year < year) firstMonday = firstMonday.AddDays(7);
+
+        var ws = firstMonday.AddDays((weekOfYear - 1) * 7);
+        var we = ws.AddDays(6);
+
+        return (DateTime.SpecifyKind(ws, DateTimeKind.Utc),
+                DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc));
     }
 
     #endregion
