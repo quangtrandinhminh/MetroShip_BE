@@ -962,13 +962,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // Nếu chưa có train assigned, vẫn trả về thông tin itinerary
         if (itinerary?.TrainId == null)
         {
-            // Trả về thông tin cơ bản với fullPath
+            var (lat, lng, fromName, toName) = GetDefaultPosition(fullPath.Cast<dynamic>().ToList(), shipment.ShipmentItineraries.All(i => i.IsCompleted));
+
             return new TrainPositionResult
             {
                 TrainId = "not-assigned-yet",
-                Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
-                Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
+                Latitude = lat,
+                Longitude = lng,
                 Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                FromStation = fromName,
+                ToStation = toName,
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -997,12 +1000,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // Nếu train chưa bắt đầu, vẫn trả về thông tin với fullPath
         if (!hasSegmentIndex)
         {
+            var (lat, lng, fromName, toName) = GetDefaultPosition(fullPath.Cast<dynamic>().ToList(), shipment.ShipmentItineraries.All(i => i.IsCompleted));
+
             return new TrainPositionResult
             {
                 TrainId = trainId,
-                Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
-                Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
+                Latitude = lat,
+                Longitude = lng,
                 Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                FromStation = fromName,
+                ToStation = toName,
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -1027,13 +1034,19 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // 🚨 sửa ở đây: luôn gọi GetTrainPositionAsync để sync state trước
         var position = await GetTrainPositionAsync(trainId);
 
-        // *** đảm bảo top-level from/to/path lấy từ fullPath nếu cần ***
-        var firstLeg = fullPath.FirstOrDefault();
-
-        if (firstLeg != null)
+        // 🚨 Nếu tất cả legs đã hoàn tất thì fix cứng train đứng ở ga cuối
+        if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
         {
-            // đảm bảo FromStation là điểm đầu của leg order đầu tiên
-            position.FromStation = firstLeg.From.Name ?? position.FromStation;
+            var lastLeg = fullPath.LastOrDefault();
+            if (lastLeg != null)
+            {
+                position.Latitude = lastLeg.To.Latitude;
+                position.Longitude = lastLeg.To.Longitude;
+                position.FromStation = lastLeg.From.Name;
+                position.ToStation = lastLeg.To.Name;
+                position.ProgressPercent = 100;
+                position.Status = TrainStatusEnum.InTransit.ToString(); // hoặc InTransit nếu bạn muốn mapping riêng
+            }
         }
 
         
@@ -2073,6 +2086,20 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             EventTime = DateTimeOffset.UtcNow,
             Note = string.IsNullOrEmpty(note) ? $"Shipment moved to {status}" : note
         };
+    }
+
+    private (double lat, double lng, string fromName, string toName) GetDefaultPosition(List<dynamic> fullPath, bool allCompleted)
+    {
+        if (fullPath == null || !fullPath.Any()) return (0, 0, "", "");
+
+        if (allCompleted)
+        {
+            var last = fullPath.Last();
+            return (last.To.Latitude, last.To.Longitude, last.From.Name, last.To.Name);
+        }
+
+        var first = fullPath.First();
+        return (first.From.Latitude, first.From.Longitude, first.From.Name, first.To.Name);
     }
 
     private async Task<string?> GetCurrentTimeSlotIdAsync()
