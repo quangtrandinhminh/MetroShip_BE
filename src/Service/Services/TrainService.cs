@@ -1815,6 +1815,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             throw;
         }
     }
+
     public async Task<TrainDto> ScheduleTrainAsync(string trainIdOrCode, bool startFromEnd = false)
     {
         // 1. Lấy thông tin train + line + routes + station

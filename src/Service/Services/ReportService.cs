@@ -569,29 +569,37 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
     {
         var filterType = request.FilterType ?? RevenueFilterType.Default;
 
+        // ✅ Base query, chỉ lấy bản ghi có FeedbackAt
         var baseQuery = _shipmentRepository.GetAllWithCondition()
             .Where(s => s.FeedbackAt.HasValue);
 
         IQueryable<Shipment> query;
 
-        // 👉 Với Week thì không dùng ApplyDateFilter, tránh mất dữ liệu giao thoa giữa 2 tháng
+        // 👉 Với Week thì không dùng ApplyDateFilter
         if (filterType == RevenueFilterType.Week)
         {
             query = baseQuery;
         }
         else
         {
-            query = ApplyDateFilter(baseQuery, filterType, request, s => s.FeedbackAt.Value);
+            // ✅ Chỉ truyền s.FeedbackAt (nullable) -> EF sẽ dịch được
+            query = ApplyDateFilter(baseQuery, filterType, request, s => s.FeedbackAt);
         }
 
-        // ===== Raw Data =====
-        var rawData = await query
-            .GroupBy(s => new
+        // ===== Lấy dữ liệu từ DB =====
+        var shipments = await query
+            .Select(s => new
             {
-                Year = s.FeedbackAt.Value.Year,
-                Month = s.FeedbackAt.Value.Month,
-                Day = s.FeedbackAt.Value.Day
+                FeedbackAt = s.FeedbackAt,
+                s.ShipmentStatus,
+                s.Rating
             })
+            .ToListAsync();
+
+        // ===== Group trong RAM (an toàn, không còn lỗi dịch EF) =====
+        var rawData = shipments
+            .Where(s => s.FeedbackAt.HasValue)
+            .GroupBy(s => s.FeedbackAt.Value.UtcDateTime.Date)
             .Select(g => new ShipmentFeedbackDataItem
             {
                 Year = g.Key.Year,
@@ -608,7 +616,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 TotalFeedbacks = g.Count(s => s.Rating != null),
                 FiveStarFeedbacks = g.Count(s => s.Rating == 5)
             })
-            .ToListAsync();
+            .ToList();
 
         List<ShipmentFeedbackDataItem> fullData;
         DateTime? respWeekStart = null;
@@ -668,13 +676,10 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                     respWeekStart = ws;
                     respWeekEnd = we;
 
-                    // 🔹 Lọc trực tiếp từ DB theo FeedbackAt UTC
-                    var weekShipments = await query
+                    // ✅ lọc trong RAM
+                    var rawWeekData = shipments
                         .Where(s => s.FeedbackAt >= ws && s.FeedbackAt <= we)
-                        .ToListAsync();
-
-                    var rawWeekData = weekShipments
-                        .GroupBy(s => new { Year = s.FeedbackAt.Value.Year, Month = s.FeedbackAt.Value.Month, Day = s.FeedbackAt.Value.Day })
+                        .GroupBy(s => s.FeedbackAt.Value.UtcDateTime.Date)
                         .Select(g => new ShipmentFeedbackDataItem
                         {
                             Year = g.Key.Year,
