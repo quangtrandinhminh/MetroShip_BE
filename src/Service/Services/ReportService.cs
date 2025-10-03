@@ -330,40 +330,79 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
                     if (request.Day.HasValue)
                     {
-                        // 🟢 Tuần chứa ngày cụ thể
+                        // Tuần chứa ngày cụ thể
                         var target = request.Day.Value.Date;
                         var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-                        ws = target.AddDays(-diff);
-                        we = ws.AddDays(6);
+                        ws = target.AddDays(-diff); // Monday
+                        we = ws.AddDays(6);        // Sunday
                     }
                     else if (request.StartMonth.HasValue)
                     {
-                        // 🟢 Tuần thứ N trong tháng
+                        // Tuần thứ N trong tháng, đảm bảo full tuần 7 ngày
                         var year = request.Year ?? DateTime.UtcNow.Year;
                         var month = request.StartMonth.Value;
                         var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                        (ws, we) = GetWeekRangeInMonth(year, month, weekInMonth);
+                        var firstDayOfMonth = new DateTime(year, month, 1);
+                        // Ngày đầu tiên trong tuần (Monday) của tuần đầu tiên trong tháng
+                        var firstMonday = firstDayOfMonth.AddDays((8 - (int)firstDayOfMonth.DayOfWeek) % 7);
+
+                        ws = firstMonday.AddDays((weekInMonth - 1) * 7);
+                        we = ws.AddDays(6);
+
+                        // Nếu ws < đầu tháng thì set bằng ngày đầu tháng
+                        if (ws < firstDayOfMonth)
+                            ws = firstDayOfMonth;
                     }
                     else
                     {
-                        // 🟢 Tuần thứ N trong năm
+                        // Tuần thứ N trong năm
                         var year = request.Year ?? DateTime.UtcNow.Year;
                         var weekInYear = Math.Max(1, request.Week ?? 1);
-
-                        (ws, we) = GetWeekRangeInYear(year, weekInYear);
+                        (ws, we) = GetWeekRangeInYear(year, weekInYear); // phương thức đã có
                     }
 
-                    respWeekStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
-                    respWeekEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                    // Chuyển về UTC để lưu/so sánh với DB
+                    ws = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
+                    we = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
 
-                    // 👉 Lọc rawData lại theo week range (bao gồm cả giao thoa tháng)
-                    var rawWeekData = rawData
-                        .Where(r =>
-                            new DateTime(r.Year, r.Month, r.Day.Value) >= ws &&
-                            new DateTime(r.Year, r.Month, r.Day.Value) <= we)
+                    respWeekStart = ws;
+                    respWeekEnd = we;
+
+                    // 🔹 Lọc trực tiếp từ DB theo CreatedAt UTC
+                    var weekTransactions = await query
+                        .Where(t => t.CreatedAt >= ws && t.CreatedAt <= we)
+                        .ToListAsync();
+
+                    // 🔹 Group theo ngày
+                    var rawWeekData = weekTransactions
+                        .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
+                        .Select(g => new TransactionDataItem
+                        {
+                            Year = g.Key.Year,
+                            Month = g.Key.Month,
+                            Day = g.Key.Day,
+                            TotalTransactions = g.Count(),
+
+                            ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                                     && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                            .Sum(t => t.PaymentAmount),
+
+                            Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                                   && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                         .Sum(t => t.PaymentAmount),
+
+                            Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                                && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                      .Sum(t => t.PaymentAmount),
+
+                            Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                                      && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                            .Sum(t => t.PaymentAmount),
+                        })
                         .ToList();
 
+                    // 🔹 Build full 7 ngày tuần, ngày không có giao dịch = 0
                     var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
                     fullData = BuildFullDataForDays(daysInWeek, rawWeekData);
 
