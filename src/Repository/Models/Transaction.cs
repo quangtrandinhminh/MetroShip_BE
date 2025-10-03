@@ -23,17 +23,17 @@ public partial class Transaction : BaseEntity
     public PaymentStatusEnum PaymentStatus { get; set; }
 
     [StringLength(50)]
-    public string PaymentTrackingId { get; set; }
+    public string? PaymentTrackingId { get; set; }
 
-    public DateTimeOffset PaymentDate { get; set; }
+    public DateTimeOffset? PaymentDate { get; set; }
 
     [Column(TypeName = "decimal(18, 2)")]
     public decimal PaymentAmount { get; set; }
 
     [StringLength(20)]
-    public string PaymentCurrency { get; set; }
+    public string? PaymentCurrency { get; set; }
 
-    public DateTimeOffset PaymentTime { get; set; }
+    public DateTimeOffset? PaymentTime { get; set; }
 
     public TransactionTypeEnum TransactionType { get; set; }
 
