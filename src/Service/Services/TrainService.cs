@@ -121,25 +121,24 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
         Dictionary<string, (DirectionEnum? direction, int? segmentIndex)> trainStates = new();
 
-        // Thêm: xác định ca hiện tại
+        // Find current active time slot
         string? activeTimeSlotId = request.TimeSlotId;
         if (string.IsNullOrEmpty(activeTimeSlotId))
         {
-            activeTimeSlotId = await GetCurrentTimeSlotIdAsync();
+            var timeSlots = await _timeSlotRepository.GetAll()
+                .Where(ts => !ts.IsAbnormal && ts.DeletedAt == null)
+                .OrderBy(ts => ts.Shift)
+                .ToListAsync();
+            var currentTime = CoreHelper.SystemTimeNow.UtcToSystemTime().TimeOfDay;
+            var currentTimeOnly = new TimeOnly(currentTime.Hours, currentTime.Minutes, currentTime.Seconds);
+            //1h -> đêm 2, 3h -> sáng 11h, 12h -> chiều 16h, 17h -> tối 21h, 22h -> đêm 2h
+            // Find current time slot by checking close time only
+            activeTimeSlotId = timeSlots.FirstOrDefault(ts =>
+                    ts.Shift != ShiftEnum.Night ?
+                        currentTimeOnly < ts.CloseTime : // Regular shifts: just check if before close time
+                        true // Night shift: always matches if we reach it (should be last in ordered list)
+            ).Id;
         }
-
-         /*❌ Code cũ(lọc mất hết các schedule khác)
-         if (!string.IsNullOrEmpty(request.TimeSlotId))
-        {
-            // filter train schedules theo TimeSlotId nếu được cung cấp
-            trainSchedules = trainSchedules
-                .Where(ts => ts.TimeSlotId == request.TimeSlotId)
-                .ToList();
-        }
-        else
-        {
-            trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
-        }*/
 
         // ✅ Code mới: vẫn giữ toàn bộ trainSchedules, chỉ lấy direction từ Firebase nếu không có filter
         if (string.IsNullOrEmpty(request.TimeSlotId))
@@ -195,13 +194,27 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 .ToList();
 
             // Nếu chỉ có 1 trainSchedules, gán direction theo trainSchedules
-            if (train.TrainSchedules.Count == 1)
+            /*if (train.TrainSchedules.Count == 1)
             {
                 train.Direction = train.TrainSchedules[0].Direction;
                 continue;
+            }*/
+
+            // activeTimeSlotId filter từ request, nếu không có thì tìm theo thời điểm hiện tại
+            if (activeTimeSlotId != null && train.TrainSchedules.Count > 0)
+            {
+                var matchedSchedule = train.TrainSchedules
+                    .FirstOrDefault(ts => ts.TimeSlotId == activeTimeSlotId);
+                if (matchedSchedule != null)
+                {
+                    train.Direction = matchedSchedule.Direction;
+                    train.CurrentTimeSlotId = matchedSchedule.TimeSlotId;
+                    train.CurrentShift = matchedSchedule.Shift;
+                    train.CurrentTrainScheduleDirection = matchedSchedule.Direction;
+                }
             }
 
-            // Nếu lấy all trainSchedules, tìm direction từ Firebase
+            // Luôn lấy all trainSchedules, tìm direction từ Firebase
             if (trainStates.ContainsKey(train.Id))
             {
                 train.Direction = trainStates[train.Id].direction;
