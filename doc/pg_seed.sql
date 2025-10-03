@@ -718,52 +718,52 @@ VALUES
 -- REVERSE DIRECTION (1)
 ('53c8e7fe-8f9a-453c-8e8f-9a8e9a8c8e53','HCMC-L2-02-01','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a','5e9f3c27-8d6b-4c44-9a14-dfd6a3e2e8f0',
- 'Tao Đàn – Bến Thành','Tao Dan – Ben Thanh',1,1,2,0.69,
+ 'Tao Đàn – Bến Thành','Tao Dan – Ben Thanh',1,10,2,0.69,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('42d9f6af-7e8b-442d-9f7e-8b7f8b7d9f42','HCMC-L2-03-02','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b','8a4c6e91-2f5b-4d3e-9c7a-6b8d2f4e7c9a',
- 'Dân Chủ – Tao Đàn','Dan Chu – Tao Dan',1,2,3,1.25,
+ 'Dân Chủ – Tao Đàn','Dan Chu – Tao Dan',1,9,3,1.25,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('31e8a5ba-6f7c-431e-8a6f-7c6a7c6e8a31','HCMC-L2-04-03','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '6c8e4f73-1d7a-4b5c-9e8c-4f6a1d7b9e2c','7b5d9f82-3e6c-4a2f-8d9b-5c7e3f6a8d1b',
- 'Hòa Hưng – Dân Chủ','Hoa Hung – Dan Chu',1,3,1,0.62,
+ 'Hòa Hưng – Dân Chủ','Hoa Hung – Dan Chu',1,8,1,0.62,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('20f9b4cb-5e6d-420f-9b5e-6d5b6d5f9b20','HCMC-L2-05-04','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '5d9f7e64-2c8b-4a6d-8f9d-7e5c2c8a6f3d','6c8e4f73-1d7a-4b5c-9e8c-4f6a1d7b9e2c',
- 'Lê Thị Riêng – Hòa Hưng','Le Thi Rieng – Hoa Hung',1,4,3,1.21,
+ 'Lê Thị Riêng – Hòa Hưng','Le Thi Rieng – Hoa Hung',1,7,3,1.21,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('1fa8c3dc-4d5e-41fa-8c4d-5e4c5e4a8c1f','HCMC-L2-06-05','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '4e8a6f55-3d9c-4b7e-9a8e-6f4d3d9b7a4e','5d9f7e64-2c8b-4a6d-8f9d-7e5c2c8a6f3d',
- 'Phạm Văn Hai – Lê Thị Riêng','Pham Van Hai – Le Thi Rieng',1,5,1,0.57,
+ 'Phạm Văn Hai – Lê Thị Riêng','Pham Van Hai – Le Thi Rieng',1,6,1,0.57,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('0eb9d2ed-3c4f-40eb-9d3c-4f3d4f3b9d0e','HCMC-L2-07-06','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '3f9b5e46-4c8d-4a6f-8b9f-5e3c4c8a6b5f','4e8a6f55-3d9c-4b7e-9a8e-6f4d3d9b7a4e',
- 'Bảy Hiền – Phạm Văn Hai','Bay Hien – Pham Van Hai',1,6,2,0.77,
+ 'Bảy Hiền – Phạm Văn Hai','Bay Hien – Pham Van Hai',1,5,2,0.77,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('9dc8e1fe-2b3a-49dc-8e2b-3a2e3a2c8e9d','HCMC-L2-08-07','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '2a7c4d37-5b9e-4c8a-9c7a-4d2b5b9c8a7a','3f9b5e46-4c8d-4a6f-8b9f-5e3c4c8a6b5f',
- 'Nguyễn Hồng Đào – Bảy Hiền','Nguyen Hong Dao – Bay Hien',1,7,3,1.33,
+ 'Nguyễn Hồng Đào – Bảy Hiền','Nguyen Hong Dao – Bay Hien',1,4,3,1.33,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('8cd7f0af-1a29-48cd-7f1a-291f291d7f8c','HCMC-L2-09-08','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '1b8d3c28-6a7f-4d9b-8d6b-3c1a6a7d9b8b','2a7c4d37-5b9e-4c8a-9c7a-4d2b5b9c8a7a',
- 'Bà Quẹo – Nguyễn Hồng Đào','Ba Queo – Nguyen Hong Dao',1,8,2,0.78,
+ 'Bà Quẹo – Nguyễn Hồng Đào','Ba Queo – Nguyen Hong Dao',1,3,2,0.78,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('7bc6efba-0918-47bc-6ef0-180e180c6f7b','HCMC-L2-10-09','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '9c6e2b19-7d8a-4e6c-7e9c-2b9d7d8e6c2c','1b8d3c28-6a7f-4d9b-8d6b-3c1a6a7d9b8b',
- 'Phạm Văn Bạch – Bà Quẹo','Pham Van Bach – Ba Queo',1,9,2,0.93,
+ 'Phạm Văn Bạch – Bà Quẹo','Pham Van Bach – Ba Queo',1,2,2,0.93,
  NULL,NULL,NULL,NOW(),NOW(),NULL),
 
 ('6ab5decb-8071-46ab-5de8-071d071b5e6a','HCMC-L2-11-10','2f5c8e93-4b7a-4d2e-8f6c-1a9b5e7d3c2f',
  '8d7f1a0a-5e9b-4f7d-6f8d-1a8e5e9f7d1d','9c6e2b19-7d8a-4e6c-7e9c-2b9d7d8e6c2c',
- 'Tân Bình – Phạm Văn Bạch','Tan Binh – Pham Van Bach',1,10,2,0.98,
+ 'Tân Bình – Phạm Văn Bạch','Tan Binh – Pham Van Bach',1,1,2,0.98,
  NULL,NULL,NULL,NOW(),NOW(),NULL);
 
 -- Metro Line 3A: Ben Thanh – Tan Kien, deleted carriage & price
