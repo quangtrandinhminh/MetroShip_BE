@@ -1188,13 +1188,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // create new shipment for return
         var returnShipment = new Shipment();
         await _itineraryService.HandleItineraryForReturnShipment(shipment, returnShipment);
-        // set payment deadline for original shipment
-        var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
-        if (!int.TryParse(config, out int cancelAfterMinutes))
-        {
-            cancelAfterMinutes = 15; // default 15 minutes
-        }
-        returnShipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
 
         // Update shipment status to Returned
         shipment.ShipmentStatus = ShipmentStatusEnum.Returned;
@@ -1235,9 +1228,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             UpdatedBy = customerId
         });
 
-        returnShipment = await _shipmentRepository.AddAsync(returnShipment, cancellationToken);
+        // set payment deadline for return shipment
+        var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
+        if (!int.TryParse(config, out int cancelAfterMinutes))
+        {
+            cancelAfterMinutes = 15; // default 15 minutes
+        }
+        returnShipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
+        returnShipment = _shipmentRepository.Add(returnShipment);
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        // Schedule job to update shipment status to Unpaid if not paid in time
+        await _backgroundJobService.ScheduleUnpaidJob(returnShipment.Id, returnShipment.PaymentDealine.Value);
 
         // send email to customer
         _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}",
