@@ -466,50 +466,63 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             item.NetAmount = item.TotalIncome - item.TotalOutcome;
         }
 
-        // === Growth theo NetAmount ===
+        // === Growth theo Doanh Thu (TotalIncome) ===
         for (int i = 0; i < fullData.Count; i++)
         {
             var current = fullData[i];
 
-            // Tìm tháng trước theo lịch
+            // Tìm tháng trước theo thời gian thực
             var prevYear = current.Month == 1 ? current.Year - 1 : current.Year;
             var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
 
             var prev = fullData.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
 
-            if (prev != null && prev.NetAmount != 0)
+            if (prev != null)
             {
-                if (current.NetAmount == 0)
+                if (prev.TotalIncome == 0 && current.TotalIncome > 0)
                 {
-                    // Tháng này không có dữ liệu => không tính tăng trưởng
-                    current.NetGrowthPercent = 0; // hoặc null
+                    // Từ 0 → có doanh thu
+                    current.NetGrowthPercent = 100;
+                }
+                else if (prev.TotalIncome > 0 && current.TotalIncome == 0)
+                {
+                    // Có doanh thu → mất hết
+                    // 👉 Nếu muốn coi là "mất hết" thì để -100
+                    // 👉 Nếu muốn coi là "không tăng trưởng" thì để 0
+                    current.NetGrowthPercent = 0; // thay vì -100
+                }
+                else if (prev.TotalIncome > 0 && current.TotalIncome > 0)
+                {
+                    // So sánh bình thường
+                    current.NetGrowthPercent = Math.Round(
+                        ((current.TotalIncome - prev.TotalIncome) / prev.TotalIncome) * 100m, 2);
                 }
                 else
                 {
-                    current.NetGrowthPercent = Math.Round(
-                        ((current.NetAmount - prev.NetAmount) / Math.Abs(prev.NetAmount)) * 100m, 2);
+                    // Cả 2 đều 0
+                    current.NetGrowthPercent = 0;
                 }
             }
             else
             {
-                current.NetGrowthPercent = 0; // hoặc null nếu muốn rõ ràng
+                current.NetGrowthPercent = 0; // Tháng đầu tiên
             }
         }
 
-        return new RevenueChartResponse<TransactionDataItem>
-        {
-            FilterType = filterType,
-            Year = request.Year,
-            Quarter = request.Quarter,
-            Week = request.Week,
-            StartYear = request.StartYear,
-            StartMonth = request.StartMonth,
-            EndYear = request.EndYear,
-            EndMonth = request.EndMonth,
-            WeekStartDate = respWeekStart,
-            WeekEndDate = respWeekEnd,
-            Data = fullData
-        };
+            return new RevenueChartResponse<TransactionDataItem>
+            {
+                FilterType = filterType,
+                Year = request.Year,
+                Quarter = request.Quarter,
+                Week = request.Week,
+                StartYear = request.StartYear,
+                StartMonth = request.StartMonth,
+                EndYear = request.EndYear,
+                EndMonth = request.EndMonth,
+                WeekStartDate = respWeekStart,
+                WeekEndDate = respWeekEnd,
+                Data = fullData
+            };
     }
 
     public async Task<CategoryStatisticsResponse> GetCategoryStatisticsAsync(CategoryStatisticsRequest request)
