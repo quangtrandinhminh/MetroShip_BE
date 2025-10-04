@@ -283,32 +283,66 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             query = ApplyDateFilter(baseQuery, filterType, request, t => t.CreatedAt);
         }
 
-        var rawData = await query
-            .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
-            .Select(g => new TransactionDataItem
-            {
-                Year = g.Key.Year,
-                Month = g.Key.Month,
-                Day = g.Key.Day,
-                TotalTransactions = g.Count(),
+        List<TransactionDataItem> rawData;
 
-                ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
-                                         && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                .Sum(t => t.PaymentAmount),
+        // 🔹 Group theo cấp độ phù hợp
+        if (filterType == RevenueFilterType.Day || filterType == RevenueFilterType.Week)
+        {
+            rawData = await query
+                .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
+                .Select(g => new TransactionDataItem
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Day = g.Key.Day,
+                    TotalTransactions = g.Count(),
 
-                Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
-                                       && t.PaymentStatus == PaymentStatusEnum.Paid)
-                             .Sum(t => t.PaymentAmount),
+                    ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                             && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                    .Sum(t => t.PaymentAmount),
 
-                Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
-                                    && t.PaymentStatus == PaymentStatusEnum.Paid)
-                          .Sum(t => t.PaymentAmount),
+                    Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                           && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                 .Sum(t => t.PaymentAmount),
 
-                Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
-                                          && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                .Sum(t => t.PaymentAmount),
-            })
-            .ToListAsync();
+                    Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                        && t.PaymentStatus == PaymentStatusEnum.Paid)
+                              .Sum(t => t.PaymentAmount),
+
+                    Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                              && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                    .Sum(t => t.PaymentAmount),
+                })
+                .ToListAsync();
+        }
+        else
+        {
+            rawData = await query
+                .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
+                .Select(g => new TransactionDataItem
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    TotalTransactions = g.Count(),
+
+                    ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
+                                             && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                    .Sum(t => t.PaymentAmount),
+
+                    Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
+                                           && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                 .Sum(t => t.PaymentAmount),
+
+                    Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
+                                        && t.PaymentStatus == PaymentStatusEnum.Paid)
+                              .Sum(t => t.PaymentAmount),
+
+                    Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
+                                              && t.PaymentStatus == PaymentStatusEnum.Paid)
+                                    .Sum(t => t.PaymentAmount),
+                })
+                .ToListAsync();
+        }
 
         List<TransactionDataItem> fullData;
         DateTime? respWeekStart = null;
@@ -322,6 +356,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                     var targetMonth = request.StartMonth ?? DateTime.UtcNow.Month;
                     fullData = rawData
                         .Where(d => d.Year == targetYear && d.Month == targetMonth)
+                        .OrderBy(d => d.Day)
                         .ToList();
                     break;
                 }
@@ -361,7 +396,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                         // Tuần thứ N trong năm
                         var year = request.Year ?? DateTime.UtcNow.Year;
                         var weekInYear = Math.Max(1, request.Week ?? 1);
-                        (ws, we) = GetWeekRangeInYear(year, weekInYear); // phương thức đã có
+                        (ws, we) = GetWeekRangeInYear(year, weekInYear);
                     }
 
                     // Chuyển về UTC để lưu/so sánh với DB
@@ -371,43 +406,8 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                     respWeekStart = ws;
                     respWeekEnd = we;
 
-                    // 🔹 Lọc trực tiếp từ DB theo CreatedAt UTC
-                    var weekTransactions = await query
-                        .Where(t => t.CreatedAt >= ws && t.CreatedAt <= we)
-                        .ToListAsync();
-
-                    // 🔹 Group theo ngày
-                    var rawWeekData = weekTransactions
-                        .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month, Day = t.CreatedAt.Day })
-                        .Select(g => new TransactionDataItem
-                        {
-                            Year = g.Key.Year,
-                            Month = g.Key.Month,
-                            Day = g.Key.Day,
-                            TotalTransactions = g.Count(),
-
-                            ShipmentCost = g.Where(t => t.TransactionType == TransactionTypeEnum.ShipmentCost
-                                                     && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                            .Sum(t => t.PaymentAmount),
-
-                            Surcharge = g.Where(t => t.TransactionType == TransactionTypeEnum.Surcharge
-                                                   && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                         .Sum(t => t.PaymentAmount),
-
-                            Refund = g.Where(t => t.TransactionType == TransactionTypeEnum.Refund
-                                                && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                      .Sum(t => t.PaymentAmount),
-
-                            Compensation = g.Where(t => t.TransactionType == TransactionTypeEnum.Compensation
-                                                      && t.PaymentStatus == PaymentStatusEnum.Paid)
-                                            .Sum(t => t.PaymentAmount),
-                        })
-                        .ToList();
-
-                    // 🔹 Build full 7 ngày tuần, ngày không có giao dịch = 0
                     var daysInWeek = Enumerable.Range(0, 7).Select(i => ws.AddDays(i)).ToList();
-                    fullData = BuildFullDataForDays(daysInWeek, rawWeekData);
-
+                    fullData = BuildFullDataForDays(daysInWeek, rawData);
                     break;
                 }
 
@@ -470,18 +470,29 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         for (int i = 0; i < fullData.Count; i++)
         {
             var current = fullData[i];
+
+            // Tìm tháng trước theo lịch
             var prevYear = current.Month == 1 ? current.Year - 1 : current.Year;
             var prevMonth = current.Month == 1 ? 12 : current.Month - 1;
 
             var prev = fullData.FirstOrDefault(d => d.Year == prevYear && d.Month == prevMonth);
+
             if (prev != null && prev.NetAmount != 0)
             {
-                current.NetGrowthPercent = Math.Round(
-                    ((current.NetAmount - prev.NetAmount) / prev.NetAmount) * 100m, 2);
+                if (current.NetAmount == 0)
+                {
+                    // Tháng này không có dữ liệu => không tính tăng trưởng
+                    current.NetGrowthPercent = 0; // hoặc null
+                }
+                else
+                {
+                    current.NetGrowthPercent = Math.Round(
+                        ((current.NetAmount - prev.NetAmount) / Math.Abs(prev.NetAmount)) * 100m, 2);
+                }
             }
             else
             {
-                current.NetGrowthPercent = 0;
+                current.NetGrowthPercent = 0; // hoặc null nếu muốn rõ ràng
             }
         }
 
