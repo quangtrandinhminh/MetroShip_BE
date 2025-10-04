@@ -9,6 +9,7 @@ using MetroShip.Service.Interfaces;
 using MetroShip.Utility.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using ILogger = Serilog.ILogger;
@@ -1235,17 +1236,15 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     private (DateTime wsUtc, DateTime weUtc) GetWeekRangeInYear(int year, int weekOfYear)
     {
-        var jan1 = new DateTime(year, 1, 1);
-        int daysOffset = DayOfWeek.Monday - jan1.DayOfWeek;
+        // Lấy ngày bắt đầu tuần (Monday)
+        var ws = ISOWeek.ToDateTime(year, weekOfYear, DayOfWeek.Monday);
+        // Lấy ngày kết thúc tuần (Sunday)
+        var we = ISOWeek.ToDateTime(year, weekOfYear, DayOfWeek.Sunday);
 
-        var firstMonday = jan1.AddDays(daysOffset);
-        if (firstMonday.Year < year) firstMonday = firstMonday.AddDays(7);
-
-        var ws = firstMonday.AddDays((weekOfYear - 1) * 7);
-        var we = ws.AddDays(6);
-
-        return (DateTime.SpecifyKind(ws, DateTimeKind.Utc),
-                DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc));
+        return (
+            DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc),
+            DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc) // đến hết ngày Sunday
+        );
     }
 
     #endregion
