@@ -823,29 +823,45 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
 
             case RevenueFilterType.Week:
+                DateTime ws, we;
+
                 if (request.Day.HasValue)
                 {
-                    // tuần chứa ngày cụ thể
+                    // Tuần chứa ngày cụ thể
                     var target = DateTime.SpecifyKind(request.Day.Value.Date, DateTimeKind.Utc);
                     var diff = ((int)target.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
-                    var ws = target.AddDays(-diff);
-                    var we = ws.AddDays(6);
+                    ws = target.AddDays(-diff); // Monday
+                    we = ws.AddDays(6);        // Sunday
+                }
+                else if (request.StartMonth.HasValue)
+                {
+                    // Tuần thứ N trong tháng
+                    var year = request.Year ?? DateTime.UtcNow.Year;
+                    var month = request.StartMonth.Value;
+                    var weekInMonth = Math.Max(1, request.Week ?? 1);
 
-                    periodStart = ws;
-                    periodEnd = we.AddDays(1).AddTicks(-1);
+                    var firstDayOfMonth = new DateTime(year, month, 1);
+                    var firstMonday = firstDayOfMonth.AddDays((8 - (int)firstDayOfMonth.DayOfWeek) % 7);
+
+                    ws = firstMonday.AddDays((weekInMonth - 1) * 7);
+                    we = ws.AddDays(6);
+
+                    if (ws < firstDayOfMonth)
+                        ws = firstDayOfMonth;
                 }
                 else
                 {
-                    // tuần thứ N trong tháng
+                    // Tuần thứ N trong năm
                     var year = request.Year ?? DateTime.UtcNow.Year;
-                    var month = request.StartMonth ?? DateTime.UtcNow.Month;
-                    var weekInMonth = Math.Max(1, request.Week ?? 1);
-
-                    var (wsUtc, weUtc) = GetWeekRangeInMonth(year, month, weekInMonth);
-
-                    periodStart = DateTime.SpecifyKind(wsUtc, DateTimeKind.Utc); // Giả sử GetWeekRangeInMonth trả Unspecified
-                    periodEnd = DateTime.SpecifyKind(weUtc, DateTimeKind.Utc);
+                    var weekInYear = Math.Max(1, request.Week ?? 1);
+                    (ws, we) = GetWeekRangeInYear(year, weekInYear);
                 }
+
+                periodStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
+                periodEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+
+                // 🔹 Apply filter vào query
+                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
                 break;
 
             case RevenueFilterType.MonthRange:
@@ -868,12 +884,16 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 var qStartMonth = (quarter - 1) * 3 + 1;
                 periodStart = DateTime.SpecifyKind(new DateTime(qYear, qStartMonth, 1), DateTimeKind.Utc);
                 periodEnd = periodStart.AddMonths(3).AddTicks(-1);
-                break;  // Di chuyển lọc vào trước aggregate nếu có thể, hoặc re-agg sau
+
+                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
+                break;
 
             case RevenueFilterType.Year: // ✅ Default cũng đã map về Year ở trên
                 var yearOnly = request.Year ?? DateTime.UtcNow.Year;
                 periodStart = DateTime.SpecifyKind(new DateTime(yearOnly, 1, 1), DateTimeKind.Utc);
                 periodEnd = DateTime.SpecifyKind(new DateTime(yearOnly, 12, 31, 23, 59, 59), DateTimeKind.Utc);
+
+                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
                 break;
 
             default:
@@ -883,13 +903,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 break;
         }
 
-        // Áp dụng lọc thêm cho Quarter nếu ApplyDateFilter chưa xử lý đầy đủ
-        if (finalFilterType == RevenueFilterType.Quarter)
-        {
-            q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
-        }
-
-        // nhóm status (di chuyển lên để reuse nếu re-agg)
+        // nhóm status
         var completedStatuses = new[]
         {
         ShipmentStatusEnum.Completed
@@ -906,7 +920,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
         ShipmentStatusEnum.Returned
     };
 
-        // aggregate query (bây giờ sau tất cả lọc)
+        // aggregate query
         var agg = await q
             .GroupBy(_ => 1)
             .Select(g => new
@@ -924,7 +938,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
         return new ActivityMetricsDto
         {
-            FilterType = requestedFilter, // ✅ vẫn trả về đúng cái request gốc (Default nếu null)
+            FilterType = requestedFilter,
             FilterTypeName = requestedFilter.ToString(),
             PeriodStart = periodStart,
             PeriodEnd = periodEnd,
