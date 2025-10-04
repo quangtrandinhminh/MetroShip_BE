@@ -17,6 +17,7 @@ namespace MetroShip.WebAPI.Controllers
     {
         private readonly IInsuranceService _insuranceService = serviceProvider.GetRequiredService<IInsuranceService>();
 
+        [AllowAnonymous]
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllPolicies)]
         [ProducesResponseType(typeof(BaseResponse<PaginatedListResponse<InsurancePolicyResponse>>), 200)]
         public async Task<IActionResult> GetAllPoliciesPaginatedList([FromQuery] PaginatedListRequest request, [FromQuery] bool? isActive = null)
@@ -25,6 +26,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(response);
         }
 
+        [AllowAnonymous]
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetPolicyById)]
         [ProducesResponseType(typeof(BaseResponse<InsurancePolicyResponse>), 200)]
         public async Task<IActionResult> GetPolicyById([FromRoute] string id)
@@ -57,6 +59,7 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response));
         }
 
+        [AllowAnonymous]
         [HttpGet(WebApiEndpoint.InsurancePolicyEndpoint.GetAllActivePoliciesDropdown)]
         public async Task<IActionResult> GetAllActivePoliciesDropdown()
         {
