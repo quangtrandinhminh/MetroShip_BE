@@ -13,7 +13,8 @@ public partial class StaffAssignment : BaseEntity
     public string StaffId { get; set; }
 
     [StringLength(50)]
-    public string StationId { get; set; }
+    public string? StationId { get; set; }
+    public string? TrainId { get; set; }
 
     public AssignmentRoleEnum AssignedRole { get; set; }
 
@@ -31,5 +32,9 @@ public partial class StaffAssignment : BaseEntity
 
     [ForeignKey(nameof(StationId))]
     [InverseProperty(nameof(Station.Staffs))]
-    public virtual Station Station { get; set; }
+    public virtual Station? Station { get; set; }
+
+    [ForeignKey(nameof(TrainId))]
+    [InverseProperty(nameof(MetroTrain.StaffAssignments))]
+    public virtual MetroTrain? Train { get; set; }
 }

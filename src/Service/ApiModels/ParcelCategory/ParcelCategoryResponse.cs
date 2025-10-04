@@ -23,6 +23,7 @@ namespace MetroShip.Service.ApiModels.ParcelCategory
         public decimal? InsuranceRate { get; set; }
         public decimal? InsuranceFeeVnd { get; set; }
         public bool IsInsuranceRequired { get; set; }
+        public bool IsActive { get; set; }
         public IList<CategoryInsuranceResponse> CategoryInsurances { get; set; } = new List<CategoryInsuranceResponse>();
     }
 }

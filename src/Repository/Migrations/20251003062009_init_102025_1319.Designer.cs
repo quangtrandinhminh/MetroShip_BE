@@ -3,6 +3,7 @@ using System;
 using MetroShip.Repository.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MetroShip.Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251003062009_init_102025_1319")]
+    partial class init_102025_1319
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -572,10 +575,6 @@ namespace MetroShip.Repository.Migrations
                         .HasColumnType("decimal(8, 2)");
 
                     b.Property<string>("ModelName")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("NextStationId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -1724,9 +1723,6 @@ namespace MetroShip.Repository.Migrations
                     b.Property<DateTimeOffset?>("ToTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("TrainId")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedAt");
@@ -1737,8 +1733,6 @@ namespace MetroShip.Repository.Migrations
                     b.HasIndex("StaffId");
 
                     b.HasIndex("StationId");
-
-                    b.HasIndex("TrainId");
 
                     b.ToTable("StaffAssignments");
                 });
@@ -2519,15 +2513,9 @@ namespace MetroShip.Repository.Migrations
                         .WithMany("Staffs")
                         .HasForeignKey("StationId");
 
-                    b.HasOne("MetroShip.Repository.Models.MetroTrain", "Train")
-                        .WithMany("StaffAssignments")
-                        .HasForeignKey("TrainId");
-
                     b.Navigation("Staff");
 
                     b.Navigation("Station");
-
-                    b.Navigation("Train");
                 });
 
             modelBuilder.Entity("MetroShip.Repository.Models.Station", b =>
@@ -2715,8 +2703,6 @@ namespace MetroShip.Repository.Migrations
             modelBuilder.Entity("MetroShip.Repository.Models.MetroTrain", b =>
                 {
                     b.Navigation("ShipmentItineraries");
-
-                    b.Navigation("StaffAssignments");
 
                     b.Navigation("TrainSchedules");
                 });

@@ -404,7 +404,15 @@ namespace MetroShip.Service.Services
                     claims.Add(new Claim("AssignmentRole", assignedRole.AssignedRole.ToString()));
 
                     // Add station claim if user is assigned to a station
-                    claims.Add(new Claim("StationId", assignedRole.StationId));
+                    if (assignedRole.StationId != null)
+                    {
+                        claims.Add(new Claim("StationId", assignedRole.StationId));
+                    }
+
+                    if (assignedRole.TrainId != null)
+                    {
+                        claims.Add(new Claim("TrainId", assignedRole.TrainId));
+                    }
                 }
             }
 

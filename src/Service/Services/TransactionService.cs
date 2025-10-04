@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using MetroShip.Repository.Repositories;
 using MetroShip.Service.Jobs;
 using Microsoft.Extensions.Caching.Memory;
+using MetroShip.Utility.Config;
 
 namespace MetroShip.Service.Services;
 
@@ -39,6 +40,7 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
     private readonly IBaseRepository<ShipmentTracking> _shipmentTrackingRepository = serviceProvider.GetRequiredService<IBaseRepository<ShipmentTracking>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
     private readonly IMemoryCache _memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+    private readonly ISystemConfigRepository _systemConfigRepository = serviceProvider.GetRequiredService<ISystemConfigRepository>();
 
     public async Task<string> CreateVnPayTransaction(TransactionRequest request)
     {
@@ -564,6 +566,18 @@ public class TransactionService(IServiceProvider serviceProvider) : ITransaction
                 "Loại giao dịch không hợp lệ để tạo giao dịch.",
                 StatusCodes.Status400BadRequest)
         };
+
+        if (shipment.PaymentDealine == null || shipment.PaymentDealine <= CoreHelper.SystemTimeNow)
+        {
+            // get from config
+            var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
+            if (!int.TryParse(config, out int cancelAfterMinutes))
+            {
+                cancelAfterMinutes = 15; // default 15 minutes
+            }
+            shipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
+            _shipmentRepository.Update(shipment);
+        }
 
         await _backgroundJobService.ScheduleCancelTransactionJob(transaction.Id, shipment.PaymentDealine.Value);
         return transaction;

@@ -35,6 +35,7 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
     private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
     private readonly RoleManager<RoleEntity> _roleManager = serviceProvider.GetRequiredService<RoleManager<RoleEntity>>();
     private readonly IStationRepository _stationRepository = serviceProvider.GetRequiredService<IStationRepository>();
+    private readonly ITrainRepository _trainRepository = serviceProvider.GetRequiredService<ITrainRepository>();
 
     public async Task<PaginatedListResponse<UserResponse>> GetAllUsersAsync(PaginatedListRequest paginatedRequest, UserRoleEnum? role, string? searchKeyword = null,
     DateTimeOffset? createdFrom = null, DateTimeOffset? createdTo = null, OrderByRequest? orderByRequest = null)
@@ -117,6 +118,11 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
             .Select(x => new { x.Id, x.StationNameVi })
             .ToList();
 
+        var trainList = _trainRepository.GetAll()
+            .Where(x => x.DeletedAt == null)
+            .Select(x => new { x.Id, x.TrainCode })
+            .ToList();
+
         // Map DTO
         var userResponse = _mapper.MapToUserResponsePaginatedList(users);
 
@@ -142,6 +148,12 @@ public class UserService(IServiceProvider serviceProvider) : IUserService
                     if (station != null)
                     {
                         assignment.StationName = station.StationNameVi;
+                    }
+
+                    var train = trainList.FirstOrDefault(x => x.Id == assignment.TrainId);
+                    if (train != null)
+                    {
+                        assignment.TrainCode = train.TrainCode;
                     }
                 }
             }

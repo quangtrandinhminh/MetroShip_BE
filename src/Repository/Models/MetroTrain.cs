@@ -34,6 +34,9 @@ public partial class MetroTrain : BaseEntity
     public string? CurrentStationId { get; set; }
 
     [StringLength(50)]
+    public string? NextStationId { get; set; }
+
+    [StringLength(50)]
     public string? CurrentRouteStationId { get; set; }
 
     [NotMapped]
@@ -75,6 +78,9 @@ public partial class MetroTrain : BaseEntity
 
     [InverseProperty(nameof(TrainSchedule.Train))]
     public virtual ICollection<TrainSchedule> TrainSchedules { get; set; } = new List<TrainSchedule>();
+
+    [InverseProperty(nameof(StaffAssignment.Train))]
+    public virtual ICollection<StaffAssignment> StaffAssignments { get; set; } = new List<StaffAssignment>();
 
     public bool IsTrainCodeEven()
     {

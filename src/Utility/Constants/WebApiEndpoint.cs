@@ -179,6 +179,7 @@
             public const string GetTrainsByLineId = BaseEndpoint + "/line/{lineId}";
             public const string SendLocation = BaseEndpoint + "/staff/send-location";
             public const string AddShipmentItinerariesForTrain = BaseEndpoint + "/itineraries";
+            public const string GetTrainsDropdown = BaseEndpoint + "/dropdown";
         }
 
         public static class MediaEndpoint

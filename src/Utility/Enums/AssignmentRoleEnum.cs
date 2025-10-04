@@ -2,7 +2,7 @@
 
 public enum AssignmentRoleEnum
 {
-    Manager = 1,
+    TrainOperator = 1,
     Checker,
     CargoLoader,
 }

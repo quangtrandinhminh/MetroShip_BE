@@ -90,6 +90,32 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         return response;
     }
 
+    public async Task<List<TrainDropdownResponse>> GetTrainsDropdownAsync(string? lineId = null, string? regionId = null)
+    {
+        _logger.Information("Get trains dropdown with lineId: {lineId}", lineId);
+
+        Expression<Func<MetroTrain, bool>> filter = t => t.IsActive && t.DeletedAt == null;
+        if (!string.IsNullOrEmpty(lineId))
+        {
+            filter = filter.And(t => t.LineId == lineId);
+        }
+        if (!string.IsNullOrEmpty(regionId))
+        {
+            filter = filter.And(t => t.Line != null && t.Line.RegionId == regionId);
+        }
+
+        var trains = await _trainRepository.GetAllWithCondition(filter)
+            .OrderBy(t => t.TrainCode)
+            .Select(t => new TrainDropdownResponse
+            {
+                Id = t.Id,
+                TrainCode = t.TrainCode,
+            })
+            .ToListAsync();
+
+        return trains;
+    }
+
     public async Task<PaginatedListResponse<TrainListResponse>> PaginatedListResponse(
     TrainListFilterRequest request)
     {
@@ -106,7 +132,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var trainIds = paginatedList.Items.Select(t => t.Id).ToList();
         var trainSchedules = await _trainScheduleRepository.GetTrainSchedulesByTrainListAsync(trainIds);
         var stationIds = paginatedList.Items
-            .SelectMany(t => new[] { t.CurrentStationId, t.CurrentRouteStationId })
+            .SelectMany(t => new[] { t.CurrentStationId, t.NextStationId })
             .Where(id => !string.IsNullOrEmpty(id))
             .Distinct()
             .ToList();
@@ -121,31 +147,20 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         var response = _mapper.MapToTrainListResponsePaginatedList(paginatedList);
         Dictionary<string, (DirectionEnum? direction, int? segmentIndex)> trainStates = new();
 
-        // Thêm: xác định ca hiện tại
+        // Find current active time slot
         string? activeTimeSlotId = request.TimeSlotId;
         if (string.IsNullOrEmpty(activeTimeSlotId))
         {
             activeTimeSlotId = await GetCurrentTimeSlotIdAsync();
         }
 
-         /*❌ Code cũ(lọc mất hết các schedule khác)
-         if (!string.IsNullOrEmpty(request.TimeSlotId))
-        {
-            // filter train schedules theo TimeSlotId nếu được cung cấp
-            trainSchedules = trainSchedules
-                .Where(ts => ts.TimeSlotId == request.TimeSlotId)
-                .ToList();
-        }
-        else
-        {
-            trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
-        }*/
-
         // ✅ Code mới: vẫn giữ toàn bộ trainSchedules, chỉ lấy direction từ Firebase nếu không có filter
         if (string.IsNullOrEmpty(request.TimeSlotId))
         {
             trainStates = await _trainStateStore.GetDirectionsAndSegmentIndicesAsync(trainIds);
         }
+
+        var groupedData = await CalculateCapacityData(request.Date, paginatedList.Items.ToList(), activeTimeSlotId);
 
         foreach (var train in response.Items) // train bây giờ là TrainListResponse
         {
@@ -168,9 +183,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             }
 
             // Gán tên ga tiếp theo
-            if (!string.IsNullOrEmpty(train.CurrentRouteStationId) && stationNames.TryGetValue(train.CurrentRouteStationId, out var nextStationName))
+            if (!string.IsNullOrEmpty(train.NextStationId) && stationNames.TryGetValue(train.NextStationId, out var nextStationName))
             {
-                train.NextStationId = train.CurrentRouteStationId;
                 train.NextStationName = nextStationName;
             }
 
@@ -195,16 +209,38 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 .ToList();
 
             // Nếu chỉ có 1 trainSchedules, gán direction theo trainSchedules
-            if (train.TrainSchedules.Count == 1)
+            /*if (train.TrainSchedules.Count == 1)
             {
                 train.Direction = train.TrainSchedules[0].Direction;
                 continue;
+            }*/
+
+            // activeTimeSlotId filter từ request, nếu không có thì tìm theo thời điểm hiện tại
+            if (activeTimeSlotId != null && train.TrainSchedules.Count > 0)
+            {
+                var matchedSchedule = train.TrainSchedules
+                    .FirstOrDefault(ts => ts.TimeSlotId == activeTimeSlotId);
+                if (matchedSchedule != null)
+                {
+                    train.Direction = matchedSchedule.Direction;
+                    train.CurrentTimeSlotId = matchedSchedule.TimeSlotId;
+                    train.CurrentShift = matchedSchedule.Shift;
+                    train.CurrentTrainScheduleDirection = matchedSchedule.Direction;
+                }
             }
 
-            // Nếu lấy all trainSchedules, tìm direction từ Firebase
+            // Luôn lấy all trainSchedules, tìm direction từ Firebase
             if (trainStates.ContainsKey(train.Id))
             {
                 train.Direction = trainStates[train.Id].direction;
+            }
+
+            // Gán current capacity nếu có dữ liệu
+            var capacity = groupedData.FirstOrDefault(g => g.TrainId == train.Id);
+            if (capacity != null)
+            {
+                train.CurrentKg = capacity.TotalWeightKg;
+                train.CurrentM3 = capacity.TotalVolumeM3;
             }
 
             //Lấy direction hiện tại từ Firebase
@@ -230,6 +266,66 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         return response;
+    }
+
+    private class CapacityData {
+        public string TrainId { get; set; }
+        public decimal? TotalWeightKg { get; set; }
+        public decimal? TotalVolumeM3 { get; set; }
+        public int ShipmentCount { get; set; }
+    }
+
+    private async Task<List<CapacityData>> CalculateCapacityData(DateOnly? date, List<MetroTrain> trains, string timeSlotId)
+    {
+        // lấy tất cả shipment có itinerary trong ngày và ca do trainids chở
+        // select lấy kg và m3 theo parcel status normal, group theo trainId
+        var currentDate = date ?? DateOnly.FromDateTime(CoreHelper.SystemTimeNow.UtcToSystemTime().Date);
+        var departedTrainIds = trains
+            .Where(t => t.Status == TrainStatusEnum.Departed)
+            .Select(t => t.Id)
+            .ToList();
+        var routeStationIds = trains
+            .Where(t => t.Status == TrainStatusEnum.Departed && !string.IsNullOrEmpty(t.CurrentRouteStationId))
+            .Select(t => t.CurrentRouteStationId)
+            .ToList();
+
+        var shipmentData = await _shipmentRepository.GetAllWithCondition(s =>
+                s.DeletedAt == null &&
+                s.ShipmentStatus == ShipmentStatusEnum.InTransit &&
+                s.ShipmentItineraries.Any(si =>
+                    si.Date == currentDate &&
+                    si.TrainId != null &&
+                    departedTrainIds.Contains(si.TrainId) &&
+                    (string.IsNullOrEmpty(timeSlotId) || si.TimeSlotId == timeSlotId) &&
+                    routeStationIds.Contains(si.RouteId)
+                ))
+            .SelectMany(s => s.ShipmentItineraries
+                .Where(si =>
+                    si.Date == currentDate &&
+                    si.TrainId != null &&
+                    departedTrainIds.Contains(si.TrainId) &&
+                    (string.IsNullOrEmpty(timeSlotId) || si.TimeSlotId == timeSlotId) &&
+                    routeStationIds.Contains(si.RouteId))
+                .Select(si => new
+                {
+                    TrainId = si.TrainId,
+                    WeightKg = s.Parcels.Where(p => p.Status == ParcelStatusEnum.Normal).Sum(p => p.WeightKg),
+                    VolumeM3 = s.Parcels.Where(p => p.Status == ParcelStatusEnum.Normal).Sum(p => ((p.LengthCm * p.HeightCm * p.WidthCm) / 1000000)),
+                }))
+            .ToListAsync();
+
+        var groupedData = shipmentData
+            .GroupBy(x => x.TrainId)
+            .Select(g => new CapacityData
+            {
+                TrainId = g.Key,
+                TotalWeightKg = g.Sum(x => x.WeightKg),
+                TotalVolumeM3 = g.Sum(x => x.VolumeM3),
+                ShipmentCount = g.Count()
+            })
+            .ToList();
+
+        return groupedData;
     }
 
     // get system config related to train
@@ -404,6 +500,21 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                 expression = expression.And(x => x.Line.Routes.Any(
                     r => r.FromStationId == request.StationId ||
                     r.ToStationId == request.StationId));
+            }
+
+            if (!string.IsNullOrEmpty(request.Id))
+            {
+                expression = expression.And(x => x.Id == request.Id);
+            }
+
+            if (!string.IsNullOrEmpty(request.TrainCode))
+            {
+                expression = expression.And(x => EF.Functions.ILike(x.TrainCode, $"%{request.TrainCode}%"));
+            }
+
+            if (request.Status.HasValue)
+            {
+                expression = expression.And(x => x.Status == request.Status.Value);
             }
         }
 
@@ -646,7 +757,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             train.CurrentStationId = prevRoute.ToStationId;
             train.Latitude = prevRoute.ToStation?.Latitude;
             train.Longitude = prevRoute.ToStation?.Longitude;
-            train.CurrentRouteStationId = null;
+            train.CurrentRouteStationId = prevRoute.Id;
+            train.NextStationId = null;
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
         }
@@ -661,6 +773,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             train.CurrentStationId = lastRoute.ToStationId;
             train.Latitude = lastRoute.ToStation?.Latitude;
             train.Longitude = lastRoute.ToStation?.Longitude;
+            train.CurrentRouteStationId = null;
+            train.NextStationId = null;
 
             _trainRepository.Update(train);
             await _trainRepository.SaveChangesAsync();
@@ -682,7 +796,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         train.Status = TrainStatusEnum.Departed;
         train.CurrentStationId = null;
         // save next station id temporarily
-        train.CurrentRouteStationId = nextRoute.ToStationId;
+        train.CurrentRouteStationId = nextRoute.Id;
+        train.NextStationId = nextRoute.ToStationId;
 
         _trainRepository.Update(train);
         await _trainRepository.SaveChangesAsync();
@@ -733,10 +848,11 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         var shipmentValidStatus = new[]
         {
-        ShipmentStatusEnum.AwaitingDropOff,
-        ShipmentStatusEnum.AwaitingPayment,
-        ShipmentStatusEnum.PickedUp
-    };
+            ShipmentStatusEnum.AwaitingDropOff,
+            ShipmentStatusEnum.AwaitingPayment,
+            ShipmentStatusEnum.PickedUp,
+            ShipmentStatusEnum.WaitingForNextTrain,
+        };
 
         // Get all unique shipment IDs from the trains with proper null checks
         var shipmentIds = metroTrains
@@ -829,15 +945,17 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
 
         // 🔹 2. LUÔN tạo fullPath ngay từ đầu để đảm bảo có dữ liệu
         const int steps = 10;
-        var fullPath = shipment.ShipmentItineraries
-            .OrderBy(x => x.LegOrder)
-            .Where(x => x.Route != null && x.Route.FromStation != null && x.Route.ToStation != null)
-            .Select(x =>
-            {
-                var from = x.Route.FromStation;
-                var to = x.Route.ToStation;
+        var sortedItineraries = shipment.ShipmentItineraries.OrderBy(x => x.LegOrder).ToList();
 
-                var polyline = Enumerable.Range(0, steps + 1)
+        var fullPath = sortedItineraries.Select(x =>
+        {
+            var from = x.Route?.FromStation;
+            var to = x.Route?.ToStation;
+
+            var polyline = new List<GeoPoint>();
+            if (from != null && to != null)
+            {
+                polyline = Enumerable.Range(0, steps + 1)
                     .Select(s =>
                     {
                         var p = s / (double)steps;
@@ -847,17 +965,28 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                             p);
                         return new GeoPoint { Latitude = lat, Longitude = lng };
                     }).ToList();
+            }
 
-                return new
+            return new
+            {
+                LegOrder = x.LegOrder,
+                From = new
                 {
-                    x.LegOrder,
-                    From = new { Name = from.StationNameVi, from.Latitude, from.Longitude },
-                    To = new { Name = to.StationNameVi, to.Latitude, to.Longitude },
-                    x.IsCompleted,
-                    x.Message,
-                    Polyline = polyline
-                };
-            }).ToList();
+                    Name = from?.StationNameVi ?? x.Route?.FromStationId ?? "",
+                    Latitude = from?.Latitude ?? 0,
+                    Longitude = from?.Longitude ?? 0
+                },
+                To = new
+                {
+                    Name = to?.StationNameVi ?? x.Route?.ToStationId ?? "",
+                    Latitude = to?.Latitude ?? 0,
+                    Longitude = to?.Longitude ?? 0
+                },
+                IsCompleted = x.IsCompleted,
+                x.Message,
+                Polyline = polyline
+            };
+        }).ToList();
 
         // 🔹 3. Cho phép tracking từ khi pickup
         if (shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge &&
@@ -874,13 +1003,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // Nếu chưa có train assigned, vẫn trả về thông tin itinerary
         if (itinerary?.TrainId == null)
         {
-            // Trả về thông tin cơ bản với fullPath
+            var (lat, lng, fromName, toName) = GetDefaultPosition(fullPath.Cast<dynamic>().ToList(), shipment.ShipmentItineraries.All(i => i.IsCompleted));
+
             return new TrainPositionResult
             {
                 TrainId = "not-assigned-yet",
-                Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
-                Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
+                Latitude = lat,
+                Longitude = lng,
                 Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                FromStation = fromName,
+                ToStation = toName,
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -909,12 +1041,16 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         // Nếu train chưa bắt đầu, vẫn trả về thông tin với fullPath
         if (!hasSegmentIndex)
         {
+            var (lat, lng, fromName, toName) = GetDefaultPosition(fullPath.Cast<dynamic>().ToList(), shipment.ShipmentItineraries.All(i => i.IsCompleted));
+
             return new TrainPositionResult
             {
                 TrainId = trainId,
-                Latitude = fullPath.FirstOrDefault()?.From.Latitude ?? 0,
-                Longitude = fullPath.FirstOrDefault()?.From.Longitude ?? 0,
+                Latitude = lat,
+                Longitude = lng,
                 Status = ShipmentStatusEnum.AwaitingDelivery.ToString(),
+                FromStation = fromName,
+                ToStation = toName,
                 Path = fullPath.SelectMany(p => p.Polyline).ToList(),
                 AdditionalData = new
                 {
@@ -936,12 +1072,31 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         }
 
         // 🔹 6. Lấy position hiện tại của tàu
-        var position = await _trainStateStore.GetPositionResultAsync(trainId);
-        if (position == null)
+        // 🚨 sửa ở đây: luôn gọi GetTrainPositionAsync để sync state trước
+        var position = await GetTrainPositionAsync(trainId);
+
+        // 🚨 Nếu tất cả legs đã hoàn tất thì fix cứng train đứng ở ga cuối
+        if (shipment.ShipmentItineraries.All(i => i.IsCompleted))
         {
-            // Fallback tính toán giống GetTrainPositionAsync
-            position = await GetTrainPositionAsync(trainId);
+            var lastLeg = fullPath.LastOrDefault();
+            if (lastLeg != null)
+            {
+                position.Latitude = lastLeg.To.Latitude;
+                position.Longitude = lastLeg.To.Longitude;
+                position.FromStation = lastLeg.From.Name;
+                position.ToStation = lastLeg.To.Name;
+                position.ProgressPercent = 100;
+                position.Status = TrainStatusEnum.InTransit.ToString(); // hoặc InTransit nếu bạn muốn mapping riêng
+            }
         }
+
+        
+        // nếu position.Path đang rỗng thì fill bằng fullPath polyline
+        if (position.Path == null || !position.Path.Any())
+        {
+            position.Path = fullPath.SelectMany(p => p.Polyline).ToList();
+        }
+        // *** end sửa ***
 
         var rawTrainStatus = Enum.Parse<TrainStatusEnum>(position.Status);
         var mappedShipmentStatus = MapTrainStatusToShipmentStatus(rawTrainStatus);
@@ -1435,7 +1590,7 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
                     "⚠️ Unexpected station for TrainId={TrainId}. Expected: {ExpectedStationId}, Received: {ReceivedStationId}, Direction={Direction}, SegmentIndex={SegmentIndex}",
                     trainId, expectedStationId, stationId, direction, resolvedSegmentIndex);
 
-                var expectedStationName = _stationRepository.GetStationNameByIdAsync(expectedStationId);
+                var expectedStationName = await _stationRepository.GetStationNameByIdAsync(expectedStationId);
                 throw new AppException(
                     ErrorCode.BadRequest,
                     $"Bạn cần làm việc ở ga {expectedStationName} để xác nhận tàu đã đến trạm này. ",
@@ -1462,12 +1617,27 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
             train.Latitude = currentLeg.ToStation?.Latitude;
             train.Longitude = currentLeg.ToStation?.Longitude;
 
+            // lấy ga kế tiếp
+            var nextLeg = resolvedSegmentIndex + 1 < routes.Count ? routes[resolvedSegmentIndex + 1] : null;
+            if (nextLeg != null)
+            {
+                train.CurrentRouteStationId = nextLeg.Id;
+                train.NextStationId = nextLeg.ToStationId;
+            }
+            else
+            {
+                train.CurrentRouteStationId = null;
+                train.NextStationId = null;
+            }
+
             _trainRepository.Update(train);
             await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
 
             // 6. Cập nhật shipment itineraries
             var allCandidates = await _shipmentItineraryRepository
-                .GetAllWithCondition(x => x.TrainId == trainId && !x.IsCompleted && x.RouteId != null)
+                .GetAllWithCondition(x => x.TrainId == trainId
+                                          && !x.IsCompleted && x.RouteId != null
+                                          && x.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit)
                 .ToListAsync();
 
             var matchedItineraries = allCandidates
@@ -1527,6 +1697,162 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         catch (Exception ex)
         {
             _logger.Error(ex, "❌ Error confirming train arrival: TrainId={TrainId}, StationId={StationId}", trainId, stationId);
+            throw;
+        }
+    }
+
+    // confirm for staff: train operator
+    public async Task ConfirmTrainArrivedAsync(string nextStationId)
+    {
+        try
+        {
+            var trainId = JwtClaimUltils.GetUserTrain(_httpContextAccessor);
+            if (string.IsNullOrWhiteSpace(trainId))
+                throw new AppException(ErrorCode.BadRequest, "Bạn chưa được điều khiển tàu này", StatusCodes.Status400BadRequest);
+
+            var train = await _trainRepository.GetTrainWithAllRoutesAsync(trainId)
+                ?? throw new AppException(ErrorCode.NotFound, ResponseMessageTrain.TRAIN_NOT_FOUND, StatusCodes.Status404NotFound);
+
+            if (train.Line?.Routes == null || !train.Line.Routes.Any())
+                throw new AppException(ErrorCode.NotFound, "No route information found", StatusCodes.Status404NotFound);
+
+            // 1. Xác định direction từ Firebase
+            var direction = await _trainStateStore.GetDirectionAsync(trainId);
+            if (direction == null)
+            {
+                var segmentIndex = await _trainStateStore.GetSegmentIndexAsync(trainId);
+                if (segmentIndex != null && segmentIndex >= 0)
+                {
+                    var routeFromIndex = train.Line.Routes.FirstOrDefault(r => r.SeqOrder == segmentIndex);
+                    direction = routeFromIndex?.Direction
+                        ?? throw new AppException(ErrorCode.BadRequest, "Cannot determine direction from segment index", StatusCodes.Status400BadRequest);
+
+                    await _trainStateStore.SetDirectionAsync(trainId, direction.Value);
+                }
+                else
+                {
+                    direction = InferTrainDirectionFromCurrentStation(train, nextStationId);
+                    await _trainStateStore.SetDirectionAsync(trainId, direction.Value);
+                }
+            }
+
+            // 2. Lấy danh sách route theo direction
+            var routes = train.Line.Routes
+                .Where(r => r.Direction == direction)
+                .OrderBy(r => r.SeqOrder)
+                .ToList();
+
+            if (routes.Count == 0)
+                throw new AppException(ErrorCode.BadRequest, "No routes found for current direction", StatusCodes.Status400BadRequest);
+
+            // 3. Lấy segmentIndex hiện tại từ Firebase
+            var segmentIndexFirebase = await _trainStateStore.GetSegmentIndexAsync(trainId);
+            int resolvedSegmentIndex;
+            if (segmentIndexFirebase != null)
+            {
+                resolvedSegmentIndex = segmentIndexFirebase.Value;
+            }
+            else
+            {
+                int foundIndex = routes.FindIndex(r => r.FromStationId == train.CurrentStationId);
+                resolvedSegmentIndex = foundIndex >= 0 ? foundIndex : 0;
+            }
+
+            if (resolvedSegmentIndex < 0 || resolvedSegmentIndex >= routes.Count)
+                throw new AppException(ErrorCode.BadRequest, "Train segment index out of range", StatusCodes.Status400BadRequest);
+
+            // 4. Chống nhảy trạm
+            var expectedStationId = routes[resolvedSegmentIndex].ToStationId;
+            if (!string.Equals(expectedStationId, nextStationId, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.Warning(
+                    "⚠️ Unexpected station for TrainId={TrainId}. Expected: {ExpectedStationId}, Received: {ReceivedStationId}, Direction={Direction}, SegmentIndex={SegmentIndex}",
+                    trainId, expectedStationId, nextStationId, direction, resolvedSegmentIndex);
+
+                var expectedStationName = await _stationRepository.GetStationNameByIdAsync(expectedStationId);
+                throw new AppException(
+                    ErrorCode.BadRequest,
+                    $"Ga kế tiếp phải là ga {expectedStationName}.",
+                    StatusCodes.Status400BadRequest);
+            }
+
+            var currentLeg = routes[resolvedSegmentIndex];
+
+            // 5. Cập nhật trạng thái Train
+            if (resolvedSegmentIndex == routes.Count - 1)
+            {
+                train.Status = TrainStatusEnum.Completed;
+                await _trainStateStore.RemoveSegmentIndexAsync(trainId);
+                _logger.Information("✅ Train {TrainId} completed journey at station {StationId}", trainId, nextStationId);
+            }
+            else
+            {
+                train.Status = TrainStatusEnum.ArrivedAtStation;
+                await _trainStateStore.SetSegmentIndexAsync(trainId, resolvedSegmentIndex);
+                _logger.Information("🚉 Train {TrainId} arrived at station {StationId}", trainId, nextStationId);
+            }
+
+            train.CurrentStationId = nextStationId;
+            train.Latitude = currentLeg.ToStation?.Latitude;
+            train.Longitude = currentLeg.ToStation?.Longitude;
+
+            // lấy ga kế tiếp
+            var nextLeg = resolvedSegmentIndex + 1 < routes.Count ? routes[resolvedSegmentIndex + 1] : null;
+            if (nextLeg != null)
+            {
+                train.CurrentRouteStationId = nextLeg.Id;
+                train.NextStationId = nextLeg.ToStationId;
+            }
+            else
+            {
+                train.CurrentRouteStationId = null;
+                train.NextStationId = null;
+            }
+
+            _trainRepository.Update(train);
+            await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+            // 6. Cập nhật shipment itineraries
+            var allCandidates = await _shipmentItineraryRepository
+                .GetAllWithCondition(x => x.TrainId == trainId 
+                && !x.IsCompleted && x.RouteId != null
+                && x.Shipment.ShipmentStatus == ShipmentStatusEnum.InTransit)
+                .ToListAsync();
+
+            var matchedItineraries = allCandidates
+                .Where(i => train.Line.Routes.Any(r => r.Id == i.RouteId && r.ToStationId == nextStationId))
+                .ToList();
+
+            // ✅ Group by ShipmentId and select leg with lowest LegOrder
+            var itinerariesToComplete = matchedItineraries
+                .GroupBy(i => i.ShipmentId)
+                .Select(g => g.OrderBy(i => i.LegOrder).First())
+                .ToList();
+
+            foreach (var itinerary in itinerariesToComplete)
+            {
+                var route = train.Line.Routes.FirstOrDefault(r => r.Id == itinerary.RouteId);
+                var stationName = route?.ToStation?.StationNameVi ?? "Unknown";
+
+                itinerary.IsCompleted = true;
+
+                var messageLine = $"[Arrived at {stationName} - {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm}]";
+                itinerary.Message = string.IsNullOrWhiteSpace(itinerary.Message)
+                    ? messageLine
+                    : $"{itinerary.Message}\n{messageLine}";
+
+                _shipmentItineraryRepository.Update(itinerary);
+            }
+
+            if (itinerariesToComplete.Count > 0)
+            {
+                await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+                _logger.Information("✅ Updated {Count} shipment itineraries at station {StationId}", itinerariesToComplete.Count, nextStationId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "❌ Error confirming train arrival: TrainId={TrainId}, StationId={StationId}", nextStationId, nextStationId);
             throw;
         }
     }
@@ -1804,22 +2130,34 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         };
     }
 
+    private (double lat, double lng, string fromName, string toName) GetDefaultPosition(List<dynamic> fullPath, bool allCompleted)
+    {
+        if (fullPath == null || !fullPath.Any()) return (0, 0, "", "");
+
+        if (allCompleted)
+        {
+            var last = fullPath.Last();
+            return (last.To.Latitude, last.To.Longitude, last.From.Name, last.To.Name);
+        }
+
+        var first = fullPath.First();
+        return (first.From.Latitude, first.From.Longitude, first.From.Name, first.To.Name);
+    }
+
     private async Task<string?> GetCurrentTimeSlotIdAsync()
     {
-        var now = TimeOnly.FromDateTime(DateTime.Now);
-        var timeSlots = await _timeSlotRepository.GetAllAsync();
-
+        var currentTime = TimeOnly.FromDateTime(CoreHelper.SystemTimeNow.UtcToSystemTime());
+        var timeSlots = await _timeSlotRepository.GetAll()
+            .Where(ts => !ts.IsAbnormal && ts.DeletedAt == null)
+            .OrderBy(ts => ts.Shift)
+            .ToListAsync();
+        //1h -> đêm 2, 3h -> sáng 11h, 12h -> chiều 16h, 17h -> tối 21h, 22h -> đêm 2h
+        // Find current time slot by checking close time only
         var currentSlot = timeSlots.FirstOrDefault(ts =>
-            ts.StartReceivingTime.HasValue && ts.CutOffTime.HasValue &&
-            (
-                (ts.StartReceivingTime.Value <= ts.CutOffTime.Value &&
-                 ts.StartReceivingTime.Value <= now && now < ts.CutOffTime.Value)
-                ||
-                (ts.StartReceivingTime.Value > ts.CutOffTime.Value &&
-                 (now >= ts.StartReceivingTime.Value || now < ts.CutOffTime.Value))
-            )
+                ts.Shift != ShiftEnum.Night ?
+                    currentTime < ts.CloseTime : // Regular shifts: just check if before close time
+                    true // Night shift: always matches if we reach it (should be last in ordered list)
         );
-
         return currentSlot?.Id;
     }
 
