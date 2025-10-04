@@ -811,7 +811,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
     public async Task<ActivityMetricsDto> GetActivityMetricsAsync(RevenueChartRequest request)
     {
-        IQueryable<Shipment> q;
+        IQueryable<Shipment> q = _shipmentRepository.GetAllWithCondition();
 
         // ✅ Nếu null hoặc Default thì coi như Year
         var requestedFilter = request?.FilterType ?? RevenueFilterType.Default;
@@ -819,23 +819,7 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
             ? RevenueFilterType.Year
             : requestedFilter;
 
-        if (finalFilterType == RevenueFilterType.Day)
-        {
-            // ✅ Day = Today
-            var today = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-            var tomorrow = today.AddDays(1);
-
-            q = _shipmentRepository.GetAllWithCondition()
-                 .Where(s => s.CreatedAt >= today && s.CreatedAt < tomorrow);
-        }
-        else
-        {
-            // ✅ Default => Year
-            q = _shipmentRepository.GetAllWithCondition();
-            q = ApplyDateFilter(q, finalFilterType, request, s => s.CreatedAt);
-        }
-
-        // ✅ Xác định khoảng thời gian
+        // ✅ Xác định khoảng thời gian filter
         DateTime periodStart;
         DateTime periodEnd;
 
@@ -884,9 +868,6 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
 
                 periodStart = DateTime.SpecifyKind(ws.Date, DateTimeKind.Utc);
                 periodEnd = DateTime.SpecifyKind(we.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
-
-                // 🔹 Apply filter vào query
-                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
                 break;
 
             case RevenueFilterType.MonthRange:
@@ -909,24 +890,17 @@ public class ReportService(IServiceProvider serviceProvider): IReportService
                 var qStartMonth = (quarter - 1) * 3 + 1;
                 periodStart = DateTime.SpecifyKind(new DateTime(qYear, qStartMonth, 1), DateTimeKind.Utc);
                 periodEnd = periodStart.AddMonths(3).AddTicks(-1);
-
-                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
                 break;
 
-            case RevenueFilterType.Year: // ✅ Default cũng đã map về Year ở trên
+            case RevenueFilterType.Year:
+            default:
                 var yearOnly = request.Year ?? DateTime.UtcNow.Year;
                 periodStart = DateTime.SpecifyKind(new DateTime(yearOnly, 1, 1), DateTimeKind.Utc);
                 periodEnd = DateTime.SpecifyKind(new DateTime(yearOnly, 12, 31, 23, 59, 59), DateTimeKind.Utc);
-
-                q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
-                break;
-
-            default:
-                // fallback theo dữ liệu (sẽ set sau aggregate nếu cần)
-                periodStart = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
-                periodEnd = DateTime.SpecifyKind(DateTime.UtcNow.Date, DateTimeKind.Utc);
                 break;
         }
+
+        q = q.Where(s => s.CreatedAt >= periodStart && s.CreatedAt <= periodEnd);
 
         // nhóm status
         var completedStatuses = new[]
