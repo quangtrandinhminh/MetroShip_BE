@@ -129,4 +129,14 @@ public class TrainRepository : BaseRepository<MetroTrain>, ITrainRepository
                     .ThenInclude(r => r.ToStation)
             .FirstOrDefaultAsync(s => s.TrackingCode == trackingCode);
     }
+
+    public async Task<string> GetTrainCodeByIdAsync(string trainId)
+    {
+        var train = await _context.MetroTrains
+            .Where(t => t.Id == trainId)
+            .Select(t => t.TrainCode)
+            .FirstOrDefaultAsync();
+
+        return train ?? string.Empty;
+    }
 }

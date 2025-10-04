@@ -201,14 +201,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
             CurrentStationName = _context.Stations
                 .Where(station => station.Id == s.CurrentStationId)
                 .Select(station => station.StationNameVi)
-                .FirstOrDefault() /*??
-            s.ShipmentItineraries
-                                     .Where(i => i.IsCompleted)
-                                     .OrderBy(i => i.LegOrder)
-                                     .LastOrDefault().Route.ToStation.StationNameVi ??
-                                 s.ShipmentItineraries
-                                     .OrderBy(i => i.LegOrder)
-                                     .FirstOrDefault().Route.FromStation.StationNameVi*/,
+                .FirstOrDefault(),
 
             ShipmentItineraries = s.ShipmentItineraries.Select(itinerary => new ShipmentItinerary
             {
@@ -228,7 +221,12 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                     LengthKm = itinerary.Route.LengthKm,
                 },
                 TrainId = itinerary.TrainId,
+                TrainCode = itinerary.Train.TrainCode,
+                MetroRouteId = itinerary.Route.LineId,
+                MetroRouteName = itinerary.Route.MetroLine.LineNameVi,
+                Direction = itinerary.Route.Direction,
                 TimeSlotId = itinerary.TimeSlotId,
+                Shift = itinerary.TimeSlot.Shift,
                 Date = itinerary.Date,
                 IsCompleted = itinerary.IsCompleted,
                 Message = itinerary.Message,

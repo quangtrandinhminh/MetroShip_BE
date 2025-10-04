@@ -53,6 +53,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
     private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
+    private readonly ITrainRepository _trainRepository = serviceProvider.GetRequiredService<ITrainRepository>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -231,6 +232,33 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         var itineraryResponse = shipmentResponse.ShipmentItineraries.OrderBy(i => i.LegOrder).LastOrDefault();
         shipmentResponse.EstArrivalTime = await _itineraryService.CheckEstArrivalTime(itineraryResponse);
+
+        if (shipmentResponse.CurrentTrainId != null)
+        {
+            shipmentResponse.CurrentTrainCode = await _trainRepository.GetTrainCodeByIdAsync(shipmentResponse.CurrentTrainId);
+        }
+
+        if (shipmentResponse.CurrentTrainCode == shipmentResponse.WaitingForTrainCode)
+        {
+            // check if this CurrentTrainId is the last itinerary's train
+            var lastItinerary = shipmentResponse.ShipmentItineraries.OrderBy(i => i.LegOrder).LastOrDefault();
+            if (lastItinerary != null && lastItinerary.TrainId == shipmentResponse.CurrentTrainId)
+            {
+                shipmentResponse.WaitingForTrainCode = null;
+            }
+            else
+            {
+                // if not, get the next itinerary's train code
+                var nextItinerary = shipmentResponse.ShipmentItineraries
+                    .Where(i => String.CompareOrdinal(i.Id, itineraryResponse.Id) > 0)
+                    .OrderBy(i => i.LegOrder)
+                    .FirstOrDefault();
+                if (nextItinerary != null && nextItinerary.TrainId != null)
+                {
+                    shipmentResponse.WaitingForTrainCode = await _trainRepository.GetTrainCodeByIdAsync(nextItinerary.TrainId);
+                }
+            }
+        }
         return shipmentResponse;
     }
 

@@ -32,10 +32,24 @@ public partial class ShipmentItinerary : BaseEntity
     [StringLength(50)]
     public string? TrainId { get; set; }
 
+    [NotMapped]
+    public string? TrainCode { get; set; }
+
+    [NotMapped]
+    public string? MetroRouteId { get; set; }
+
+    [NotMapped]
+    public string? MetroRouteName { get; set; }
+    [NotMapped]
+    public DirectionEnum? Direction { get; set; }
+
     [StringLength(50)]
     public string? TrainScheduleId { get; set; }
 
     public string? TimeSlotId { get; set; }
+
+    [NotMapped]
+    public ShiftEnum? Shift { get; set; }
 
     [Column(TypeName = "date")]
     public DateOnly? Date { get; set; }

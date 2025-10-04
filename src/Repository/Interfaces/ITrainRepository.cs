@@ -18,4 +18,5 @@ public interface ITrainRepository : IBaseRepository<MetroTrain>
     Task<MetroTrain?> GetTrainWithAllRoutesAsync(string trainId);
     Task<IList<Shipment>> GetLoadedShipmentsByTrainAsync(string trainId);
     Task<Shipment> GetShipmentWithItinerariesAndRoutesAsync(string trackingCode);
+    Task<string> GetTrainCodeByIdAsync(string trainId);
 }
