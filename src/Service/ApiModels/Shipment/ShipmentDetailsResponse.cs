@@ -59,7 +59,9 @@ public record ShipmentDetailsResponse : ShipmentListResponse
     public string DepartureStationId { get; set; }
     public string DestinationStationId { get; set; }
     public string? CurrentStationId { get; set; }
+    public string? CurrentStationName { get; set; }
     public string? CurrentTrainId { get; set; }
+    public string? CurrentTrainCode { get; set; }
     public string? WaitingForTrainCode { get; set; } 
 
     // Customer fields
@@ -87,4 +89,45 @@ public record ShipmentDetailsResponse : ShipmentListResponse
 
     public IList<ShipmentTrackingResponse> ShipmentTrackings { get; set; } = new List<ShipmentTrackingResponse>();
     public ItineraryGraphResponse ItineraryGraph { get; set; }
+
+    public IList<ItinerarySummary> ItinerarySummaries
+    {
+        // group by RouteId, TrainId, TimeSlotId, Date
+        // if any group has any IsCompleted = false, then the whole group is IsCompleted = false
+        // legOrder is the min of the group
+        get
+        {
+            return ShipmentItineraries
+                .GroupBy(i => new { i.MetroRouteName, i.TimeSlotId, i.Date })
+                .Select(g => new ItinerarySummary
+                {
+                    LegOrder = g.Min(i => i.LegOrder),
+                    MetroRouteCode = g.First().MetroRouteId,
+                    MetroRouteName = g.First().MetroRouteName,
+                    DirectionName = g.First().DirectionName,
+                    TrainId = g.First().TrainId,
+                    TrainCode = g.First().TrainCode,
+                    TimeSlotId = g.Key.TimeSlotId,
+                    ShiftName = g.First().ShiftName,
+                    Date = g.Key.Date,
+                    IsCompleted = g.All(i => i.IsCompleted)
+                })
+                .OrderBy(s => s.LegOrder)
+                .ToList();
+        }
+    }
+}
+
+public record ItinerarySummary
+{
+    public int LegOrder { get; set; }
+    public string? MetroRouteCode { get; set; } = null;
+    public string? MetroRouteName { get; set; } = null;
+    public string? TrainId { get; set; } = null;
+    public string? DirectionName { get; set; } = null;
+    public string? TrainCode { get; set; } = null;
+    public string? TimeSlotId { get; set; } = null;
+    public string? ShiftName { get; set; } = null;
+    public DateOnly? Date { get; set; } = null;
+    public bool IsCompleted { get; set; }
 }

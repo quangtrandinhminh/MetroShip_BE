@@ -100,6 +100,8 @@ namespace MetroShip.WebAPI.Controllers
         public IActionResult GetAssignmentRoles()
         {
             var assignmentRoles = EnumHelper.GetEnumList<AssignmentRoleEnum>();
+            // exculde TrainOperator role
+            assignmentRoles = assignmentRoles.Where(r => r.Value != nameof(AssignmentRoleEnum.TrainOperator)).ToList();
             return Ok(BaseResponse.OkResponseDto(assignmentRoles));
         }
 

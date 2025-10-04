@@ -53,6 +53,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     private readonly IBaseRepository<CategoryInsurance> _categoryInsuranceRepository = serviceProvider.GetRequiredService<IBaseRepository<CategoryInsurance>>();
     private readonly IBackgroundJobService _backgroundJobService = serviceProvider.GetRequiredService<IBackgroundJobService>();
     private readonly IBaseRepository<ParcelMedia> _parcelMediaRepository = serviceProvider.GetRequiredService<IBaseRepository<ParcelMedia>>();
+    private readonly ITrainRepository _trainRepository = serviceProvider.GetRequiredService<ITrainRepository>();
     private MetroGraph _metroGraph;
     private const string CACHE_KEY = nameof(MetroGraph);
     private const int CACHE_EXPIRY_MINUTES = 30;
@@ -231,6 +232,33 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
 
         var itineraryResponse = shipmentResponse.ShipmentItineraries.OrderBy(i => i.LegOrder).LastOrDefault();
         shipmentResponse.EstArrivalTime = await _itineraryService.CheckEstArrivalTime(itineraryResponse);
+
+        if (shipmentResponse.CurrentTrainId != null)
+        {
+            shipmentResponse.CurrentTrainCode = await _trainRepository.GetTrainCodeByIdAsync(shipmentResponse.CurrentTrainId);
+        }
+
+        if (shipmentResponse.CurrentTrainCode == shipmentResponse.WaitingForTrainCode)
+        {
+            // check if this CurrentTrainId is the last itinerary's train
+            var lastItinerary = shipmentResponse.ShipmentItineraries.OrderBy(i => i.LegOrder).LastOrDefault();
+            if (lastItinerary != null && lastItinerary.TrainId == shipmentResponse.CurrentTrainId)
+            {
+                shipmentResponse.WaitingForTrainCode = null;
+            }
+            else
+            {
+                // if not, get the next itinerary's train code
+                var nextItinerary = shipmentResponse.ShipmentItineraries
+                    .Where(i => String.CompareOrdinal(i.Id, itineraryResponse.Id) > 0)
+                    .OrderBy(i => i.LegOrder)
+                    .FirstOrDefault();
+                if (nextItinerary != null && nextItinerary.TrainId != null)
+                {
+                    shipmentResponse.WaitingForTrainCode = await _trainRepository.GetTrainCodeByIdAsync(nextItinerary.TrainId);
+                }
+            }
+        }
         return shipmentResponse;
     }
 
@@ -1160,13 +1188,6 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         // create new shipment for return
         var returnShipment = new Shipment();
         await _itineraryService.HandleItineraryForReturnShipment(shipment, returnShipment);
-        // set payment deadline for original shipment
-        var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
-        if (!int.TryParse(config, out int cancelAfterMinutes))
-        {
-            cancelAfterMinutes = 15; // default 15 minutes
-        }
-        returnShipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
 
         // Update shipment status to Returned
         shipment.ShipmentStatus = ShipmentStatusEnum.Returned;
@@ -1207,9 +1228,18 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             UpdatedBy = customerId
         });
 
-        returnShipment = await _shipmentRepository.AddAsync(returnShipment, cancellationToken);
+        // set payment deadline for return shipment
+        var config = _systemConfigRepository.GetSystemConfigValueByKey(nameof(SystemConfigSetting.CANCEL_TRANSACTION_AFTER_MINUTE));
+        if (!int.TryParse(config, out int cancelAfterMinutes))
+        {
+            cancelAfterMinutes = 15; // default 15 minutes
+        }
+        returnShipment.PaymentDealine = CoreHelper.SystemTimeNow.AddMinutes(cancelAfterMinutes);
+        returnShipment = _shipmentRepository.Add(returnShipment);
         _shipmentRepository.Update(shipment);
         await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+        // Schedule job to update shipment status to Unpaid if not paid in time
+        await _backgroundJobService.ScheduleUnpaidJob(returnShipment.Id, returnShipment.PaymentDealine.Value);
 
         // send email to customer
         _logger.Information("Scheduling to send email to customer with tracking code: {@trackingCode}",
