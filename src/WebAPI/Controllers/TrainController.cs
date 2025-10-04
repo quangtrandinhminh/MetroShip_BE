@@ -37,6 +37,16 @@ namespace MetroShip.WebAPI.Controllers
             return Ok(BaseResponse.OkResponseDto(response, additionalData));
         }
 
+        [HttpGet]
+        [Authorize]
+        [Route(WebApiEndpoint.MetroTrainEndpoint.GetTrainsDropdown)]
+        [ProducesResponseType(typeof(BaseResponse<IList<TrainDropdownResponse>>), 200)]
+        public async Task<IActionResult> GetTrainsDropdownAsync([FromQuery] string? lineId = null, [FromQuery] string? regionId = null)
+        {
+            var response = await _trainService.GetTrainsDropdownAsync(lineId, regionId);
+            return Ok(BaseResponse.OkResponseDto(response, null));
+        }
+
         [HttpPost(WebApiEndpoint.MetroTrainEndpoint.CreateTrain)]
         public async Task<IActionResult> CreateTrainAsync([FromBody] CreateTrainRequest request)
         {

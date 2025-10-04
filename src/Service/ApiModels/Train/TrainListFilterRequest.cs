@@ -5,6 +5,8 @@ namespace MetroShip.Service.ApiModels.Train;
 
 public sealed record TrainListFilterRequest : PaginatedListRequest
 {
+    public string? Id { get; set; }
+    public string? TrainCode { get; set; }
     public string? StationId { get; set; }
 
     public string? LineId { get; set; }
@@ -18,4 +20,6 @@ public sealed record TrainListFilterRequest : PaginatedListRequest
     public bool? IsAvailable { get; set; }
 
     public DirectionEnum? Direction { get; set; }
+
+    public TrainStatusEnum? Status { get; set; }
 }
