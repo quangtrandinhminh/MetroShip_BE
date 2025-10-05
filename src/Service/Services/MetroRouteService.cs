@@ -243,11 +243,38 @@ namespace MetroShip.Service.Services
                     metroRoute.TotalStations = request.Stations.Count;
                     _logger.Information("MetroRoute entity mapped: {LineCode}", metroRoute.LineCode);
 
+                    // check a pair of stations is exist a routeStation already
+                    // get all station name for all 
+                    var stationNames = await _stationRepository
+                        .GetStationNamesByIdsAsync(request.Stations.Select(s => s.Id).ToList());
+                    for (int i = 0; i < request.Stations.Count - 1; i++)
+                    {
+                        var fromStationId = request.Stations[i].Id;
+                        var toStationId = request.Stations[i + 1].Id;
+
+                        var existingRoute = await _routeStationRepository.GetAll()
+                            .FirstOrDefaultAsync(r =>
+                                r.FromStationId == fromStationId &&
+                                r.ToStationId == toStationId);
+
+                        if (existingRoute != null)
+                        {
+                            var fromStationName = stationNames.FirstOrDefault(s => s.Key == fromStationId).Value ?? "Unknown";
+                            var toStationName = stationNames.FirstOrDefault(s => s.Key == toStationId).Value ?? "Unknown";
+                            throw new AppException(
+                                ErrorCode.BadRequest,
+                                $"Đã có tuyến đường giữa trạm {fromStationName} and {toStationName}.",
+                                StatusCodes.Status400BadRequest);
+                        }
+                    }
+
                     // Handle existing stations (none in your case since all IDs are null)
                     var existingStationIds = request.Stations
                         .Where(st => !string.IsNullOrEmpty(st.Id))
                         .Select(st => st.Id)
                         .ToList();
+
+
 
                     _logger.Information("Found {Count} existing stations", existingStationIds.Count);
 
