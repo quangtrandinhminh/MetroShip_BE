@@ -1917,6 +1917,8 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         train.CurrentStationId = chosen.Id;
         train.Latitude = chosen.Latitude;
         train.Longitude = chosen.Longitude;
+        train.CurrentRouteStationId = null;
+        train.NextStationId = null;
         train.Status = TrainStatusEnum.Scheduled;   // chỉ schedule, chưa chạy
         train.LastUpdatedAt = DateTimeOffset.UtcNow;
 
