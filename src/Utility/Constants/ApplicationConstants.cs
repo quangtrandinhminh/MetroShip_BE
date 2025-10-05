@@ -192,6 +192,8 @@
         public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";
         public const string SHIPMENT_CANNOT_BE_RETURNED = "Đơn hàng ở trạng thái chờ giao hàng hoặc đang tính phụ phí mới có thể yêu cầu trả hàng. ";
         public const string SHIPMENT_ALREADY_TO_RETURN = "Đơn hàng đã được lên lịch trả hàng. ";
+        public const string SURCHARGE_APPLIED_SUCCESS = "Áp dụng phụ phí thành công.";
+        public const string EXPIRED_APPLIED_SUCCESS = "Áp dụng quá hạn thành công.";
     }
 
     public class ResponseMessageItinerary

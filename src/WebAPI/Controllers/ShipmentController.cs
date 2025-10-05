@@ -210,5 +210,21 @@ namespace MetroShip.WebAPI.Controllers
             var result = await itineraryService.ChangeItinerariesToNextSlotAsync(request);
             return Ok(BaseResponse.OkResponseDto(result, null));
         }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.ApplySurchargeForShipment)]
+        public async Task<IActionResult> SurchargeForShipment([FromRoute] string shipmentId)
+        {
+            await shipmentService.ApplySurchargeForShipment(shipmentId);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.SURCHARGE_APPLIED_SUCCESS, null));
+        }
+
+        [Authorize(Roles = nameof(UserRoleEnum.Staff))]
+        [HttpPut(WebApiEndpoint.ShipmentEndpoint.ApplyExpiredForShipment)]
+        public async Task<IActionResult> ExpiredForShipment([FromRoute] string shipmentId)
+        {
+            await shipmentService.ApplyExpiredForShipment(shipmentId);
+            return Ok(BaseResponse.OkResponseDto(ResponseMessageShipment.EXPIRED_APPLIED_SUCCESS, null));
+        }
     }
 }

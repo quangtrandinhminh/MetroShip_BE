@@ -20,6 +20,7 @@ public class ParcelResponse
     public decimal LengthCm { get; set; }
     public decimal WidthCm { get; set; }
     public decimal HeightCm { get; set; }
+    public decimal? OverdueSurchangeFeeVnd { get; set; } = 0;
     public decimal? ShippingFeeVnd { get; set; } = 0;
     public decimal? InsuranceFeeVnd { get; set; } = 0;
     public decimal? PriceVnd { get; set; }

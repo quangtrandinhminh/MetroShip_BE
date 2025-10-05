@@ -875,12 +875,12 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
         }
 
         // Check if the shipment is awaiting payment
-        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery ||
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.AwaitingDelivery &&
             shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
         {
             throw new AppException(
             ErrorCode.BadRequest,
-            "Shipment must be in AwaitingDelivery or ApplyingSurcharge status to apply surcharge.",
+            "Đơn hàng phải ở trạng thái Chờ giao hoặc Áp dụng phụ phí để áp dụng phụ phí lưu kho.",
             StatusCodes.Status400BadRequest);
         }
 
@@ -1603,4 +1603,77 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             IsCompleted = it.IsCompleted
         }).ToList();
     }
+
+    // apply expired for shipment which is applying surcharge
+    public async Task ApplyExpiredForShipment(string shipmentId)
+    {
+        _logger.Information("Applying expired for shipment ID: {@shipmentId}", shipmentId);
+        var shipment = await _shipmentRepository.GetSingleAsync(x => x.Id == shipmentId);
+
+        // Check if the shipment exists
+        if (shipment == null)
+        {
+            throw new AppException(
+            ErrorCode.NotFound,
+            ResponseMessageShipment.SHIPMENT_NOT_FOUND,
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Check if the shipment is applying surcharge
+        if (shipment.ShipmentStatus != ShipmentStatusEnum.ApplyingSurcharge)
+        {
+            throw new AppException(
+            ErrorCode.BadRequest,
+            "Đơn hàng phải ở trạng thái Đang áp dụng phụ phí lưu kho để cập nhật thành Quá hạn.",
+            StatusCodes.Status400BadRequest);
+        }
+
+        // Update shipment status to expired
+        shipment.ShipmentStatus = ShipmentStatusEnum.Expired;
+        shipment.ExpiredAt = CoreHelper.SystemTimeNow;
+        _shipmentTrackingRepository.Add(new ShipmentTracking
+        {
+            ShipmentId = shipment.Id,
+            CurrentShipmentStatus = ShipmentStatusEnum.Expired,
+            Status = $"Đơn hàng đã quá hạn nhận hàng",
+            EventTime = CoreHelper.SystemTimeNow,
+            UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+        });
+
+        foreach (var parcel in shipment.Parcels)
+        {
+            _parcelTrackingRepository.Add(new ParcelTracking
+            {
+                ParcelId = parcel.Id,
+                CurrentShipmentStatus = ShipmentStatusEnum.Expired,
+                CurrentParcelStatus = parcel.Status,
+                TrackingForShipmentStatus = ShipmentStatusEnum.Expired,
+                Status = $"Kiện hàng đã quá hạn nhận hàng",
+                EventTime = CoreHelper.SystemTimeNow,
+                UpdatedBy = JwtClaimUltils.GetUserId(_httpContextAccessor)
+            });
+        }
+
+        // Save changes to the database
+        _shipmentRepository.Update(shipment);
+        await _unitOfWork.SaveChangeAsync(_httpContextAccessor);
+
+        // cancel Applyd surcharge job
+        await _backgroundJobService.CancelScheduleApplySurchargeJob(shipment.Id);
+
+        // send email to customer
+        var user = await _userRepository.GetUserByIdAsync(shipment.SenderId);
+        if (user != null)
+        {
+            var sendMailModel = new SendMailModel
+            {
+                Email = user.Email,
+                Type = MailTypeEnum.Notification,
+                Message = $"Đơn hàng {shipment.TrackingCode} của bạn đã quá hạn nhận hàng." +
+                $"Vui lòng liên lạc với chúng tôi để được hỗ trợ. Nếu không chúng tôi có toàn quyền quyết định xử lý hàng hóa của đơn."
+            };
+            await _emailSender.ScheduleEmailJob(sendMailModel);
+        }
+    }
+
 }
