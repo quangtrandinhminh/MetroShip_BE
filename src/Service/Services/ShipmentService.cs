@@ -284,7 +284,7 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
     {
         var customerId = JwtClaimUltils.GetUserId(_httpContextAccessor);
         _logger.Information("Get shipments history with request: {@request} for {@cus}", request, customerId);
-        Expression<Func<Shipment, bool>> expression = x => x.DeletedAt == null && x.SenderId == customerId;
+        Expression<Func<Shipment, bool>> expression = x => x.DeletedAt == null ;
         if (status != null)
         {
             expression = expression.And(x => x.ShipmentStatus == status);
@@ -295,6 +295,10 @@ public class ShipmentService(IServiceProvider serviceProvider) : IShipmentServic
             var customer = await _userRepository.GetUserByIdAsync(customerId);
             expression = expression.And(x => x.RecipientId.Equals(customerId)
                 || x.RecipientPhone.Equals(customer.PhoneNumber) || x.RecipientEmail.Equals(customer.Email));
+        }
+        else
+        {
+            expression = expression.And(x => x.SenderId.Equals(customerId));
         }
 
         // var shipments = await _shipmentRepository.GetAllPaginatedQueryable(
