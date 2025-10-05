@@ -114,6 +114,7 @@ namespace MetroShip.Utility.Config
         public string MAX_NUMBER_OF_SHIFT_ATTEMPTS { get; set; }
         public string NUM_OF_MAX_DISTANCE_EXPANSION_TIMES { get; set; }
         public string CANCEL_TRANSACTION_AFTER_MINUTE { get; set; }
+        public string MAX_TRAIN_PER_METRO_ROUTE { get; set; }
 
         // main policy
         public string MAX_SCHEDULE_SHIPMENT_DAY { get; set; }

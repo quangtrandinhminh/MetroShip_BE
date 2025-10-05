@@ -2739,3 +2739,11 @@ VALUES
      'Thời gian hủy giao dịch treo ở chờ thanh toán', 1,TRUE,
      NULL,NULL,NULL,NOW(),NOW(),NULL);
 
+INSERT INTO public."SystemConfigs"
+("Id","ConfigKey","ConfigValue","Description","ConfigType", "IsActive",
+ "CreatedBy","LastUpdatedBy","DeletedBy","CreatedAt","LastUpdatedAt","DeletedAt")
+VALUES
+    -- System
+    ('c07ac26d-8388-48f7-88de-8fc289c7951b','MAX_TRAIN_PER_METRO_ROUTE','2',
+     'Số lượng tàu tối đa trên 1 tuyến', 1,TRUE,
+     NULL,NULL,NULL,NOW(),NOW(),NULL);
