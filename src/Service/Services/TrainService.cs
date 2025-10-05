@@ -372,7 +372,19 @@ public class TrainService(IServiceProvider serviceProvider) : ITrainService
         if (existingTrain)
         {
             throw new AppException(ErrorCode.BadRequest,
-            ResponseMessageTrain.TRAIN_EXISTED,
+            ResponseMessageTrain.TRAIN_EXISTED + $"{request.TrainCode}",
+            StatusCodes.Status400BadRequest);
+        }
+
+        var maxTrainPerLine = int.Parse(_systemConfigRepository
+            .GetSystemConfigValueByKey(nameof(SystemConfigSetting.MAX_TRAIN_PER_METRO_ROUTE)));
+        var currentTrainCount = await _trainRepository.GetAllWithCondition(
+            t => t.LineId == request.LineId && t.DeletedAt == null && t.IsActive
+            ).CountAsync();
+        if (maxTrainPerLine == currentTrainCount)
+        {
+            throw new AppException(ErrorCode.BadRequest,
+            ResponseMessageTrain.MAX_TRAIN_PER_LINE_REACHED + $"{maxTrainPerLine}",
             StatusCodes.Status400BadRequest);
         }
 

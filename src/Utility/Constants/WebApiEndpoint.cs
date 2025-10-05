@@ -87,6 +87,8 @@
             public const string ReturnForShipment = BaseEndpoint + "/return/{shipmentId}";
             public const string ChangeItinerarySlot = BaseEndpoint + "/itineraries";
             public const string GetShipmentForGuest = BaseEndpoint + "/guest/{shipmentTrackingCode}";
+            public const string ApplySurchargeForShipment = BaseEndpoint + "/surcharge/{shipmentId}";
+            public const string ApplyExpiredForShipment = BaseEndpoint + "/expired/{shipmentId}";
         }
 
         public static class TransactionEndpoint

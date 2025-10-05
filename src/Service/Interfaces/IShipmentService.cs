@@ -29,6 +29,7 @@ public interface IShipmentService
     Task RateShipment(ShipmentFeedbackRequest request);
     Task UpdateShipmentStatusUnpaid(string shipmentId);
     Task ApplySurchargeForShipment(string shipmentId);
+    Task ApplyExpiredForShipment(string shipmentId);
     Task<(Shipment returnShipment, string message)> ReturnForShipment(string shipmentId,
         CancellationToken cancellationToken = default);
     Task<(string message, string SenderId)> CompleteShipment(ShipmentPickUpRequest request);

@@ -353,10 +353,11 @@ public class PricingService(IServiceProvider serviceProvider) : IPricingService
             );
         }
 
-        var overdueDays = shipment.SurchargeAppliedAt.HasValue
+        /*var overdueDays = shipment.SurchargeAppliedAt.HasValue
             ? (CoreHelper.SystemTimeNow - shipment.SurchargeAppliedAt.Value).Days
-            : 0;
-
+            : 1;*/
+        // if (CoreHelper.SystemTimeNow - shipment.SurchargeAppliedAt.Value).Days == 0, count as 1 day overdue, 
+        var overdueDays = (CoreHelper.SystemTimeNow - shipment.SurchargeAppliedAt.Value).Days + 1;
         foreach (var parcel in shipment.Parcels)
         {
             var surchargeDays = overdueDays;

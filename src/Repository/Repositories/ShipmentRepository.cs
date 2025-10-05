@@ -250,6 +250,7 @@ public class ShipmentRepository : BaseRepository<Shipment>, IShipmentRepository
                 CreatedAt = parcel.CreatedAt,
                 LastUpdatedAt = parcel.LastUpdatedAt,
                 Status = parcel.Status,
+                OverdueSurchangeFeeVnd = parcel.OverdueSurchangeFeeVnd,
                 /*ParcelCategory = new ParcelCategory
                 {
                     Id = parcel.ParcelCategory.Id,

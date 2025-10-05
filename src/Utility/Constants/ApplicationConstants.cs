@@ -192,6 +192,8 @@
         public const string SHIPMENT_PICKUP_OUT_OF_TIME_RANGE = "Đơn hàng phải được xác nhận trong khung thời gian Gửi hàng";
         public const string SHIPMENT_CANNOT_BE_RETURNED = "Đơn hàng ở trạng thái chờ giao hàng hoặc đang tính phụ phí mới có thể yêu cầu trả hàng. ";
         public const string SHIPMENT_ALREADY_TO_RETURN = "Đơn hàng đã được lên lịch trả hàng. ";
+        public const string SURCHARGE_APPLIED_SUCCESS = "Áp dụng phụ phí thành công.";
+        public const string EXPIRED_APPLIED_SUCCESS = "Áp dụng quá hạn thành công.";
     }
 
     public class ResponseMessageItinerary
@@ -272,7 +274,7 @@
     public class ResponseMessageTrain
     {
         public const string TRAIN_NOT_FOUND = "Không tìm thấy tàu.";
-        public const string TRAIN_EXISTED = "Mã tàu đã tồn tại.";
+        public const string TRAIN_EXISTED = "Mã tàu đã tồn tại: ";
         public const string TRAIN_UPDATE_SUCCESS = "Cập nhật tàu thành công.";
         public const string TRAIN_DELETE_SUCCESS = "Xóa tàu thành công.";
         public const string TRAIN_CREATE_SUCCESS = "Tạo tàu thành công.";
@@ -294,6 +296,7 @@
         public const string TRAIN_MUST_BE_SAME_LINE = "Tàu phải thuộc cùng tuyến với tuyến đường.";
         public const string TRAIN_CODE_INVALID = "Train code không hợp lệ.";
         public const string TRAIN_CODE_TOO_LONG = "Train code không được vượt quá 20 ký tự.";
+        public const string MAX_TRAIN_PER_LINE_REACHED = "Tuyến đã đạt đến số lượng tàu tối đa: ";
     }
 
     public class RegionMessageConstants

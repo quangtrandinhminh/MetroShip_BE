@@ -29,7 +29,7 @@ public class BackgroundJobService(IServiceProvider serviceProvider) : IBackgroun
 
         var trigger = TriggerBuilder.Create()
             .WithIdentity($"Trigger-UpdateShipmentToNoDropOff-{shipmentId}")
-            .StartAt(scheduledDateTime.AddMinutes(5))
+            .StartAt(scheduledDateTime)
             //.StartAt(DateTimeOffset.UtcNow.AddSeconds(5))
             .Build();
 
