@@ -1,98 +1,150 @@
-# MetroShip
+# MetroShip Backend Service
 
-## Getting Started
+> An enterprise-grade backend service for a nationwide logistics and consignment management platform, built with .NET Core.
+> 
 
-To get started with this project, follow these steps:
+## Project Overview
 
-### Prerequisites
+MetroShip is a comprehensive logistics backend designed to handle complex consignment operations, from order booking and smart routing to real-time tracking and payment processing. The system is architected to be highly scalable, maintainable, and efficient at processing concurrent data.
 
-- [.NET Core SDK](https://dotnet.microsoft.com/download)
-- [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)
-- [Git](https://git-scm.com/)
+## Technical Highlights 
 
-### Installation
+- **Smart Logistics Routing (Graph Algorithms):** * Modeled the nationwide transit network as a weighted graph.
+    - Implemented **Dijkstra's Algorithm** and **BFS** to dynamically calculate the shortest and most cost-effective delivery routes based on dynamic pricing configurations and distance tiers.
+- **Architecture:** * Strictly follows **N-Layer Architecture** separating WebAPI, Business Services, Data Access (Repository), and Utilities.
+    - Applied **Repository** and **Unit of Work** design patterns to manage database transactions safely and abstract EF Core logic.
+- **Real-Time Data Processing:** * Integrated **SignalR** and **Firebase Realtime Database** to push real-time location updates of trains/consignments and broadcast system notifications to clients instantaneously.
+- **Automated CI/CD Pipeline:** * Configured **GitHub Actions** for continuous integration and deployment. The pipeline automatically builds Docker images and deploys containerized applications to a Linux (DigitalOcean) server, ensuring minimal downtime.
 
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/quangtrandinhminh/MetroShip_BE.git
-    ```
+## Tech Stack
 
-2. Install dependencies:
-    ```bash
-    dotnet restore
-    ```
+**Core & Framework**
 
-### Setting Up the Database
+- .NET 8 / C# 12
+- ASP.NET Core Web API
+- Entity Framework Core (Code-First)
 
-Update the `appsettings.json` file with your database connection string:
-    ```json
-    {
-      "ConnectionStrings": {
-        "DefaultConnection": "YourConnectionStringHere"
-      }
-    }
-    ```
+**Database & Caching**
 
-    **Please do not commit any changes in `appsettings.json`**
+- PostgreSQL (Relational Data)
+- Firebase Realtime Database (Geo-tracking Data)
+- In-Memory Cache (Graph Data caching)
 
-### Running the Application
+**Integrations & Background Services**
 
-Run the application:
-    ```bash
-    dotnet run
-    ```
+- **Payment Gateways:** VNPay & PayOS (with Webhook handling)
+- **Real-time:** SignalR
+- **Media Storage:** Cloudinary
+- **Background Jobs:** Quartz.NET / Native Background Services (for auto-handling payment status, shipment status, train scheduling, email sending)
+- **Authentication:** JWT (JSON Web Tokens) with Role-based access control.
 
-## Collaborate with Your Team
+**DevOps**
 
-To collaborate within the team without forking, follow these steps:
+- Docker & Docker Compose
+- GitHub Actions
+- Linux (DigitalOcean)
 
-### Branching Strategy
+## Project Structure
 
-We use a Git branching strategy with three main branches:
+```
+MetroShip_BE/
+├── src/
+│   ├── WebAPI/           # Controllers, Middlewares, SignalR Hubs, Startup configuration
+│   ├── Service/          # Business logic, Graph algorithms, DTOs, Validation (FluentValidation)
+│   ├── Repository/       # EF Core DbContext, Migrations, Repositories, Unit of Work
+│   ├── Utility/          # Global constants, Enums, Exceptions, Helpers
+│   └── Test/             # Unit testing configurations
+├── doc/                  # Postman collections, database seed scripts, Simulator scripts
+├── .github/workflows/    # CI/CD pipeline definitions
+```
 
-- `main`: Contains the stable version of the code. Direct commits to this branch are restricted.
-- `dev`: Contains the latest development changes. This is the main branch for ongoing development.
-- `test`: Contains code that is under testing before being merged into `dev`.
+## Core Modules
 
-### Working on a Feature
+1. **Shipment & Parcel Management:** Handles the entire lifecycle of a parcel, from Awaiting Drop-off to Delivered, including volumetric weight calculations and category-based insurance policies.
+2. **Itinerary & Scheduling:** Manages Metro Trains, Stations, and Routes. Dynamically assigns shipments to available Metro Time Slots ensuring optimal capacity utilization.
+3. **Transaction & Payment:** Secure processing of transactions via third-party APIs, utilizing database transactions to prevent race conditions during webhook callbacks.
+4. **GPS Simulator:** Includes a custom web-based simulator (`doc/metro-gps-simulator`) to mock real-time train movements and trigger live tracking updates.
 
-1. Create a new branch from `dev` for your feature:
-    ```bash
-    git checkout dev
-    git pull origin dev
-    git checkout -b feature/your-feature-name
-    ```
+## 🚀 Getting Started (Collaboration & Local Setup)
 
-2. Make your changes and commit them:
-    ```bash
-    git add .
-    git commit -m 'Add some feature'
-    ```
+**Prerequisites:**
 
-3. Push your branch to the repository:
-    ```bash
-    git push origin feature/your-feature-name
-    ```
+- .NET 8 SDK
+- Docker Desktop
+- Git
 
-4. Create a pull request (PR) from your feature branch to `test` for testing:
-    - Ensure all tests pass before requesting a merge.
-    - Team members review and approve the PR.
-    - Once approved, the PR is merged into `test`.
+**1. Clone the Repository (Development Branch)**
+For collaboration, please ensure you clone the repository and switch to the `dev` branch:
 
-5. After thorough testing, create a pull request from `test` to `dev`.
+```
+git clone https://github.com/quangtrandinhminh/MetroShip_BE.git
+cd MetroShip_BE
+git checkout dev
+```
 
-6. For releases, create a pull request from `dev` to `main`.
+**2. Environment Configuration (.env)**
+The application relies heavily on Environment Variables for secure configuration of third-party services. Create a `.env` file in the root directory and populate it with the following required keys:
 
-## Contributing
+```
+# System Settings
+APP_NAME=MetroShip
+SYSTEM_DOMAIN=http://localhost:5000
+SYSTEM_SECRET_KEY=your_jwt_secret_key_here
+SYSTEM_SECRET_CODE=your_secret_code_here
 
-We welcome contributions! To contribute:
+# VNPay Integration
+VNPAY_TMN_CODE=
+VNPAY_HASH_SECRET=
+VNPAY_BASE_URL=
+VNPAY_VERSION=
+VNPAY_CURR_CODE=
+VNPAY_LOCALE=
 
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/your-feature-name`
-3. Make your changes and commit them: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature-name`
-5. Open a pull request.
+# PayOS Integration
+PAYOS_API_KEY=
+PAYOS_CHECKSUM_KEY=
+PAYOS_CLIENT_ID=
 
-## Authors and Acknowledgment
+# VietQR Integration
+VIETQR_API_KEY=
+VIETQR_CLIENT_ID=
 
-Thanks to all the contributors who have helped develop this project.
+# SMTP / Email Configuration
+SMTP_HOST=
+SMTP_PORT=
+SMTP_ENABLE_SSL=true
+SMTP_USING_CREDENTIAL=true
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_FROM_ADDRESS=
+SMTP_FROM_DISPLAY_NAME=MetroShip Support
+
+# Other Third-party Integrations
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+CLOUDINARY_URL=
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_PHONE_NUMBER=
+```
+
+**3. Run with Docker Compose**
+The easiest way to spin up the database and the API locally (Docker will automatically pick up your `.env` file):
+
+```
+docker-compose up -d --build
+```
+
+**4. Apply Database Migrations (If running without Docker)**
+If you are running the project via IIS Express or Kestrel directly, ensure your local database is running and apply EF Core migrations:
+
+```
+dotnet ef database update --project src/Repository --startup-project src/WebAPI
+```
+
+## 📖 API Documentation
+
+Once the application is running, the Swagger UI can be accessed at:
+`http://localhost:<port>/swagger`
+
+*(A complete Postman Collection is also available in the `/doc` directory).*
