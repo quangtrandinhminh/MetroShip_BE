@@ -1,12 +1,11 @@
-# .github/workflows/main_metroship.yml
-name: Build and Deploy to DigitalOcean
+name: Build and Push Docker Image
 
 on:
   push:
     branches: [main]
     
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     
     steps:
@@ -22,20 +21,5 @@ jobs:
         
     - name: Build and push Docker image
       run: |
-        # Use your specific Dockerfile path
         docker build -f src/Dockerfile . -t ghcr.io/quangtrandinhminh/metroship-ghcr:latest
         docker push ghcr.io/quangtrandinhminh/metroship-ghcr:latest
-        
-    - name: Deploy to DigitalOcean App Platform
-      run: |
-        # Install doctl
-        curl -sL https://github.com/digitalocean/doctl/releases/download/v1.104.0/doctl-1.104.0-linux-amd64.tar.gz | tar -xzv
-        sudo mv doctl /usr/local/bin
-        
-        # Authenticate doctl
-        doctl auth init -t ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-        
-        # Trigger deployment
-        doctl apps create-deployment ${{ secrets.DO_APP_ID }}
-      env:
-        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
