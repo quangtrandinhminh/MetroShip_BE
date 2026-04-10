@@ -9,12 +9,12 @@ MetroShip is a comprehensive logistics backend designed to handle complex consig
 
 ## Technical Highlights 
 
-- **Smart Logistics Routing (Graph Algorithms):** * Modeled the nationwide transit network as a weighted graph.
+- **Smart Logistics Routing (Graph Algorithms):** Modeled the nationwide transit network as a weighted graph.
     - Implemented **Dijkstra's Algorithm** and **BFS** to dynamically calculate the shortest and most cost-effective delivery routes based on dynamic pricing configurations and distance tiers.
-- **Architecture:** * Strictly follows **N-Layer Architecture** separating WebAPI, Business Services, Data Access (Repository), and Utilities.
+- **Architecture:** Strictly follows **N-Layer Architecture** separating WebAPI, Business Services, Data Access (Repository), and Utilities.
     - Applied **Repository** and **Unit of Work** design patterns to manage database transactions safely and abstract EF Core logic.
-- **Real-Time Data Processing:** * Integrated **SignalR** and **Firebase Realtime Database** to push real-time location updates of trains/consignments and broadcast system notifications to clients instantaneously.
-- **Automated CI/CD Pipeline:** * Configured **GitHub Actions** for continuous integration and deployment. The pipeline automatically builds Docker images and deploys containerized applications to a Linux (DigitalOcean) server, ensuring minimal downtime.
+- **Real-Time Data Processing:** Integrated **SignalR** and **Firebase Realtime Database** to push real-time location updates of trains/consignments and broadcast system notifications to clients instantaneously.
+- **Automated CI/CD Pipeline:** Configured **GitHub Actions** for continuous integration and deployment. The pipeline automatically builds Docker images and deploys containerized applications to a Linux (DigitalOcean) server, ensuring minimal downtime.
 
 ## Tech Stack
 
@@ -65,7 +65,7 @@ MetroShip_BE/
 3. **Transaction & Payment:** Secure processing of transactions via third-party APIs, utilizing database transactions to prevent race conditions during webhook callbacks.
 4. **GPS Simulator:** Includes a custom web-based simulator (`doc/metro-gps-simulator`) to mock real-time train movements and trigger live tracking updates.
 
-## 🚀 Getting Started (Collaboration & Local Setup)
+## Getting Started (Collaboration & Local Setup)
 
 **Prerequisites:**
 
@@ -142,7 +142,7 @@ If you are running the project via IIS Express or Kestrel directly, ensure your 
 dotnet ef database update --project src/Repository --startup-project src/WebAPI
 ```
 
-## 📖 API Documentation
+## API Documentation
 
 Once the application is running, the Swagger UI can be accessed at:
 `http://localhost:<port>/swagger`
