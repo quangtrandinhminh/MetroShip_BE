@@ -37,7 +37,7 @@ namespace MetroShip.Service.Services
         private readonly ISchedulerFactory _schedulerFactory =
             serviceProvider.GetRequiredService<ISchedulerFactory>();
 
-        public void SendMail(SendMailModel model)
+        public Task SendMail(SendMailModel model)
         {
             _logger.Information($"Send mail to {model.Email} with type {model.Type} and token {model.Token}");
             switch (model.Type)
@@ -63,6 +63,8 @@ namespace MetroShip.Service.Services
                 default:
                     break;
             }
+
+            return Task.CompletedTask;
         }
 
         public async Task ScheduleEmailJob(SendMailModel emailData)
@@ -123,7 +125,7 @@ namespace MetroShip.Service.Services
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Failed to send email to {Email}", model.Email);
+                _logger.Error(ex, "Failed to send email to {Email}, exception: {Exception}", model.Email, ex);
                 //throw new AppException(ErrorCode.Unknown, $"Failed to send email: {ex.Message}");
             }
         }

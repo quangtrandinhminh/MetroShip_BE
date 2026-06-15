@@ -379,18 +379,19 @@ namespace MetroShip.Service.Services
             claims.AddRange(
                 await _userManager.GetClaimsAsync(loggedUser)
                 );
+
             // Add role claims
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-
+          
                 // Use RoleManager to find the role and add its claims
-                var roleEntity = await _roleManager.FindByNameAsync(role);
+                /*var roleEntity = await _roleManager.FindByNameAsync(role);
                 if (roleEntity != null)
                 {
                     var roleClaims = await _roleManager.GetClaimsAsync(roleEntity);
                     claims.AddRange(roleClaims);
-                }
+                }*/
             }
 
             // Add permission claims
@@ -429,14 +430,15 @@ namespace MetroShip.Service.Services
             return JwtUtils.GenerateToken(claims.Distinct(), hour);
         }
 
-        private async Task GenerateRefreshToken(UserEntity user, int hour)
+        private  Task GenerateRefreshToken(UserEntity user, int hour)
         {
             var randomByte = new byte[64];
             var rngCryptoServiceProvider = new RNGCryptoServiceProvider();
             rngCryptoServiceProvider.GetBytes(randomByte);
             user.RefreshToken = Convert.ToBase64String(randomByte);
             user.RefreshTokenExpiredTime = CoreHelper.SystemTimeNow.AddHours(hour);
-            await _userRepository.UpdateAsync(user);
+            // await _userRepository.UpdateAsync(user);
+            return Task.CompletedTask;
         }
 
         private async Task<UserEntity> GetUserByRefreshToken(string token)
