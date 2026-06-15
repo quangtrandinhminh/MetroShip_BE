@@ -15,7 +15,7 @@ public class SendEmailJob(IServiceProvider serviceProvider) : IJob
     private readonly ILogger _logger = serviceProvider.GetRequiredService<ILogger>();
     private readonly IEmailService _emailService = serviceProvider.GetRequiredService<IEmailService>();
 
-    public Task Execute(IJobExecutionContext context)
+    public async Task Execute(IJobExecutionContext context)
     {
         // Deserialize from JSON
         var emailDataJson = context.JobDetail.JobDataMap.GetString("emailDataJson");
@@ -34,7 +34,7 @@ public class SendEmailJob(IServiceProvider serviceProvider) : IJob
 
         try
         {
-             _emailService.SendMail(sendMailModel); // Make this async if possible
+             await _emailService.SendMail(sendMailModel); // Make this async if possible
             _logger.Information("Email sent successfully to: {Email} from Quartz", sendMailModel.Email);
         }
         catch (Exception ex)
@@ -42,7 +42,5 @@ public class SendEmailJob(IServiceProvider serviceProvider) : IJob
             _logger.Error(ex, "Failed to send email to: {Email} from Quartz", sendMailModel.Email);
             throw; // Quartz will handle retries based on configuration
         }
-
-        return Task.CompletedTask;
     }
 }
