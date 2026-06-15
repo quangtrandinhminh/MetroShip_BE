@@ -98,7 +98,28 @@ namespace MetroShip.Repository.Repositories
 
         public async Task<UserEntity?> GetSingleAsync(Expression<Func<UserEntity, bool>>? predicate = null,
             params Expression<Func<UserEntity, object>>[] includeProperties)
-        => await Get(predicate, includeProperties).FirstOrDefaultAsync();
+        => await GetWithoutTracking(predicate, includeProperties).FirstOrDefaultAsync();
+
+        private IQueryable<UserEntity> GetWithoutTracking(Expression<Func<UserEntity, bool>>? predicate = null, params Expression<Func<UserEntity, object>>[] includeProperties)
+        {
+            IQueryable<UserEntity> reault = _context.Users.AsQueryable();
+            if (predicate != null)
+            {
+                reault = reault.Where(predicate);
+            }
+
+            includeProperties = includeProperties?.Distinct().ToArray();
+            if (includeProperties?.Any() ?? false)
+            {
+                Expression<Func<UserEntity, object>>[] array = includeProperties;
+                foreach (Expression<Func<UserEntity, object>> navigationPropertyPath in array)
+                {
+                    reault = reault.Include(navigationPropertyPath);
+                }
+            }
+
+            return reault.Where(x => x.DeletedTime == null);
+        }
 
         public IQueryable<UserEntity> Get(Expression<Func<UserEntity, bool>>? predicate = null, params Expression<Func<UserEntity, object>>[] includeProperties)
         {
